@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,6 +18,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -31,7 +34,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -47,8 +49,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.transaction.model.Transaction
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalance
 
 
 val backgroundGray = Color(0xFFEFEFEF)
@@ -195,6 +195,64 @@ fun CurrentBalanceCard(balance: Double) {
     }
 }
 
+@Composable
+fun IncomeExpenseCards(totalIncome: Double, totalExpense: Double) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Income card (up arrow)
+        InfoCard(
+            title = "Total Income",
+            amount = "KSh ${formatAmount(totalIncome)}",
+            iconColor = GreenIncome,
+            modifier = Modifier.weight(1f),
+            icon = {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(GreenIncome),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowDownward,
+                        contentDescription = "Income",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        )
+
+        // Expense card (down arrow)
+        InfoCard(
+            title = "Total Expense",
+            amount = "KSh ${formatAmount(totalExpense)}",
+            iconColor = PinkExpense,
+            modifier = Modifier.weight(1f),
+            icon = {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(PinkExpense),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowUpward,
+                        contentDescription = "Expense",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        )
+    }
+}
+
+
+
 
 @Composable
 fun IncomeExpensesOverview(transactions: List<Transaction>) {
@@ -329,51 +387,13 @@ fun RecentTransactionsSection() {
         )
     }
 }
-
-@Composable
-fun IncomeExpenseCards(totalIncome: Double, totalExpense: Double) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        InfoCard(
-            title = "Total Income",
-            amount = "KSh ${formatAmount(totalIncome)}",
-            iconColor = GreenIncome,
-            modifier = Modifier.weight(1f),
-            icon = {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(GreenIncome)
-                )
-            }
-        )
-        InfoCard(
-            title = "Total Expense",
-            amount = "KSh ${formatAmount(totalExpense)}",
-            iconColor = PinkExpense,
-            modifier = Modifier.weight(1f),
-            icon = {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(PinkExpense)
-                )
-            }
-        )
-    }
-}
-
 @Composable
 fun InfoCard(
     title: String,
     amount: String,
     icon: (@Composable () -> Unit)? = null,
-    iconColor: Color = Color.Black,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    iconColor: Color
 ) {
     Card(
         modifier = modifier.height(70.dp),
@@ -383,13 +403,16 @@ fun InfoCard(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically // this centers children vertically
         ) {
-            icon?.let {
-                it()
-                Spacer(modifier = Modifier.width(8.dp))
+            if (icon != null) {
+                icon()
+                Spacer(modifier = Modifier.width(12.dp)) // space between icon and texts
             }
-            Column(Modifier.align(Alignment.CenterVertically)) {
+
+            // Column for title + amount
+            Column {
                 Text(text = title, fontSize = 14.sp)
                 Text(text = amount, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
