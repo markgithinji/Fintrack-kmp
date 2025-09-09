@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -50,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.transaction.model.Transaction
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 
@@ -255,16 +257,30 @@ fun IncomeExpenseCards(totalIncome: Double, totalExpense: Double) {
 }
 
 
+fun LocalDate.shortDayName(): String {
+    // 0 = Monday ... 6 = Sunday
+    return when (this.dayOfWeek.ordinal) {
+        0 -> "Mon"; 1 -> "Tue"; 2 -> "Wed"; 3 -> "Thu"
+        4 -> "Fri"; 5 -> "Sat"; 6 -> "Sun"
+        else -> ""
+    }
+}
+
+
 @Composable
 fun IncomeExpensesOverview(transactions: List<Transaction>) {
-    // Group transactions by day (or week) for the chart
-    val weeklyData: List<Pair<String, Pair<Double, Double>>> = transactions
-        .groupBy { it.date } // LocalDate
+    // Group transactions by date and compute daily income/expense
+    val weeklyData = transactions
+        .groupBy { it.date }
         .map { (date, txs) ->
             val income = txs.filter { it.type == "income" }.sumOf { it.amount }
             val expense = txs.filter { it.type == "expense" }.sumOf { it.amount }
-            date.toString() to (income to expense)
+            date.shortDayName() to (income to expense)
         }
+        .sortedBy { (label, _) ->
+            listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").indexOf(label)
+        }
+
 
     Column(
         modifier = Modifier
@@ -272,6 +288,7 @@ fun IncomeExpensesOverview(transactions: List<Transaction>) {
             .clip(RoundedCornerShape(24.dp))
             .background(Color.White)
     ) {
+        // Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -303,9 +320,7 @@ fun IncomeExpensesOverview(transactions: List<Transaction>) {
                 }
             }
 
-            Row(
-                verticalAlignment = Alignment.Top
-            ) {
+            Row(verticalAlignment = Alignment.Top) {
                 Text(text = "Weekly", color = Color.Gray, fontSize = 12.sp)
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
@@ -325,53 +340,92 @@ fun IncomeExpensesOverview(transactions: List<Transaction>) {
     }
 }
 
-
 @Composable
 fun BarChart(
     data: List<Pair<String, Pair<Double, Double>>>,
     modifier: Modifier = Modifier
 ) {
-    val totalHeight = 200.dp
+    val totalBarHeight = 200.dp
     val barWidth = 24.dp
-    val maxAmount = data.maxOfOrNull { it.second.first + it.second.second } ?: 1.0
+    val maxTotal = data.maxOfOrNull { it.second.first + it.second.second } ?: 1.0
+
+    // number of Y-axis levels
+    val levels = 5
+    val step = maxTotal / levels
 
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(totalHeight),
-        horizontalArrangement = Arrangement.SpaceAround,
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Bottom
     ) {
-        data.forEach { (label, values) ->
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Bottom,
-                modifier = Modifier.fillMaxHeight()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .height(totalHeight * ((values.first + values.second) / maxAmount).toFloat())
-                        .width(barWidth)
+        // Y-axis
+        Column(
+            modifier = Modifier
+                .height(totalBarHeight) // same height as bars
+                .padding(end = 8.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.End
+        ) {
+            for (i in levels downTo 0) {
+                val value = step * i
+                val text = if (value >= 1000) {
+                    val kValue = (value / 100).toInt() / 10.0  // divide by 1000 and keep 1 decimal
+                    "${kValue}k"
+                } else {
+                    value.toInt().toString()
+                }
+                Text(
+                    text = text,
+                    fontSize = 10.sp
+                )
+            }
+
+
+        }
+
+        // Bars
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            data.forEach { (label, values) ->
+                val incomeHeightFraction = (values.first / maxTotal).toFloat()
+                val expenseHeightFraction = (values.second / maxTotal).toFloat()
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Bottom
                 ) {
                     Box(
                         modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .height(totalHeight * (values.first / maxAmount).toFloat())
                             .width(barWidth)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(GreenIncome)
-                    )
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .height(totalHeight * (values.second / maxAmount).toFloat())
-                            .width(barWidth)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(PinkExpense)
-                    )
+                            .height(totalBarHeight)
+                    ) {
+                        // Income bar
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxHeight(incomeHeightFraction)
+                                .width(barWidth)
+                                .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                                .background(GreenIncome)
+                        )
+
+                        // Expense stacked on income
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxHeight(expenseHeightFraction)
+                                .width(barWidth)
+                                .offset(y = -totalBarHeight * incomeHeightFraction)
+                                .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                                .background(PinkExpense)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(text = label, fontSize = 12.sp)
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = label, fontSize = 12.sp)
             }
         }
     }
