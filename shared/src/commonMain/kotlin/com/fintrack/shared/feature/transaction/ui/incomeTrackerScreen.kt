@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -39,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.DarkGray
 import androidx.compose.ui.graphics.Color.Companion.LightGray
@@ -201,11 +203,9 @@ fun IncomeExpenseCards(totalIncome: Double, totalExpense: Double) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Income card (up arrow)
         InfoCard(
             title = "Total Income",
             amount = "KSh ${formatAmount(totalIncome)}",
-            iconColor = GreenIncome,
             modifier = Modifier.weight(1f),
             icon = {
                 Box(
@@ -216,20 +216,20 @@ fun IncomeExpenseCards(totalIncome: Double, totalExpense: Double) {
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowDownward,
+                        imageVector = Icons.Default.ArrowUpward,
                         contentDescription = "Income",
                         tint = Color.White,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier
+                            .size(18.dp)
+                            .rotate(135f)
                     )
                 }
             }
         )
 
-        // Expense card (down arrow)
         InfoCard(
             title = "Total Expense",
             amount = "KSh ${formatAmount(totalExpense)}",
-            iconColor = PinkExpense,
             modifier = Modifier.weight(1f),
             icon = {
                 Box(
@@ -240,18 +240,19 @@ fun IncomeExpenseCards(totalIncome: Double, totalExpense: Double) {
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowUpward,
+                        imageVector = Icons.Default.ArrowDownward,
                         contentDescription = "Expense",
                         tint = Color.White,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier
+                            .size(18.dp)
+                            .rotate(-135f)
+
                     )
                 }
             }
         )
     }
 }
-
-
 
 
 @Composable
@@ -262,7 +263,7 @@ fun IncomeExpensesOverview(transactions: List<Transaction>) {
         .map { (date, txs) ->
             val income = txs.filter { it.type == "income" }.sumOf { it.amount }
             val expense = txs.filter { it.type == "expense" }.sumOf { it.amount }
-            date.toString() to (income to expense) // convert LocalDate to String
+            date.toString() to (income to expense)
         }
 
     Column(
@@ -276,11 +277,11 @@ fun IncomeExpensesOverview(transactions: List<Transaction>) {
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             Column {
                 Text(
-                    text = "Income & Expenses Overview",
+                    text = "Overview",
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
@@ -301,7 +302,18 @@ fun IncomeExpensesOverview(transactions: List<Transaction>) {
                     Text(text = " Expenses", fontSize = 12.sp)
                 }
             }
-            Text(text = "Weekly", color = Color.Gray) // placeholder for dropdown
+
+            Row(
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(text = "Weekly", color = Color.Gray, fontSize = 12.sp)
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = "Select period",
+                    tint = Color.Gray,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -387,13 +399,13 @@ fun RecentTransactionsSection() {
         )
     }
 }
+
 @Composable
 fun InfoCard(
     title: String,
     amount: String,
     icon: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier,
-    iconColor: Color
 ) {
     Card(
         modifier = modifier.height(70.dp),
@@ -404,17 +416,17 @@ fun InfoCard(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically // this centers children vertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
             if (icon != null) {
                 icon()
-                Spacer(modifier = Modifier.width(12.dp)) // space between icon and texts
+                Spacer(modifier = Modifier.width(12.dp))
             }
 
             // Column for title + amount
             Column {
-                Text(text = title, fontSize = 14.sp)
-                Text(text = amount, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(text = title, fontSize = 12.sp)
+                Text(text = amount, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
