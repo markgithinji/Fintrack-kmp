@@ -4,12 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -41,14 +43,23 @@ import androidx.compose.ui.graphics.Color.Companion.LightGray
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.transaction.model.Transaction
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
+
+
+val backgroundGray = Color(0xFFEFEFEF)
+val GreenIncome = Color(0xFF1FC287) // green for income
+val PinkExpense = Color(0xFFE27C94) // pinkish-red for expense
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IncomeTrackerScreen() {
     val viewModel: TransactionViewModel = viewModel()
-    val transactions by viewModel.transactions.collectAsState(emptyList())
+    val transactions by viewModel.transactions.collectAsStateWithLifecycle(emptyList())
 
     LaunchedEffect(Unit) {
         viewModel.refresh()
@@ -57,8 +68,6 @@ fun IncomeTrackerScreen() {
     val totalIncome = transactions.filter { it.type == "income" }.sumOf { it.amount }
     val totalExpense = transactions.filter { it.type == "expense" }.sumOf { it.amount }
     val currentBalance = totalIncome - totalExpense
-
-    val backgroundGray = Color(0xFFEFEFEF)
 
     Scaffold(
         topBar = { TopBar() },
@@ -101,6 +110,91 @@ fun IncomeTrackerScreen() {
     }
 }
 
+@Composable
+fun CurrentBalanceCard(balance: Double) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkGray)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(130.dp)
+        ) {
+            LowerRightWavesBackground(modifier = Modifier.matchParentSize())
+            // Top row with label + button
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .fillMaxWidth()
+                    .padding(start = 24.dp, end = 24.dp, top = 18.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+
+                    Icon(
+                        imageVector = Icons.Default.AccountBalance,
+                        contentDescription = "Bank",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Bank Account",
+                        fontSize = 12.sp,
+                        color = Color.White
+                    )
+                }
+
+                Button(
+                    onClick = { /* TODO */ },
+                    colors = ButtonDefaults.buttonColors(containerColor = LightGray),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.height(26.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp)
+                ) {
+                    Text(
+                        text = "Change Account",
+                        color = Color.Black,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            // Bottom section
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 24.dp, bottom = 8.dp)
+            ) {
+                val formattedBalance = remember(balance) {
+                    balance.toLong()
+                        .toString()
+                        .reversed()
+                        .chunked(3)
+                        .joinToString(",")
+                        .reversed()
+                }
+                Text(
+                    text = "Current Balance",
+                    fontSize = 14.sp,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "KSh $formattedBalance",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+        }
+    }
+}
+
 
 @Composable
 fun IncomeExpensesOverview(transactions: List<Transaction>) {
@@ -113,16 +207,16 @@ fun IncomeExpensesOverview(transactions: List<Transaction>) {
             date.toString() to (income to expense) // convert LocalDate to String
         }
 
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
             .background(Color.White)
-            .padding(16.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -152,23 +246,29 @@ fun IncomeExpensesOverview(transactions: List<Transaction>) {
             Text(text = "Weekly", color = Color.Gray) // placeholder for dropdown
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        BarChart(weeklyData)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        BarChart(
+            data = weeklyData,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+        )
     }
 }
 
+
 @Composable
-fun BarChart(data: List<Pair<String, Pair<Double, Double>>>) {
+fun BarChart(
+    data: List<Pair<String, Pair<Double, Double>>>,
+    modifier: Modifier = Modifier
+) {
     val totalHeight = 200.dp
     val barWidth = 24.dp
-
     val maxAmount = data.maxOfOrNull { it.second.first + it.second.second } ?: 1.0
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(totalHeight)
-            .padding(horizontal = 16.dp),
+            .height(totalHeight),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.Bottom
     ) {
@@ -183,7 +283,6 @@ fun BarChart(data: List<Pair<String, Pair<Double, Double>>>) {
                         .height(totalHeight * ((values.first + values.second) / maxAmount).toFloat())
                         .width(barWidth)
                 ) {
-                    // Income Bar (bottom)
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
@@ -192,7 +291,6 @@ fun BarChart(data: List<Pair<String, Pair<Double, Double>>>) {
                             .clip(RoundedCornerShape(4.dp))
                             .background(GreenIncome)
                     )
-                    // Expense Bar (top)
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
@@ -232,68 +330,6 @@ fun RecentTransactionsSection() {
     }
 }
 
-
-// Updated card composables
-@Composable
-fun CurrentBalanceCard(balance: Double) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkGray)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .padding(24.dp)
-        ) {
-            Column(modifier = Modifier.align(Alignment.CenterStart)) {
-                Text(
-                    text = "Bank Account",
-                    fontSize = 16.sp,
-                    color = Color.White
-                )
-                Text(
-                    text = "Current Balance",
-                    fontSize = 16.sp,
-                    color = Color.White.copy(alpha = 0.7f)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Format balance safely
-                val formattedBalance = remember(balance) {
-                    balance.toLong()
-                        .toString()
-                        .reversed()
-                        .chunked(3)
-                        .joinToString(",")
-                        .reversed()
-                }
-
-                Text(
-                    text = "KSh $formattedBalance",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
-
-            Button(
-                onClick = { /* TODO */ },
-                colors = ButtonDefaults.buttonColors(containerColor = LightGray),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.align(Alignment.TopEnd)
-            ) {
-                Text(text = "Change Account", color = Color.White)
-            }
-        }
-    }
-}
-
-
-val GreenIncome = Color(0xFF1FC287) // green for income
-val PinkExpense = Color(0xFFE27C94)
-
 @Composable
 fun IncomeExpenseCards(totalIncome: Double, totalExpense: Double) {
     Row(
@@ -308,7 +344,7 @@ fun IncomeExpenseCards(totalIncome: Double, totalExpense: Double) {
             icon = {
                 Box(
                     modifier = Modifier
-                        .size(24.dp)
+                        .size(32.dp)
                         .clip(CircleShape)
                         .background(GreenIncome)
                 )
@@ -322,7 +358,7 @@ fun IncomeExpenseCards(totalIncome: Double, totalExpense: Double) {
             icon = {
                 Box(
                     modifier = Modifier
-                        .size(24.dp)
+                        .size(32.dp)
                         .clip(CircleShape)
                         .background(PinkExpense)
                 )
@@ -335,27 +371,28 @@ fun IncomeExpenseCards(totalIncome: Double, totalExpense: Double) {
 fun InfoCard(
     title: String,
     amount: String,
-    icon: (@Composable () -> Unit)? = null,   // make it nullable slot
+    icon: (@Composable () -> Unit)? = null,
     iconColor: Color = Color.Black,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.height(100.dp),
-        shape = RoundedCornerShape(24.dp),
+        modifier = modifier.height(70.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center
+                .padding(16.dp)
         ) {
             icon?.let {
                 it()
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
             }
-            Text(text = title, fontSize = 14.sp)
-            Text(text = amount, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Column(Modifier.align(Alignment.CenterVertically)) {
+                Text(text = title, fontSize = 14.sp)
+                Text(text = amount, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -368,4 +405,10 @@ fun formatAmount(value: Double): String {
         .chunked(3)
         .joinToString(",")
         .reversed()
+}
+
+@Preview
+@Composable
+fun AppAndroidPreview() {
+    IncomeTrackerScreen()
 }

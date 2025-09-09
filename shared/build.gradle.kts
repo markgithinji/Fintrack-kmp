@@ -46,6 +46,8 @@ kotlin {
             implementation("io.ktor:ktor-client-content-negotiation:2.3.12")
             implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+            implementation("androidx.compose.material:material-icons-core:1.6.0")
+            implementation("androidx.compose.material:material-icons-extended:1.6.0")
         }
         iosMain.dependencies {
             implementation("io.ktor:ktor-client-darwin:2.3.12")
