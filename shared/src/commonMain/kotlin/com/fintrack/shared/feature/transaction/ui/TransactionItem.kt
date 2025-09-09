@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,9 +24,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.transaction.model.Transaction
+import kotlinx.datetime.LocalDate
 
 @Composable
 fun TransactionItem(transaction: Transaction) {
+    val isExpense = transaction.type.lowercase() == "expense"
+
+    fun LocalDate.toShortMonthDay(): String {
+        val month = when (this.monthNumber) {
+            1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
+            5 -> "May"; 6 -> "Jun"; 7 -> "Jul"; 8 -> "Aug"
+            9 -> "Sep"; 10 -> "Oct"; 11 -> "Nov"; 12 -> "Dec"
+            else -> ""
+        }
+        return "$month ${this.dayOfMonth}"
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -38,6 +52,7 @@ fun TransactionItem(transaction: Transaction) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            // Left content
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
@@ -46,32 +61,35 @@ fun TransactionItem(transaction: Transaction) {
                         .background(Color.LightGray),
                     contentAlignment = Alignment.Center
                 ) {
-                    // simple emoji fallback (cross-platform safe)
-                    Text(
-                        text = "💸",
-                        fontSize = 20.sp
-                    )
+                    Text(text = "💸", fontSize = 20.sp)
                 }
+
                 Spacer(modifier = Modifier.width(16.dp))
+
                 Column {
-                    Text(text = "transaction title", fontWeight = FontWeight.SemiBold)
-                    Text(text = "transaction description", fontSize = 12.sp, color = Color.Gray)
+                    Text(text = transaction.category, fontWeight = FontWeight.SemiBold)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    transaction.description?.let {
+                        Text(text = it, fontSize = 12.sp, color = Color.Gray)
+                    }
                 }
             }
-//            Column(horizontalAlignment = Alignment.End) {
-//                Text(
-//                    text = "${if (transaction.isExpense) "-" else "+"}$${transaction.amount}",
-//                    color = if (transaction.isExpense) PinkExpense else GreenIncome,
-//                    fontWeight = FontWeight.Bold
-//                )
-//                Text(
-//                    text = formatDate(transaction.date), // helper function
-//                    fontSize = 12.sp,
-//                    color = Color.Gray
-//                )
-//            }
+
+            // Right content
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "${if (isExpense) "-" else "+"}$${transaction.amount.toInt()}",
+                    color = if (isExpense) PinkExpense else GreenIncome,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = transaction.date.toShortMonthDay(),
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
         }
     }
 }
-
 

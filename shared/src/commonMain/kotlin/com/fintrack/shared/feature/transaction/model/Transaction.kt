@@ -10,5 +10,6 @@ data class Transaction(
     val type: String,
     val amount: Double,
     val category: String,
-    @Contextual val date: LocalDate
+    @Contextual val date: LocalDate,
+    val description: String? = null
 )
