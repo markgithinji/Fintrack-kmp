@@ -1,4 +1,4 @@
-package com.fintrack.app
+package com.fintrack.shared
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

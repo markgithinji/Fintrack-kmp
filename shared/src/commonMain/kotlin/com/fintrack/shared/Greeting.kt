@@ -1,4 +1,4 @@
-package com.fintrack.app
+package com.fintrack.shared
 
 class Greeting {
     private val platform = getPlatform()

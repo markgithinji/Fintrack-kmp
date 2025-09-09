@@ -1,4 +1,4 @@
-package com.fintrack.app
+package com.fintrack.shared
 
 interface Platform {
     val name: String

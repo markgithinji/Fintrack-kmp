@@ -1,4 +1,4 @@
-package com.fintrack.app
+package com.fintrack.shared
 
 import androidx.compose.ui.window.ComposeUIViewController
 
