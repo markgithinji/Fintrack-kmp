@@ -108,8 +108,7 @@ fun IncomeTrackerScreen() {
             item { CurrentBalanceCard(currentBalance) }
             item { IncomeExpenseCards(totalIncome, totalExpense) }
             item { IncomeExpensesOverview(transactions) }
-            item { RecentTransactionsSection() }
-            item { TransactionsList(transactions) }
+            item { TransactionsListCard(transactions) }
         }
     }
 }
@@ -428,29 +427,6 @@ fun BarChart(
                 }
             }
         }
-    }
-}
-
-
-@Composable
-fun RecentTransactionsSection() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "Recent Transactions",
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp
-        )
-        Text(
-            text = "View All",
-            fontSize = 14.sp,
-            color = GreenIncome // highlight color for clickable text
-        )
     }
 }
 

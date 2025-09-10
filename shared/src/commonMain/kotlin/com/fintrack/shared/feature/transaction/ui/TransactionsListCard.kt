@@ -28,7 +28,7 @@ import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.LocalDate
 
 @Composable
-fun TransactionsList(transactions: List<Transaction>) {
+fun TransactionsListCard(transactions: List<Transaction>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -37,6 +37,10 @@ fun TransactionsList(transactions: List<Transaction>) {
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
+            RecentTransactionsHeader()
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             transactions.forEachIndexed { index, transaction ->
                 TransactionRow(transaction)
 
@@ -49,6 +53,28 @@ fun TransactionsList(transactions: List<Transaction>) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun RecentTransactionsHeader() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Recent Transactions",
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp
+        )
+        Text(
+            text = "View All",
+            fontSize = 14.sp,
+            color = GreenIncome
+        )
     }
 }
 
@@ -110,4 +136,3 @@ fun TransactionRow(transaction: Transaction) {
         }
     }
 }
-
