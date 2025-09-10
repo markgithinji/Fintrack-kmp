@@ -6,10 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.fintrack.shared.feature.transaction.ui.IncomeTrackerScreen
-import com.fintrack.shared.App
-
-//import com.fintrack.app.App
+import com.fintrack.shared.feature.transaction.ui.AppNavigation
 
 
 class MainActivity : ComponentActivity() {
@@ -17,7 +14,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
-            IncomeTrackerScreen()
+            AppNavigation()
         }
     }
 }
@@ -25,5 +22,5 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun AppAndroidPreview() {
-    IncomeTrackerScreen()
+    AppNavigation()
 }

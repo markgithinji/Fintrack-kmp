@@ -37,7 +37,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,7 +54,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.LocalDate
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 
 val backgroundGray = Color(0xFFEFEFEF)
@@ -61,8 +62,10 @@ val PinkExpense = Color(0xFFE27C94) // pinkish-red for expense
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun IncomeTrackerScreen() {
-    val viewModel: TransactionViewModel = viewModel()
+fun IncomeTrackerScreen(
+    viewModel: TransactionViewModel= viewModel(),
+    onAddClicked: () -> Unit
+) {
     val transactions by viewModel.transactions.collectAsStateWithLifecycle(emptyList())
 
     LaunchedEffect(Unit) {
@@ -83,7 +86,7 @@ fun IncomeTrackerScreen() {
                 modifier = Modifier
                     .size(60.dp)
                     .offset(y = 60.dp),
-                onClick = { /* TODO: add transaction */ },
+                onClick = onAddClicked,
                 containerColor = Color.Black,
                 contentColor = Color.White,
                 shape = CircleShape
@@ -470,10 +473,4 @@ fun formatAmount(value: Double): String {
         .chunked(3)
         .joinToString(",")
         .reversed()
-}
-
-@Preview
-@Composable
-fun AppAndroidPreview() {
-    IncomeTrackerScreen()
 }

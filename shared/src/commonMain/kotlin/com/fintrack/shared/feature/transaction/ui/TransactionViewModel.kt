@@ -15,6 +15,27 @@ class TransactionViewModel : ViewModel() {
     private val _transactions = MutableStateFlow<List<Transaction>>(emptyList())
     val transactions: StateFlow<List<Transaction>> = _transactions
 
+    private val _saveResult = MutableStateFlow<Boolean?>(null) // null = idle, true = success, false = error
+    val saveResult: StateFlow<Boolean?> = _saveResult
+
+
+    fun addTransaction(transaction: Transaction) {
+        viewModelScope.launch {
+            try {
+                val savedTransaction = repo.addTransaction(transaction)
+                _transactions.value = _transactions.value + savedTransaction
+                _saveResult.value = true // success
+            } catch (e: Exception) {
+                println("Error adding transaction: ${e.message}")
+                _saveResult.value = false // error
+            }
+        }
+    }
+
+    fun resetSaveResult() {
+        _saveResult.value = null
+    }
+
     fun refresh() {
         viewModelScope.launch {
             _transactions.value = repo.getTransactions()
