@@ -77,10 +77,9 @@ fun RecentTransactionsHeader() {
         )
     }
 }
-
 @Composable
 fun TransactionRow(transaction: Transaction) {
-    val isExpense = transaction.type.lowercase() == "expense"
+    val isExpense = !transaction.isIncome // true if expense, false if income
 
     fun LocalDate.toShortMonthDay(): String {
         val month = when (this.monthNumber) {

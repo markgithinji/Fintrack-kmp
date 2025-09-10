@@ -57,10 +57,8 @@ fun AddTransactionScreen(
         }
     }
 
-
-
     var amount by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf("Expense") }
+    var isIncome by remember { mutableStateOf(false) } // false = Expense, true = Income
     var category by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     val date = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
@@ -92,14 +90,14 @@ fun AddTransactionScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Type dropdown
+            // Type dropdown (Expense/Income)
             var expanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded }
             ) {
                 OutlinedTextField(
-                    value = type,
+                    value = if (isIncome) "Income" else "Expense",
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Type") },
@@ -107,11 +105,11 @@ fun AddTransactionScreen(
                     modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
                 ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                    listOf("Expense", "Income").forEach { option ->
+                    listOf(false to "Expense", true to "Income").forEach { (value, label) ->
                         DropdownMenuItem(
-                            text = { Text(option) },
+                            text = { Text(label) },
                             onClick = {
-                                type = option
+                                isIncome = value
                                 expanded = false
                             }
                         )
@@ -140,7 +138,7 @@ fun AddTransactionScreen(
             Button(
                 onClick = {
                     val parsedAmount = amount.toDoubleOrNull()
-                    if (parsedAmount == null || type.isBlank() || category.isBlank()) {
+                    if (parsedAmount == null || category.isBlank()) {
                         // Show error to user
                         return@Button
                     }
@@ -148,7 +146,7 @@ fun AddTransactionScreen(
                     val newTransaction = Transaction(
                         id = null, // server generates
                         amount = parsedAmount,
-                        type = type.lowercase(),
+                        isIncome = isIncome,
                         category = category,
                         description = description.takeIf { it.isNotBlank() },
                         date = date

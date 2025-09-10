@@ -63,7 +63,7 @@ val PinkExpense = Color(0xFFE27C94) // pinkish-red for expense
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IncomeTrackerScreen(
-    viewModel: TransactionViewModel= viewModel(),
+    viewModel: TransactionViewModel = viewModel(),
     onAddClicked: () -> Unit
 ) {
     val transactions by viewModel.transactions.collectAsStateWithLifecycle(emptyList())
@@ -72,15 +72,13 @@ fun IncomeTrackerScreen(
         viewModel.refresh()
     }
 
-    val totalIncome = transactions.filter { it.type == "income" }.sumOf { it.amount }
-    val totalExpense = transactions.filter { it.type == "expense" }.sumOf { it.amount }
+    val totalIncome = transactions.filter { it.isIncome }.sumOf { it.amount }
+    val totalExpense = transactions.filter { !it.isIncome }.sumOf { it.amount }
     val currentBalance = totalIncome - totalExpense
 
     Scaffold(
         topBar = { TopBar() },
-        bottomBar = {
-            BottomBar()
-        },
+        bottomBar = { BottomBar() },
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier
@@ -115,6 +113,7 @@ fun IncomeTrackerScreen(
         }
     }
 }
+
 
 @Composable
 fun CurrentBalanceCard(balance: Double) {
@@ -268,21 +267,19 @@ fun LocalDate.shortDayName(): String {
     }
 }
 
-
 @Composable
 fun IncomeExpensesOverview(transactions: List<Transaction>) {
     // Group transactions by date and compute daily income/expense
     val weeklyData = transactions
         .groupBy { it.date }
         .map { (date, txs) ->
-            val income = txs.filter { it.type == "income" }.sumOf { it.amount }
-            val expense = txs.filter { it.type == "expense" }.sumOf { it.amount }
+            val income = txs.filter { it.isIncome }.sumOf { it.amount }
+            val expense = txs.filter { !it.isIncome }.sumOf { it.amount }
             date.shortDayName() to (income to expense)
         }
         .sortedBy { (label, _) ->
             listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").indexOf(label)
         }
-
 
     Column(
         modifier = Modifier
@@ -341,6 +338,7 @@ fun IncomeExpensesOverview(transactions: List<Transaction>) {
         )
     }
 }
+
 
 @Composable
 fun BarChart(
