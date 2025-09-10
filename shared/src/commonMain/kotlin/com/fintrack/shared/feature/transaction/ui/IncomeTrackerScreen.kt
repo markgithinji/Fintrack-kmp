@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -74,21 +75,23 @@ fun IncomeTrackerScreen() {
 
     Scaffold(
         topBar = { TopBar() },
-        bottomBar = { BottomBar() },
+        bottomBar = {
+            BottomBar()
+        },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* TODO */ },
+                modifier = Modifier
+                    .size(60.dp)
+                    .offset(y = 60.dp),
+                onClick = { /* TODO: add transaction */ },
                 containerColor = Color.Black,
                 contentColor = Color.White,
-                shape = CircleShape,
-                modifier = Modifier.size(60.dp)
+                shape = CircleShape
             ) {
-                // Quick workaround: just show a "+" text instead of Material icon
-                Text(
-                    text = "+",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = "Add Transaction",
+                    tint = Color.White
                 )
             }
         },
@@ -106,9 +109,7 @@ fun IncomeTrackerScreen() {
             item { IncomeExpenseCards(totalIncome, totalExpense) }
             item { IncomeExpensesOverview(transactions) }
             item { RecentTransactionsSection() }
-            item {
-                TransactionsList(transactions)
-            }
+            item { TransactionsList(transactions) }
         }
     }
 }
