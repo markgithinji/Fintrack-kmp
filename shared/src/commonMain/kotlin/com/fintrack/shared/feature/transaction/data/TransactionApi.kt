@@ -1,7 +1,6 @@
 package com.fintrack.shared.feature.transaction.data
 
 import com.fintrack.shared.feature.transaction.model.Transaction
-import com.fintrack.shared.feature.transaction.data.TransactionResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -13,9 +12,7 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-class TransactionApi(
-    private val baseUrl: String
-) {
+class TransactionApi(private val baseUrl: String =  ApiConfig.BASE_URL) {
     private val client = HttpClient {
         install(ContentNegotiation) {
             json(Json { ignoreUnknownKeys = true })

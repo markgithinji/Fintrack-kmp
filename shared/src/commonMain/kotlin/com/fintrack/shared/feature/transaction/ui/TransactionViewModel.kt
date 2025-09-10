@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class TransactionViewModel : ViewModel() {
-    private val repo = TransactionRepository(TransactionApi("http://10.0.2.2:8080"))
+    private val repo = TransactionRepository(TransactionApi())
 
     private val _transactions = MutableStateFlow<List<Transaction>>(emptyList())
     val transactions: StateFlow<List<Transaction>> = _transactions
