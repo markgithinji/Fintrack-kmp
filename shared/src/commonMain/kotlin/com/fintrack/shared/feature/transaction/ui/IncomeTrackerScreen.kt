@@ -20,7 +20,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -30,10 +29,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -62,10 +58,8 @@ val PinkExpense = Color(0xFFE27C94) // pinkish-red for expense
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun IncomeTrackerScreen(
+fun IncomeTrackerContent(
     viewModel: TransactionViewModel = viewModel(),
-    onAddClicked: () -> Unit,
-    onStatisticsClicked: () -> Unit
 ) {
     val transactionsResult by viewModel.transactions.collectAsStateWithLifecycle()
 
@@ -75,7 +69,6 @@ fun IncomeTrackerScreen(
 
     when (transactionsResult) {
         is Result.Loading -> {
-            // Show a loading indicator
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -87,7 +80,6 @@ fun IncomeTrackerScreen(
         }
 
         is Result.Error -> {
-            // Show an error message
             val message = (transactionsResult as Result.Error).exception.message ?: "Unknown error"
             Box(
                 modifier = Modifier
@@ -105,46 +97,21 @@ fun IncomeTrackerScreen(
             val totalExpense = transactions.filter { !it.isIncome }.sumOf { it.amount }
             val currentBalance = totalIncome - totalExpense
 
-            Scaffold(
-                topBar = { TopBar() },
-                bottomBar = { BottomBar() },
-                floatingActionButton = {
-                    FloatingActionButton(
-                        modifier = Modifier
-                            .size(60.dp)
-                            .offset(y = 60.dp),
-                        onClick = onAddClicked,
-                        containerColor = Color.Black,
-                        contentColor = Color.White,
-                        shape = CircleShape
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = "Add Transaction",
-                            tint = Color.White
-                        )
-                    }
-                },
-                floatingActionButtonPosition = FabPosition.Center
-            ) { padding ->
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .background(backgroundGray)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    item { CurrentBalanceCard(currentBalance) }
-                    item { IncomeExpenseCards(totalIncome, totalExpense) }
-                    item { IncomeExpensesOverview(transactions) }
-                    item { TransactionsListCard(transactions) }
-                }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(backgroundGray)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item { CurrentBalanceCard(currentBalance) }
+                item { IncomeExpenseCards(totalIncome, totalExpense) }
+                item { IncomeExpensesOverview(transactions) }
+                item { TransactionsListCard(transactions) }
             }
         }
     }
 }
-
 
 @Composable
 fun CurrentBalanceCard(balance: Double) {
