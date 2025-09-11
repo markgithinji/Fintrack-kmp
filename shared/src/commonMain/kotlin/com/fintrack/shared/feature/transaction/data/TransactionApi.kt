@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.transaction.data
 
-import com.fintrack.shared.feature.transaction.model.Transaction
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -25,17 +24,19 @@ class TransactionApi(
     }
 
     suspend fun getTransactions(): List<TransactionDto> {
-        val response: TransactionResponse =
+        val response: ApiResponse<List<TransactionDto>> =
             client.get("$baseUrl/transactions").body()
         return response.data
     }
 
     suspend fun addTransaction(transaction: TransactionDto): TransactionDto {
-        return client.post("$baseUrl/transactions") {
+        val response: ApiResponse<TransactionDto> = client.post("$baseUrl/transactions") {
             contentType(ContentType.Application.Json)
             setBody(transaction)
         }.body()
+        return response.data
     }
+
 
     suspend fun getSummary(): Map<String, Any> {
         return client.get("$baseUrl/transactions/summary").body()

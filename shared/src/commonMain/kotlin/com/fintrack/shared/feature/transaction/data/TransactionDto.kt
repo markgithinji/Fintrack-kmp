@@ -13,6 +13,7 @@ data class TransactionDto(
     val date: String,
     val description: String? = null
 )
+
 fun TransactionDto.toDomain(): Transaction =
     Transaction(
         id = id,
