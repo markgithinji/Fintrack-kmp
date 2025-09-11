@@ -37,8 +37,10 @@ class TransactionApi(
         return response.data
     }
 
-
-    suspend fun getSummary(): Map<String, Any> {
-        return client.get("$baseUrl/transactions/summary").body()
+    suspend fun getSummary(): SummaryDto {
+        val response: ApiResponse<SummaryDto> =
+            client.get("$baseUrl/transactions/summary")
+                .body()
+        return response.data
     }
 }

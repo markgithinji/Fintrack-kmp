@@ -19,8 +19,10 @@ class TransactionRepository(
         Result.Error(e)
     }
 
-    suspend fun getSummary(): Result<Map<String, Any>> = try {
-        Result.Success(api.getSummary())
+
+    suspend fun getSummary(): Result<Summary> = try {
+        val dto: SummaryDto = api.getSummary()
+        Result.Success(dto.toDomain())
     } catch (e: Exception) {
         Result.Error(e)
     }
