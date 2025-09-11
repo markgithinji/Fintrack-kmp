@@ -6,13 +6,15 @@ class TransactionRepository(
     private val api: TransactionApi
 ) {
     suspend fun getTransactions(): Result<List<Transaction>> = try {
-        Result.Success(api.getTransactions())
+        val dtos = api.getTransactions()
+        Result.Success(dtos.map { it.toDomain() })
     } catch (e: Exception) {
         Result.Error(e)
     }
 
     suspend fun addTransaction(transaction: Transaction): Result<Transaction> = try {
-        Result.Success(api.addTransaction(transaction))
+        val dto = api.addTransaction(transaction.toDto())
+        Result.Success(dto.toDomain())
     } catch (e: Exception) {
         Result.Error(e)
     }
@@ -23,3 +25,4 @@ class TransactionRepository(
         Result.Error(e)
     }
 }
+

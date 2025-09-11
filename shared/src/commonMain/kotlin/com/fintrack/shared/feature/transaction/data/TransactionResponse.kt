@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class TransactionResponse(
-    val data: List<Transaction>
+    val data: List<TransactionDto>
 )

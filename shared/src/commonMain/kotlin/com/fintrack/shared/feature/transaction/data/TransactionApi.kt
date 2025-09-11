@@ -12,20 +12,25 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-class TransactionApi(private val baseUrl: String =  ApiConfig.BASE_URL) {
+class TransactionApi(
+    private val baseUrl: String = ApiConfig.BASE_URL
+) {
     private val client = HttpClient {
         install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true })
+            json(Json {
+                ignoreUnknownKeys = true
+                explicitNulls = false
+            })
         }
     }
 
-    suspend fun getTransactions(): List<Transaction> {
+    suspend fun getTransactions(): List<TransactionDto> {
         val response: TransactionResponse =
             client.get("$baseUrl/transactions").body()
         return response.data
     }
 
-    suspend fun addTransaction(transaction: Transaction): Transaction {
+    suspend fun addTransaction(transaction: TransactionDto): TransactionDto {
         return client.post("$baseUrl/transactions") {
             contentType(ContentType.Application.Json)
             setBody(transaction)
