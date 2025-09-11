@@ -16,6 +16,7 @@ fun AppNavigation() {
         composable(Screen.Home.route) {
             IncomeTrackerScreen(
                 onAddClicked = { navController.navigate(Screen.AddTransaction.route) },
+                onStatisticsClicked = { navController.navigate(Screen.Statistics.route) }
             )
         }
 
@@ -24,5 +25,10 @@ fun AppNavigation() {
                 onCancel = { navController.popBackStack() }
             )
         }
+
+        composable(Screen.Statistics.route) {
+            StatisticsScreen()
+        }
     }
 }
+

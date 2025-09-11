@@ -64,7 +64,8 @@ val PinkExpense = Color(0xFFE27C94) // pinkish-red for expense
 @Composable
 fun IncomeTrackerScreen(
     viewModel: TransactionViewModel = viewModel(),
-    onAddClicked: () -> Unit
+    onAddClicked: () -> Unit,
+    onStatisticsClicked: () -> Unit
 ) {
     val transactionsResult by viewModel.transactions.collectAsStateWithLifecycle()
 
