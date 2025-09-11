@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,15 +58,20 @@ fun TopBar() {
     )
 }
 
-data class BottomNavItem(val title: String, val icon: ImageVector)
+data class BottomNavItem(
+    val title: String,
+    val icon: ImageVector,
+    val route: String
+)
+
 
 @Composable
-fun BottomBar() {
+fun BottomBar(navController: NavHostController) {
     val items = listOf(
-        BottomNavItem("Home", Icons.Default.Home),
-        BottomNavItem("Stats", Icons.Default.BarChart),
-        BottomNavItem("Budget", Icons.Default.Info),
-        BottomNavItem("Profile", Icons.Default.Person)
+        BottomNavItem("Home", Icons.Default.Home, Screen.Home.route),
+        BottomNavItem("Stats", Icons.Default.BarChart, Screen.Statistics.route),
+        BottomNavItem("Budget", Icons.Default.Info, Screen.Budget.route),
+        BottomNavItem("Profile", Icons.Default.Person, Screen.Profile.route)
     )
 
     var selectedItem by remember { mutableStateOf(0) }
@@ -85,7 +91,14 @@ fun BottomBar() {
                 }
 
                 IconButton(
-                    onClick = { selectedItem = index },
+                    onClick = {
+                        selectedItem = index
+                        navController.navigate(item.route) {
+                            // Avoid multiple copies of the same destination
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
                     modifier = Modifier.padding(horizontal = 12.dp)
                 ) {
                     Icon(
