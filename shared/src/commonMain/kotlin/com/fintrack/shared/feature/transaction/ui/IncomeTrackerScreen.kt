@@ -100,8 +100,8 @@ fun IncomeTrackerContent(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(backgroundGray)
-                    .padding(16.dp),
+                    .background(backgroundGray),
+                contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item { CurrentBalanceCard(currentBalance) }
