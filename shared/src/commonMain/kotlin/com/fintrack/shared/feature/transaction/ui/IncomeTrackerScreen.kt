@@ -28,6 +28,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
@@ -37,9 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fintrack.shared.feature.transaction.data.Result
 import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.LocalDate
 
@@ -66,50 +66,80 @@ fun IncomeTrackerScreen(
     viewModel: TransactionViewModel = viewModel(),
     onAddClicked: () -> Unit
 ) {
-    val transactions by viewModel.transactions.collectAsStateWithLifecycle(emptyList())
+    val transactionsResult by viewModel.transactions.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.refresh()
     }
 
-    val totalIncome = transactions.filter { it.isIncome }.sumOf { it.amount }
-    val totalExpense = transactions.filter { !it.isIncome }.sumOf { it.amount }
-    val currentBalance = totalIncome - totalExpense
-
-    Scaffold(
-        topBar = { TopBar() },
-        bottomBar = { BottomBar() },
-        floatingActionButton = {
-            FloatingActionButton(
+    when (transactionsResult) {
+        is Result.Loading -> {
+            // Show a loading indicator
+            Box(
                 modifier = Modifier
-                    .size(60.dp)
-                    .offset(y = 60.dp),
-                onClick = onAddClicked,
-                containerColor = Color.Black,
-                contentColor = Color.White,
-                shape = CircleShape
+                    .fillMaxSize()
+                    .background(backgroundGray),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = "Add Transaction",
-                    tint = Color.White
-                )
+                CircularProgressIndicator()
             }
-        },
-        floatingActionButtonPosition = FabPosition.Center
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .background(backgroundGray)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item { CurrentBalanceCard(currentBalance) }
-            item { IncomeExpenseCards(totalIncome, totalExpense) }
-            item { IncomeExpensesOverview(transactions) }
-            item { TransactionsListCard(transactions) }
+        }
+
+        is Result.Error -> {
+            // Show an error message
+            val message = (transactionsResult as Result.Error).exception.message ?: "Unknown error"
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(backgroundGray),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Error: $message", color = Color.Red)
+            }
+        }
+
+        is Result.Success -> {
+            val transactions = (transactionsResult as Result.Success).data
+            val totalIncome = transactions.filter { it.isIncome }.sumOf { it.amount }
+            val totalExpense = transactions.filter { !it.isIncome }.sumOf { it.amount }
+            val currentBalance = totalIncome - totalExpense
+
+            Scaffold(
+                topBar = { TopBar() },
+                bottomBar = { BottomBar() },
+                floatingActionButton = {
+                    FloatingActionButton(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .offset(y = 60.dp),
+                        onClick = onAddClicked,
+                        containerColor = Color.Black,
+                        contentColor = Color.White,
+                        shape = CircleShape
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Add Transaction",
+                            tint = Color.White
+                        )
+                    }
+                },
+                floatingActionButtonPosition = FabPosition.Center
+            ) { padding ->
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .background(backgroundGray)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item { CurrentBalanceCard(currentBalance) }
+                    item { IncomeExpenseCards(totalIncome, totalExpense) }
+                    item { IncomeExpensesOverview(transactions) }
+                    item { TransactionsListCard(transactions) }
+                }
+            }
         }
     }
 }
@@ -378,8 +408,6 @@ fun BarChart(
                     fontSize = 10.sp
                 )
             }
-
-
         }
 
         // Bars

@@ -5,10 +5,21 @@ import com.fintrack.shared.feature.transaction.model.Transaction
 class TransactionRepository(
     private val api: TransactionApi
 ) {
-    suspend fun getTransactions(): List<Transaction> = api.getTransactions()
+    suspend fun getTransactions(): Result<List<Transaction>> = try {
+        Result.Success(api.getTransactions())
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
 
-    suspend fun addTransaction(transaction: Transaction): Transaction =
-        api.addTransaction(transaction)
+    suspend fun addTransaction(transaction: Transaction): Result<Transaction> = try {
+        Result.Success(api.addTransaction(transaction))
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
 
-    suspend fun getSummary(): Map<String, Any> = api.getSummary()
+    suspend fun getSummary(): Result<Map<String, Any>> = try {
+        Result.Success(api.getSummary())
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
 }
