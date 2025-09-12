@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -31,15 +33,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.transaction.data.Highlight
 import com.fintrack.shared.feature.transaction.data.Result
 
-val DarkCardBackground = Color(0xFF1B1B1B)
-val LightGreenCardBackground = Color(0xFFE8FFB5)
-val LightGreenText = Color(0xFF80A23F)
-val DarkGreenSegment = Color(0xFF5B6C3F)
-val LightGreenSegment1 = Color(0xFF80A23F)
-val LightGreenSegment2 = Color(0xFFBCC26F)
-val LightGreenSegment3 = Color(0xFFD6DBA5)
-val LightGreenSegment4 = Color(0xFFF1F6D4)
-val CategoryTextColor = Color(0xFF4A4A4A)
+// Chart segments
+val SegmentColor1 = Color(0xFFE63946)   // Strong red
+val SegmentColor2 = Color(0xFFF1FAEE)   // Soft off-white / mint
+val SegmentColor3 = Color(0xFF457B9D)   // Vibrant blue
+val SegmentColor4 = Color(0xFFF4A261)   // Warm orange
+val SegmentColor5 = Color(0xFF2A9D8F)   // Teal / turquoise
+
+// Text colors
+val CategoryTextColor = Color(0xFF222222) // Dark gray for better contrast
+val AmountTextColor = Color(0xFF1A1A1A)   // Slightly darker for amounts
+
 
 @Composable
 fun StatisticsScreen(
@@ -48,7 +52,12 @@ fun StatisticsScreen(
     val summaryResult by viewModel.summary.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.loadSummary() }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()) // make screen scrollable
+            .padding(bottom = 16.dp)
+    ) {
         ScreenHeader()
 
         when (summaryResult) {
@@ -160,7 +169,7 @@ fun SpendingHighlightsSection(
                 title = "Highest Month",
                 value = monthDisplay,
                 description = "${formatCurrencyKmp(highestMonth.amount)} spent",
-                backgroundColor = DarkCardBackground,
+                backgroundColor = SegmentColor3,
                 titleColor = Color.White,
                 valueColor = Color.White,
                 contentSpacing = 8.dp
@@ -170,9 +179,9 @@ fun SpendingHighlightsSection(
                 title = "Most Spent Category",
                 value = highestCategory.value,
                 description = "${formatCurrencyKmp(highestCategory.amount)} total",
-                backgroundColor = LightGreenCardBackground,
-                titleColor = Color.Black,
-                valueColor = LightGreenText,
+                backgroundColor = SegmentColor4,
+                titleColor = Color.White,
+                valueColor = Color.White,
                 contentSpacing = 8.dp
             )
         }
@@ -187,9 +196,9 @@ fun SpendingHighlightsSection(
                 title = "Highest Daily Spending",
                 value = highestDay.value.toFormattedDate(),
                 description = "${formatCurrencyKmp(highestDay.amount)} spent",
-                backgroundColor = LightGreenCardBackground,
-                titleColor = Color.Black,
-                valueColor = LightGreenText,
+                backgroundColor = SegmentColor5,
+                titleColor = Color.White,
+                valueColor = Color.White,
                 contentSpacing = 8.dp
             )
 
@@ -198,14 +207,15 @@ fun SpendingHighlightsSection(
                 title = "Average Per Day",
                 value = formatCurrencyKmp(averagePerDay),
                 description = "Daily Spending",
-                backgroundColor = LightGreenCardBackground,
-                titleColor = Color.Black,
-                valueColor = LightGreenText,
+                backgroundColor = SegmentColor1,
+                titleColor = Color.White,
+                valueColor = Color.White,
                 contentSpacing = 8.dp
             )
         }
     }
 }
+
 
 @Composable
 fun HighlightCard(
@@ -268,7 +278,6 @@ fun String.toFormattedDate(): String {
     return "$day $monthName $year"
 }
 
-// KMP-safe currency formatting
 fun formatCurrencyKmp(amount: Double): String {
     val whole = amount.toLong()
     val fraction = ((amount - whole) * 100).toInt()
