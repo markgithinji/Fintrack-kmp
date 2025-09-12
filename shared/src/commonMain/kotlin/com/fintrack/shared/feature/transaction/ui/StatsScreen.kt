@@ -88,26 +88,11 @@ fun StatisticsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ---- Monthly Distribution ----
-                data.monthlyCategorySummary.forEach { (monthKey, categories) ->
-                    val monthName = monthKey.toMonthName() // "2025-09" -> "Sep 2025"
-
-                    Text(
-                        text = monthName,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                    )
-
-                    categories.forEach { category ->
-                        Text(
-                            text = "${category.category}: ${formatCurrencyKmp(category.total)}",
-                            modifier = Modifier.padding(start = 32.dp, bottom = 4.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
+                // ---- Category Totals Card ----
+                CategoryTotalsCardWithTabs(
+                    weeklySummary = data.weeklyCategorySummary,
+                    monthlySummary = data.monthlyCategorySummary
+                )
             }
         }
     }
