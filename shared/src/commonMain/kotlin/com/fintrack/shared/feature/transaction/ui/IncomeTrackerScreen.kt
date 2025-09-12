@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.transaction.data.Result
+import com.fintrack.shared.feature.transaction.data.Summary
 import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.LocalDate
 
@@ -56,65 +57,49 @@ val backgroundGray = Color(0xFFEFEFEF)
 val GreenIncome = Color(0xFF1FC287) // green for income
 val PinkExpense = Color(0xFFE27C94) // pinkish-red for expense
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun IncomeTrackerContent(
-    viewModel: TransactionViewModel = viewModel(),
-) {
+fun IncomeTrackerContent(viewModel: TransactionViewModel = viewModel()) {
+    val summaryResult by viewModel.summary.collectAsStateWithLifecycle()
     val transactionsResult by viewModel.transactions.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
+        viewModel.loadSummary()
         viewModel.refresh()
     }
 
-    when (transactionsResult) {
-        is Result.Loading -> {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(backgroundGray),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        }
-
-        is Result.Error -> {
-            val message = (transactionsResult as Result.Error).exception.message ?: "Unknown error"
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(backgroundGray),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Error: $message", color = Color.Red)
-            }
-        }
-
-        is Result.Success -> {
-            val transactions = (transactionsResult as Result.Success).data
-            val totalIncome = transactions.filter { it.isIncome }.sumOf { it.amount }
-            val totalExpense = transactions.filter { !it.isIncome }.sumOf { it.amount }
-            val currentBalance = totalIncome - totalExpense
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(backgroundGray),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                item { CurrentBalanceCard(currentBalance) }
-                item { IncomeExpenseCards(totalIncome, totalExpense) }
-                item { IncomeExpensesOverview(transactions) }
-                item { TransactionsListCard(transactions) }
-            }
-        }
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundGray),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    )  {
+        item { CurrentBalanceCard(summaryResult) }
+        item { IncomeExpenseCards(summaryResult) }
+        item { IncomeExpensesOverview(transactionsResult) }
+        item { TransactionsListCard(transactionsResult) }
     }
 }
 
+
 @Composable
-fun CurrentBalanceCard(balance: Double) {
+fun CurrentBalanceCard(summary: Summary?) {
+    if (summary == null) {
+        // Loading state while summary is not available
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(130.dp)
+                .background(DarkGray),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = Color.White)
+        }
+        return
+    }
+
+    val balance = summary.balance
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -126,6 +111,7 @@ fun CurrentBalanceCard(balance: Double) {
                 .height(130.dp)
         ) {
             LowerRightWavesBackground(modifier = Modifier.matchParentSize())
+
             // Top row with label + button
             Row(
                 modifier = Modifier
@@ -136,7 +122,6 @@ fun CurrentBalanceCard(balance: Double) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-
                     Icon(
                         imageVector = Icons.Default.AccountBalance,
                         contentDescription = "Bank",
@@ -198,8 +183,26 @@ fun CurrentBalanceCard(balance: Double) {
     }
 }
 
+
 @Composable
-fun IncomeExpenseCards(totalIncome: Double, totalExpense: Double) {
+fun IncomeExpenseCards(summary: Summary?) {
+    if (summary == null) {
+        // Show loading placeholder while summary is null
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(80.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CircularProgressIndicator(color = Color.White)
+        }
+        return
+    }
+
+    val totalIncome = summary.income
+    val totalExpense = summary.expense
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -247,13 +250,13 @@ fun IncomeExpenseCards(totalIncome: Double, totalExpense: Double) {
                         modifier = Modifier
                             .size(18.dp)
                             .rotate(-135f)
-
                     )
                 }
             }
         )
     }
 }
+
 
 
 fun LocalDate.shortDayName(): String {
@@ -266,76 +269,110 @@ fun LocalDate.shortDayName(): String {
 }
 
 @Composable
-fun IncomeExpensesOverview(transactions: List<Transaction>) {
-    // Group transactions by date and compute daily income/expense
-    val weeklyData = transactions
-        .groupBy { it.date }
-        .map { (date, txs) ->
-            val income = txs.filter { it.isIncome }.sumOf { it.amount }
-            val expense = txs.filter { !it.isIncome }.sumOf { it.amount }
-            date.shortDayName() to (income to expense)
-        }
-        .sortedBy { (label, _) ->
-            listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").indexOf(label)
+fun IncomeExpensesOverview(transactionsResult: Result<List<Transaction>>) {
+    when (transactionsResult) {
+        is Result.Loading -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
         }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(Color.White)
-    ) {
-        // Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
-        ) {
-            Column {
-                Text(
-                    text = "Overview",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .background(GreenIncome)
-                    )
-                    Text(text = " Income", fontSize = 12.sp)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .background(PinkExpense)
-                    )
-                    Text(text = " Expenses", fontSize = 12.sp)
+        is Result.Error -> {
+            val message = transactionsResult.exception.message ?: "Unknown error"
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Error: $message", color = Color.Red)
+            }
+        }
+
+        is Result.Success -> {
+            val transactions = transactionsResult.data
+
+            // Group transactions by date and compute daily income/expense
+            val weeklyData = transactions
+                .groupBy { it.date }
+                .map { (date, txs) ->
+                    val income = txs.filter { it.isIncome }.sumOf { it.amount }
+                    val expense = txs.filter { !it.isIncome }.sumOf { it.amount }
+                    date.shortDayName() to (income to expense)
                 }
-            }
+                .sortedBy { (label, _) ->
+                    listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").indexOf(label)
+                }
 
-            Row(verticalAlignment = Alignment.Top) {
-                Text(text = "Weekly", color = Color.Gray, fontSize = 12.sp)
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Select period",
-                    tint = Color.Gray,
-                    modifier = Modifier.size(20.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color.White)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column {
+                        Text(
+                            text = "Overview",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .background(GreenIncome)
+                            )
+                            Text(text = " Income", fontSize = 12.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .background(PinkExpense)
+                            )
+                            Text(text = " Expenses", fontSize = 12.sp)
+                        }
+                    }
+
+                    Row(verticalAlignment = Alignment.Top) {
+                        Text(text = "Weekly", color = Color.Gray, fontSize = 12.sp)
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Select period",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                BarChart(
+                    data = weeklyData,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        BarChart(
-            data = weeklyData,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-        )
     }
 }
+
 
 
 @Composable

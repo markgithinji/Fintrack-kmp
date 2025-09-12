@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,35 +28,75 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.LocalDate
+import com.fintrack.shared.feature.transaction.data.Result
 
 @Composable
-fun TransactionsListCard(transactions: List<Transaction>) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            RecentTransactionsHeader()
+fun TransactionsListCard(transactionsResult: Result<List<Transaction>>) {
+    when (transactionsResult) {
+        is Result.Loading -> {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+        }
 
-            Spacer(modifier = Modifier.height(8.dp))
+        is Result.Error -> {
+            val message = transactionsResult.exception.message ?: "Unknown error"
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Error: $message", color = Color.Red)
+                }
+            }
+        }
 
-            transactions.forEachIndexed { index, transaction ->
-                TransactionRow(transaction)
+        is Result.Success -> {
+            val transactions = transactionsResult.data
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    RecentTransactionsHeader()
 
-                if (index < transactions.lastIndex) {
-                    HorizontalDivider(
-                        Modifier.padding(horizontal = 16.dp),
-                        0.5.dp,
-                        Color.LightGray
-                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    transactions.forEachIndexed { index, transaction ->
+                        TransactionRow(transaction)
+
+                        if (index < transactions.lastIndex) {
+                            HorizontalDivider(
+                                Modifier.padding(horizontal = 16.dp),
+                                0.5.dp,
+                                Color.LightGray
+                            )
+                        }
+                    }
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun RecentTransactionsHeader() {
