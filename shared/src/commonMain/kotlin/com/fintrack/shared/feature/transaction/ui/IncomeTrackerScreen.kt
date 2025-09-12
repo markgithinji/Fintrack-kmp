@@ -408,7 +408,14 @@ fun BarChart(
 ) {
     val totalBarHeight = 200.dp
     val barWidth = 24.dp
-    val maxTotal = data.maxOfOrNull { it.second.first + it.second.second } ?: 1.0
+
+    // Ensure all days are present
+    val weekDays = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    val fullData = weekDays.map { day ->
+        data.find { it.first == day } ?: (day to (0.0 to 0.0))
+    }
+
+    val maxTotal = fullData.maxOfOrNull { it.second.first + it.second.second } ?: 1.0
 
     // number of Y-axis levels
     val levels = 5
@@ -429,7 +436,7 @@ fun BarChart(
             for (i in levels downTo 0) {
                 val value = step * i
                 val text = if (value >= 1000) {
-                    val kValue = (value / 100).toInt() / 10.0  // divide by 1000 and keep 1 decimal
+                    val kValue = (value / 100).toInt() / 10.0
                     "${kValue}k"
                 } else {
                     value.toInt().toString()
@@ -447,7 +454,7 @@ fun BarChart(
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.Bottom
         ) {
-            data.forEach { (label, values) ->
+            fullData.forEach { (label, values) ->
                 val incomeHeightFraction = (values.first / maxTotal).toFloat()
                 val expenseHeightFraction = (values.second / maxTotal).toFloat()
 
@@ -489,6 +496,7 @@ fun BarChart(
         }
     }
 }
+
 
 @Composable
 fun InfoCard(
