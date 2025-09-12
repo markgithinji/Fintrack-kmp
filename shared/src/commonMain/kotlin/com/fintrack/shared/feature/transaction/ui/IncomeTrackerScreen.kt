@@ -83,101 +83,116 @@ fun IncomeTrackerContent(viewModel: TransactionViewModel = viewModel()) {
 
 
 @Composable
-fun CurrentBalanceCard(summary: Summary?) {
-    if (summary == null) {
-        // Loading state while summary is not available
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(130.dp)
-                .background(DarkGray),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator(color = Color.White)
-        }
-        return
-    }
-
-    val balance = summary.balance
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkGray)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(130.dp)
-        ) {
-            LowerRightWavesBackground(modifier = Modifier.matchParentSize())
-
-            // Top row with label + button
-            Row(
+fun CurrentBalanceCard(summaryResult: Result<Summary>) {
+    when (summaryResult) {
+        is Result.Loading -> {
+            Box(
                 modifier = Modifier
-                    .align(Alignment.TopStart)
                     .fillMaxWidth()
-                    .padding(start = 24.dp, end = 24.dp, top = 18.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .height(130.dp)
+                    .background(DarkGray),
+                contentAlignment = Alignment.Center
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.AccountBalance,
-                        contentDescription = "Bank",
-                        tint = Color.White,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Bank Account",
-                        fontSize = 12.sp,
-                        color = Color.White
-                    )
-                }
-
-                Button(
-                    onClick = { /* TODO */ },
-                    colors = ButtonDefaults.buttonColors(containerColor = LightGray),
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.height(26.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp)
-                ) {
-                    Text(
-                        text = "Change Account",
-                        color = Color.Black,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+                CircularProgressIndicator(color = Color.White)
             }
+        }
 
-            // Bottom section
-            Column(
+        is Result.Error -> {
+            val message = summaryResult.exception.message ?: "Unknown error"
+            Box(
                 modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 24.dp, bottom = 8.dp)
+                    .fillMaxWidth()
+                    .height(130.dp)
+                    .background(DarkGray),
+                contentAlignment = Alignment.Center
             ) {
-                val formattedBalance = remember(balance) {
-                    balance.toLong()
-                        .toString()
-                        .reversed()
-                        .chunked(3)
-                        .joinToString(",")
-                        .reversed()
+                Text("Error: $message", color = Color.Red)
+            }
+        }
+
+        is Result.Success -> {
+            val balance = summaryResult.data.balance
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = DarkGray)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(130.dp)
+                ) {
+                    LowerRightWavesBackground(modifier = Modifier.matchParentSize())
+
+                    // Top row with label + button
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .fillMaxWidth()
+                            .padding(start = 24.dp, end = 24.dp, top = 18.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.AccountBalance,
+                                contentDescription = "Bank",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Bank Account",
+                                fontSize = 12.sp,
+                                color = Color.White
+                            )
+                        }
+
+                        Button(
+                            onClick = { /* TODO */ },
+                            colors = ButtonDefaults.buttonColors(containerColor = LightGray),
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.height(26.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp)
+                        ) {
+                            Text(
+                                text = "Change Account",
+                                color = Color.Black,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+
+                    // Bottom section
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 24.dp, bottom = 8.dp)
+                    ) {
+                        val formattedBalance = remember(balance) {
+                            balance.toLong()
+                                .toString()
+                                .reversed()
+                                .chunked(3)
+                                .joinToString(",")
+                                .reversed()
+                        }
+                        Text(
+                            text = "Current Balance",
+                            fontSize = 14.sp,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "KSh $formattedBalance",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
                 }
-                Text(
-                    text = "Current Balance",
-                    fontSize = 14.sp,
-                    color = Color.White.copy(alpha = 0.7f)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "KSh $formattedBalance",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
             }
         }
     }
@@ -185,75 +200,89 @@ fun CurrentBalanceCard(summary: Summary?) {
 
 
 @Composable
-fun IncomeExpenseCards(summary: Summary?) {
-    if (summary == null) {
-        // Show loading placeholder while summary is null
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            CircularProgressIndicator(color = Color.White)
+fun IncomeExpenseCards(summaryResult: Result<Summary>) {
+    when (summaryResult) {
+        is Result.Loading -> {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircularProgressIndicator(color = Color.White)
+            }
         }
-        return
-    }
 
-    val totalIncome = summary.income
-    val totalExpense = summary.expense
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        InfoCard(
-            title = "Total Income",
-            amount = "KSh ${formatAmount(totalIncome)}",
-            modifier = Modifier.weight(1f),
-            icon = {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(GreenIncome),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowUpward,
-                        contentDescription = "Income",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(18.dp)
-                            .rotate(135f)
-                    )
-                }
+        is Result.Error -> {
+            val message = summaryResult.exception.message ?: "Unknown error"
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Error: $message", color = Color.Red)
             }
-        )
+        }
 
-        InfoCard(
-            title = "Total Expense",
-            amount = "KSh ${formatAmount(totalExpense)}",
-            modifier = Modifier.weight(1f),
-            icon = {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(PinkExpense),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowDownward,
-                        contentDescription = "Expense",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(18.dp)
-                            .rotate(-135f)
-                    )
-                }
+        is Result.Success -> {
+            val totalIncome = summaryResult.data.income
+            val totalExpense = summaryResult.data.expense
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                InfoCard(
+                    title = "Total Income",
+                    amount = "KSh ${formatAmount(totalIncome)}",
+                    modifier = Modifier.weight(1f),
+                    icon = {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(GreenIncome),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowUpward,
+                                contentDescription = "Income",
+                                tint = Color.White,
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .rotate(135f)
+                            )
+                        }
+                    }
+                )
+
+                InfoCard(
+                    title = "Total Expense",
+                    amount = "KSh ${formatAmount(totalExpense)}",
+                    modifier = Modifier.weight(1f),
+                    icon = {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(PinkExpense),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowDownward,
+                                contentDescription = "Expense",
+                                tint = Color.White,
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .rotate(-135f)
+                            )
+                        }
+                    }
+                )
             }
-        )
+        }
     }
 }
 

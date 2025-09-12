@@ -22,8 +22,9 @@ class TransactionViewModel : ViewModel() {
     private val _saveResult = MutableStateFlow<Result<Transaction>?>(null)
     val saveResult: StateFlow<Result<Transaction>?> = _saveResult
 
-    private val _summary = MutableStateFlow<Summary?>(null)
-    val summary: StateFlow<Summary?> = _summary
+    // Summary state wrapped in Result
+    private val _summary = MutableStateFlow<Result<Summary>>(Result.Loading)
+    val summary: StateFlow<Result<Summary>> = _summary
 
     fun addTransaction(transaction: Transaction) {
         viewModelScope.launch {
@@ -51,24 +52,17 @@ class TransactionViewModel : ViewModel() {
         }
     }
 
-
     fun loadSummary() {
         viewModelScope.launch {
+            _summary.value = Result.Loading
             try {
-                when (val result = repo.getSummary()) {
-                    is Result.Success -> _summary.value = result.data
-                    is Result.Error -> {
-                        _summary.value = null
-                        println("Failed to load summary: ${result.exception.message}")
-                        // Optionally expose error state via another StateFlow
-                    }
-
-                    Result.Loading -> TODO()
-                }
+                val result = repo.getSummary()
+                _summary.value = result
             } catch (e: Exception) {
-                _summary.value = null
+                _summary.value = Result.Error(e)
                 println("Failed to load summary: ${e.message}")
             }
         }
     }
 }
+

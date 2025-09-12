@@ -34,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.transaction.data.CategorySummary
 import com.fintrack.shared.feature.transaction.data.Highlight
+import com.fintrack.shared.feature.transaction.data.Result
 
 val DarkCardBackground = Color(0xFF1B1B1B)
 val LightGreenCardBackground = Color(0xFFE8FFB5)
@@ -49,43 +50,58 @@ val CategoryTextColor = Color(0xFF4A4A4A)
 fun StatisticsScreen(
     viewModel: TransactionViewModel = viewModel()
 ) {
-    val summary by viewModel.summary.collectAsStateWithLifecycle()
+    val summaryResult by viewModel.summary.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) { viewModel.loadSummary() }
 
     Column(modifier = Modifier.fillMaxSize()) {
         ScreenHeader()
 
-        summary?.let { data ->
-            // Pass domain Highlight objects directly
-            data.highestMonth?.let { highestMonth ->
-                data.highestCategory?.let { highestCategory ->
-                    data.highestDay?.let { highestDay ->
-                        SpendingHighlightsSection(
-                            highestMonth = highestMonth,
-                            highestCategory = highestCategory,
-                            highestDay = highestDay,
-                            averagePerDay = data.averagePerDay
-                        )
-                    }
+        when (summaryResult) {
+            is Result.Loading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
             }
+            is Result.Error -> {
+                val message = (summaryResult as Result.Error).exception.message ?: "Unknown error"
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Error: $message", color = Color.Red)
+                }
+            }
+            is Result.Success -> {
+                val data = (summaryResult as Result.Success).data
 
-            Spacer(modifier = Modifier.height(16.dp))
+                // Pass domain Highlight objects directly
+                data.highestMonth?.let { highestMonth ->
+                    data.highestCategory?.let { highestCategory ->
+                        data.highestDay?.let { highestDay ->
+                            SpendingHighlightsSection(
+                                highestMonth = highestMonth,
+                                highestCategory = highestCategory,
+                                highestDay = highestDay,
+                                averagePerDay = data.averagePerDay
+                            )
+                        }
+                    }
+                }
 
-            SpendingDistributionSection(
-                categories = data.monthlyCategorySummary["2025-09"] ?: emptyList()
-            )
-        } ?: run {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
+                Spacer(modifier = Modifier.height(16.dp))
+
+                SpendingDistributionSection(
+                    categories = data.monthlyCategorySummary["2025-09"] ?: emptyList()
+                )
             }
         }
     }
 }
+
 
 @Composable
 fun ScreenHeader() {
