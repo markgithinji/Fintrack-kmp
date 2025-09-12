@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.transaction.data
 
-
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -8,10 +7,19 @@ data class SummaryDto(
     val income: Double = 0.0,
     val expense: Double = 0.0,
     val balance: Double = 0.0,
+
+    // Expense highlights
     val highestMonth: HighlightDto? = null,
     val highestCategory: HighlightDto? = null,
     val highestDay: HighlightDto? = null,
     val averagePerDay: Double = 0.0,
+
+    // Income highlights
+    val highestIncomeMonth: HighlightDto? = null,
+    val highestIncomeCategory: HighlightDto? = null,
+    val highestIncomeDay: HighlightDto? = null,
+    val averageIncomePerDay: Double = 0.0,
+
     val weeklyCategorySummary: Map<String, List<CategorySummaryDto>> = emptyMap(),
     val monthlyCategorySummary: Map<String, List<CategorySummaryDto>> = emptyMap()
 )
@@ -30,6 +38,8 @@ data class CategorySummaryDto(
     val percentage: Double = 0.0
 )
 
+// --- Domain mapping ---
+
 fun HighlightDto.toDomain(): Highlight =
     Highlight(
         label = label.ifEmpty { "-" },
@@ -45,6 +55,10 @@ fun SummaryDto.toDomain(): Summary = Summary(
     highestCategory = highestCategory?.toDomain(),
     highestDay = highestDay?.toDomain(),
     averagePerDay = averagePerDay,
+    highestIncomeMonth = highestIncomeMonth?.toDomain(),
+    highestIncomeCategory = highestIncomeCategory?.toDomain(),
+    highestIncomeDay = highestIncomeDay?.toDomain(),
+    averageIncomePerDay = averageIncomePerDay,
     weeklyCategorySummary = weeklyCategorySummary.mapValues { it.value.map { cs -> cs.toDomain() } },
     monthlyCategorySummary = monthlyCategorySummary.mapValues { it.value.map { cs -> cs.toDomain() } }
 )

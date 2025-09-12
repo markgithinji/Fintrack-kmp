@@ -6,10 +6,19 @@ data class Summary(
     val income: Double,
     val expense: Double,
     val balance: Double,
+
+    // Expense highlights
     val highestMonth: Highlight?,
     val highestCategory: Highlight?,
     val highestDay: Highlight?,
     val averagePerDay: Double,
+
+    // Income highlights
+    val highestIncomeMonth: Highlight?,
+    val highestIncomeCategory: Highlight?,
+    val highestIncomeDay: Highlight?,
+    val averageIncomePerDay: Double,
+
     val weeklyCategorySummary: Map<String, List<CategorySummary>>,
     val monthlyCategorySummary: Map<String, List<CategorySummary>>
 )

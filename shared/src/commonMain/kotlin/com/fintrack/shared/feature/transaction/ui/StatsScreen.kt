@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.transaction.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,12 +48,13 @@ val SegmentColor5 = Color(0xFF2A9D8F)   // Teal / turquoise
 val CategoryTextColor = Color(0xFF222222) // Dark gray for better contrast
 val AmountTextColor = Color(0xFF1A1A1A)   // Slightly darker for amounts
 
-
 @Composable
 fun StatisticsScreen(
     viewModel: TransactionViewModel = viewModel()
 ) {
     val summaryResult by viewModel.summary.collectAsStateWithLifecycle()
+    var selectedTab by remember { mutableStateOf("Expenses") } // default tab
+
     LaunchedEffect(Unit) { viewModel.loadSummary() }
 
     Column(
@@ -58,7 +63,10 @@ fun StatisticsScreen(
             .verticalScroll(rememberScrollState()) // make screen scrollable
             .padding(bottom = 16.dp)
     ) {
-        ScreenHeader()
+        // --- Tabs at top ---
+        ScreenHeader(selectedTab = selectedTab, onTabSelected = { selectedTab = it })
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         when (summaryResult) {
             is Result.Loading -> {
@@ -81,15 +89,33 @@ fun StatisticsScreen(
             is Result.Success -> {
                 val data = (summaryResult as Result.Success).data
 
+                // --- Select highlights based on tab ---
+                val highlightData = when (selectedTab) {
+                    "Income" -> data.copy(
+                        highestMonth = data.highestIncomeMonth,
+                        highestCategory = data.highestIncomeCategory,
+                        highestDay = data.highestIncomeDay,
+                        averagePerDay = data.averageIncomePerDay
+                    )
+                    "Expenses" -> data
+                    "All" -> data.copy(
+                        highestMonth = data.highestMonth,
+                        highestCategory = data.highestCategory,
+                        highestDay = data.highestDay,
+                        averagePerDay = data.averagePerDay
+                    )
+                    else -> data
+                }
+
                 // ---- Highlights ----
-                data.highestMonth?.let { highestMonth ->
-                    data.highestCategory?.let { highestCategory ->
-                        data.highestDay?.let { highestDay ->
+                highlightData.highestMonth?.let { highestMonth ->
+                    highlightData.highestCategory?.let { highestCategory ->
+                        highlightData.highestDay?.let { highestDay ->
                             SpendingHighlightsSection(
                                 highestMonth = highestMonth,
                                 highestCategory = highestCategory,
                                 highestDay = highestDay,
-                                averagePerDay = data.averagePerDay
+                                averagePerDay = highlightData.averagePerDay
                             )
                         }
                     }
@@ -99,8 +125,8 @@ fun StatisticsScreen(
 
                 // ---- Category Totals Card ----
                 CategoryTotalsCardWithTabs(
-                    weeklySummary = data.weeklyCategorySummary,
-                    monthlySummary = data.monthlyCategorySummary
+                    weeklySummary = highlightData.weeklyCategorySummary,
+                    monthlySummary = highlightData.monthlyCategorySummary
                 )
             }
         }
@@ -108,25 +134,33 @@ fun StatisticsScreen(
 }
 
 @Composable
-fun ScreenHeader() {
-    Column(
+fun ScreenHeader(
+    selectedTab: String,
+    onTabSelected: (String) -> Unit
+) {
+    val tabs = listOf("All", "Income", "Expenses")
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.SpaceAround
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround
-        ) {
-            TabItem(text = "All", isSelected = false)
-            TabItem(text = "Income", isSelected = false)
-            TabItem(text = "Expenses", isSelected = true)
+        tabs.forEach { tab ->
+            TabItem(
+                text = tab,
+                isSelected = tab == selectedTab,
+                onClick = { onTabSelected(tab) }
+            )
         }
     }
 }
 
 @Composable
-fun TabItem(text: String, isSelected: Boolean) {
+fun TabItem(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
     val backgroundColor = if (isSelected) Color.Black else Color.Transparent
     val textColor = if (isSelected) Color.White else Color.Black
     val shape = RoundedCornerShape(16.dp)
@@ -135,11 +169,13 @@ fun TabItem(text: String, isSelected: Boolean) {
         modifier = Modifier
             .clip(shape)
             .background(backgroundColor)
+            .clickable { onClick() }
             .padding(horizontal = 24.dp, vertical = 10.dp)
     ) {
         Text(text = text, color = textColor, fontWeight = FontWeight.SemiBold)
     }
 }
+
 
 // ---- Highlight Section ----
 
