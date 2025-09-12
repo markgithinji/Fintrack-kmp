@@ -4,6 +4,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -23,10 +24,22 @@ class TransactionApi(
         }
     }
 
-    suspend fun getTransactions(): List<TransactionDto> {
-        val response: ApiResponse<List<TransactionDto>> =
-            client.get("$baseUrl/transactions").body()
-        return response.data
+    suspend fun getTransactions(
+        limit: Int = 20,
+        sortBy: String = "date",
+        order: String = "DESC",
+        afterDate: String? = null,
+        afterId: Int? = null
+    ): PaginatedTransactionDto {
+        val response: ApiResponse<PaginatedTransactionDto> = client.get("$baseUrl/transactions") {
+            parameter("limit", limit)
+            parameter("sortBy", sortBy)
+            parameter("order", order)
+            afterDate?.let { parameter("afterDate", it) }
+            afterId?.let { parameter("afterId", it) }
+        }.body()
+
+        return response.result
     }
 
     suspend fun addTransaction(transaction: TransactionDto): TransactionDto {
@@ -34,13 +47,12 @@ class TransactionApi(
             contentType(ContentType.Application.Json)
             setBody(transaction)
         }.body()
-        return response.data
+        return response.result
     }
 
     suspend fun getSummary(): SummaryDto {
         val response: ApiResponse<SummaryDto> =
-            client.get("$baseUrl/transactions/summary")
-                .body()
-        return response.data
+            client.get("$baseUrl/transactions/summary").body()
+        return response.result
     }
 }

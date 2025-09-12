@@ -60,11 +60,11 @@ val PinkExpense = Color(0xFFE27C94) // pinkish-red for expense
 @Composable
 fun IncomeTrackerContent(viewModel: TransactionViewModel = viewModel()) {
     val summaryResult by viewModel.summary.collectAsStateWithLifecycle()
-    val transactionsResult by viewModel.transactions.collectAsStateWithLifecycle()
+    val transactionsResult by viewModel.recentTransactions.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.loadSummary()
-        viewModel.refresh()
+        viewModel.loadRecentTransactions()
     }
 
     LazyColumn(
