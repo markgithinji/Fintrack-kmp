@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.transaction.ui
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,9 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -26,13 +22,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.fintrack.shared.feature.transaction.data.CategorySummary
 import com.fintrack.shared.feature.transaction.data.Highlight
 import com.fintrack.shared.feature.transaction.data.Result
 
@@ -51,7 +46,6 @@ fun StatisticsScreen(
     viewModel: TransactionViewModel = viewModel()
 ) {
     val summaryResult by viewModel.summary.collectAsStateWithLifecycle()
-
     LaunchedEffect(Unit) { viewModel.loadSummary() }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -78,7 +72,7 @@ fun StatisticsScreen(
             is Result.Success -> {
                 val data = (summaryResult as Result.Success).data
 
-                // Pass domain Highlight objects directly
+                // ---- Highlights ----
                 data.highestMonth?.let { highestMonth ->
                     data.highestCategory?.let { highestCategory ->
                         data.highestDay?.let { highestDay ->
@@ -94,14 +88,30 @@ fun StatisticsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                SpendingDistributionSection(
-                    categories = data.monthlyCategorySummary["2025-09"] ?: emptyList()
-                )
+                // ---- Monthly Distribution ----
+                data.monthlyCategorySummary.forEach { (monthKey, categories) ->
+                    val monthName = monthKey.toMonthName() // "2025-09" -> "Sep 2025"
+
+                    Text(
+                        text = monthName,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                    )
+
+                    categories.forEach { category ->
+                        Text(
+                            text = "${category.category}: ${formatCurrencyKmp(category.total)}",
+                            modifier = Modifier.padding(start = 32.dp, bottom = 4.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
         }
     }
 }
-
 
 @Composable
 fun ScreenHeader() {
@@ -110,13 +120,6 @@ fun ScreenHeader() {
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        Text(
-            text = "Statistics",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround
@@ -144,21 +147,8 @@ fun TabItem(text: String, isSelected: Boolean) {
     }
 }
 
-fun formatCurrency(amount: Double): String {
-    val whole = amount.toLong()
-    val fraction = ((amount - whole) * 100).toInt()
-    return "Rp ${
-        whole.toString().reversed().chunked(3).joinToString(".") { it.reversed() }
-    }.${fraction.toString().padStart(2, '0')}"
-}
-
-fun formatPercentage(percentage: Double): String {
-    val rounded = kotlin.math.round(percentage * 10) / 10
-    return "$rounded%"
-}
-
-
 // ---- Highlight Section ----
+
 @Composable
 fun SpendingHighlightsSection(
     highestMonth: Highlight,
@@ -178,23 +168,27 @@ fun SpendingHighlightsSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            val monthDisplay = highestMonth.value.toMonthName()
+
             HighlightCard(
                 modifier = Modifier.weight(1f),
                 title = "Highest Month",
-                value = highestMonth.value,
-                description = "${formatCurrency(highestMonth.amount)} spent",
+                value = monthDisplay,
+                description = "${formatCurrencyKmp(highestMonth.amount)} spent",
                 backgroundColor = DarkCardBackground,
                 titleColor = Color.White,
-                valueColor = Color.White
+                valueColor = Color.White,
+                contentSpacing = 8.dp
             )
             HighlightCard(
                 modifier = Modifier.weight(1f),
                 title = "Most Spent Category",
                 value = highestCategory.value,
-                description = "${formatCurrency(highestCategory.amount)} total",
+                description = "${formatCurrencyKmp(highestCategory.amount)} total",
                 backgroundColor = LightGreenCardBackground,
                 titleColor = Color.Black,
-                valueColor = LightGreenText
+                valueColor = LightGreenText,
+                contentSpacing = 8.dp
             )
         }
 
@@ -206,20 +200,23 @@ fun SpendingHighlightsSection(
             HighlightCard(
                 modifier = Modifier.weight(1f),
                 title = "Highest Daily Spending",
-                value = highestDay.value,
-                description = "${formatCurrency(highestDay.amount)} spent",
+                value = highestDay.value.toFormattedDate(),
+                description = "${formatCurrencyKmp(highestDay.amount)} spent",
                 backgroundColor = LightGreenCardBackground,
                 titleColor = Color.Black,
-                valueColor = LightGreenText
+                valueColor = LightGreenText,
+                contentSpacing = 8.dp
             )
+
             HighlightCard(
                 modifier = Modifier.weight(1f),
                 title = "Average Per Day",
-                value = formatCurrency(averagePerDay),
+                value = formatCurrencyKmp(averagePerDay),
                 description = "Daily Spending",
                 backgroundColor = LightGreenCardBackground,
                 titleColor = Color.Black,
-                valueColor = LightGreenText
+                valueColor = LightGreenText,
+                contentSpacing = 8.dp
             )
         }
     }
@@ -233,7 +230,8 @@ fun HighlightCard(
     description: String,
     backgroundColor: Color,
     titleColor: Color,
-    valueColor: Color
+    valueColor: Color,
+    contentSpacing: Dp = 4.dp
 ) {
     Card(
         modifier = modifier.height(120.dp),
@@ -241,116 +239,59 @@ fun HighlightCard(
         colors = CardDefaults.cardColors(containerColor = backgroundColor)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.Start
         ) {
             Text(text = title, fontSize = 14.sp, color = titleColor)
+            Spacer(modifier = Modifier.height(contentSpacing))
             Text(text = value, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = valueColor)
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(contentSpacing))
             Text(text = description, fontSize = 12.sp, color = titleColor.copy(alpha = 0.7f))
         }
     }
 }
 
-// ---- Distribution Section ----
-@Composable
-fun SpendingDistributionSection(categories: List<CategorySummary>) {
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text(
-            text = "Spending Distribution by Category",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        DonutChart(categories)
-        Spacer(modifier = Modifier.height(24.dp))
-        CategoryList(categories)
-    }
+// month conversion: "yyyy-MM" -> "Jan 2025"
+fun String.toMonthName(): String {
+    val parts = this.split("-")
+    if (parts.size != 2) return this
+    val year = parts[0]
+    val monthIndex = (parts[1].toIntOrNull()?.minus(1)) ?: return this
+    val monthNames = listOf(
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    )
+    val monthName = monthNames.getOrElse(monthIndex) { parts[1] }
+    return "$monthName $year"
 }
 
-@Composable
-fun DonutChart(categories: List<CategorySummary>) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val strokeWidth = 50.dp.toPx()
-            var startAngle = 0f
-            val colors = listOf(
-                DarkGreenSegment,
-                LightGreenSegment1,
-                LightGreenSegment2,
-                LightGreenSegment3,
-                LightGreenSegment4
-            )
-
-            val totalPercentage = categories.sumOf { it.percentage }
-
-            categories.forEachIndexed { index, cat ->
-                val sweep =
-                    ((cat.percentage / totalPercentage) * 360f).toFloat()
-                drawArc(
-                    color = colors.getOrElse(index) { LightGreenSegment4 },
-                    startAngle = startAngle,
-                    sweepAngle = sweep,
-                    useCenter = false,
-                    style = Stroke(width = strokeWidth)
-                )
-                startAngle += sweep
-            }
-        }
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Top Category", fontWeight = FontWeight.Bold)
-        }
-    }
+// date conversion: "yyyy-MM-dd" -> "15 Jan 2025"
+fun String.toFormattedDate(): String {
+    val parts = this.split("-")
+    if (parts.size != 3) return this
+    val day = parts[2].toIntOrNull() ?: return this
+    val monthIndex = (parts[1].toIntOrNull()?.minus(1)) ?: return this
+    val year = parts[0]
+    val monthNames = listOf(
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    )
+    val monthName = monthNames.getOrElse(monthIndex) { parts[1] }
+    return "$day $monthName $year"
 }
 
-@Composable
-fun CategoryList(categories: List<CategorySummary>) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        categories.forEachIndexed { index, cat ->
-            val color = listOf(
-                DarkGreenSegment,
-                LightGreenSegment1,
-                LightGreenSegment2,
-                LightGreenSegment3,
-                LightGreenSegment4
-            ).getOrElse(index) { LightGreenSegment4 }
-
-            CategoryItem(
-                color = color,
-                name = cat.category,
-                amount = formatCurrency(cat.total),
-                percentage = formatPercentage(cat.percentage)
-            )
-        }
-    }
+// KMP-safe currency formatting
+fun formatCurrencyKmp(amount: Double): String {
+    val whole = amount.toLong()
+    val fraction = ((amount - whole) * 100).toInt()
+    val wholeFormatted = whole.toString()
+        .reversed()
+        .chunked(3)
+        .joinToString(",") { it.reversed() }
+        .reversed()
+    return "Ksh $wholeFormatted.${fraction.toString().padStart(2, '0')}"
 }
 
-@Composable
-fun CategoryItem(color: Color, name: String, amount: String, percentage: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(color)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = name, color = CategoryTextColor, fontWeight = FontWeight.SemiBold)
-        }
-        Spacer(modifier = Modifier.weight(1f))
-        Text(text = amount, color = Color.Black, fontWeight = FontWeight.SemiBold)
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text = percentage, color = color, fontWeight = FontWeight.SemiBold)
-    }
-}

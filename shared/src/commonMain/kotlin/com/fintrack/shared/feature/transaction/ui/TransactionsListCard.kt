@@ -29,6 +29,9 @@ import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.transaction.data.Result
 import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.LocalDate
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.Icon
 
 @Composable
 fun TransactionsListCard(transactionsResult: Result<List<Transaction>>) {
@@ -120,11 +123,29 @@ fun RecentTransactionsHeader() {
     }
 }
 
+val categoryIcons = mapOf(
+    "Food" to Icons.Default.Fastfood,
+    "Transport" to Icons.Default.DirectionsCar,
+    "Shopping" to Icons.Default.ShoppingCart,
+    "Health" to Icons.Default.LocalHospital,
+    "Bills" to Icons.Default.Receipt,
+    "Entertainment" to Icons.Default.Movie,
+    "Education" to Icons.Default.School,
+    "Gifts" to Icons.Default.CardGiftcard,
+    "Travel" to Icons.Default.Flight,
+    "Personal Care" to Icons.Default.ContentCut,
+    "Subscriptions" to Icons.Default.Subscriptions,
+    "Rent" to Icons.Default.Home,
+    "Groceries" to Icons.Default.ShoppingBag,
+    "Insurance" to Icons.Default.Shield,
+    "Misc" to Icons.Default.HelpOutline
+)
+
 @Composable
 fun TransactionRow(transaction: Transaction) {
-    val isExpense = !transaction.isIncome // true if expense, false if income
+    val isExpense = !transaction.isIncome
+    val icon = categoryIcons[transaction.category] ?: Icons.Default.AttachMoney
 
-    // Extension function for LocalDate
     fun LocalDate.toShortMonthDay(): String {
         val month = when (this.monthNumber) {
             1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
@@ -143,15 +164,15 @@ fun TransactionRow(transaction: Transaction) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
+            Icon(
+                imageVector = icon,
+                contentDescription = transaction.category,
                 modifier = Modifier
                     .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.LightGray),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "💸", fontSize = 20.sp)
-            }
+                    .background(Color.LightGray, shape = RoundedCornerShape(12.dp))
+                    .padding(12.dp),
+                tint = Color.Black
+            )
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -166,12 +187,11 @@ fun TransactionRow(transaction: Transaction) {
 
         Column(horizontalAlignment = Alignment.End) {
             Text(
-                text = "${if (isExpense) "-" else "+"}$${transaction.amount.toInt()}",
+                text = "${if (isExpense) "-" else "+"}${transaction.amount.toInt()}",
                 color = if (isExpense) PinkExpense else GreenIncome,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
-            // Use dateTime.date to get LocalDate
             Text(
                 text = transaction.dateTime.date.toShortMonthDay(),
                 fontSize = 12.sp,
@@ -180,4 +200,5 @@ fun TransactionRow(transaction: Transaction) {
         }
     }
 }
+
 

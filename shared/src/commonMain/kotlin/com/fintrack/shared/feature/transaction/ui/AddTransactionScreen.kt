@@ -2,14 +2,31 @@ package com.fintrack.shared.feature.transaction.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Fastfood
+import androidx.compose.material.icons.filled.Flight
+import androidx.compose.material.icons.filled.HealthAndSafety
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Store
+import androidx.compose.material.icons.filled.Subscriptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -130,11 +147,9 @@ fun AddTransactionScreen(
                 }
             }
 
-            OutlinedTextField(
-                value = category,
-                onValueChange = { category = it },
-                label = { Text("Category") },
-                modifier = Modifier.fillMaxWidth()
+            CategoryDropdown(
+                selectedCategory = category,
+                onCategorySelected = { category = it }
             )
 
             OutlinedTextField(
@@ -179,4 +194,67 @@ fun AddTransactionScreen(
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CategoryDropdown(
+    selectedCategory: String,
+    onCategorySelected: (String) -> Unit
+) {
+    val categories = listOf(
+        "Food" to Icons.Default.Fastfood,
+        "Transport" to Icons.Default.DirectionsCar,
+        "Shopping" to Icons.Default.ShoppingCart,
+        "Health" to Icons.Default.HealthAndSafety,
+        "Bills" to Icons.Default.Receipt,
+        "Entertainment" to Icons.Default.Movie,
+        "Education" to Icons.Default.School,
+        "Gifts" to Icons.Default.CardGiftcard,
+        "Travel" to Icons.Default.Flight,
+        "Personal Care" to Icons.Default.Face,
+        "Subscriptions" to Icons.Default.Subscriptions,
+        "Rent" to Icons.Default.Home,
+        "Groceries" to Icons.Default.Store,
+        "Insurance" to Icons.Default.Security,
+        "Misc" to Icons.Default.MoreHoriz
+    )
+
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = selectedCategory,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Category") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            modifier = Modifier.menuAnchor().fillMaxWidth()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            categories.forEach { (categoryName, icon) ->
+                DropdownMenuItem(
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(icon, contentDescription = categoryName)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(categoryName)
+                        }
+                    },
+                    onClick = {
+                        onCategorySelected(categoryName)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
 
