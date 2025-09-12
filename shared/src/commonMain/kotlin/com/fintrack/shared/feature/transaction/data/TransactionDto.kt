@@ -1,7 +1,7 @@
 package com.fintrack.shared.feature.transaction.data
 
 import com.fintrack.shared.feature.transaction.model.Transaction
-import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -10,7 +10,7 @@ data class TransactionDto(
     val isIncome: Boolean,
     val amount: Double,
     val category: String,
-    val date: String,
+    val dateTime: String,
     val description: String? = null
 )
 
@@ -20,7 +20,7 @@ fun TransactionDto.toDomain(): Transaction =
         isIncome = isIncome,
         amount = amount,
         category = category,
-        date = LocalDate.parse(date),
+        dateTime = LocalDateTime.parse(dateTime),
         description = description
     )
 
@@ -30,6 +30,7 @@ fun Transaction.toDto(): TransactionDto =
         isIncome = isIncome,
         amount = amount,
         category = category,
-        date = date.toString(),
+        dateTime = dateTime.toString(),
         description = description
     )
+

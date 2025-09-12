@@ -40,7 +40,7 @@ import com.fintrack.shared.feature.transaction.data.Result
 import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
+import kotlinx.datetime.toLocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +58,6 @@ fun AddTransactionScreen(
             }
 
             is Result.Error -> {
-                // TODO:show error toast/snackbar
                 val message = (saveResult as Result.Error).exception.message ?: "Failed to save"
                 println("Error saving transaction: $message")
             }
@@ -71,7 +70,12 @@ fun AddTransactionScreen(
     var isIncome by remember { mutableStateOf(false) }
     var category by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    val date = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
+
+    var dateTime by remember {
+        mutableStateOf(
+            Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -140,11 +144,14 @@ fun AddTransactionScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Text("Date: $date", color = Color.Gray, fontSize = 14.sp)
+            Text(
+                "Date & Time: $dateTime",
+                color = Color.Gray,
+                fontSize = 14.sp
+            )
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Show loading indicator on save
             if (saveResult is Result.Loading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             }
@@ -152,18 +159,15 @@ fun AddTransactionScreen(
             Button(
                 onClick = {
                     val parsedAmount = amount.toDoubleOrNull()
-                    if (parsedAmount == null || category.isBlank()) {
-                        // Show error to user
-                        return@Button
-                    }
+                    if (parsedAmount == null || category.isBlank()) return@Button
 
                     val newTransaction = Transaction(
-                        id = null, // server generates
+                        id = null,
                         amount = parsedAmount,
                         isIncome = isIncome,
                         category = category,
                         description = description.takeIf { it.isNotBlank() },
-                        date = date
+                        dateTime = dateTime
                     )
                     viewModel.addTransaction(newTransaction)
                 },
@@ -175,3 +179,4 @@ fun AddTransactionScreen(
         }
     }
 }
+

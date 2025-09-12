@@ -26,9 +26,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fintrack.shared.feature.transaction.data.Result
 import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.LocalDate
-import com.fintrack.shared.feature.transaction.data.Result
 
 @Composable
 fun TransactionsListCard(transactionsResult: Result<List<Transaction>>) {
@@ -119,10 +119,12 @@ fun RecentTransactionsHeader() {
         )
     }
 }
+
 @Composable
 fun TransactionRow(transaction: Transaction) {
     val isExpense = !transaction.isIncome // true if expense, false if income
 
+    // Extension function for LocalDate
     fun LocalDate.toShortMonthDay(): String {
         val month = when (this.monthNumber) {
             1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
@@ -169,11 +171,13 @@ fun TransactionRow(transaction: Transaction) {
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
+            // Use dateTime.date to get LocalDate
             Text(
-                text = transaction.date.toShortMonthDay(),
+                text = transaction.dateTime.date.toShortMonthDay(),
                 fontSize = 12.sp,
                 color = Color.Gray
             )
         }
     }
 }
+

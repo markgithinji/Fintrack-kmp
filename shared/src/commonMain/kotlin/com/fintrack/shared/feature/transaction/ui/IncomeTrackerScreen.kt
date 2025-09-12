@@ -28,7 +28,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -73,7 +72,7 @@ fun IncomeTrackerContent(viewModel: TransactionViewModel = viewModel()) {
             .background(backgroundGray),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
-    )  {
+    ) {
         item { CurrentBalanceCard(summaryResult) }
         item { IncomeExpenseCards(summaryResult) }
         item { IncomeExpensesOverview(transactionsResult) }
@@ -287,7 +286,6 @@ fun IncomeExpenseCards(summaryResult: Result<Summary>) {
 }
 
 
-
 fun LocalDate.shortDayName(): String {
     // 0 = Monday ... 6 = Sunday
     return when (this.dayOfWeek.ordinal) {
@@ -330,9 +328,9 @@ fun IncomeExpensesOverview(transactionsResult: Result<List<Transaction>>) {
         is Result.Success -> {
             val transactions = transactionsResult.data
 
-            // Group transactions by date and compute daily income/expense
+            // Group transactions by date (ignore time) and compute daily income/expense
             val weeklyData = transactions
-                .groupBy { it.date }
+                .groupBy { it.dateTime.date } // extract LocalDate from LocalDateTime
                 .map { (date, txs) ->
                     val income = txs.filter { it.isIncome }.sumOf { it.amount }
                     val expense = txs.filter { !it.isIncome }.sumOf { it.amount }
@@ -401,7 +399,6 @@ fun IncomeExpensesOverview(transactionsResult: Result<List<Transaction>>) {
         }
     }
 }
-
 
 
 @Composable
