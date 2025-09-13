@@ -6,23 +6,22 @@ data class Summary(
     val income: Double,
     val expense: Double,
     val balance: Double,
+    val incomeHighlights: Highlights,
+    val expenseHighlights: Highlights,
+    val incomeCategorySummary: CategorySummaries,
+    val expenseCategorySummary: CategorySummaries
+)
 
-    // Expense highlights
+data class Highlights(
     val highestMonth: Highlight?,
     val highestCategory: Highlight?,
     val highestDay: Highlight?,
-    val averagePerDay: Double,
+    val averagePerDay: Double
+)
 
-    // Income highlights
-    val highestIncomeMonth: Highlight?,
-    val highestIncomeCategory: Highlight?,
-    val highestIncomeDay: Highlight?,
-    val averageIncomePerDay: Double,
-
-    val weeklyCategorySummary: Map<String, List<CategorySummary>>,
-    val monthlyCategorySummary: Map<String, List<CategorySummary>>,
-    val weeklyIncomeCategorySummary: Map<String, List<CategorySummary>>,
-    val monthlyIncomeCategorySummary: Map<String, List<CategorySummary>>
+data class CategorySummaries(
+    val weekly: Map<String, List<CategorySummary>>,
+    val monthly: Map<String, List<CategorySummary>>
 )
 
 data class Highlight(
@@ -31,10 +30,8 @@ data class Highlight(
     val amount: Double
 )
 
-@Serializable
 data class CategorySummary(
     val category: String,
     val total: Double,
     val percentage: Double
 )
-

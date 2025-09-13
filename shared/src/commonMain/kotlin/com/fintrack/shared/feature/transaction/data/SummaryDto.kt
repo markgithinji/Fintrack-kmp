@@ -7,26 +7,24 @@ data class SummaryDto(
     val income: Double = 0.0,
     val expense: Double = 0.0,
     val balance: Double = 0.0,
+    val incomeHighlights: HighlightsDto = HighlightsDto(),
+    val expenseHighlights: HighlightsDto = HighlightsDto(),
+    val incomeCategorySummary: CategorySummariesDto = CategorySummariesDto(),
+    val expenseCategorySummary: CategorySummariesDto = CategorySummariesDto()
+)
 
-    // Expense highlights
+@Serializable
+data class HighlightsDto(
     val highestMonth: HighlightDto? = null,
     val highestCategory: HighlightDto? = null,
     val highestDay: HighlightDto? = null,
-    val averagePerDay: Double = 0.0,
+    val averagePerDay: Double = 0.0
+)
 
-    // Income highlights
-    val highestIncomeMonth: HighlightDto? = null,
-    val highestIncomeCategory: HighlightDto? = null,
-    val highestIncomeDay: HighlightDto? = null,
-    val averageIncomePerDay: Double = 0.0,
-
-    // Expense categories
-    val weeklyCategorySummary: Map<String, List<CategorySummaryDto>> = emptyMap(),
-    val monthlyCategorySummary: Map<String, List<CategorySummaryDto>> = emptyMap(),
-
-    // Income categories
-    val weeklyIncomeCategorySummary: Map<String, List<CategorySummaryDto>> = emptyMap(),
-    val monthlyIncomeCategorySummary: Map<String, List<CategorySummaryDto>> = emptyMap()
+@Serializable
+data class CategorySummariesDto(
+    val weekly: Map<String, List<CategorySummaryDto>> = emptyMap(),
+    val monthly: Map<String, List<CategorySummaryDto>> = emptyMap()
 )
 
 @Serializable
@@ -55,20 +53,26 @@ fun HighlightDto.toDomain(): Highlight =
 fun CategorySummaryDto.toDomain(): CategorySummary =
     CategorySummary(category, total, percentage)
 
+fun HighlightsDto.toDomain(): Highlights =
+    Highlights(
+        highestMonth = highestMonth?.toDomain(),
+        highestCategory = highestCategory?.toDomain(),
+        highestDay = highestDay?.toDomain(),
+        averagePerDay = averagePerDay
+    )
+
+fun CategorySummariesDto.toDomain(): CategorySummaries =
+    CategorySummaries(
+        weekly = weekly.mapValues { it.value.map { cs -> cs.toDomain() } },
+        monthly = monthly.mapValues { it.value.map { cs -> cs.toDomain() } }
+    )
+
 fun SummaryDto.toDomain(): Summary = Summary(
     income = income,
     expense = expense,
     balance = balance,
-    highestMonth = highestMonth?.toDomain(),
-    highestCategory = highestCategory?.toDomain(),
-    highestDay = highestDay?.toDomain(),
-    averagePerDay = averagePerDay,
-    highestIncomeMonth = highestIncomeMonth?.toDomain(),
-    highestIncomeCategory = highestIncomeCategory?.toDomain(),
-    highestIncomeDay = highestIncomeDay?.toDomain(),
-    averageIncomePerDay = averageIncomePerDay,
-    weeklyCategorySummary = weeklyCategorySummary.mapValues { it.value.map { cs -> cs.toDomain() } },
-    monthlyCategorySummary = monthlyCategorySummary.mapValues { it.value.map { cs -> cs.toDomain() } },
-    weeklyIncomeCategorySummary = weeklyIncomeCategorySummary.mapValues { it.value.map { cs -> cs.toDomain() } },
-    monthlyIncomeCategorySummary = monthlyIncomeCategorySummary.mapValues { it.value.map { cs -> cs.toDomain() } }
+    incomeHighlights = incomeHighlights.toDomain(),
+    expenseHighlights = expenseHighlights.toDomain(),
+    incomeCategorySummary = incomeCategorySummary.toDomain(),
+    expenseCategorySummary = expenseCategorySummary.toDomain()
 )

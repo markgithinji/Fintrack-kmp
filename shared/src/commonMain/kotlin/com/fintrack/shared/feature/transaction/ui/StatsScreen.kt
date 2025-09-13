@@ -50,7 +50,7 @@ fun StatisticsScreen(
     viewModel: TransactionViewModel = viewModel()
 ) {
     val summaryResult by viewModel.summary.collectAsStateWithLifecycle()
-    var selectedTab by remember { mutableStateOf("Expenses") } // default tab
+    var selectedTab by remember { mutableStateOf("Expenses") }
 
     LaunchedEffect(Unit) { viewModel.loadSummary() }
 
@@ -60,20 +60,16 @@ fun StatisticsScreen(
             .verticalScroll(rememberScrollState())
             .padding(bottom = 16.dp)
     ) {
-        // --- Tabs at top ---
         ScreenHeader(selectedTab = selectedTab, onTabSelected = { selectedTab = it })
 
         Spacer(modifier = Modifier.height(16.dp))
 
         when (summaryResult) {
-            is Result.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
+            is Result.Loading -> Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) { CircularProgressIndicator() }
+
             is Result.Error -> {
                 val message = (summaryResult as Result.Error).exception.message ?: "Unknown error"
                 Box(
@@ -83,40 +79,37 @@ fun StatisticsScreen(
                     Text("Error: $message", color = Color.Red)
                 }
             }
+
             is Result.Success -> {
                 val data = (summaryResult as Result.Success).data
 
-                // --- Select highlights dynamically based on selected tab ---
-                val highlightData = when (selectedTab) {
-                    "Income" -> data.copy(
-                        highestMonth = data.highestIncomeMonth,
-                        highestCategory = data.highestIncomeCategory,
-                        highestDay = data.highestIncomeDay,
-                        averagePerDay = data.averageIncomePerDay,
-                        weeklyCategorySummary = data.weeklyIncomeCategorySummary,
-                        monthlyCategorySummary = data.monthlyIncomeCategorySummary
-                    )
-                    "Expenses" -> data
-                    "All" -> data.copy(
-                        highestMonth = data.highestMonth,
-                        highestCategory = data.highestCategory,
-                        highestDay = data.highestDay,
-                        averagePerDay = data.averagePerDay,
-                        weeklyCategorySummary = data.weeklyCategorySummary,
-                        monthlyCategorySummary = data.monthlyCategorySummary
-                    )
-                    else -> data
+                val highlights = when (selectedTab) {
+                    "Income" -> data.incomeHighlights
+                    "Expenses" -> data.expenseHighlights
+                    else -> { // "All"
+                        // TODO: combine income + expenses into a merged Highlights if needed
+                        data.expenseHighlights
+                    }
+                }
+
+                val categories = when (selectedTab) {
+                    "Income" -> data.incomeCategorySummary
+                    "Expenses" -> data.expenseCategorySummary
+                    else -> { // "All"
+                        // TODO: combine income + expenses categories if needed
+                        data.expenseCategorySummary
+                    }
                 }
 
                 // ---- Highlights ----
-                highlightData.highestMonth?.let { highestMonth ->
-                    highlightData.highestCategory?.let { highestCategory ->
-                        highlightData.highestDay?.let { highestDay ->
+                highlights.highestMonth?.let {
+                    highlights.highestCategory?.let {
+                        highlights.highestDay?.let {
                             SpendingHighlightsSection(
-                                highestMonth = highlightData.highestMonth,
-                                highestCategory = highlightData.highestCategory,
-                                highestDay = highlightData.highestDay,
-                                averagePerDay = highlightData.averagePerDay,
+                                highestMonth = highlights.highestMonth,
+                                highestCategory = highlights.highestCategory,
+                                highestDay = highlights.highestDay,
+                                averagePerDay = highlights.averagePerDay,
                                 tabType = selectedTab
                             )
                         }
@@ -125,15 +118,16 @@ fun StatisticsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ---- Category Totals Card (donut chart + list) ----
+                // ---- Category Totals Card ----
                 CategoryTotalsCardWithTabs(
-                    weeklySummary = highlightData.weeklyCategorySummary,
-                    monthlySummary = highlightData.monthlyCategorySummary
+                    weeklySummary = categories.weekly,
+                    monthlySummary = categories.monthly
                 )
             }
         }
     }
 }
+
 
 @Composable
 fun ScreenHeader(
