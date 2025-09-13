@@ -43,14 +43,13 @@ fun StatisticsScreen(
     var selectedTab by remember { mutableStateOf("Expenses") }
     var selectedPeriod by remember { mutableStateOf("week") }
     val scrollState = rememberScrollState()
-
     var selectedWeek by remember { mutableStateOf<String?>(null) }
 
-    // --- Collect state from ViewModel ---
     val highlights by viewModel.highlights.collectAsStateWithLifecycle()
     val availableWeeks by viewModel.availableWeeks.collectAsStateWithLifecycle()
+    val distributionResult by viewModel.distribution.collectAsStateWithLifecycle()
 
-    // --- Load data ---
+    // --- Load initial data ---
     LaunchedEffect(Unit) {
         viewModel.loadAvailableWeeks()
         viewModel.loadHighlights()
@@ -67,13 +66,20 @@ fun StatisticsScreen(
         }
     }
 
+    // Load distribution whenever selectedTab/selectedPeriod/selectedWeek changes
+    LaunchedEffect(selectedTab, selectedPeriod, selectedWeek) {
+        val type = if (selectedTab == "Income") "income" else "expense"
+        selectedWeek?.let { week ->
+            viewModel.loadDistribution(week, type = type)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
             .padding(bottom = 16.dp)
     ) {
-        // --- Top Tabs ---
         ScreenHeader(
             selectedTab = selectedTab,
             onTabSelected = { selectedTab = it }
@@ -81,7 +87,6 @@ fun StatisticsScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        // --- Highlights Section  ---
         SpendingHighlightsSection(
             tabType = selectedTab,
             highlightsResult = highlights,
@@ -90,12 +95,12 @@ fun StatisticsScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        // --- Category Totals Section  ---
         if (selectedPeriod == "week" && selectedWeek != null) {
             CategoryTotalsCardWithTabs(
                 tabType = selectedTab,
-                period = "week",
+                period = selectedPeriod,
                 value = selectedWeek!!,
+                distributionResult = distributionResult,
                 availableWeeks = availableWeeks,
                 onWeekSelected = { newWeek ->
                     selectedWeek = newWeek

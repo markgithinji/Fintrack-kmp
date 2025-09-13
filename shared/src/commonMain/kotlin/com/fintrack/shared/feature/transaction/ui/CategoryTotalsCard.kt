@@ -26,7 +26,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,9 +42,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.transaction.data.CategorySummary
+import com.fintrack.shared.feature.transaction.data.DistributionSummary
 import com.fintrack.shared.feature.transaction.data.Result
 
 // --- Segment Colors ---
@@ -61,23 +59,11 @@ val SegmentColors = listOf(
 fun CategoryTotalsCardWithTabs(
     tabType: String,
     period: String,
-    value: String, // <- now comes from parent
-    viewModel: TransactionViewModel = viewModel(),
+    value: String,
+    distributionResult: Result<DistributionSummary>,
     availableWeeks: List<String> = emptyList(),
     onWeekSelected: (String) -> Unit = {}
 ) {
-    // Load distribution when tab, period, or selected value changes
-    LaunchedEffect(tabType, period, value) {
-        val type = when (tabType) {
-            "Income" -> "income"
-            "Expenses" -> "expense"
-            else -> null
-        }
-        viewModel.loadDistribution(value, type = type)
-    }
-
-    val distributionResult by viewModel.distribution.collectAsStateWithLifecycle()
-
     when (distributionResult) {
         is Result.Loading -> Box(
             modifier = Modifier.fillMaxWidth(),
@@ -85,7 +71,7 @@ fun CategoryTotalsCardWithTabs(
         ) { CircularProgressIndicator() }
 
         is Result.Error -> {
-            val message = (distributionResult as Result.Error).exception.message ?: "Unknown error"
+            val message = distributionResult.exception.message ?: "Unknown error"
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -93,7 +79,7 @@ fun CategoryTotalsCardWithTabs(
         }
 
         is Result.Success -> {
-            val data = (distributionResult as Result.Success).data
+            val data = distributionResult.data
             val categories = when (tabType) {
                 "Income" -> data.incomeCategories
                 "Expenses" -> data.expenseCategories
@@ -103,7 +89,7 @@ fun CategoryTotalsCardWithTabs(
             val weeklyMap = if (period == "week") mapOf(data.period to categories) else emptyMap()
             val monthlyMap = if (period == "month") mapOf(data.period to categories) else emptyMap()
 
-            CategoryTotalsCardContent(
+            CategoryContent(
                 weeklySummary = weeklyMap,
                 monthlySummary = monthlyMap,
                 initialSelectedWeek = value,
@@ -115,9 +101,8 @@ fun CategoryTotalsCardWithTabs(
 }
 
 
-
 @Composable
-private fun CategoryTotalsCardContent(
+private fun CategoryContent(
     weeklySummary: Map<String, List<CategorySummary>>,
     monthlySummary: Map<String, List<CategorySummary>>,
     initialSelectedWeek: String? = null,
@@ -232,7 +217,6 @@ private fun CategoryTotalsCardContent(
 }
 
 
-
 @Composable
 fun CategoryList(
     categories: List<Pair<String, Float>>,
@@ -303,7 +287,6 @@ fun CategoryList(
 }
 
 
-
 @Composable
 fun WeekSelector(
     weeks: List<String>,
@@ -344,7 +327,6 @@ enum class TimeSpan(val displayName: String) {
     MONTH("Month"),
     YEAR("Year")
 }
-
 
 
 @Composable
