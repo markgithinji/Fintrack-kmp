@@ -53,12 +53,20 @@ class TransactionRepository(
 
     // --- Distribution summary ---
     suspend fun getDistributionSummary(
-        period: String, // "week" | "month"
-        value: String   // "2025-W37" | "2025-09"
+        weekOrMonthCode: String,       // e.g., "2025-W37" or "2025-09"
+        type: String? = null,          // "income" | "expense" | null
+        start: String? = null,         // optional "YYYY-MM-DD"
+        end: String? = null            // optional "YYYY-MM-DD"
     ): Result<DistributionSummary> = try {
-        val dto = api.getDistributionSummary(period, value)
+        val dto = api.getDistributionSummary(
+            weekOrMonthCode = weekOrMonthCode,
+            type = type,
+            start = start,
+            end = end
+        )
         Result.Success(dto.toDomain())
     } catch (e: Exception) {
         Result.Error(e)
     }
+
 }

@@ -111,12 +111,27 @@ class TransactionViewModel : ViewModel() {
     }
 
     // --- Load distribution summary (on-demand by period + value) ---
-    fun loadDistribution(period: String, value: String) {
+    fun loadDistribution(
+        weekOrMonthCode: String,     // actual week or month string
+        type: String? = null,        // "income", "expense", or null
+        start: String? = null,       // optional
+        end: String? = null          // optional
+    ) {
         viewModelScope.launch {
             _distribution.value = Result.Loading
-            _distribution.value = repo.getDistributionSummary(period, value)
+            try {
+                // repo.getDistributionSummary already returns Result<DistributionSummary>
+                val result: Result<DistributionSummary> =
+                    repo.getDistributionSummary(weekOrMonthCode, type, start, end)
+
+                _distribution.value = result
+            } catch (e: Exception) {
+                _distribution.value = Result.Error(e)
+            }
         }
     }
+
+
 }
 
 
