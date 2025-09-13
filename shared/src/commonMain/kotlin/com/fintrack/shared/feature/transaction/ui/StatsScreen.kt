@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -44,65 +45,70 @@ val SegmentColor3 = Color(0xFF457B9D)   // Vibrant blue
 val SegmentColor4 = Color(0xFFF4A261)   // Warm orange
 val SegmentColor5 = Color(0xFF2A9D8F)   // Teal / turquoise
 
-
 @Composable
 fun StatisticsScreen(
     viewModel: TransactionViewModel = viewModel()
 ) {
-    var selectedTab by remember { mutableStateOf("Expenses") } // "Income" or "Expenses"
-    var selectedPeriod by remember { mutableStateOf("week") }   // "week" or "month"
-    var selectedValue by remember { mutableStateOf<String?>(null) } // week or month code/id
+    var selectedTab by remember { mutableStateOf("Expenses") }
+    var selectedPeriod by remember { mutableStateOf("week") }
+    val scrollState = rememberScrollState()
 
-    // --- Load available weeks on first composition ---
-    LaunchedEffect(Unit) {
-        viewModel.loadAvailableWeeks()
-    }
+    var selectedWeek by remember { mutableStateOf<String?>(null) }
 
+    // --- Load available weeks ---
+    LaunchedEffect(Unit) { viewModel.loadAvailableWeeks() }
     val availableWeeks by viewModel.availableWeeks.collectAsStateWithLifecycle()
+
+    // Set default week if null
+    LaunchedEffect(availableWeeks) {
+        if (selectedWeek == null && availableWeeks.isNotEmpty()) {
+            selectedWeek = availableWeeks.first()
+            viewModel.selectWeek(
+                selectedWeek!!,
+                type = if (selectedTab == "Income") "income" else "expense"
+            )
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(bottom = 16.dp)
     ) {
         // --- Top Tabs ---
         ScreenHeader(selectedTab = selectedTab, onTabSelected = { selectedTab = it })
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
         // --- Highlights Section ---
-        SpendingHighlightsSection(
-            tabType = selectedTab,
-            viewModel = viewModel
-        )
+        SpendingHighlightsSection(tabType = selectedTab, viewModel = viewModel)
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
         // --- Category Totals Section ---
-        if (selectedPeriod == "week") {
-            // Set default selectedValue to first week if null
-            val currentWeek = selectedValue ?: availableWeeks.firstOrNull()
-            selectedValue = currentWeek
-
-            currentWeek?.let { week ->
+        if (selectedPeriod == "week" && selectedWeek != null) {
+            // Only this block recomposes when selectedWeek changes
+            key(selectedWeek) {
                 CategoryTotalsCardWithTabs(
                     tabType = selectedTab,
                     period = "week",
-                    value = week,
+                    value = selectedWeek!!,
                     viewModel = viewModel,
                     availableWeeks = availableWeeks,
                     onWeekSelected = { newWeek ->
-                        selectedValue = newWeek
-                        viewModel.selectWeek(newWeek, type = if (selectedTab == "Income") "income" else "expense")
+                        selectedWeek = newWeek
+                        viewModel.selectWeek(
+                            newWeek,
+                            type = if (selectedTab == "Income") "income" else "expense"
+                        )
                     }
                 )
             }
-        } else {
-            // TODO: handle monthly view
         }
     }
 }
+
 
 
 

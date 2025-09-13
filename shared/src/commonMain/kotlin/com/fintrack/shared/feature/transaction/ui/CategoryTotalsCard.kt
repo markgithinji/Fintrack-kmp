@@ -56,27 +56,24 @@ val SegmentColors = listOf(
     Color(0xFF76B7B2), // Teal
     Color(0xFFFF9DA7)  // Pink / Others
 )
+
 @Composable
 fun CategoryTotalsCardWithTabs(
     tabType: String,
     period: String,
-    value: String,
+    value: String, // <- now comes from parent
     viewModel: TransactionViewModel = viewModel(),
     availableWeeks: List<String> = emptyList(),
     onWeekSelected: (String) -> Unit = {}
 ) {
-
-    // Load distribution on parameter change
+    // Load distribution when tab, period, or selected value changes
     LaunchedEffect(tabType, period, value) {
         val type = when (tabType) {
             "Income" -> "income"
             "Expenses" -> "expense"
             else -> null
         }
-        viewModel.loadDistribution(
-            weekOrMonthCode = value,
-            type = type
-        )
+        viewModel.loadDistribution(value, type = type)
     }
 
     val distributionResult by viewModel.distribution.collectAsStateWithLifecycle()
@@ -97,7 +94,6 @@ fun CategoryTotalsCardWithTabs(
 
         is Result.Success -> {
             val data = (distributionResult as Result.Success).data
-
             val categories = when (tabType) {
                 "Income" -> data.incomeCategories
                 "Expenses" -> data.expenseCategories
@@ -110,15 +106,13 @@ fun CategoryTotalsCardWithTabs(
             CategoryTotalsCardContent(
                 weeklySummary = weeklyMap,
                 monthlySummary = monthlyMap,
-                initialSelectedWeek = weeklyMap.keys.firstOrNull(),
-                initialSelectedMonth = monthlyMap.keys.firstOrNull(),
+                initialSelectedWeek = value,
                 availableWeeks = availableWeeks,
                 onWeekSelected = onWeekSelected
             )
         }
     }
 }
-
 
 
 
