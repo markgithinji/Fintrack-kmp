@@ -146,7 +146,7 @@ fun SpendingHighlightsSection(
                         title = "Average Per Day",
                         value = formatCurrencyKmp(average),
                         description = dailyLabel,
-                        backgroundColor = SegmentColor1,
+                        backgroundColor = SegmentColor2,
                         titleColor = Color.White,
                         valueColor = Color.White,
                         contentSpacing = 8.dp
@@ -171,7 +171,7 @@ fun HighlightCard(
     contentSpacing: Dp = 4.dp
 ) {
     Card(
-        modifier = modifier.height(120.dp),
+        modifier = modifier.height(100.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor)
     ) {

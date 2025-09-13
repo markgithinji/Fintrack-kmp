@@ -30,11 +30,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 // Chart segments
-val SegmentColor1 = Color(0xFFE63946)   // Strong red
-val SegmentColor2 = Color(0xFFF1FAEE)   // Soft off-white / mint
-val SegmentColor3 = Color(0xFF457B9D)   // Vibrant blue
-val SegmentColor4 = Color(0xFFF4A261)   // Warm orange
-val SegmentColor5 = Color(0xFF2A9D8F)   // Teal / turquoise
+val SegmentColor1 = Color(0xFFE63946) // Strong red
+val SegmentColor2 = Color(0xFF228B22) // Forest Green
+val SegmentColor3 = Color(0xFF457B9D) // Vibrant blue
+val SegmentColor4 = Color(0xFFF4A261) // Warm orange
+val SegmentColor5 = Color(0xFF2A9D8F) // Teal / turquoise
 
 @Composable
 fun StatisticsScreen(
