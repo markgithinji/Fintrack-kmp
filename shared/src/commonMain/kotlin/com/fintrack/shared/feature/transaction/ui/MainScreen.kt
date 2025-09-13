@@ -40,7 +40,7 @@ fun MainScreen() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = Screen.Statistics.route,
             modifier = Modifier
                 .padding(paddingValues)
         ) {

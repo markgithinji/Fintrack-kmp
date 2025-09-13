@@ -46,8 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fintrack.shared.feature.transaction.data.HighlightsSummary
 import com.fintrack.shared.feature.transaction.data.Result
-import com.fintrack.shared.feature.transaction.data.Summary
 import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.LocalDate
 
@@ -58,11 +58,11 @@ val PinkExpense = Color(0xFFE27C94) // pinkish-red for expense
 
 @Composable
 fun IncomeTrackerContent(viewModel: TransactionViewModel = viewModel()) {
-    val summaryResult by viewModel.summary.collectAsStateWithLifecycle()
+    val summaryResult by viewModel.highlights.collectAsStateWithLifecycle()
     val transactionsResult by viewModel.recentTransactions.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.loadSummary()
+        viewModel.loadHighlights()
         viewModel.loadRecentTransactions()
     }
 
@@ -82,7 +82,7 @@ fun IncomeTrackerContent(viewModel: TransactionViewModel = viewModel()) {
 
 
 @Composable
-fun CurrentBalanceCard(summaryResult: Result<Summary>) {
+fun CurrentBalanceCard(summaryResult: Result<HighlightsSummary>) {
     when (summaryResult) {
         is Result.Loading -> {
             Box(
@@ -199,7 +199,7 @@ fun CurrentBalanceCard(summaryResult: Result<Summary>) {
 
 
 @Composable
-fun IncomeExpenseCards(summaryResult: Result<Summary>) {
+fun IncomeExpenseCards(summaryResult: Result<HighlightsSummary>) {
     when (summaryResult) {
         is Result.Loading -> {
             Row(

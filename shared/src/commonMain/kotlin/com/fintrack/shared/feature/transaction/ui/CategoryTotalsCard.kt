@@ -10,15 +10,23 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,7 +43,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.transaction.data.CategorySummary
+import com.fintrack.shared.feature.transaction.data.Result
 
 // --- Segment Colors ---
 val SegmentColors = listOf(
@@ -45,14 +56,65 @@ val SegmentColors = listOf(
     Color(0xFF76B7B2), // Teal
     Color(0xFFFF9DA7)  // Pink / Others
 )
-
 @Composable
 fun CategoryTotalsCardWithTabs(
+    tabType: String,               // "Income" or "Expenses"
+    period: String,                // "week" or "month"
+    value: String,                 // week code or month id
+    viewModel: TransactionViewModel = viewModel()
+) {
+
+    LaunchedEffect(tabType, period, value) {
+        viewModel.loadDistribution(period = period, value = value)
+    }
+
+    val distributionResult by viewModel.distribution.collectAsStateWithLifecycle()
+
+    when (distributionResult) {
+        is Result.Loading -> Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) { CircularProgressIndicator() }
+
+        is Result.Error -> {
+            val message = (distributionResult as Result.Error).exception.message ?: "Unknown error"
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) { Text("Error: $message", color = Color.Red) }
+        }
+
+        is Result.Success -> {
+            val data = (distributionResult as Result.Success).data
+
+            // --- Prepare categories based on tab ---
+            val categories = when (tabType) {
+                "Income" -> data.incomeCategories
+                "Expenses" -> data.expenseCategories
+                else -> data.incomeCategories + data.expenseCategories
+            }
+
+            // --- Build maps for period selectors ---
+            val weeklyMap = if (data.period.contains("W")) mapOf(data.period to categories) else emptyMap()
+            val monthlyMap = if (!data.period.contains("W")) mapOf(data.period to categories) else emptyMap()
+
+            CategoryTotalsCardContent(
+                weeklySummary = weeklyMap,
+                monthlySummary = monthlyMap
+            )
+        }
+    }
+}
+
+@Composable
+private fun CategoryTotalsCardContent(
     weeklySummary: Map<String, List<CategorySummary>>,
     monthlySummary: Map<String, List<CategorySummary>>,
     title: String = "Spending Distribution"
 ) {
     var selectedTab by remember { mutableStateOf(TimeSpan.WEEK) }
+    var selectedWeek by remember { mutableStateOf(weeklySummary.keys.firstOrNull()) }
+    var selectedMonth by remember { mutableStateOf(monthlySummary.keys.firstOrNull()) }
 
     Column(
         modifier = Modifier
@@ -95,44 +157,53 @@ fun CategoryTotalsCardWithTabs(
             }
         }
 
+        // --- Period selector ---
+        if (selectedTab == TimeSpan.WEEK && weeklySummary.isNotEmpty()) {
+            WeekSelector(
+                weeks = weeklySummary.keys.toList(),
+                selectedWeek = selectedWeek,
+                onWeekSelected = { selectedWeek = it }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+        if (selectedTab == TimeSpan.MONTH && monthlySummary.isNotEmpty()) {
+            WeekSelector(
+                weeks = monthlySummary.keys.toList(),
+                selectedWeek = selectedMonth,
+                onWeekSelected = { selectedMonth = it }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
         // --- Prepare category data ---
         val categories: List<CategorySummary> = when (selectedTab) {
-            TimeSpan.WEEK -> weeklySummary.values.flatten()
-            TimeSpan.MONTH -> monthlySummary.values.flatten()
+            TimeSpan.WEEK -> selectedWeek?.let { weeklySummary[it] } ?: emptyList()
+            TimeSpan.MONTH -> selectedMonth?.let { monthlySummary[it] } ?: emptyList()
             TimeSpan.YEAR -> monthlySummary.values.flatten()
         }
 
-        val totalAmount = categories.sumOf { it.total }
-
-        val categorySums: List<Pair<String, Float>> = if (selectedTab == TimeSpan.YEAR) {
-            categories.groupBy { it.category }
-                .map { (cat, list) -> cat to list.sumOf { it.total }.toFloat() }
-        } else {
-            categories.map { it.category to it.total.toFloat() }
-        }
+        val totalAmount = categories.sumOf { it.total }.toFloat()
+        val categorySums = categories.map { it.category to it.total.toFloat() }
 
         // --- Top 4 + "Others" for chart ---
         val sortedForChart = categorySums.sortedByDescending { it.second }
         val topForChart = sortedForChart.take(4).toMutableList()
         val othersTotal = sortedForChart.drop(4).sumOf { it.second.toDouble() }.toFloat()
         if (othersTotal > 0f) topForChart.add("Others" to othersTotal)
-        val chartData = topForChart
 
-        /// --- Donut chart ---
+        // --- Donut chart ---
         if (categorySums.isNotEmpty()) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                // --- Assign colors for top 4 + "Others" ---
-                val chartColors = chartData.mapIndexed { index, _ ->
+                val chartColors = topForChart.mapIndexed { index, _ ->
                     if (index < 4) SegmentColors[index] else SegmentColors.last()
                 }
 
                 SimpleDonutChart(
-                    categorySums = chartData.map { it.first to it.second.toDouble() },
-                    totalAmount = totalAmount,
+                    categorySums = topForChart.map { it.first to it.second.toDouble() },
+                    totalAmount = totalAmount.toDouble(),
                     chartSize = 250.dp,
                     gapPercentage = 0.02f,
                     segmentColors = chartColors
@@ -140,74 +211,125 @@ fun CategoryTotalsCardWithTabs(
             }
         }
 
-// --- List of all categories (descending) with colored icon ---
-        val sortedCategorySums = categorySums.sortedByDescending { it.second }
+        Spacer(modifier = Modifier.height(16.dp))
 
-// Map each category in sortedCategorySums to its chart color
-        val categoryColors = sortedCategorySums.map { category ->
-            val chartIndex = chartData.indexOfFirst { it.first == category.first }
-            if (chartIndex in 0..3) SegmentColors[chartIndex]
-            else SegmentColors.last() // "Others"
-        }
+        // --- Category list ---
+        CategoryList(
+            categories = categorySums,
+            totalAmount = totalAmount,
+            segmentColors = SegmentColors
+        )
+    }
+}
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF4F4F4))
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                sortedCategorySums.forEachIndexed { index, (categoryName, amount) ->
-                    val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
-                    Row(
+
+
+@Composable
+fun CategoryList(
+    categories: List<Pair<String, Float>>,
+    totalAmount: Float,
+    segmentColors: List<Color>
+) {
+    val sortedCategorySums = categories.sortedByDescending { it.second }
+    val categoryColors = sortedCategorySums.map { category ->
+        val chartIndex = categories.indexOfFirst { it.first == category.first }
+        if (chartIndex in 0..3) segmentColors[chartIndex] else segmentColors.last()
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF4F4F4))
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            sortedCategorySums.forEachIndexed { index, (categoryName, amount) ->
+                val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Colored circle icon matching chart
-                        Box(
-                            modifier = Modifier
-                                .size(12.dp)
-                                .background(
-                                    color = categoryColors[index],
-                                    shape = CircleShape
-                                )
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        Text(
-                            text = categoryName,
-                            fontSize = 14.sp,
-                            color = Color.DarkGray,
-                            modifier = Modifier.width(160.dp)
-                        )
-
-                        Box(
-                            modifier = Modifier.width(100.dp),
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            Text(
-                                text = formatCurrencyKmp(amount.toDouble()),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black
+                            .size(12.dp)
+                            .background(
+                                color = categoryColors[index],
+                                shape = CircleShape
                             )
-                        }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
 
-                        Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = categoryName,
+                        fontSize = 14.sp,
+                        color = Color.DarkGray,
+                        modifier = Modifier.width(160.dp)
+                    )
 
+                    Box(
+                        modifier = Modifier.width(100.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
                         Text(
-                            text = "($percent%)",
+                            text = formatCurrencyKmp(amount.toDouble()),
                             fontSize = 14.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = Color.DarkGray.copy(alpha = 0.8f)
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
                         )
                     }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = "($percent%)",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.DarkGray.copy(alpha = 0.8f)
+                    )
                 }
             }
         }
     }
 }
+
+
+
+@Composable
+fun WeekSelector(
+    weeks: List<String>,
+    selectedWeek: String?,
+    onWeekSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color.LightGray.copy(alpha = 0.2f))
+                .clickable { expanded = true }
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(selectedWeek ?: "Select Week")
+            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+        }
+
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            weeks.forEach { week ->
+                DropdownMenuItem(
+                    text = { Text(week) },
+                    onClick = {
+                        onWeekSelected(week)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
 
 @Composable
 fun SimpleDonutChart(

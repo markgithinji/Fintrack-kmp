@@ -49,10 +49,9 @@ val SegmentColor5 = Color(0xFF2A9D8F)   // Teal / turquoise
 fun StatisticsScreen(
     viewModel: TransactionViewModel = viewModel()
 ) {
-    val summaryResult by viewModel.summary.collectAsStateWithLifecycle()
-    var selectedTab by remember { mutableStateOf("Expenses") }
-
-    LaunchedEffect(Unit) { viewModel.loadSummary() }
+    var selectedTab by remember { mutableStateOf("Expenses") } // "Income" or "Expenses"
+    var selectedPeriod by remember { mutableStateOf("week") }   // "week" or "month"
+    var selectedValue by remember { mutableStateOf("2025-W37") } // week or month code/id
 
     Column(
         modifier = Modifier
@@ -60,71 +59,26 @@ fun StatisticsScreen(
             .verticalScroll(rememberScrollState())
             .padding(bottom = 16.dp)
     ) {
+        // --- Top Tabs ---
         ScreenHeader(selectedTab = selectedTab, onTabSelected = { selectedTab = it })
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        when (summaryResult) {
-            is Result.Loading -> Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) { CircularProgressIndicator() }
+        // --- Highlights Section ---
+        SpendingHighlightsSection(
+            tabType = selectedTab,
+            viewModel = viewModel // internally handles loading/error/success
+        )
 
-            is Result.Error -> {
-                val message = (summaryResult as Result.Error).exception.message ?: "Unknown error"
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Error: $message", color = Color.Red)
-                }
-            }
+        Spacer(modifier = Modifier.height(16.dp))
 
-            is Result.Success -> {
-                val data = (summaryResult as Result.Success).data
-
-                val highlights = when (selectedTab) {
-                    "Income" -> data.incomeHighlights
-                    "Expenses" -> data.expenseHighlights
-                    else -> { // "All"
-                        // TODO: combine income + expenses into a merged Highlights if needed
-                        data.expenseHighlights
-                    }
-                }
-
-                val categories = when (selectedTab) {
-                    "Income" -> data.incomeCategorySummary
-                    "Expenses" -> data.expenseCategorySummary
-                    else -> { // "All"
-                        // TODO: combine income + expenses categories if needed
-                        data.expenseCategorySummary
-                    }
-                }
-
-                // ---- Highlights ----
-                highlights.highestMonth?.let {
-                    highlights.highestCategory?.let {
-                        highlights.highestDay?.let {
-                            SpendingHighlightsSection(
-                                highestMonth = highlights.highestMonth,
-                                highestCategory = highlights.highestCategory,
-                                highestDay = highlights.highestDay,
-                                averagePerDay = highlights.averagePerDay,
-                                tabType = selectedTab
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // ---- Category Totals Card ----
-                CategoryTotalsCardWithTabs(
-                    weeklySummary = categories.weekly,
-                    monthlySummary = categories.monthly
-                )
-            }
-        }
+        // --- Category Totals Section ---
+        CategoryTotalsCardWithTabs(
+            tabType = selectedTab,
+            period = selectedPeriod,
+            value = selectedValue,
+            viewModel = viewModel // internally handles loading/error/success
+        )
     }
 }
 
@@ -175,97 +129,126 @@ fun TabItem(
 
 
 // ---- Highlight Section ----
-
 @Composable
 fun SpendingHighlightsSection(
-    highestMonth: Highlight,
-    highestCategory: Highlight,
-    highestDay: Highlight,
-    averagePerDay: Double,
+    viewModel: TransactionViewModel = viewModel(),
     tabType: String // "Income", "Expenses", or "All"
 ) {
-    val amountSuffix = when (tabType) {
-        "Income" -> "received"
-        "Expenses" -> "spent"
-        "All" -> "total"
-        else -> ""
-    }
-    val dailyLabel = when (tabType) {
-        "Income" -> "Daily Income"
-        "Expenses" -> "Daily Spending"
-        "All" -> "Daily Total"
-        else -> ""
+    val highlightsResult by viewModel.highlights.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadHighlights()
     }
 
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Text(
-            text = when(tabType) {
-                "Income" -> "Income Highlights"
-                "Expenses" -> "Spending Highlights"
-                "All" -> "Summary Highlights"
-                else -> "Highlights"
-            },
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
+    when (val highlights = highlightsResult) {
+        is Result.Loading -> Box(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            val monthDisplay = highestMonth.value.toMonthName()
-            HighlightCard(
-                modifier = Modifier.weight(1f),
-                title = "Highest Month",
-                value = monthDisplay,
-                description = "${formatCurrencyKmp(highestMonth.amount)} $amountSuffix",
-                backgroundColor = SegmentColor3,
-                titleColor = Color.White,
-                valueColor = Color.White,
-                contentSpacing = 8.dp
-            )
-            HighlightCard(
-                modifier = Modifier.weight(1f),
-                title = "Top Category",
-                value = highestCategory.value,
-                description = "${formatCurrencyKmp(highestCategory.amount)} $amountSuffix",
-                backgroundColor = SegmentColor4,
-                titleColor = Color.White,
-                valueColor = Color.White,
-                contentSpacing = 8.dp
-            )
-        }
+            contentAlignment = Alignment.Center
+        ) { CircularProgressIndicator() }
 
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
+        is Result.Error -> Box(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            HighlightCard(
-                modifier = Modifier.weight(1f),
-                title = "Highest Daily",
-                value = highestDay.value.toFormattedDate(),
-                description = "${formatCurrencyKmp(highestDay.amount)} $amountSuffix",
-                backgroundColor = SegmentColor5,
-                titleColor = Color.White,
-                valueColor = Color.White,
-                contentSpacing = 8.dp
-            )
+            contentAlignment = Alignment.Center
+        ) { Text("Error: ${highlights.exception.message ?: "Unknown"}", color = Color.Red) }
 
-            HighlightCard(
-                modifier = Modifier.weight(1f),
-                title = "Average Per Day",
-                value = formatCurrencyKmp(averagePerDay),
-                description = dailyLabel,
-                backgroundColor = SegmentColor1,
-                titleColor = Color.White,
-                valueColor = Color.White,
-                contentSpacing = 8.dp
-            )
+        is Result.Success -> {
+            val data = highlights.data
+            val summaryHighlights = when (tabType) {
+                "Income" -> data.incomeHighlights
+                "Expenses" -> data.expenseHighlights
+                else -> data.expenseHighlights // TODO: merge later
+            }
+
+            // Provide defaults if null
+            val month = summaryHighlights.highestMonth ?: Highlight("", "", 0.0)
+            val category = summaryHighlights.highestCategory ?: Highlight("", "", 0.0)
+            val day = summaryHighlights.highestDay ?: Highlight("", "", 0.0)
+            val average = summaryHighlights.averagePerDay
+
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                Text(
+                    text = when(tabType) {
+                        "Income" -> "Income Highlights"
+                        "Expenses" -> "Spending Highlights"
+                        "All" -> "Summary Highlights"
+                        else -> "Highlights"
+                    },
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                val amountSuffix = when(tabType) {
+                    "Income" -> "received"
+                    "Expenses" -> "spent"
+                    "All" -> "total"
+                    else -> ""
+                }
+                val dailyLabel = when(tabType) {
+                    "Income" -> "Daily Income"
+                    "Expenses" -> "Daily Spending"
+                    "All" -> "Daily Total"
+                    else -> ""
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    HighlightCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Highest Month",
+                        value = month.value.toMonthName(),
+                        description = "${formatCurrencyKmp(month.amount)} $amountSuffix",
+                        backgroundColor = SegmentColor3,
+                        titleColor = Color.White,
+                        valueColor = Color.White,
+                        contentSpacing = 8.dp
+                    )
+                    HighlightCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Top Category",
+                        value = category.value,
+                        description = "${formatCurrencyKmp(category.amount)} $amountSuffix",
+                        backgroundColor = SegmentColor4,
+                        titleColor = Color.White,
+                        valueColor = Color.White,
+                        contentSpacing = 8.dp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    HighlightCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Highest Daily",
+                        value = day.value.toFormattedDate(),
+                        description = "${formatCurrencyKmp(day.amount)} $amountSuffix",
+                        backgroundColor = SegmentColor5,
+                        titleColor = Color.White,
+                        valueColor = Color.White,
+                        contentSpacing = 8.dp
+                    )
+
+                    HighlightCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Average Per Day",
+                        value = formatCurrencyKmp(average),
+                        description = dailyLabel,
+                        backgroundColor = SegmentColor1,
+                        titleColor = Color.White,
+                        valueColor = Color.White,
+                        contentSpacing = 8.dp
+                    )
+                }
+            }
         }
     }
 }
+
 
 @Composable
 fun HighlightCard(

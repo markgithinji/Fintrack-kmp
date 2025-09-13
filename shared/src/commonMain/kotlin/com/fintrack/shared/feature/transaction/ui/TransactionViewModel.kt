@@ -2,8 +2,9 @@ package com.fintrack.shared.feature.transaction.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fintrack.shared.feature.transaction.data.DistributionSummary
+import com.fintrack.shared.feature.transaction.data.HighlightsSummary
 import com.fintrack.shared.feature.transaction.data.Result
-import com.fintrack.shared.feature.transaction.data.Summary
 import com.fintrack.shared.feature.transaction.data.TransactionApi
 import com.fintrack.shared.feature.transaction.data.TransactionRepository
 import com.fintrack.shared.feature.transaction.model.Transaction
@@ -14,26 +15,28 @@ import kotlinx.coroutines.launch
 class TransactionViewModel : ViewModel() {
     private val repo = TransactionRepository(TransactionApi())
 
-    // Transactions state (full list / paginated)
+    // --- Transactions state (full list / paginated) ---
     private val _transactions = MutableStateFlow<Result<List<Transaction>>>(Result.Loading)
     val transactions: StateFlow<Result<List<Transaction>>> = _transactions
-
-    // Keep track of pagination cursor
     private var nextCursor: String? = null
 
-    // Recent transactions (e.g. dashboard preview)
+    // --- Recent transactions (dashboard preview) ---
     private val _recentTransactions = MutableStateFlow<Result<List<Transaction>>>(Result.Loading)
     val recentTransactions: StateFlow<Result<List<Transaction>>> = _recentTransactions
 
-    // Save transaction state
+    // --- Save transaction state ---
     private val _saveResult = MutableStateFlow<Result<Transaction>?>(null)
     val saveResult: StateFlow<Result<Transaction>?> = _saveResult
 
-    // Summary state
-    private val _summary = MutableStateFlow<Result<Summary>>(Result.Loading)
-    val summary: StateFlow<Result<Summary>> = _summary
+    // --- Highlights state ---
+    private val _highlights = MutableStateFlow<Result<HighlightsSummary>>(Result.Loading)
+    val highlights: StateFlow<Result<HighlightsSummary>> = _highlights
 
+    // --- Distribution state ---
+    private val _distribution = MutableStateFlow<Result<DistributionSummary>>(Result.Loading)
+    val distribution: StateFlow<Result<DistributionSummary>> = _distribution
 
+    // --- Add transaction ---
     fun addTransaction(transaction: Transaction) {
         viewModelScope.launch {
             _saveResult.value = Result.Loading
@@ -43,7 +46,6 @@ class TransactionViewModel : ViewModel() {
                         is Result.Success -> (_transactions.value as Result.Success).data
                         else -> emptyList()
                     }
-                    // Update transactions list with new item
                     _transactions.value = Result.Success(currentList + result.data)
                 }
             }
@@ -54,9 +56,7 @@ class TransactionViewModel : ViewModel() {
         _saveResult.value = null
     }
 
-    /**
-     * Initial load / refresh of transactions (page 1).
-     */
+    // --- Refresh / first page ---
     fun refresh(
         limit: Int = 20,
         sortBy: String = "date",
@@ -64,81 +64,59 @@ class TransactionViewModel : ViewModel() {
     ) {
         viewModelScope.launch {
             _transactions.value = Result.Loading
-            val result = repo.getTransactions(
-                limit = limit,
-                sortBy = sortBy,
-                order = order
-            )
+            val result = repo.getTransactions(limit, sortBy, order)
 
-            if (result is Result.Success) {
-                val (list, cursor) = result.data
-                nextCursor = cursor
-                _transactions.value = Result.Success(list)
-            } else if (result is Result.Error) {
-                println("Failed to refresh transactions: ${result.exception.message}")
-                result.exception.printStackTrace()
-                _transactions.value = result
+            _transactions.value = when (result) {
+                is Result.Success -> {
+                    val (list, cursor) = result.data
+                    nextCursor = cursor
+                    Result.Success(list)
+                }
+                is Result.Error -> Result.Error(result.exception)
+                Result.Loading -> Result.Loading
             }
         }
     }
 
-
-    /**
-     * Load the next page of transactions using cursor.
-     */
-    fun loadMore(
-        limit: Int = 20,
-        sortBy: String = "date",
-        order: String = "DESC"
-    ) {
-        val cursor = nextCursor ?: return // nothing to load
-        val (afterDate, afterId) = cursor.split("|").let {
-            it[0] to it[1].toInt()
-        }
+    // --- Load next page ---
+    fun loadMore(limit: Int = 20, sortBy: String = "date", order: String = "DESC") {
+        val cursor = nextCursor ?: return
+        val (afterDate, afterId) = cursor.split("|").let { it[0] to it[1].toInt() }
 
         viewModelScope.launch {
-            val result = repo.getTransactions(
-                limit = limit,
-                sortBy = sortBy,
-                order = order,
-                afterDate = afterDate,
-                afterId = afterId
-            )
-
+            val result = repo.getTransactions(limit, sortBy, order, afterDate, afterId)
             if (result is Result.Success) {
                 val (list, cursorNext) = result.data
                 nextCursor = cursorNext
-                val current = when (_transactions.value) {
-                    is Result.Success -> (_transactions.value as Result.Success).data
-                    else -> emptyList()
-                }
+                val current = (transactions.value as? Result.Success)?.data ?: emptyList()
                 _transactions.value = Result.Success(current + list)
-            } else {
-                println("Failed to load more: ${(result as? Result.Error)?.exception?.message}")
             }
         }
     }
 
-    /**
-     * Load only the most recent 6 transactions.
-     */
+    // --- Load recent transactions (6 latest) ---
     fun loadRecentTransactions() {
         viewModelScope.launch {
             _recentTransactions.value = Result.Loading
-            val result = repo.getRecentTransactions()
-            if (result is Result.Error) {
-                println("Failed to load recent transactions: ${result.exception.message}")
-                result.exception.printStackTrace()
-            }
-            _recentTransactions.value = result
+            _recentTransactions.value = repo.getRecentTransactions()
         }
     }
 
-    fun loadSummary() {
+    // --- Load highlights summary ---
+    fun loadHighlights() {
         viewModelScope.launch {
-            _summary.value = Result.Loading
-            _summary.value = repo.getSummary()
+            _highlights.value = Result.Loading
+            _highlights.value = repo.getHighlightsSummary()
+        }
+    }
+
+    // --- Load distribution summary (on-demand by period + value) ---
+    fun loadDistribution(period: String, value: String) {
+        viewModelScope.launch {
+            _distribution.value = Result.Loading
+            _distribution.value = repo.getDistributionSummary(period, value)
         }
     }
 }
+
 
