@@ -27,30 +27,37 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.transaction.data.Highlight
+import com.fintrack.shared.feature.transaction.data.HighlightsSummary
 import com.fintrack.shared.feature.transaction.data.Result
-
 
 @Composable
 fun SpendingHighlightsSection(
-    viewModel: TransactionViewModel = viewModel(),
-    tabType: String // "Income", "Expenses", or "All"
+    tabType: String, // "Income", "Expenses", or "All"
+    highlightsResult: Result<HighlightsSummary>,
+    loadHighlights: () -> Unit
 ) {
-    val highlightsResult by viewModel.highlights.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.loadHighlights()
+        loadHighlights()
     }
 
     when (val highlights = highlightsResult) {
-        is com.fintrack.shared.feature.transaction.data.Result.Loading -> Box(
+        is Result.Loading -> Box(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center
-        ) { CircularProgressIndicator() }
+        ) {
+            CircularProgressIndicator()
+        }
 
-        is com.fintrack.shared.feature.transaction.data.Result.Error -> Box(
+        is Result.Error -> Box(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center
-        ) { Text("Error: ${highlights.exception.message ?: "Unknown"}", color = Color.Red) }
+        ) {
+            Text(
+                text = "Error: ${highlights.exception.message ?: "Unknown"}",
+                color = Color.Red
+            )
+        }
 
         is Result.Success -> {
             val data = highlights.data
@@ -149,6 +156,7 @@ fun SpendingHighlightsSection(
         }
     }
 }
+
 
 
 @Composable

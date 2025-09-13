@@ -14,9 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,18 +21,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.fintrack.shared.feature.transaction.data.Highlight
-import com.fintrack.shared.feature.transaction.data.Result
 
 // Chart segments
 val SegmentColor1 = Color(0xFFE63946)   // Strong red
@@ -54,9 +46,15 @@ fun StatisticsScreen(
 
     var selectedWeek by remember { mutableStateOf<String?>(null) }
 
-    // --- Load available weeks ---
-    LaunchedEffect(Unit) { viewModel.loadAvailableWeeks() }
+    // --- Collect state from ViewModel ---
+    val highlights by viewModel.highlights.collectAsStateWithLifecycle()
     val availableWeeks by viewModel.availableWeeks.collectAsStateWithLifecycle()
+
+    // --- Load data ---
+    LaunchedEffect(Unit) {
+        viewModel.loadAvailableWeeks()
+        viewModel.loadHighlights()
+    }
 
     // Set default week if null
     LaunchedEffect(availableWeeks) {
@@ -76,22 +74,28 @@ fun StatisticsScreen(
             .padding(bottom = 16.dp)
     ) {
         // --- Top Tabs ---
-        ScreenHeader(selectedTab = selectedTab, onTabSelected = { selectedTab = it })
+        ScreenHeader(
+            selectedTab = selectedTab,
+            onTabSelected = { selectedTab = it }
+        )
 
         Spacer(Modifier.height(16.dp))
 
-        // --- Highlights Section ---
-        SpendingHighlightsSection(tabType = selectedTab, viewModel = viewModel)
+        // --- Highlights Section  ---
+        SpendingHighlightsSection(
+            tabType = selectedTab,
+            highlightsResult = highlights,
+            loadHighlights = { viewModel.loadHighlights() }
+        )
 
         Spacer(Modifier.height(16.dp))
 
-        // --- Category Totals Section ---
+        // --- Category Totals Section  ---
         if (selectedPeriod == "week" && selectedWeek != null) {
             CategoryTotalsCardWithTabs(
                 tabType = selectedTab,
                 period = "week",
                 value = selectedWeek!!,
-                viewModel = viewModel,
                 availableWeeks = availableWeeks,
                 onWeekSelected = { newWeek ->
                     selectedWeek = newWeek
