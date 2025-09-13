@@ -36,6 +36,10 @@ class TransactionViewModel : ViewModel() {
     private val _distribution = MutableStateFlow<Result<DistributionSummary>>(Result.Loading)
     val distribution: StateFlow<Result<DistributionSummary>> = _distribution
 
+    // --- Available weeks state ---
+    private val _availableWeeks = MutableStateFlow<List<String>>(emptyList())
+    val availableWeeks: StateFlow<List<String>> = _availableWeeks
+
     // --- Add transaction ---
     fun addTransaction(transaction: Transaction) {
         viewModelScope.launch {
@@ -112,26 +116,37 @@ class TransactionViewModel : ViewModel() {
 
     // --- Load distribution summary (on-demand by period + value) ---
     fun loadDistribution(
-        weekOrMonthCode: String,     // actual week or month string
-        type: String? = null,        // "income", "expense", or null
-        start: String? = null,       // optional
-        end: String? = null          // optional
+        weekOrMonthCode: String,
+        type: String? = null,
+        start: String? = null,
+        end: String? = null
     ) {
         viewModelScope.launch {
             _distribution.value = Result.Loading
-            try {
-                // repo.getDistributionSummary already returns Result<DistributionSummary>
-                val result: Result<DistributionSummary> =
-                    repo.getDistributionSummary(weekOrMonthCode, type, start, end)
+            _distribution.value = repo.getDistributionSummary(weekOrMonthCode, type, start, end)
+        }
+    }
 
-                _distribution.value = result
+    // --- Load available weeks ---
+    fun loadAvailableWeeks() {
+        viewModelScope.launch {
+            try {
+                val result = repo.getAvailableWeeks()
+                if (result is Result.Success) {
+                    _availableWeeks.value = result.data
+                } else {
+                    _availableWeeks.value = emptyList()
+                }
             } catch (e: Exception) {
-                _distribution.value = Result.Error(e)
+                _availableWeeks.value = emptyList()
             }
         }
     }
 
-
+    // --- Convenience: load distribution for selected week ---
+    fun selectWeek(week: String, type: String? = null) {
+        loadDistribution(weekOrMonthCode = week, type = type)
+    }
 }
 
 

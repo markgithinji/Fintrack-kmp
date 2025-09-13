@@ -69,4 +69,10 @@ class TransactionRepository(
         Result.Error(e)
     }
 
+    suspend fun getAvailableWeeks(): Result<List<String>> = try {
+        val dto = api.getAvailableWeeks()
+        Result.Success(dto.weeks)
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
 }

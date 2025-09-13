@@ -70,4 +70,12 @@ class TransactionApi(
 
         return response.result
     }
+
+    // --- Available Weeks ---
+    suspend fun getAvailableWeeks(): AvailableWeeksDto {
+        val response: ApiResponse<AvailableWeeksDto> =
+            client.get("$baseUrl/transactions/available-weeks").body()
+        return response.result
+    }
+
 }
