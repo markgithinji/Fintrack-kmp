@@ -43,11 +43,22 @@ class TransactionRepository(
         Result.Error(e)
     }
 
-    suspend fun getSummary(): Result<Summary> = try {
-        val dto = api.getSummary()
+    // --- Highlights summary ---
+    suspend fun getHighlightsSummary(): Result<HighlightsSummary> = try {
+        val dto = api.getHighlightsSummary()
+        Result.Success(dto.toDomain())
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
+
+    // --- Distribution summary ---
+    suspend fun getDistributionSummary(
+        period: String, // "week" | "month"
+        value: String   // "2025-W37" | "2025-09"
+    ): Result<DistributionSummary> = try {
+        val dto = api.getDistributionSummary(period, value)
         Result.Success(dto.toDomain())
     } catch (e: Exception) {
         Result.Error(e)
     }
 }
-

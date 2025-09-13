@@ -2,14 +2,18 @@ package com.fintrack.shared.feature.transaction.data
 
 import kotlinx.serialization.Serializable
 
-data class Summary(
+data class HighlightsSummary(
     val income: Double,
     val expense: Double,
     val balance: Double,
     val incomeHighlights: Highlights,
-    val expenseHighlights: Highlights,
-    val incomeCategorySummary: CategorySummaries,
-    val expenseCategorySummary: CategorySummaries
+    val expenseHighlights: Highlights
+)
+
+data class DistributionSummary(
+    val period: String, // e.g. "2025-W37" or "2025-09"
+    val incomeCategories: List<CategorySummary>,
+    val expenseCategories: List<CategorySummary>
 )
 
 data class Highlights(
@@ -17,11 +21,6 @@ data class Highlights(
     val highestCategory: Highlight?,
     val highestDay: Highlight?,
     val averagePerDay: Double
-)
-
-data class CategorySummaries(
-    val weekly: Map<String, List<CategorySummary>>,
-    val monthly: Map<String, List<CategorySummary>>
 )
 
 data class Highlight(

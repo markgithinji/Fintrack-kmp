@@ -3,14 +3,19 @@ package com.fintrack.shared.feature.transaction.data
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class SummaryDto(
+data class HighlightsSummaryDto(
     val income: Double = 0.0,
     val expense: Double = 0.0,
     val balance: Double = 0.0,
     val incomeHighlights: HighlightsDto = HighlightsDto(),
-    val expenseHighlights: HighlightsDto = HighlightsDto(),
-    val incomeCategorySummary: CategorySummariesDto = CategorySummariesDto(),
-    val expenseCategorySummary: CategorySummariesDto = CategorySummariesDto()
+    val expenseHighlights: HighlightsDto = HighlightsDto()
+)
+
+@Serializable
+data class DistributionSummaryDto(
+    val period: String = "", // e.g. "2025-W37" or "2025-09"
+    val incomeCategories: List<CategorySummaryDto> = emptyList(),
+    val expenseCategories: List<CategorySummaryDto> = emptyList()
 )
 
 @Serializable
@@ -22,17 +27,13 @@ data class HighlightsDto(
 )
 
 @Serializable
-data class CategorySummariesDto(
-    val weekly: Map<String, List<CategorySummaryDto>> = emptyMap(),
-    val monthly: Map<String, List<CategorySummaryDto>> = emptyMap()
-)
-
-@Serializable
 data class HighlightDto(
     val label: String = "",
     val value: String = "",
     val amount: Double = 0.0
 )
+
+
 
 @Serializable
 data class CategorySummaryDto(
@@ -41,17 +42,9 @@ data class CategorySummaryDto(
     val percentage: Double = 0.0
 )
 
-// --- Domain mapping ---
-
+// --- Highlights ---
 fun HighlightDto.toDomain(): Highlight =
-    Highlight(
-        label = label.ifEmpty { "-" },
-        value = value.ifEmpty { "-" },
-        amount = amount
-    )
-
-fun CategorySummaryDto.toDomain(): CategorySummary =
-    CategorySummary(category, total, percentage)
+    Highlight(label.ifEmpty { "-" }, value.ifEmpty { "-" }, amount)
 
 fun HighlightsDto.toDomain(): Highlights =
     Highlights(
@@ -61,18 +54,22 @@ fun HighlightsDto.toDomain(): Highlights =
         averagePerDay = averagePerDay
     )
 
-fun CategorySummariesDto.toDomain(): CategorySummaries =
-    CategorySummaries(
-        weekly = weekly.mapValues { it.value.map { cs -> cs.toDomain() } },
-        monthly = monthly.mapValues { it.value.map { cs -> cs.toDomain() } }
+fun HighlightsSummaryDto.toDomain(): HighlightsSummary =
+    HighlightsSummary(
+        income = income,
+        expense = expense,
+        balance = balance,
+        incomeHighlights = incomeHighlights.toDomain(),
+        expenseHighlights = expenseHighlights.toDomain()
     )
 
-fun SummaryDto.toDomain(): Summary = Summary(
-    income = income,
-    expense = expense,
-    balance = balance,
-    incomeHighlights = incomeHighlights.toDomain(),
-    expenseHighlights = expenseHighlights.toDomain(),
-    incomeCategorySummary = incomeCategorySummary.toDomain(),
-    expenseCategorySummary = expenseCategorySummary.toDomain()
-)
+// --- Distribution ---
+fun CategorySummaryDto.toDomain(): CategorySummary =
+    CategorySummary(category, total, percentage)
+
+fun DistributionSummaryDto.toDomain(): DistributionSummary =
+    DistributionSummary(
+        period = period,
+        incomeCategories = incomeCategories.map { it.toDomain() },
+        expenseCategories = expenseCategories.map { it.toDomain() }
+    )
