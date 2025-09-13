@@ -20,8 +20,13 @@ data class SummaryDto(
     val highestIncomeDay: HighlightDto? = null,
     val averageIncomePerDay: Double = 0.0,
 
+    // Expense categories
     val weeklyCategorySummary: Map<String, List<CategorySummaryDto>> = emptyMap(),
-    val monthlyCategorySummary: Map<String, List<CategorySummaryDto>> = emptyMap()
+    val monthlyCategorySummary: Map<String, List<CategorySummaryDto>> = emptyMap(),
+
+    // Income categories
+    val weeklyIncomeCategorySummary: Map<String, List<CategorySummaryDto>> = emptyMap(),
+    val monthlyIncomeCategorySummary: Map<String, List<CategorySummaryDto>> = emptyMap()
 )
 
 @Serializable
@@ -47,6 +52,9 @@ fun HighlightDto.toDomain(): Highlight =
         amount = amount
     )
 
+fun CategorySummaryDto.toDomain(): CategorySummary =
+    CategorySummary(category, total, percentage)
+
 fun SummaryDto.toDomain(): Summary = Summary(
     income = income,
     expense = expense,
@@ -60,8 +68,7 @@ fun SummaryDto.toDomain(): Summary = Summary(
     highestIncomeDay = highestIncomeDay?.toDomain(),
     averageIncomePerDay = averageIncomePerDay,
     weeklyCategorySummary = weeklyCategorySummary.mapValues { it.value.map { cs -> cs.toDomain() } },
-    monthlyCategorySummary = monthlyCategorySummary.mapValues { it.value.map { cs -> cs.toDomain() } }
+    monthlyCategorySummary = monthlyCategorySummary.mapValues { it.value.map { cs -> cs.toDomain() } },
+    weeklyIncomeCategorySummary = weeklyIncomeCategorySummary.mapValues { it.value.map { cs -> cs.toDomain() } },
+    monthlyIncomeCategorySummary = monthlyIncomeCategorySummary.mapValues { it.value.map { cs -> cs.toDomain() } }
 )
-
-fun CategorySummaryDto.toDomain(): CategorySummary =
-    CategorySummary(category, total, percentage)

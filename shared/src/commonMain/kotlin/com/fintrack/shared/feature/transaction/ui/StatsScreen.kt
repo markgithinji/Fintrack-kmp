@@ -44,9 +44,6 @@ val SegmentColor3 = Color(0xFF457B9D)   // Vibrant blue
 val SegmentColor4 = Color(0xFFF4A261)   // Warm orange
 val SegmentColor5 = Color(0xFF2A9D8F)   // Teal / turquoise
 
-// Text colors
-val CategoryTextColor = Color(0xFF222222) // Dark gray for better contrast
-val AmountTextColor = Color(0xFF1A1A1A)   // Slightly darker for amounts
 
 @Composable
 fun StatisticsScreen(
@@ -60,7 +57,7 @@ fun StatisticsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()) // make screen scrollable
+            .verticalScroll(rememberScrollState())
             .padding(bottom = 16.dp)
     ) {
         // --- Tabs at top ---
@@ -89,20 +86,24 @@ fun StatisticsScreen(
             is Result.Success -> {
                 val data = (summaryResult as Result.Success).data
 
-                // --- Select highlights based on tab ---
+                // --- Select highlights dynamically based on selected tab ---
                 val highlightData = when (selectedTab) {
                     "Income" -> data.copy(
                         highestMonth = data.highestIncomeMonth,
                         highestCategory = data.highestIncomeCategory,
                         highestDay = data.highestIncomeDay,
-                        averagePerDay = data.averageIncomePerDay
+                        averagePerDay = data.averageIncomePerDay,
+                        weeklyCategorySummary = data.weeklyIncomeCategorySummary,
+                        monthlyCategorySummary = data.monthlyIncomeCategorySummary
                     )
                     "Expenses" -> data
                     "All" -> data.copy(
                         highestMonth = data.highestMonth,
                         highestCategory = data.highestCategory,
                         highestDay = data.highestDay,
-                        averagePerDay = data.averagePerDay
+                        averagePerDay = data.averagePerDay,
+                        weeklyCategorySummary = data.weeklyCategorySummary,
+                        monthlyCategorySummary = data.monthlyCategorySummary
                     )
                     else -> data
                 }
@@ -112,10 +113,11 @@ fun StatisticsScreen(
                     highlightData.highestCategory?.let { highestCategory ->
                         highlightData.highestDay?.let { highestDay ->
                             SpendingHighlightsSection(
-                                highestMonth = highestMonth,
-                                highestCategory = highestCategory,
-                                highestDay = highestDay,
-                                averagePerDay = highlightData.averagePerDay
+                                highestMonth = highlightData.highestMonth,
+                                highestCategory = highlightData.highestCategory,
+                                highestDay = highlightData.highestDay,
+                                averagePerDay = highlightData.averagePerDay,
+                                tabType = selectedTab
                             )
                         }
                     }
@@ -123,7 +125,7 @@ fun StatisticsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ---- Category Totals Card ----
+                // ---- Category Totals Card (donut chart + list) ----
                 CategoryTotalsCardWithTabs(
                     weeklySummary = highlightData.weeklyCategorySummary,
                     monthlySummary = highlightData.monthlyCategorySummary
@@ -177,6 +179,7 @@ fun TabItem(
 }
 
 
+
 // ---- Highlight Section ----
 
 @Composable
@@ -184,11 +187,30 @@ fun SpendingHighlightsSection(
     highestMonth: Highlight,
     highestCategory: Highlight,
     highestDay: Highlight,
-    averagePerDay: Double
+    averagePerDay: Double,
+    tabType: String // "Income", "Expenses", or "All"
 ) {
+    val amountSuffix = when (tabType) {
+        "Income" -> "received"
+        "Expenses" -> "spent"
+        "All" -> "total"
+        else -> ""
+    }
+    val dailyLabel = when (tabType) {
+        "Income" -> "Daily Income"
+        "Expenses" -> "Daily Spending"
+        "All" -> "Daily Total"
+        else -> ""
+    }
+
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Text(
-            text = "Spending Highlights",
+            text = when(tabType) {
+                "Income" -> "Income Highlights"
+                "Expenses" -> "Spending Highlights"
+                "All" -> "Summary Highlights"
+                else -> "Highlights"
+            },
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold
         )
@@ -199,12 +221,11 @@ fun SpendingHighlightsSection(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             val monthDisplay = highestMonth.value.toMonthName()
-
             HighlightCard(
                 modifier = Modifier.weight(1f),
                 title = "Highest Month",
                 value = monthDisplay,
-                description = "${formatCurrencyKmp(highestMonth.amount)} spent",
+                description = "${formatCurrencyKmp(highestMonth.amount)} $amountSuffix",
                 backgroundColor = SegmentColor3,
                 titleColor = Color.White,
                 valueColor = Color.White,
@@ -212,9 +233,9 @@ fun SpendingHighlightsSection(
             )
             HighlightCard(
                 modifier = Modifier.weight(1f),
-                title = "Most Spent Category",
+                title = "Top Category",
                 value = highestCategory.value,
-                description = "${formatCurrencyKmp(highestCategory.amount)} total",
+                description = "${formatCurrencyKmp(highestCategory.amount)} $amountSuffix",
                 backgroundColor = SegmentColor4,
                 titleColor = Color.White,
                 valueColor = Color.White,
@@ -229,9 +250,9 @@ fun SpendingHighlightsSection(
         ) {
             HighlightCard(
                 modifier = Modifier.weight(1f),
-                title = "Highest Daily Spending",
+                title = "Highest Daily",
                 value = highestDay.value.toFormattedDate(),
-                description = "${formatCurrencyKmp(highestDay.amount)} spent",
+                description = "${formatCurrencyKmp(highestDay.amount)} $amountSuffix",
                 backgroundColor = SegmentColor5,
                 titleColor = Color.White,
                 valueColor = Color.White,
@@ -242,7 +263,7 @@ fun SpendingHighlightsSection(
                 modifier = Modifier.weight(1f),
                 title = "Average Per Day",
                 value = formatCurrencyKmp(averagePerDay),
-                description = "Daily Spending",
+                description = dailyLabel,
                 backgroundColor = SegmentColor1,
                 titleColor = Color.White,
                 valueColor = Color.White,
@@ -251,7 +272,6 @@ fun SpendingHighlightsSection(
         }
     }
 }
-
 
 @Composable
 fun HighlightCard(

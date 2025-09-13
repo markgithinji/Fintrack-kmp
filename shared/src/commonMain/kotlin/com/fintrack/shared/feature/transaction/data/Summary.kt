@@ -20,7 +20,9 @@ data class Summary(
     val averageIncomePerDay: Double,
 
     val weeklyCategorySummary: Map<String, List<CategorySummary>>,
-    val monthlyCategorySummary: Map<String, List<CategorySummary>>
+    val monthlyCategorySummary: Map<String, List<CategorySummary>>,
+    val weeklyIncomeCategorySummary: Map<String, List<CategorySummary>>,
+    val monthlyIncomeCategorySummary: Map<String, List<CategorySummary>>
 )
 
 data class Highlight(
