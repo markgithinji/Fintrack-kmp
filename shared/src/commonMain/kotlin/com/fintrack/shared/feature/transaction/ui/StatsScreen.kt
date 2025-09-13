@@ -74,11 +74,12 @@ fun StatisticsScreen(
 
         // --- Category Totals Section ---
         CategoryTotalsCardWithTabs(
-            tabType = selectedTab,
-            period = selectedPeriod,
-            value = selectedValue,
-            viewModel = viewModel // internally handles loading/error/success
+            tabType = "Expenses",
+            period = "week",         // for UI selection logic
+            value = "2025-W37",      // actual week code
+            viewModel = viewModel()
         )
+
     }
 }
 
