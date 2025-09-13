@@ -51,7 +51,14 @@ fun StatisticsScreen(
 ) {
     var selectedTab by remember { mutableStateOf("Expenses") } // "Income" or "Expenses"
     var selectedPeriod by remember { mutableStateOf("week") }   // "week" or "month"
-    var selectedValue by remember { mutableStateOf("2025-W37") } // week or month code/id
+    var selectedValue by remember { mutableStateOf<String?>(null) } // week or month code/id
+
+    // --- Load available weeks on first composition ---
+    LaunchedEffect(Unit) {
+        viewModel.loadAvailableWeeks()
+    }
+
+    val availableWeeks by viewModel.availableWeeks.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -67,21 +74,36 @@ fun StatisticsScreen(
         // --- Highlights Section ---
         SpendingHighlightsSection(
             tabType = selectedTab,
-            viewModel = viewModel // internally handles loading/error/success
+            viewModel = viewModel
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // --- Category Totals Section ---
-        CategoryTotalsCardWithTabs(
-            tabType = "Expenses",
-            period = "week",         // for UI selection logic
-            value = "2025-W37",      // actual week code
-            viewModel = viewModel()
-        )
+        if (selectedPeriod == "week") {
+            // Set default selectedValue to first week if null
+            val currentWeek = selectedValue ?: availableWeeks.firstOrNull()
+            selectedValue = currentWeek
 
+            currentWeek?.let { week ->
+                CategoryTotalsCardWithTabs(
+                    tabType = selectedTab,
+                    period = "week",
+                    value = week,
+                    viewModel = viewModel,
+                    availableWeeks = availableWeeks,
+                    onWeekSelected = { newWeek ->
+                        selectedValue = newWeek
+                        viewModel.selectWeek(newWeek, type = if (selectedTab == "Income") "income" else "expense")
+                    }
+                )
+            }
+        } else {
+            // TODO: handle monthly view
+        }
     }
 }
+
 
 
 @Composable

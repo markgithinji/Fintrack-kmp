@@ -58,15 +58,16 @@ val SegmentColors = listOf(
 )
 @Composable
 fun CategoryTotalsCardWithTabs(
-    tabType: String,               // "Income" or "Expenses"
-    period: String,                // "week" or "month"
-    value: String,                 // week code or month id
-    viewModel: TransactionViewModel = viewModel()
+    tabType: String,
+    period: String,
+    value: String,
+    viewModel: TransactionViewModel = viewModel(),
+    availableWeeks: List<String> = emptyList(),
+    onWeekSelected: (String) -> Unit = {}
 ) {
 
-    // Load distribution on parameters change
+    // Load distribution on parameter change
     LaunchedEffect(tabType, period, value) {
-        // For "Income"/"Expenses" you can optionally pass type if needed
         val type = when (tabType) {
             "Income" -> "income"
             "Expenses" -> "expense"
@@ -75,7 +76,6 @@ fun CategoryTotalsCardWithTabs(
         viewModel.loadDistribution(
             weekOrMonthCode = value,
             type = type
-            // Optionally: start = ..., end = ...
         )
     }
 
@@ -98,7 +98,6 @@ fun CategoryTotalsCardWithTabs(
         is Result.Success -> {
             val data = (distributionResult as Result.Success).data
 
-            // Prepare categories based on selected tab
             val categories = when (tabType) {
                 "Income" -> data.incomeCategories
                 "Expenses" -> data.expenseCategories
@@ -112,11 +111,14 @@ fun CategoryTotalsCardWithTabs(
                 weeklySummary = weeklyMap,
                 monthlySummary = monthlyMap,
                 initialSelectedWeek = weeklyMap.keys.firstOrNull(),
-                initialSelectedMonth = monthlyMap.keys.firstOrNull()
+                initialSelectedMonth = monthlyMap.keys.firstOrNull(),
+                availableWeeks = availableWeeks,
+                onWeekSelected = onWeekSelected
             )
         }
     }
 }
+
 
 
 
@@ -126,20 +128,13 @@ private fun CategoryTotalsCardContent(
     monthlySummary: Map<String, List<CategorySummary>>,
     initialSelectedWeek: String? = null,
     initialSelectedMonth: String? = null,
+    availableWeeks: List<String> = emptyList(),
+    onWeekSelected: (String) -> Unit = {},
     title: String = "Spending Distribution"
 ) {
     var selectedTab by remember { mutableStateOf(TimeSpan.WEEK) }
     var selectedWeek by remember { mutableStateOf(initialSelectedWeek) }
     var selectedMonth by remember { mutableStateOf(initialSelectedMonth) }
-
-    // --- LOGGING ---
-    LaunchedEffect(weeklySummary, monthlySummary, selectedWeek, selectedMonth) {
-        println("CategoryTotalsCardContent: weeklySummary=$weeklySummary")
-        println("CategoryTotalsCardContent: monthlySummary=$monthlySummary")
-        println("CategoryTotalsCardContent: selectedWeek=$selectedWeek")
-        println("CategoryTotalsCardContent: selectedMonth=$selectedMonth")
-    }
-
 
     Column(
         modifier = Modifier
@@ -183,19 +178,14 @@ private fun CategoryTotalsCardContent(
         }
 
         // --- Period selector ---
-        if (selectedTab == TimeSpan.WEEK && weeklySummary.isNotEmpty()) {
+        if (selectedTab == TimeSpan.WEEK && availableWeeks.isNotEmpty()) {
             WeekSelector(
-                weeks = weeklySummary.keys.toList(),
+                weeks = availableWeeks,
                 selectedWeek = selectedWeek,
-                onWeekSelected = { selectedWeek = it }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-        if (selectedTab == TimeSpan.MONTH && monthlySummary.isNotEmpty()) {
-            WeekSelector(
-                weeks = monthlySummary.keys.toList(),
-                selectedWeek = selectedMonth,
-                onWeekSelected = { selectedMonth = it }
+                onWeekSelected = {
+                    selectedWeek = it
+                    onWeekSelected(it)
+                }
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
