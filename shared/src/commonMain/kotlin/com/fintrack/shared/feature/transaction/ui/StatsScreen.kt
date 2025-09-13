@@ -343,11 +343,20 @@ fun String.toFormattedDate(): String {
 fun formatCurrencyKmp(amount: Double): String {
     val whole = amount.toLong()
     val fraction = ((amount - whole) * 100).toInt()
-    val wholeFormatted = whole.toString()
-        .reversed()
-        .chunked(3)
-        .joinToString(",") { it.reversed() }
-        .reversed()
-    return "Ksh $wholeFormatted.${fraction.toString().padStart(2, '0')}"
+
+    // Format the whole part with commas
+    val wholeStr = whole.toString()
+    val sb = StringBuilder()
+    var count = 0
+    for (i in wholeStr.length - 1 downTo 0) {
+        sb.append(wholeStr[i])
+        count++
+        if (count % 3 == 0 && i != 0) {
+            sb.append(',')
+        }
+    }
+    val formattedWhole = sb.reverse().toString()
+
+    return "Ksh $formattedWhole.${fraction.toString().padStart(2, '0')}"
 }
 
