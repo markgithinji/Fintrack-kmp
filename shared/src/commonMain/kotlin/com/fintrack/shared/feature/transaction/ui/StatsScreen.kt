@@ -21,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -88,28 +87,23 @@ fun StatisticsScreen(
 
         // --- Category Totals Section ---
         if (selectedPeriod == "week" && selectedWeek != null) {
-            // Only this block recomposes when selectedWeek changes
-            key(selectedWeek) {
-                CategoryTotalsCardWithTabs(
-                    tabType = selectedTab,
-                    period = "week",
-                    value = selectedWeek!!,
-                    viewModel = viewModel,
-                    availableWeeks = availableWeeks,
-                    onWeekSelected = { newWeek ->
-                        selectedWeek = newWeek
-                        viewModel.selectWeek(
-                            newWeek,
-                            type = if (selectedTab == "Income") "income" else "expense"
-                        )
-                    }
-                )
-            }
+            CategoryTotalsCardWithTabs(
+                tabType = selectedTab,
+                period = "week",
+                value = selectedWeek!!,
+                viewModel = viewModel,
+                availableWeeks = availableWeeks,
+                onWeekSelected = { newWeek ->
+                    selectedWeek = newWeek
+                    viewModel.selectWeek(
+                        newWeek,
+                        type = if (selectedTab == "Income") "income" else "expense"
+                    )
+                }
+            )
         }
     }
 }
-
-
 
 
 @Composable
@@ -154,209 +148,3 @@ fun TabItem(
         Text(text = text, color = textColor, fontWeight = FontWeight.SemiBold)
     }
 }
-
-
-
-// ---- Highlight Section ----
-@Composable
-fun SpendingHighlightsSection(
-    viewModel: TransactionViewModel = viewModel(),
-    tabType: String // "Income", "Expenses", or "All"
-) {
-    val highlightsResult by viewModel.highlights.collectAsStateWithLifecycle()
-
-    LaunchedEffect(Unit) {
-        viewModel.loadHighlights()
-    }
-
-    when (val highlights = highlightsResult) {
-        is Result.Loading -> Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) { CircularProgressIndicator() }
-
-        is Result.Error -> Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) { Text("Error: ${highlights.exception.message ?: "Unknown"}", color = Color.Red) }
-
-        is Result.Success -> {
-            val data = highlights.data
-            val summaryHighlights = when (tabType) {
-                "Income" -> data.incomeHighlights
-                "Expenses" -> data.expenseHighlights
-                else -> data.expenseHighlights // TODO: merge later
-            }
-
-            // Provide defaults if null
-            val month = summaryHighlights.highestMonth ?: Highlight("", "", 0.0)
-            val category = summaryHighlights.highestCategory ?: Highlight("", "", 0.0)
-            val day = summaryHighlights.highestDay ?: Highlight("", "", 0.0)
-            val average = summaryHighlights.averagePerDay
-
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                Text(
-                    text = when(tabType) {
-                        "Income" -> "Income Highlights"
-                        "Expenses" -> "Spending Highlights"
-                        "All" -> "Summary Highlights"
-                        else -> "Highlights"
-                    },
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                val amountSuffix = when(tabType) {
-                    "Income" -> "received"
-                    "Expenses" -> "spent"
-                    "All" -> "total"
-                    else -> ""
-                }
-                val dailyLabel = when(tabType) {
-                    "Income" -> "Daily Income"
-                    "Expenses" -> "Daily Spending"
-                    "All" -> "Daily Total"
-                    else -> ""
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    HighlightCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Highest Month",
-                        value = month.value.toMonthName(),
-                        description = "${formatCurrencyKmp(month.amount)} $amountSuffix",
-                        backgroundColor = SegmentColor3,
-                        titleColor = Color.White,
-                        valueColor = Color.White,
-                        contentSpacing = 8.dp
-                    )
-                    HighlightCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Top Category",
-                        value = category.value,
-                        description = "${formatCurrencyKmp(category.amount)} $amountSuffix",
-                        backgroundColor = SegmentColor4,
-                        titleColor = Color.White,
-                        valueColor = Color.White,
-                        contentSpacing = 8.dp
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    HighlightCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Highest Daily",
-                        value = day.value.toFormattedDate(),
-                        description = "${formatCurrencyKmp(day.amount)} $amountSuffix",
-                        backgroundColor = SegmentColor5,
-                        titleColor = Color.White,
-                        valueColor = Color.White,
-                        contentSpacing = 8.dp
-                    )
-
-                    HighlightCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Average Per Day",
-                        value = formatCurrencyKmp(average),
-                        description = dailyLabel,
-                        backgroundColor = SegmentColor1,
-                        titleColor = Color.White,
-                        valueColor = Color.White,
-                        contentSpacing = 8.dp
-                    )
-                }
-            }
-        }
-    }
-}
-
-
-@Composable
-fun HighlightCard(
-    modifier: Modifier = Modifier,
-    title: String,
-    value: String,
-    description: String,
-    backgroundColor: Color,
-    titleColor: Color,
-    valueColor: Color,
-    contentSpacing: Dp = 4.dp
-) {
-    Card(
-        modifier = modifier.height(120.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor)
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.Start
-        ) {
-            Text(text = title, fontSize = 14.sp, color = titleColor)
-            Spacer(modifier = Modifier.height(contentSpacing))
-            Text(text = value, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = valueColor)
-            Spacer(modifier = Modifier.height(contentSpacing))
-            Text(text = description, fontSize = 12.sp, color = titleColor.copy(alpha = 0.7f))
-        }
-    }
-}
-
-// month conversion: "yyyy-MM" -> "Jan 2025"
-fun String.toMonthName(): String {
-    val parts = this.split("-")
-    if (parts.size != 2) return this
-    val year = parts[0]
-    val monthIndex = (parts[1].toIntOrNull()?.minus(1)) ?: return this
-    val monthNames = listOf(
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    )
-    val monthName = monthNames.getOrElse(monthIndex) { parts[1] }
-    return "$monthName $year"
-}
-
-// date conversion: "yyyy-MM-dd" -> "15 Jan 2025"
-fun String.toFormattedDate(): String {
-    val parts = this.split("-")
-    if (parts.size != 3) return this
-    val day = parts[2].toIntOrNull() ?: return this
-    val monthIndex = (parts[1].toIntOrNull()?.minus(1)) ?: return this
-    val year = parts[0]
-    val monthNames = listOf(
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    )
-    val monthName = monthNames.getOrElse(monthIndex) { parts[1] }
-    return "$day $monthName $year"
-}
-
-fun formatCurrencyKmp(amount: Double): String {
-    val whole = amount.toLong()
-    val fraction = ((amount - whole) * 100).toInt()
-
-    // Format the whole part with commas
-    val wholeStr = whole.toString()
-    val sb = StringBuilder()
-    var count = 0
-    for (i in wholeStr.length - 1 downTo 0) {
-        sb.append(wholeStr[i])
-        count++
-        if (count % 3 == 0 && i != 0) {
-            sb.append(',')
-        }
-    }
-    val formattedWhole = sb.reverse().toString()
-
-    return "Ksh $formattedWhole.${fraction.toString().padStart(2, '0')}"
-}
-
