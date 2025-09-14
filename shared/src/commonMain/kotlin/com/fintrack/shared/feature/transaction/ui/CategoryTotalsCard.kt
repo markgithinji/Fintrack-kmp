@@ -14,10 +14,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,12 +35,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -114,7 +118,6 @@ fun CategoryTotalsCardWithTabs(
     }
 }
 
-
 @Composable
 private fun CategoryContent(
     weeklySummary: Map<String, List<CategorySummary>>,
@@ -146,16 +149,20 @@ private fun CategoryContent(
     ) {
         CategoryHeader(title = title)
 
-        PeriodSelector(
-            selectedPeriod = selectedPeriod,
-            availableWeeks = availableWeeks,
-            availableMonths = availableMonths,
-            availableYears = availableYears,
-            onWeekSelected = onWeekSelected,
-            onMonthSelected = onMonthSelected,
-            onYearSelected = onYearSelected,
-            onPeriodSelected = onPeriodSelected
-        )
+        Column {
+            Spacer(modifier = Modifier.height(8.dp))
+            PeriodSelector(
+                selectedPeriod = selectedPeriod,
+                availableWeeks = availableWeeks,
+                availableMonths = availableMonths,
+                availableYears = availableYears,
+                onWeekSelected = onWeekSelected,
+                onMonthSelected = onMonthSelected,
+                onYearSelected = onYearSelected,
+                onPeriodSelected = onPeriodSelected
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         DonutChartSection(categorySums, totalAmount)
         Spacer(Modifier.height(16.dp))
@@ -168,7 +175,6 @@ private fun CategoryContent(
 }
 
 
-
 @Composable
 private fun CategoryHeader(title: String) {
     Text(
@@ -178,7 +184,6 @@ private fun CategoryHeader(title: String) {
         modifier = Modifier.padding(bottom = 8.dp)
     )
 }
-
 
 @Composable
 fun PeriodSelector(
@@ -191,112 +196,115 @@ fun PeriodSelector(
     onMonthSelected: (String) -> Unit = {},
     onYearSelected: (String) -> Unit = {}
 ) {
-    Column {
-        // --- Switcher Row (Week / Month / Year) ---
-        PeriodSwitcher(
-            selectedPeriod = selectedPeriod,
-            availableWeeks = availableWeeks,
-            availableMonths = availableMonths,
-            availableYears = availableYears,
-            onPeriodSelected = onPeriodSelected
-        )
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // --- Tabs ---
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                TimeSpan.entries.forEach { span ->
+                    val isSelected = when (span) {
+                        TimeSpan.WEEK -> selectedPeriod is Period.Week
+                        TimeSpan.MONTH -> selectedPeriod is Period.Month
+                        TimeSpan.YEAR -> selectedPeriod is Period.Year
+                    }
 
-        Spacer(Modifier.height(8.dp))
-
-        // --- Dropdown for the selected period ---
-        val (options, selectedCode, onSelected, placeholder) = when (selectedPeriod) {
-            is Period.Week -> Quad(availableWeeks, selectedPeriod.code, onWeekSelected, "Select Week")
-            is Period.Month -> Quad(availableMonths, selectedPeriod.code, onMonthSelected, "Select Month")
-            is Period.Year -> Quad(availableYears, selectedPeriod.code, onYearSelected, "Select Year")
-        }
-
-        if (options.isNotEmpty()) {
-            DropdownSelector(
-                options = options,
-                selected = selectedCode,
-                onSelected = onSelected,
-                placeholder = placeholder
-            )
-        }
-    }
-}
-
-// Helper data class to hold four values
-private data class Quad<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
-
-@Composable
-private fun PeriodSwitcher(
-    selectedPeriod: Period,
-    availableWeeks: List<String> = emptyList(),
-    availableMonths: List<String> = emptyList(),
-    availableYears: List<String> = emptyList(),
-    onPeriodSelected: (Period) -> Unit = {}
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        TimeSpan.entries.forEach { span ->
-            val isSelected = when (span) {
-                TimeSpan.WEEK -> selectedPeriod is Period.Week
-                TimeSpan.MONTH -> selectedPeriod is Period.Month
-                TimeSpan.YEAR -> selectedPeriod is Period.Year
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isSelected) Color(0xFF2D2D2D) else Color(0xFFE0E0E0))
+                            .clickable {
+                                when (span) {
+                                    TimeSpan.WEEK -> availableWeeks.firstOrNull()?.let { onPeriodSelected(Period.Week(it)) }
+                                    TimeSpan.MONTH -> availableMonths.firstOrNull()?.let { onPeriodSelected(Period.Month(it)) }
+                                    TimeSpan.YEAR -> availableYears.firstOrNull()?.let { onPeriodSelected(Period.Year(it)) }
+                                }
+                            }
+                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = span.displayName,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = if (isSelected) Color.White else Color.Black
+                        )
+                    }
+                }
             }
 
-            val bg = if (isSelected) Color(0xFF2D2D2D) else Color.Transparent
-            val fg = if (isSelected) Color.White else Color.Black
+            // --- Custom Dropdown ---
+            val (options, selectedCode, onSelected, placeholder) = when (selectedPeriod) {
+                is Period.Week -> Quad(availableWeeks, selectedPeriod.code, onWeekSelected, "Select Week")
+                is Period.Month -> Quad(availableMonths, selectedPeriod.code, onMonthSelected, "Select Month")
+                is Period.Year -> Quad(availableYears, selectedPeriod.code, onYearSelected, "Select Year")
+            }
 
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(bg)
-                    .clickable {
-                        when (span) {
-                            TimeSpan.WEEK -> availableWeeks.firstOrNull()?.let { onPeriodSelected(Period.Week(it)) }
-                            TimeSpan.MONTH -> availableMonths.firstOrNull()?.let { onPeriodSelected(Period.Month(it)) }
-                            TimeSpan.YEAR -> availableYears.firstOrNull()?.let { onPeriodSelected(Period.Year(it)) }
-                        }
-                    }
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                Text(
-                    text = span.displayName,
-                    fontWeight = FontWeight.SemiBold,
-                    color = fg
+            if (options.isNotEmpty()) {
+                SexyDropdown(
+                    options = options,
+                    selected = selectedCode,
+                    onSelected = onSelected,
+                    placeholder = placeholder,
+                    modifier = Modifier.width(120.dp)
                 )
             }
         }
     }
 }
 
+// Sexy dropdown
 @Composable
-fun DropdownSelector(
+fun SexyDropdown(
     options: List<String>,
     selected: String?,
     onSelected: (String) -> Unit,
-    placeholder: String = "Select"
+    placeholder: String = "Select",
+    modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Box {
+    Box(modifier = modifier) {
+        // Button
         Row(
             modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color.LightGray.copy(alpha = 0.2f))
-                .clickable { expanded = true }
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color(0xFFF0F0F0))
+                .clickable { expanded = !expanded }
+                .padding(horizontal = 10.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(selected ?: placeholder)
-            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+            Text(
+                text = selected ?: placeholder,
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = Color.Black
+            )
+            Spacer(Modifier.width(4.dp))
+            Icon(
+                imageVector = if (expanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                contentDescription = null,
+                tint = Color.DarkGray
+            )
         }
 
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        // Dropdown content
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .background(Color.White)
+                .clip(RoundedCornerShape(12.dp))
+                .shadow(4.dp)
+        ) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(option) },
+                    text = { Text(option, fontSize = 12.sp) },
                     onClick = {
                         onSelected(option)
                         expanded = false
@@ -306,6 +314,10 @@ fun DropdownSelector(
         }
     }
 }
+
+// Helper data class
+private data class Quad<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
+
 
 
 @Composable
