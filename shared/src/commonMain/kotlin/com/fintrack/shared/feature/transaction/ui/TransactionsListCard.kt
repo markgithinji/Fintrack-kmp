@@ -17,21 +17,19 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.transaction.data.Result
+import com.fintrack.shared.feature.transaction.model.Category
 import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.LocalDate
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.Icon
 
 @Composable
 fun TransactionsListCard(transactionsResult: Result<List<Transaction>>) {
@@ -123,28 +121,11 @@ fun RecentTransactionsHeader() {
     }
 }
 
-val categoryIcons = mapOf(
-    "Food" to Icons.Default.Fastfood,
-    "Transport" to Icons.Default.DirectionsCar,
-    "Shopping" to Icons.Default.ShoppingCart,
-    "Health" to Icons.Default.LocalHospital,
-    "Bills" to Icons.Default.Receipt,
-    "Entertainment" to Icons.Default.Movie,
-    "Education" to Icons.Default.School,
-    "Gifts" to Icons.Default.CardGiftcard,
-    "Travel" to Icons.Default.Flight,
-    "Personal Care" to Icons.Default.ContentCut,
-    "Subscriptions" to Icons.Default.Subscriptions,
-    "Rent" to Icons.Default.Home,
-    "Groceries" to Icons.Default.ShoppingBag,
-    "Insurance" to Icons.Default.Shield,
-    "Misc" to Icons.Default.HelpOutline
-)
-
 @Composable
 fun TransactionRow(transaction: Transaction) {
-    val isExpense = !transaction.isIncome
-    val icon = categoryIcons[transaction.category] ?: Icons.Default.AttachMoney
+    // Map string name to Category object
+    val category = Category.fromName(transaction.category, isExpense = !transaction.isIncome)
+    val isExpense = category.isExpense
 
     fun LocalDate.toShortMonthDay(): String {
         val month = when (this.monthNumber) {
@@ -165,8 +146,8 @@ fun TransactionRow(transaction: Transaction) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = icon,
-                contentDescription = transaction.category,
+                imageVector = category.toIcon(),
+                contentDescription = category.name,
                 modifier = Modifier
                     .size(48.dp)
                     .background(Color.LightGray, shape = RoundedCornerShape(12.dp))
@@ -177,7 +158,7 @@ fun TransactionRow(transaction: Transaction) {
             Spacer(modifier = Modifier.width(16.dp))
 
             Column {
-                Text(text = transaction.category, fontWeight = FontWeight.SemiBold)
+                Text(text = category.name, fontWeight = FontWeight.SemiBold)
                 transaction.description?.let {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(text = it, fontSize = 12.sp, color = Color.Gray)
@@ -200,5 +181,4 @@ fun TransactionRow(transaction: Transaction) {
         }
     }
 }
-
 
