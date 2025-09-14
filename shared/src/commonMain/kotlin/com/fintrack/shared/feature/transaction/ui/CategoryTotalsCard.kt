@@ -57,8 +57,8 @@ val SegmentColors = listOf(
 
 @Composable
 fun CategoryTotalsCardWithTabs(
-    tabType: String,
-    period: String,
+    tabType: TabType,
+    period: Period,
     value: String,
     distributionResult: Result<DistributionSummary>,
     availableWeeks: List<String> = emptyList(),
@@ -81,13 +81,14 @@ fun CategoryTotalsCardWithTabs(
         is Result.Success -> {
             val data = distributionResult.data
             val categories = when (tabType) {
-                "Income" -> data.incomeCategories
-                "Expenses" -> data.expenseCategories
-                else -> data.incomeCategories + data.expenseCategories
+                is TabType.Income -> data.incomeCategories
+                is TabType.Expense -> data.expenseCategories
             }
 
-            val weeklyMap = if (period == "week") mapOf(data.period to categories) else emptyMap()
-            val monthlyMap = if (period == "month") mapOf(data.period to categories) else emptyMap()
+            val weeklyMap =
+                if (period == Period.WEEK) mapOf(data.period to categories) else emptyMap()
+            val monthlyMap =
+                if (period == Period.MONTH) mapOf(data.period to categories) else emptyMap()
 
             CategoryContent(
                 weeklySummary = weeklyMap,

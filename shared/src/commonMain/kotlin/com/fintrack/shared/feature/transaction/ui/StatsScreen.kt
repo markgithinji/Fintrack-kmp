@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,16 +13,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -44,8 +38,8 @@ fun StatisticsScreen(
     viewModel: StatisticsViewModel = viewModel()
 ) {
     // --- Collect UI state ---
-    val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
-    val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle()
+    val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle() // TabType
+    val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle() // Period
     val selectedWeek by viewModel.selectedWeek.collectAsStateWithLifecycle()
     val availableWeeks by viewModel.availableWeeks.collectAsStateWithLifecycle()
     val highlights by viewModel.highlights.collectAsStateWithLifecycle()
@@ -69,13 +63,9 @@ fun StatisticsScreen(
     ) {
         // --- Screen header ---
         item(key = "screenHeader") {
-            val onTabSelected: (TabType) -> Unit = remember(viewModel) { viewModel::onTabChanged }
             ScreenHeader(
-                selectedTab = selectedTab.name.capitalize(),
-                onTabSelected = { tabString ->
-                    val tab = if (tabString.equals("Income", true)) TabType.INCOME else TabType.EXPENSE
-                    onTabSelected(tab)
-                }
+                selectedTab = selectedTab,
+                onTabSelected = viewModel::onTabChanged
             )
         }
 
@@ -84,11 +74,10 @@ fun StatisticsScreen(
 
         // --- Spending highlights ---
         item(key = "spendingHighlights") {
-            val loadHighlights = remember(viewModel) { viewModel::loadHighlights }
             SpendingHighlightsSection(
-                tabType = selectedTab.name.capitalize(),
+                tabType = selectedTab,
                 highlightsResult = highlights,
-                loadHighlights = loadHighlights
+                loadHighlights = viewModel::loadHighlights
             )
         }
 
@@ -96,15 +85,14 @@ fun StatisticsScreen(
 
         // --- Category totals ---
         if (selectedPeriod == Period.WEEK && selectedWeek != null) {
-            item(key = selectedWeek!!) {
-                val onWeekSelected = remember(viewModel) { viewModel::onWeekChanged }
+            item(key = "categoryTotals") {
                 CategoryTotalsCardWithTabs(
-                    tabType = selectedTab.name.capitalize(),
-                    period = selectedPeriod.name.lowercase(),
+                    tabType = selectedTab,
+                    period = selectedPeriod,
                     value = selectedWeek!!,
                     distributionResult = distributionResult,
                     availableWeeks = availableWeeks,
-                    onWeekSelected = onWeekSelected
+                    onWeekSelected = viewModel::onWeekChanged
                 )
             }
         }
@@ -112,14 +100,13 @@ fun StatisticsScreen(
 }
 
 
-
-
 @Composable
 fun ScreenHeader(
-    selectedTab: String,
-    onTabSelected: (String) -> Unit
+    selectedTab: TabType,
+    onTabSelected: (TabType) -> Unit
 ) {
-    val tabs = listOf("All", "Income", "Expenses")
+    val tabs = listOf(TabType.Income, TabType.Expense)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -128,7 +115,7 @@ fun ScreenHeader(
     ) {
         tabs.forEach { tab ->
             TabItem(
-                text = tab,
+                tab = tab,
                 isSelected = tab == selectedTab,
                 onClick = { onTabSelected(tab) }
             )
@@ -138,7 +125,7 @@ fun ScreenHeader(
 
 @Composable
 fun TabItem(
-    text: String,
+    tab: TabType,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -153,6 +140,10 @@ fun TabItem(
             .clickable { onClick() }
             .padding(horizontal = 24.dp, vertical = 10.dp)
     ) {
-        Text(text = text, color = textColor, fontWeight = FontWeight.SemiBold)
+        Text(
+            text = tab.displayName,
+            color = textColor,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }

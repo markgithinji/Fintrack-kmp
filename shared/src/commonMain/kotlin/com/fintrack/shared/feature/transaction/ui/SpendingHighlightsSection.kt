@@ -16,7 +16,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,19 +23,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.transaction.data.Highlight
 import com.fintrack.shared.feature.transaction.data.HighlightsSummary
 import com.fintrack.shared.feature.transaction.data.Result
 
 @Composable
 fun SpendingHighlightsSection(
-    tabType: String, // "Income", "Expenses", or "All"
+    tabType: TabType,
     highlightsResult: Result<HighlightsSummary>,
     loadHighlights: () -> Unit
 ) {
-
     LaunchedEffect(Unit) {
         loadHighlights()
     }
@@ -62,9 +58,8 @@ fun SpendingHighlightsSection(
         is Result.Success -> {
             val data = highlights.data
             val summaryHighlights = when (tabType) {
-                "Income" -> data.incomeHighlights
-                "Expenses" -> data.expenseHighlights
-                else -> data.expenseHighlights // TODO: merge later
+                is TabType.Income -> data.incomeHighlights
+                is TabType.Expense -> data.expenseHighlights
             }
 
             // Provide defaults if null
@@ -76,10 +71,8 @@ fun SpendingHighlightsSection(
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 Text(
                     text = when (tabType) {
-                        "Income" -> "Income Highlights"
-                        "Expenses" -> "Spending Highlights"
-                        "All" -> "Summary Highlights"
-                        else -> "Highlights"
+                        is TabType.Income -> "Income Highlights"
+                        is TabType.Expense -> "Spending Highlights"
                     },
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold
@@ -87,16 +80,12 @@ fun SpendingHighlightsSection(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 val amountSuffix = when (tabType) {
-                    "Income" -> "received"
-                    "Expenses" -> "spent"
-                    "All" -> "total"
-                    else -> ""
+                    is TabType.Income -> "received"
+                    is TabType.Expense -> "spent"
                 }
                 val dailyLabel = when (tabType) {
-                    "Income" -> "Daily Income"
-                    "Expenses" -> "Daily Spending"
-                    "All" -> "Daily Total"
-                    else -> ""
+                    is TabType.Income -> "Daily Income"
+                    is TabType.Expense -> "Daily Spending"
                 }
 
                 Row(
@@ -156,7 +145,6 @@ fun SpendingHighlightsSection(
         }
     }
 }
-
 
 
 @Composable

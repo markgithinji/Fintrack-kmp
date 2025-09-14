@@ -27,7 +27,7 @@ class StatisticsViewModel : ViewModel() {
     val availableWeeks: StateFlow<List<String>> = _availableWeeks
 
     // --- UI state for StatisticsScreen ---
-    private val _selectedTab = MutableStateFlow(TabType.EXPENSE)
+    private val _selectedTab = MutableStateFlow<TabType>(TabType.Expense)
     val selectedTab: StateFlow<TabType> = _selectedTab
 
     private val _selectedPeriod = MutableStateFlow(Period.WEEK)
@@ -68,7 +68,7 @@ class StatisticsViewModel : ViewModel() {
                 _selectedWeek.value = weeks.firstOrNull()
 
                 // Load distribution for the default week immediately
-                _selectedWeek.value?.let { week ->
+                _selectedWeek.value?.let {
                     reloadDistributionForCurrentSelection()
                 }
             } catch (e: Exception) {
@@ -93,8 +93,8 @@ class StatisticsViewModel : ViewModel() {
         val week = _selectedWeek.value
         val tab = _selectedTab.value
         val type = when (tab) {
-            TabType.INCOME -> "income"
-            TabType.EXPENSE -> "expense"
+            is TabType.Income -> "income"
+            is TabType.Expense -> "expense"
         }
 
         if (week != null) {
@@ -103,6 +103,11 @@ class StatisticsViewModel : ViewModel() {
     }
 }
 
-/** Enums for tab and period selection */
-enum class TabType { INCOME, EXPENSE }
+/** Sealed class for tab selection */
+sealed class TabType(val displayName: String) {
+    data object Income : TabType("Income")
+    data object Expense : TabType("Expenses")
+}
+
+/** Enum for period selection */
 enum class Period { WEEK, MONTH }
