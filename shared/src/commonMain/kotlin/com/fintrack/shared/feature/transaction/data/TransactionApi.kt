@@ -85,5 +85,10 @@ class TransactionApi(
         return response.result
     }
 
+    suspend fun getAvailableYears(): AvailableYearsDto {
+        val response: ApiResponse<AvailableYearsDto> =
+            client.get("$baseUrl/transactions/available-years").body()
+        return response.result
+    }
 
 }

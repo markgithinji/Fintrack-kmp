@@ -83,4 +83,11 @@ class TransactionRepository(
         Result.Error(e)
     }
 
+    suspend fun getAvailableYears(): Result<AvailableYears> = try {
+        val dto = api.getAvailableYears()
+        Result.Success(dto.toDomain())
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
+
 }
