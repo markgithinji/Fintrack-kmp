@@ -57,13 +57,20 @@ val GreenIncome = Color(0xFF1FC287) // green for income
 val PinkExpense = Color(0xFFE27C94) // pinkish-red for expense
 
 @Composable
-fun IncomeTrackerContent(viewModel: TransactionViewModel = viewModel()) {
-    val summaryResult by viewModel.highlights.collectAsStateWithLifecycle()
-    val transactionsResult by viewModel.recentTransactions.collectAsStateWithLifecycle()
+fun IncomeTrackerContent(
+    transactionsViewModel: TransactionListViewModel = viewModel(),
+    statsViewModel: StatisticsViewModel = viewModel()
+) {
+    // --- Observe highlights ---
+    val summaryResult by statsViewModel.highlights.collectAsStateWithLifecycle()
 
+    // --- Observe recent transactions ---
+    val transactionsResult by transactionsViewModel.recentTransactions.collectAsStateWithLifecycle()
+
+    // --- Load data once ---
     LaunchedEffect(Unit) {
-        viewModel.loadHighlights()
-        viewModel.loadRecentTransactions()
+        statsViewModel.loadHighlights()
+        transactionsViewModel.loadRecentTransactions()
     }
 
     LazyColumn(
@@ -79,6 +86,7 @@ fun IncomeTrackerContent(viewModel: TransactionViewModel = viewModel()) {
         item { TransactionsListCard(transactionsResult) }
     }
 }
+
 
 
 @Composable

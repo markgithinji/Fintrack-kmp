@@ -58,31 +58,30 @@ import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTransactionScreen(
-    viewModel: TransactionViewModel = viewModel(),
+    transactionsViewModel: TransactionListViewModel = viewModel(),
     onCancel: () -> Unit
 ) {
-    val saveResult by viewModel.saveResult.collectAsStateWithLifecycle()
+    val saveResult by transactionsViewModel.saveResult.collectAsStateWithLifecycle()
 
+    // --- Handle save result ---
     LaunchedEffect(saveResult) {
         when (saveResult) {
             is Result.Success -> {
                 onCancel()
-                viewModel.resetSaveResult()
+                transactionsViewModel.resetSaveResult()
             }
-
             is Result.Error -> {
                 val message = (saveResult as Result.Error).exception.message ?: "Failed to save"
                 println("Error saving transaction: $message")
             }
-
             else -> {}
         }
     }
 
+    // --- Form state ---
     var amount by remember { mutableStateOf("") }
     var isIncome by remember { mutableStateOf(false) }
     var category by remember { mutableStateOf("") }
@@ -184,7 +183,7 @@ fun AddTransactionScreen(
                         description = description.takeIf { it.isNotBlank() },
                         dateTime = dateTime
                     )
-                    viewModel.addTransaction(newTransaction)
+                    transactionsViewModel.addTransaction(newTransaction)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -194,6 +193,7 @@ fun AddTransactionScreen(
         }
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

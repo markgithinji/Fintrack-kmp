@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class TransactionViewModel : ViewModel() {
+class TransactionListViewModel : ViewModel() {
     private val repo = TransactionRepository(TransactionApi())
 
     // --- Transactions state (full list / paginated) ---
@@ -27,18 +27,6 @@ class TransactionViewModel : ViewModel() {
     // --- Save transaction state ---
     private val _saveResult = MutableStateFlow<Result<Transaction>?>(null)
     val saveResult: StateFlow<Result<Transaction>?> = _saveResult
-
-    // --- Highlights state ---
-    private val _highlights = MutableStateFlow<Result<HighlightsSummary>>(Result.Loading)
-    val highlights: StateFlow<Result<HighlightsSummary>> = _highlights
-
-    // --- Distribution state ---
-    private val _distribution = MutableStateFlow<Result<DistributionSummary>>(Result.Loading)
-    val distribution: StateFlow<Result<DistributionSummary>> = _distribution
-
-    // --- Available weeks state ---
-    private val _availableWeeks = MutableStateFlow<List<String>>(emptyList())
-    val availableWeeks: StateFlow<List<String>> = _availableWeeks
 
     // --- Add transaction ---
     fun addTransaction(transaction: Transaction) {
@@ -61,11 +49,7 @@ class TransactionViewModel : ViewModel() {
     }
 
     // --- Refresh / first page ---
-    fun refresh(
-        limit: Int = 20,
-        sortBy: String = "date",
-        order: String = "DESC"
-    ) {
+    fun refresh(limit: Int = 20, sortBy: String = "date", order: String = "DESC") {
         viewModelScope.launch {
             _transactions.value = Result.Loading
             val result = repo.getTransactions(limit, sortBy, order)
@@ -98,55 +82,11 @@ class TransactionViewModel : ViewModel() {
         }
     }
 
-    // --- Load recent transactions (6 latest) ---
+    // --- Load recent transactions ---
     fun loadRecentTransactions() {
         viewModelScope.launch {
             _recentTransactions.value = Result.Loading
             _recentTransactions.value = repo.getRecentTransactions()
         }
     }
-
-    // --- Load highlights summary ---
-    fun loadHighlights() {
-        viewModelScope.launch {
-            _highlights.value = Result.Loading
-            _highlights.value = repo.getHighlightsSummary()
-        }
-    }
-
-    // --- Load distribution summary (on-demand by period + value) ---
-    fun loadDistribution(
-        weekOrMonthCode: String,
-        type: String? = null,
-        start: String? = null,
-        end: String? = null
-    ) {
-        viewModelScope.launch {
-            _distribution.value = Result.Loading
-            _distribution.value = repo.getDistributionSummary(weekOrMonthCode, type, start, end)
-        }
-    }
-
-    // --- Load available weeks ---
-    fun loadAvailableWeeks() {
-        viewModelScope.launch {
-            try {
-                val result = repo.getAvailableWeeks()
-                if (result is Result.Success) {
-                    _availableWeeks.value = result.data
-                } else {
-                    _availableWeeks.value = emptyList()
-                }
-            } catch (e: Exception) {
-                _availableWeeks.value = emptyList()
-            }
-        }
-    }
-
-    // --- Convenience: load distribution for selected week ---
-    fun selectWeek(week: String, type: String? = null) {
-        loadDistribution(weekOrMonthCode = week, type = type)
-    }
 }
-
-

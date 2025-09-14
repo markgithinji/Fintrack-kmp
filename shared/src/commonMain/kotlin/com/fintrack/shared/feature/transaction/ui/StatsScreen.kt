@@ -5,12 +5,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -38,15 +41,14 @@ val SegmentColor5 = Color(0xFF2A9D8F) // Teal / turquoise
 
 @Composable
 fun StatisticsScreen(
-    viewModel: TransactionViewModel = viewModel()
+    viewModel: StatisticsViewModel = viewModel()
 ) {
-    var selectedTab by remember { mutableStateOf("Expenses") }
-    var selectedPeriod by remember { mutableStateOf("week") }
-    val scrollState = rememberScrollState()
-    var selectedWeek by remember { mutableStateOf<String?>(null) }
-
-    val highlights by viewModel.highlights.collectAsStateWithLifecycle()
+    // --- Collect UI state ---
+    val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
+    val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle()
+    val selectedWeek by viewModel.selectedWeek.collectAsStateWithLifecycle()
     val availableWeeks by viewModel.availableWeeks.collectAsStateWithLifecycle()
+    val highlights by viewModel.highlights.collectAsStateWithLifecycle()
     val distributionResult by viewModel.distribution.collectAsStateWithLifecycle()
 
     // --- Load initial data ---
@@ -55,64 +57,61 @@ fun StatisticsScreen(
         viewModel.loadHighlights()
     }
 
-    // Set default week if null
-    LaunchedEffect(availableWeeks) {
-        if (selectedWeek == null && availableWeeks.isNotEmpty()) {
-            selectedWeek = availableWeeks.first()
-            viewModel.selectWeek(
-                selectedWeek!!,
-                type = if (selectedTab == "Income") "income" else "expense"
-            )
-        }
-    }
+    // --- Remember scroll state ---
+    val listState = rememberLazyListState()
 
-    // Load distribution whenever selectedTab/selectedPeriod/selectedWeek changes
-    LaunchedEffect(selectedTab, selectedPeriod, selectedWeek) {
-        val type = if (selectedTab == "Income") "income" else "expense"
-        selectedWeek?.let { week ->
-            viewModel.loadDistribution(week, type = type)
-        }
-    }
-
-    Column(
+    LazyColumn(
+        state = listState,
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(bottom = 16.dp)
+            .padding(bottom = 16.dp),
+        contentPadding = PaddingValues(vertical = 16.dp)
     ) {
-        ScreenHeader(
-            selectedTab = selectedTab,
-            onTabSelected = { selectedTab = it }
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        SpendingHighlightsSection(
-            tabType = selectedTab,
-            highlightsResult = highlights,
-            loadHighlights = { viewModel.loadHighlights() }
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        if (selectedPeriod == "week" && selectedWeek != null) {
-            CategoryTotalsCardWithTabs(
-                tabType = selectedTab,
-                period = selectedPeriod,
-                value = selectedWeek!!,
-                distributionResult = distributionResult,
-                availableWeeks = availableWeeks,
-                onWeekSelected = { newWeek ->
-                    selectedWeek = newWeek
-                    viewModel.selectWeek(
-                        newWeek,
-                        type = if (selectedTab == "Income") "income" else "expense"
-                    )
+        // --- Screen header ---
+        item(key = "screenHeader") {
+            val onTabSelected: (TabType) -> Unit = remember(viewModel) { viewModel::onTabChanged }
+            ScreenHeader(
+                selectedTab = selectedTab.name.capitalize(),
+                onTabSelected = { tabString ->
+                    val tab = if (tabString.equals("Income", true)) TabType.INCOME else TabType.EXPENSE
+                    onTabSelected(tab)
                 }
             )
         }
+
+        // --- Spacer ---
+        item(key = "headerSpacer") { Spacer(Modifier.height(16.dp)) }
+
+        // --- Spending highlights ---
+        item(key = "spendingHighlights") {
+            val loadHighlights = remember(viewModel) { viewModel::loadHighlights }
+            SpendingHighlightsSection(
+                tabType = selectedTab.name.capitalize(),
+                highlightsResult = highlights,
+                loadHighlights = loadHighlights
+            )
+        }
+
+        item(key = "highlightsSpacer") { Spacer(Modifier.height(16.dp)) }
+
+        // --- Category totals ---
+        if (selectedPeriod == Period.WEEK && selectedWeek != null) {
+            item(key = selectedWeek!!) {
+                val onWeekSelected = remember(viewModel) { viewModel::onWeekChanged }
+                CategoryTotalsCardWithTabs(
+                    tabType = selectedTab.name.capitalize(),
+                    period = selectedPeriod.name.lowercase(),
+                    value = selectedWeek!!,
+                    distributionResult = distributionResult,
+                    availableWeeks = availableWeeks,
+                    onWeekSelected = onWeekSelected
+                )
+            }
+        }
     }
 }
+
+
 
 
 @Composable
