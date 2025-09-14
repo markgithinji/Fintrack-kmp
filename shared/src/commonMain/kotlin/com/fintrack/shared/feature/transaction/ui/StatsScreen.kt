@@ -32,22 +32,24 @@ val SegmentColor2 = Color(0xFF228B22) // Forest Green
 val SegmentColor3 = Color(0xFF457B9D) // Vibrant blue
 val SegmentColor4 = Color(0xFFF4A261) // Warm orange
 val SegmentColor5 = Color(0xFF2A9D8F) // Teal / turquoise
-
 @Composable
 fun StatisticsScreen(
     viewModel: StatisticsViewModel = viewModel()
 ) {
     // --- Collect UI state ---
-    val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle() // TabType
-    val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle() // Period
+    val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()       // Income / Expense
+    val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle() // Week / Month
     val selectedWeek by viewModel.selectedWeek.collectAsStateWithLifecycle()
     val availableWeeks by viewModel.availableWeeks.collectAsStateWithLifecycle()
+    val selectedMonth by viewModel.selectedMonth.collectAsStateWithLifecycle()
+    val availableMonths by viewModel.availableMonths.collectAsStateWithLifecycle()
     val highlights by viewModel.highlights.collectAsStateWithLifecycle()
     val distributionResult by viewModel.distribution.collectAsStateWithLifecycle()
 
     // --- Load initial data ---
     LaunchedEffect(Unit) {
         viewModel.loadAvailableWeeks()
+        viewModel.loadAvailableMonths()
         viewModel.loadHighlights()
     }
 
@@ -57,11 +59,10 @@ fun StatisticsScreen(
     LazyColumn(
         state = listState,
         modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 16.dp),
+            .fillMaxSize(),
         contentPadding = PaddingValues(vertical = 16.dp)
     ) {
-        // --- Screen header ---
+        // --- Screen header (Income / Expense tabs) ---
         item(key = "screenHeader") {
             ScreenHeader(
                 selectedTab = selectedTab,
@@ -69,7 +70,6 @@ fun StatisticsScreen(
             )
         }
 
-        // --- Spacer ---
         item(key = "headerSpacer") { Spacer(Modifier.height(16.dp)) }
 
         // --- Spending highlights ---
@@ -83,21 +83,30 @@ fun StatisticsScreen(
 
         item(key = "highlightsSpacer") { Spacer(Modifier.height(16.dp)) }
 
-        // --- Category totals ---
-        if (selectedPeriod == Period.WEEK && selectedWeek != null) {
+        // --- Category totals (week or month distribution) ---
+        val activeValue = when (selectedPeriod) {
+            Period.WEEK -> selectedWeek
+            Period.MONTH -> selectedMonth
+        }
+
+        if (activeValue != null) {
             item(key = "categoryTotals") {
                 CategoryTotalsCardWithTabs(
                     tabType = selectedTab,
                     period = selectedPeriod,
-                    value = selectedWeek!!,
+                    value = activeValue,
                     distributionResult = distributionResult,
                     availableWeeks = availableWeeks,
-                    onWeekSelected = viewModel::onWeekChanged
+                    availableMonths = availableMonths,
+                    onWeekSelected = viewModel::onWeekChanged,
+                    onMonthSelected = viewModel::onMonthChanged,
+                    onPeriodSelected = viewModel::onPeriodChanged
                 )
             }
         }
     }
 }
+
 
 
 @Composable

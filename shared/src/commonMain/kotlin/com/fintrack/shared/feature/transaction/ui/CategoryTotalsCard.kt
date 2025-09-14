@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -26,6 +28,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,7 +57,6 @@ val SegmentColors = listOf(
     Color(0xFF76B7B2), // Teal
     Color(0xFFFF9DA7)  // Pink / Others
 )
-
 @Composable
 fun CategoryTotalsCardWithTabs(
     tabType: TabType,
@@ -62,7 +64,10 @@ fun CategoryTotalsCardWithTabs(
     value: String,
     distributionResult: Result<DistributionSummary>,
     availableWeeks: List<String> = emptyList(),
-    onWeekSelected: (String) -> Unit = {}
+    availableMonths: List<String> = emptyList(),
+    onWeekSelected: (String) -> Unit = {},
+    onMonthSelected: (String) -> Unit = {},
+    onPeriodSelected: (Period) -> Unit = {}
 ) {
     when (distributionResult) {
         is Result.Loading -> Box(
@@ -93,29 +98,35 @@ fun CategoryTotalsCardWithTabs(
             CategoryContent(
                 weeklySummary = weeklyMap,
                 monthlySummary = monthlyMap,
-                initialSelectedWeek = value,
+                selectedPeriod = period,
+                selectedWeek = if (period == Period.WEEK) value else null,
+                selectedMonth = if (period == Period.MONTH) value else null,
                 availableWeeks = availableWeeks,
-                onWeekSelected = onWeekSelected
+                availableMonths = availableMonths,
+                onWeekSelected = onWeekSelected,
+                onMonthSelected = onMonthSelected,
+                onPeriodSelected = onPeriodSelected
             )
         }
     }
 }
 
 
+
 @Composable
 private fun CategoryContent(
     weeklySummary: Map<String, List<CategorySummary>>,
     monthlySummary: Map<String, List<CategorySummary>>,
-    initialSelectedWeek: String? = null,
-    initialSelectedMonth: String? = null,
+    selectedPeriod: Period,
+    selectedWeek: String? = null,
+    selectedMonth: String? = null,
     availableWeeks: List<String> = emptyList(),
+    availableMonths: List<String> = emptyList(),
     onWeekSelected: (String) -> Unit = {},
+    onMonthSelected: (String) -> Unit = {},
+    onPeriodSelected: (Period) -> Unit = {},
     title: String = "Spending Distribution"
 ) {
-    var selectedTab by remember { mutableStateOf(TimeSpan.WEEK) }
-    var selectedWeek by remember { mutableStateOf(initialSelectedWeek) }
-    var selectedMonth by remember { mutableStateOf(initialSelectedMonth) }
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -129,7 +140,7 @@ private fun CategoryContent(
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        // --- Tabs ---
+        // --- Period switcher (Week / Month) ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -137,7 +148,9 @@ private fun CategoryContent(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             TimeSpan.entries.forEach { span ->
-                val isSelected = span == selectedTab
+                val isSelected = (span == TimeSpan.WEEK && selectedPeriod == Period.WEEK) ||
+                        (span == TimeSpan.MONTH && selectedPeriod == Period.MONTH)
+
                 val backgroundColor = if (isSelected) Color(0xFF2D2D2D) else Color.Transparent
                 val textColor = if (isSelected) Color.White else Color.Black
 
@@ -145,7 +158,15 @@ private fun CategoryContent(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
                         .background(backgroundColor)
-                        .clickable { selectedTab = span }
+                        .clickable {
+                            when (span) {
+                                TimeSpan.WEEK -> onPeriodSelected(Period.WEEK)
+                                TimeSpan.MONTH -> onPeriodSelected(Period.MONTH)
+                                TimeSpan.YEAR -> {
+                                    TODO()
+                                }
+                            }
+                        }
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
@@ -157,30 +178,36 @@ private fun CategoryContent(
             }
         }
 
-        // --- Period selector ---
-        if (selectedTab == TimeSpan.WEEK && availableWeeks.isNotEmpty()) {
+        // --- Week selector ---
+        if (selectedPeriod == Period.WEEK && availableWeeks.isNotEmpty()) {
             WeekSelector(
                 weeks = availableWeeks,
                 selectedWeek = selectedWeek,
-                onWeekSelected = {
-                    selectedWeek = it
-                    onWeekSelected(it)
-                }
+                onWeekSelected = onWeekSelected
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        // --- Month selector ---
+        if (selectedPeriod == Period.MONTH && availableMonths.isNotEmpty()) {
+            MonthSelector(
+                months = availableMonths,
+                selectedMonth = selectedMonth,
+                onMonthSelected = onMonthSelected
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
 
         // --- Prepare category data ---
-        val categories: List<CategorySummary> = when (selectedTab) {
-            TimeSpan.WEEK -> selectedWeek?.let { weeklySummary[it] } ?: emptyList()
-            TimeSpan.MONTH -> selectedMonth?.let { monthlySummary[it] } ?: emptyList()
-            TimeSpan.YEAR -> monthlySummary.values.flatten()
+        val categories: List<CategorySummary> = when (selectedPeriod) {
+            Period.WEEK -> selectedWeek?.let { weeklySummary[it] } ?: emptyList()
+            Period.MONTH -> selectedMonth?.let { monthlySummary[it] } ?: emptyList()
         }
 
         val totalAmount = categories.sumOf { it.total }.toFloat()
         val categorySums = categories.map { it.category to it.total.toFloat() }
 
-        // --- Top 4 + "Others" for chart ---
+        // --- Top 4 + "Others" ---
         val sortedForChart = categorySums.sortedByDescending { it.second }
         val topForChart = sortedForChart.take(4).toMutableList()
         val othersTotal = sortedForChart.drop(4).sumOf { it.second.toDouble() }.toFloat()
@@ -216,6 +243,7 @@ private fun CategoryContent(
         )
     }
 }
+
 
 
 @Composable
@@ -322,6 +350,43 @@ fun WeekSelector(
         }
     }
 }
+
+@Composable
+fun MonthSelector(
+    months: List<String>,
+    selectedMonth: String?,
+    onMonthSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color.LightGray.copy(alpha = 0.2f))
+                .clickable { expanded = true }
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(selectedMonth ?: "Select Month")
+            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+        }
+
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            months.forEach { month ->
+                DropdownMenuItem(
+                    text = { Text(month) }, // optional: format "2025-09" -> "Sep 2025"
+                    onClick = {
+                        onMonthSelected(month)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+
 
 enum class TimeSpan(val displayName: String) {
     WEEK("Week"),
