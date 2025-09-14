@@ -63,38 +63,31 @@ class StatisticsViewModel : ViewModel() {
         }
     }
 
-
-    // --- Available weeks ---
-    fun loadAvailableWeeks() {
+    fun loadInitialPeriods() {
         viewModelScope.launch {
             try {
-                val result = repo.getAvailableWeeks()
-                val weeks = if (result is Result.Success) result.data else emptyList()
+                // --- Load available weeks ---
+                val weeksResult = repo.getAvailableWeeks()
+                val weeks = if (weeksResult is Result.Success) weeksResult.data else emptyList()
                 _availableWeeks.value = weeks
 
-                if (_selectedPeriod.value == null && weeks.isNotEmpty()) {
-                    _selectedPeriod.value = Period.Week(weeks.first())
-                    reloadDistributionForCurrentSelection()
-                }
-            } catch (e: Exception) {
-                _availableWeeks.value = emptyList()
-            }
-        }
-    }
-
-    // --- Available months ---
-    fun loadAvailableMonths() {
-        viewModelScope.launch {
-            try {
-                val result = repo.getAvailableMonths()
-                val months = if (result is Result.Success) result.data.months else emptyList()
+                // --- Load available months ---
+                val monthsResult = repo.getAvailableMonths()
+                val months =
+                    if (monthsResult is Result.Success) monthsResult.data.months else emptyList()
                 _availableMonths.value = months
 
-                if (_selectedPeriod.value == null && months.isNotEmpty()) {
-                    _selectedPeriod.value = Period.Month(months.first())
-                    reloadDistributionForCurrentSelection()
+                // --- Set default period: prefer first week if available, else first month ---
+                _selectedPeriod.value = when {
+                    weeks.isNotEmpty() -> Period.Week(weeks.first())
+                    months.isNotEmpty() -> Period.Month(months.first())
+                    else -> null
                 }
+
+                // --- Load distribution for the selected period ---
+                reloadDistributionForCurrentSelection()
             } catch (e: Exception) {
+                _availableWeeks.value = emptyList()
                 _availableMonths.value = emptyList()
             }
         }

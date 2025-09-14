@@ -32,6 +32,7 @@ val SegmentColor2 = Color(0xFF228B22) // Forest Green
 val SegmentColor3 = Color(0xFF457B9D) // Vibrant blue
 val SegmentColor4 = Color(0xFFF4A261) // Warm orange
 val SegmentColor5 = Color(0xFF2A9D8F) // Teal / turquoise
+
 @Composable
 fun StatisticsScreen(
     viewModel: StatisticsViewModel = viewModel()
@@ -46,8 +47,7 @@ fun StatisticsScreen(
 
     // --- Load initial data ---
     LaunchedEffect(Unit) {
-        viewModel.loadAvailableWeeks()
-        viewModel.loadAvailableMonths()
+        viewModel.loadInitialPeriods()
         viewModel.loadHighlights()
     }
 
@@ -97,7 +97,6 @@ fun StatisticsScreen(
         }
     }
 }
-
 
 
 @Composable
