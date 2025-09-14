@@ -30,6 +30,11 @@ class StatisticsViewModel : ViewModel() {
     private val _availableMonths = MutableStateFlow<List<String>>(emptyList())
     val availableMonths: StateFlow<List<String>> = _availableMonths
 
+    // --- Available years state ---
+    private val _availableYears = MutableStateFlow<List<String>>(emptyList())
+    val availableYears: StateFlow<List<String>> = _availableYears
+
+
     // --- UI state for StatisticsScreen ---
     private val _selectedTab = MutableStateFlow<TabType>(TabType.Expense)
     val selectedTab: StateFlow<TabType> = _selectedTab
@@ -63,35 +68,38 @@ class StatisticsViewModel : ViewModel() {
         }
     }
 
-    fun loadInitialPeriods() {
+    fun loadAvailablePeriods() {
         viewModelScope.launch {
             try {
-                // --- Load available weeks ---
                 val weeksResult = repo.getAvailableWeeks()
                 val weeks = if (weeksResult is Result.Success) weeksResult.data else emptyList()
                 _availableWeeks.value = weeks
 
-                // --- Load available months ---
                 val monthsResult = repo.getAvailableMonths()
-                val months =
-                    if (monthsResult is Result.Success) monthsResult.data.months else emptyList()
+                val months = if (monthsResult is Result.Success) monthsResult.data.months else emptyList()
                 _availableMonths.value = months
 
-                // --- Set default period: prefer first week if available, else first month ---
+                val yearsResult = repo.getAvailableYears()
+                val years = if (yearsResult is Result.Success) yearsResult.data.years else emptyList()
+                _availableYears.value = years
+
                 _selectedPeriod.value = when {
                     weeks.isNotEmpty() -> Period.Week(weeks.first())
                     months.isNotEmpty() -> Period.Month(months.first())
+                    years.isNotEmpty() -> Period.Year(years.first())
                     else -> null
                 }
 
-                // --- Load distribution for the selected period ---
                 reloadDistributionForCurrentSelection()
             } catch (e: Exception) {
                 _availableWeeks.value = emptyList()
                 _availableMonths.value = emptyList()
+                _availableYears.value = emptyList()
             }
         }
     }
+
+
 
     // --- UI state helpers ---
     fun onTabChanged(tab: TabType) {
@@ -109,6 +117,11 @@ class StatisticsViewModel : ViewModel() {
         reloadDistributionForCurrentSelection()
     }
 
+    fun onYearChanged(year: String) {
+        _selectedPeriod.value = Period.Year(year)
+        reloadDistributionForCurrentSelection()
+    }
+
     fun onPeriodChanged(period: Period) {
         _selectedPeriod.value = period
         reloadDistributionForCurrentSelection()
@@ -120,12 +133,16 @@ class StatisticsViewModel : ViewModel() {
             is TabType.Expense -> TransactionType.Expense
         }
 
-        when (val period = _selectedPeriod.value) {
+        val period = _selectedPeriod.value
+
+        when (period) {
             is Period.Week -> loadDistribution(period.code, type)
             is Period.Month -> loadDistribution(period.code, type)
-            null -> Unit
+            is Period.Year -> loadDistribution(period.code, type)
+            null -> println("DEBUG: No period selected")
         }
     }
+
 }
 
 
@@ -138,8 +155,8 @@ sealed class TabType(val displayName: String) {
 sealed class Period {
     data class Week(val code: String) : Period()
     data class Month(val code: String) : Period()
+    data class Year(val code: String) : Period()
 }
-
 sealed class TransactionType(val apiName: String) {
     object Income : TransactionType("income")
     object Expense : TransactionType("expense")

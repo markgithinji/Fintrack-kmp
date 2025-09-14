@@ -62,87 +62,111 @@ fun CategoryTotalsCardWithTabs(
     distributionResult: Result<DistributionSummary>,
     availableWeeks: List<String> = emptyList(),
     availableMonths: List<String> = emptyList(),
+    availableYears: List<String> = emptyList(),
     onWeekSelected: (String) -> Unit = {},
     onMonthSelected: (String) -> Unit = {},
+    onYearSelected: (String) -> Unit = {},
     onPeriodSelected: (Period) -> Unit = {}
 ) {
     when (distributionResult) {
         is Result.Loading -> Box(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center
-        ) { CircularProgressIndicator() }
+        ) {
+            CircularProgressIndicator()
+        }
 
         is Result.Error -> {
             val message = distributionResult.exception.message ?: "Unknown error"
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
-            ) { Text("Error: $message", color = Color.Red) }
+            ) {
+                Text("Error: $message", color = Color.Red)
+            }
         }
 
         is Result.Success -> {
-            val data = distributionResult.data
             val categories = when (tabType) {
-                is TabType.Income -> data.incomeCategories
-                is TabType.Expense -> data.expenseCategories
+                is TabType.Income -> distributionResult.data.incomeCategories
+                is TabType.Expense -> distributionResult.data.expenseCategories
             }
 
-            val weeklyMap =
-                if (period is Period.Week) mapOf(period.code to categories) else emptyMap()
-            val monthlyMap =
-                if (period is Period.Month) mapOf(period.code to categories) else emptyMap()
+            // Create a map depending on the period type
+            val weeklyMap = if (period is Period.Week) mapOf(period.code to categories) else emptyMap()
+            val monthlyMap = if (period is Period.Month) mapOf(period.code to categories) else emptyMap()
+            val yearlyMap = if (period is Period.Year) mapOf(period.code to categories) else emptyMap()
 
             CategoryContent(
                 weeklySummary = weeklyMap,
                 monthlySummary = monthlyMap,
+                yearlySummary = yearlyMap,          // added support for year
                 selectedPeriod = period,
                 availableWeeks = availableWeeks,
                 availableMonths = availableMonths,
+                availableYears = availableYears,    // pass available years
                 onWeekSelected = onWeekSelected,
                 onMonthSelected = onMonthSelected,
+                onYearSelected = onYearSelected,    // new callback
                 onPeriodSelected = onPeriodSelected
             )
         }
     }
 }
 
+
 @Composable
 private fun CategoryContent(
     weeklySummary: Map<String, List<CategorySummary>>,
     monthlySummary: Map<String, List<CategorySummary>>,
+    yearlySummary: Map<String, List<CategorySummary>> = emptyMap(),
     selectedPeriod: Period,
-    availableWeeks: List<String>,
-    availableMonths: List<String>,
-    onWeekSelected: (String) -> Unit,
-    onMonthSelected: (String) -> Unit,
-    onPeriodSelected: (Period) -> Unit,
+    availableWeeks: List<String> = emptyList(),
+    availableMonths: List<String> = emptyList(),
+    availableYears: List<String> = emptyList(),
+    onWeekSelected: (String) -> Unit = {},
+    onMonthSelected: (String) -> Unit = {},
+    onYearSelected: (String) -> Unit = {},
+    onPeriodSelected: (Period) -> Unit = {},
     title: String = "Spending Distribution"
 ) {
     val categories = when (selectedPeriod) {
         is Period.Week -> weeklySummary[selectedPeriod.code] ?: emptyList()
         is Period.Month -> monthlySummary[selectedPeriod.code] ?: emptyList()
+        is Period.Year -> yearlySummary[selectedPeriod.code] ?: emptyList()
     }
 
     val totalAmount = categories.sumOf { it.total }.toFloat()
     val categorySums = categories.map { it.category to it.total.toFloat() }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
         CategoryHeader(title = title)
 
         PeriodSelector(
             selectedPeriod = selectedPeriod,
             availableWeeks = availableWeeks,
             availableMonths = availableMonths,
-            onPeriodSelected = onPeriodSelected,
+            availableYears = availableYears,
             onWeekSelected = onWeekSelected,
-            onMonthSelected = onMonthSelected
+            onMonthSelected = onMonthSelected,
+            onYearSelected = onYearSelected,
+            onPeriodSelected = onPeriodSelected
         )
 
         DonutChartSection(categorySums, totalAmount)
         Spacer(Modifier.height(16.dp))
-        CategoryList(categories = categorySums, totalAmount = totalAmount, segmentColors = SegmentColors)
+        CategoryList(
+            categories = categorySums,
+            totalAmount = totalAmount,
+            segmentColors = SegmentColors
+        )
     }
 }
+
 
 
 @Composable
@@ -155,20 +179,72 @@ private fun CategoryHeader(title: String) {
     )
 }
 
+
+@Composable
+fun PeriodSelector(
+    selectedPeriod: Period,
+    availableWeeks: List<String> = emptyList(),
+    availableMonths: List<String> = emptyList(),
+    availableYears: List<String> = emptyList(),
+    onPeriodSelected: (Period) -> Unit = {},
+    onWeekSelected: (String) -> Unit = {},
+    onMonthSelected: (String) -> Unit = {},
+    onYearSelected: (String) -> Unit = {}
+) {
+    Column {
+        // --- Switcher Row (Week / Month / Year) ---
+        PeriodSwitcher(
+            selectedPeriod = selectedPeriod,
+            availableWeeks = availableWeeks,
+            availableMonths = availableMonths,
+            availableYears = availableYears,
+            onPeriodSelected = onPeriodSelected
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        // --- Dropdown for the selected period ---
+        val (options, selectedCode, onSelected, placeholder) = when (selectedPeriod) {
+            is Period.Week -> Quad(availableWeeks, selectedPeriod.code, onWeekSelected, "Select Week")
+            is Period.Month -> Quad(availableMonths, selectedPeriod.code, onMonthSelected, "Select Month")
+            is Period.Year -> Quad(availableYears, selectedPeriod.code, onYearSelected, "Select Year")
+        }
+
+        if (options.isNotEmpty()) {
+            DropdownSelector(
+                options = options,
+                selected = selectedCode,
+                onSelected = onSelected,
+                placeholder = placeholder
+            )
+        }
+    }
+}
+
+// Helper data class to hold four values
+private data class Quad<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
+
 @Composable
 private fun PeriodSwitcher(
     selectedPeriod: Period,
-    availableWeeks: List<String>,
-    availableMonths: List<String>,
-    onPeriodSelected: (Period) -> Unit
+    availableWeeks: List<String> = emptyList(),
+    availableMonths: List<String> = emptyList(),
+    availableYears: List<String> = emptyList(),
+    onPeriodSelected: (Period) -> Unit = {}
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         TimeSpan.entries.forEach { span ->
-            val isSelected = (span == TimeSpan.WEEK && selectedPeriod is Period.Week) ||
-                    (span == TimeSpan.MONTH && selectedPeriod is Period.Month)
+            val isSelected = when (span) {
+                TimeSpan.WEEK -> selectedPeriod is Period.Week
+                TimeSpan.MONTH -> selectedPeriod is Period.Month
+                TimeSpan.YEAR -> selectedPeriod is Period.Year
+            }
+
             val bg = if (isSelected) Color(0xFF2D2D2D) else Color.Transparent
             val fg = if (isSelected) Color.White else Color.Black
 
@@ -178,63 +254,23 @@ private fun PeriodSwitcher(
                     .background(bg)
                     .clickable {
                         when (span) {
-                            TimeSpan.WEEK -> availableWeeks.firstOrNull()
-                                ?.let { onPeriodSelected(Period.Week(it)) }
-
-                            TimeSpan.MONTH -> availableMonths.firstOrNull()
-                                ?.let { onPeriodSelected(Period.Month(it)) }
-
-                            TimeSpan.YEAR -> TODO()
+                            TimeSpan.WEEK -> availableWeeks.firstOrNull()?.let { onPeriodSelected(Period.Week(it)) }
+                            TimeSpan.MONTH -> availableMonths.firstOrNull()?.let { onPeriodSelected(Period.Month(it)) }
+                            TimeSpan.YEAR -> availableYears.firstOrNull()?.let { onPeriodSelected(Period.Year(it)) }
                         }
                     }
                     .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) { Text(text = span.displayName, fontWeight = FontWeight.SemiBold, color = fg) }
-        }
-    }
-}
-
-@Composable
-fun PeriodSelector(
-    selectedPeriod: Period,
-    availableWeeks: List<String>,
-    availableMonths: List<String>,
-    onPeriodSelected: (Period) -> Unit,
-    onWeekSelected: (String) -> Unit,
-    onMonthSelected: (String) -> Unit
-) {
-    Column {
-        // --- Switcher Row (Week / Month) ---
-        PeriodSwitcher(
-            selectedPeriod = selectedPeriod,
-            availableWeeks = availableWeeks,
-            availableMonths = availableMonths,
-            onPeriodSelected = onPeriodSelected
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        // --- Dropdown for the selected period ---
-        when (selectedPeriod) {
-            is Period.Week -> if (availableWeeks.isNotEmpty()) {
-                DropdownSelector(
-                    options = availableWeeks,
-                    selected = selectedPeriod.code,
-                    onSelected = onWeekSelected,
-                    placeholder = "Select Week"
-                )
-            }
-
-            is Period.Month -> if (availableMonths.isNotEmpty()) {
-                DropdownSelector(
-                    options = availableMonths,
-                    selected = selectedPeriod.code,
-                    onSelected = onMonthSelected,
-                    placeholder = "Select Month"
+            ) {
+                Text(
+                    text = span.displayName,
+                    fontWeight = FontWeight.SemiBold,
+                    color = fg
                 )
             }
         }
     }
 }
+
 @Composable
 fun DropdownSelector(
     options: List<String>,

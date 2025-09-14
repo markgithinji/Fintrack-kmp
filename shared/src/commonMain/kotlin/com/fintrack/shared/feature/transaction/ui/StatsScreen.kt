@@ -32,22 +32,22 @@ val SegmentColor2 = Color(0xFF228B22) // Forest Green
 val SegmentColor3 = Color(0xFF457B9D) // Vibrant blue
 val SegmentColor4 = Color(0xFFF4A261) // Warm orange
 val SegmentColor5 = Color(0xFF2A9D8F) // Teal / turquoise
-
 @Composable
 fun StatisticsScreen(
     viewModel: StatisticsViewModel = viewModel()
 ) {
     // --- Collect UI state ---
-    val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()       // Income / Expense
-    val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle() // Week / Month
+    val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()         // Income / Expense
+    val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle()   // Week / Month / Year
     val availableWeeks by viewModel.availableWeeks.collectAsStateWithLifecycle()
     val availableMonths by viewModel.availableMonths.collectAsStateWithLifecycle()
+    val availableYears by viewModel.availableYears.collectAsStateWithLifecycle()
     val highlights by viewModel.highlights.collectAsStateWithLifecycle()
     val distributionResult by viewModel.distribution.collectAsStateWithLifecycle()
 
     // --- Load initial data ---
     LaunchedEffect(Unit) {
-        viewModel.loadInitialPeriods()
+        viewModel.loadAvailablePeriods() // now loads weeks, months, and years safely
         viewModel.loadHighlights()
     }
 
@@ -67,7 +67,7 @@ fun StatisticsScreen(
             )
         }
 
-        item(key = "headerSpacer") { Spacer(Modifier.height(16.dp)) }
+        item(key = "spacer1") { Spacer(Modifier.height(16.dp)) }
 
         // --- Spending highlights ---
         item(key = "spendingHighlights") {
@@ -78,9 +78,9 @@ fun StatisticsScreen(
             )
         }
 
-        item(key = "highlightsSpacer") { Spacer(Modifier.height(16.dp)) }
+        item(key = "spacer2") { Spacer(Modifier.height(16.dp)) }
 
-        // --- Category totals (week or month distribution) ---
+        // --- Category totals (week, month, or year) ---
         selectedPeriod?.let { period ->
             item(key = "categoryTotals") {
                 CategoryTotalsCardWithTabs(
@@ -89,8 +89,10 @@ fun StatisticsScreen(
                     distributionResult = distributionResult,
                     availableWeeks = availableWeeks,
                     availableMonths = availableMonths,
+                    availableYears = availableYears,          // added year support
                     onWeekSelected = viewModel::onWeekChanged,
                     onMonthSelected = viewModel::onMonthChanged,
+                    onYearSelected = viewModel::onYearChanged, // new callback
                     onPeriodSelected = viewModel::onPeriodChanged
                 )
             }
