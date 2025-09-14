@@ -61,7 +61,6 @@ val SegmentColors = listOf(
 fun CategoryTotalsCardWithTabs(
     tabType: TabType,
     period: Period,
-    value: String,
     distributionResult: Result<DistributionSummary>,
     availableWeeks: List<String> = emptyList(),
     availableMonths: List<String> = emptyList(),
@@ -90,17 +89,13 @@ fun CategoryTotalsCardWithTabs(
                 is TabType.Expense -> data.expenseCategories
             }
 
-            val weeklyMap =
-                if (period == Period.WEEK) mapOf(data.period to categories) else emptyMap()
-            val monthlyMap =
-                if (period == Period.MONTH) mapOf(data.period to categories) else emptyMap()
+            val weeklyMap = if (period is Period.Week) mapOf(period.code to categories) else emptyMap()
+            val monthlyMap = if (period is Period.Month) mapOf(period.code to categories) else emptyMap()
 
             CategoryContent(
                 weeklySummary = weeklyMap,
                 monthlySummary = monthlyMap,
                 selectedPeriod = period,
-                selectedWeek = if (period == Period.WEEK) value else null,
-                selectedMonth = if (period == Period.MONTH) value else null,
                 availableWeeks = availableWeeks,
                 availableMonths = availableMonths,
                 onWeekSelected = onWeekSelected,
@@ -111,15 +106,11 @@ fun CategoryTotalsCardWithTabs(
     }
 }
 
-
-
 @Composable
 private fun CategoryContent(
     weeklySummary: Map<String, List<CategorySummary>>,
     monthlySummary: Map<String, List<CategorySummary>>,
     selectedPeriod: Period,
-    selectedWeek: String? = null,
-    selectedMonth: String? = null,
     availableWeeks: List<String> = emptyList(),
     availableMonths: List<String> = emptyList(),
     onWeekSelected: (String) -> Unit = {},
@@ -148,8 +139,8 @@ private fun CategoryContent(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             TimeSpan.entries.forEach { span ->
-                val isSelected = (span == TimeSpan.WEEK && selectedPeriod == Period.WEEK) ||
-                        (span == TimeSpan.MONTH && selectedPeriod == Period.MONTH)
+                val isSelected = (span == TimeSpan.WEEK && selectedPeriod is Period.Week) ||
+                        (span == TimeSpan.MONTH && selectedPeriod is Period.Month)
 
                 val backgroundColor = if (isSelected) Color(0xFF2D2D2D) else Color.Transparent
                 val textColor = if (isSelected) Color.White else Color.Black
@@ -160,11 +151,13 @@ private fun CategoryContent(
                         .background(backgroundColor)
                         .clickable {
                             when (span) {
-                                TimeSpan.WEEK -> onPeriodSelected(Period.WEEK)
-                                TimeSpan.MONTH -> onPeriodSelected(Period.MONTH)
-                                TimeSpan.YEAR -> {
-                                    TODO()
+                                TimeSpan.WEEK -> availableWeeks.firstOrNull()?.let { code ->
+                                    onPeriodSelected(Period.Week(code))
                                 }
+                                TimeSpan.MONTH -> availableMonths.firstOrNull()?.let { code ->
+                                    onPeriodSelected(Period.Month(code))
+                                }
+                                TimeSpan.YEAR -> TODO()
                             }
                         }
                         .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -179,20 +172,20 @@ private fun CategoryContent(
         }
 
         // --- Week selector ---
-        if (selectedPeriod == Period.WEEK && availableWeeks.isNotEmpty()) {
+        if (selectedPeriod is Period.Week && availableWeeks.isNotEmpty()) {
             WeekSelector(
                 weeks = availableWeeks,
-                selectedWeek = selectedWeek,
+                selectedWeek = selectedPeriod.code,
                 onWeekSelected = onWeekSelected
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
 
         // --- Month selector ---
-        if (selectedPeriod == Period.MONTH && availableMonths.isNotEmpty()) {
+        if (selectedPeriod is Period.Month && availableMonths.isNotEmpty()) {
             MonthSelector(
                 months = availableMonths,
-                selectedMonth = selectedMonth,
+                selectedMonth = selectedPeriod.code,
                 onMonthSelected = onMonthSelected
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -200,8 +193,8 @@ private fun CategoryContent(
 
         // --- Prepare category data ---
         val categories: List<CategorySummary> = when (selectedPeriod) {
-            Period.WEEK -> selectedWeek?.let { weeklySummary[it] } ?: emptyList()
-            Period.MONTH -> selectedMonth?.let { monthlySummary[it] } ?: emptyList()
+            is Period.Week -> weeklySummary[selectedPeriod.code] ?: emptyList()
+            is Period.Month -> monthlySummary[selectedPeriod.code] ?: emptyList()
         }
 
         val totalAmount = categories.sumOf { it.total }.toFloat()

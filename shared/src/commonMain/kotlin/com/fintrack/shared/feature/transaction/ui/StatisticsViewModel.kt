@@ -34,14 +34,8 @@ class StatisticsViewModel : ViewModel() {
     private val _selectedTab = MutableStateFlow<TabType>(TabType.Expense)
     val selectedTab: StateFlow<TabType> = _selectedTab
 
-    private val _selectedPeriod = MutableStateFlow(Period.WEEK) // default
-    val selectedPeriod: StateFlow<Period> = _selectedPeriod
-
-    private val _selectedWeek = MutableStateFlow<String?>(null)
-    val selectedWeek: StateFlow<String?> = _selectedWeek
-
-    private val _selectedMonth = MutableStateFlow<String?>(null)
-    val selectedMonth: StateFlow<String?> = _selectedMonth
+    private val _selectedPeriod = MutableStateFlow<Period?>(null)
+    val selectedPeriod: StateFlow<Period?> = _selectedPeriod
 
     // --- Load highlights summary ---
     fun loadHighlights() {
@@ -52,9 +46,9 @@ class StatisticsViewModel : ViewModel() {
     }
 
     // --- Load distribution summary ---
-    fun loadDistribution(
+    private fun loadDistribution(
         weekOrMonthCode: String,
-        type: String? = null,
+        type: TransactionType,
         start: String? = null,
         end: String? = null
     ) {
@@ -62,12 +56,13 @@ class StatisticsViewModel : ViewModel() {
             _distribution.value = Result.Loading
             _distribution.value = repo.getDistributionSummary(
                 weekOrMonthCode = weekOrMonthCode,
-                type = type,
+                type = type.apiName,
                 start = start,
                 end = end
             )
         }
     }
+
 
     // --- Available weeks ---
     fun loadAvailableWeeks() {
@@ -77,13 +72,12 @@ class StatisticsViewModel : ViewModel() {
                 val weeks = if (result is Result.Success) result.data else emptyList()
                 _availableWeeks.value = weeks
 
-                _selectedWeek.value = weeks.firstOrNull()
-                if (_selectedPeriod.value == Period.WEEK) {
+                if (_selectedPeriod.value == null && weeks.isNotEmpty()) {
+                    _selectedPeriod.value = Period.Week(weeks.first())
                     reloadDistributionForCurrentSelection()
                 }
             } catch (e: Exception) {
                 _availableWeeks.value = emptyList()
-                _selectedWeek.value = null
             }
         }
     }
@@ -96,13 +90,12 @@ class StatisticsViewModel : ViewModel() {
                 val months = if (result is Result.Success) result.data.months else emptyList()
                 _availableMonths.value = months
 
-                _selectedMonth.value = months.firstOrNull()
-                if (_selectedPeriod.value == Period.MONTH) {
+                if (_selectedPeriod.value == null && months.isNotEmpty()) {
+                    _selectedPeriod.value = Period.Month(months.first())
                     reloadDistributionForCurrentSelection()
                 }
             } catch (e: Exception) {
                 _availableMonths.value = emptyList()
-                _selectedMonth.value = null
             }
         }
     }
@@ -114,49 +107,30 @@ class StatisticsViewModel : ViewModel() {
     }
 
     fun onWeekChanged(week: String) {
-        _selectedWeek.value = week
-        _selectedPeriod.value = Period.WEEK
+        _selectedPeriod.value = Period.Week(week)
         reloadDistributionForCurrentSelection()
     }
 
     fun onMonthChanged(month: String) {
-        _selectedMonth.value = month
-        _selectedPeriod.value = Period.MONTH
+        _selectedPeriod.value = Period.Month(month)
         reloadDistributionForCurrentSelection()
     }
 
     fun onPeriodChanged(period: Period) {
         _selectedPeriod.value = period
-
-        when (period) {
-            Period.WEEK -> {
-                if (_selectedWeek.value == null && _availableWeeks.value.isNotEmpty()) {
-                    _selectedWeek.value = _availableWeeks.value.first()
-                }
-            }
-            Period.MONTH -> {
-                if (_selectedMonth.value == null && _availableMonths.value.isNotEmpty()) {
-                    _selectedMonth.value = _availableMonths.value.first()
-                }
-            }
-        }
-
         reloadDistributionForCurrentSelection()
     }
 
     private fun reloadDistributionForCurrentSelection() {
         val type = when (_selectedTab.value) {
-            is TabType.Income -> "income"
-            is TabType.Expense -> "expense"
+            is TabType.Income -> TransactionType.Income
+            is TabType.Expense -> TransactionType.Expense
         }
 
-        when (_selectedPeriod.value) {
-            Period.WEEK -> _selectedWeek.value?.let {
-                loadDistribution(weekOrMonthCode = it, type = type)
-            }
-            Period.MONTH -> _selectedMonth.value?.let {
-                loadDistribution(weekOrMonthCode = it, type = type)
-            }
+        when (val period = _selectedPeriod.value) {
+            is Period.Week -> loadDistribution(period.code, type)
+            is Period.Month -> loadDistribution(period.code, type)
+            null -> Unit
         }
     }
 }
@@ -168,5 +142,12 @@ sealed class TabType(val displayName: String) {
     data object Expense : TabType("Expenses")
 }
 
-/** Enum for period selection */
-enum class Period { WEEK, MONTH }
+sealed class Period {
+    data class Week(val code: String) : Period()
+    data class Month(val code: String) : Period()
+}
+
+sealed class TransactionType(val apiName: String) {
+    object Income : TransactionType("income")
+    object Expense : TransactionType("expense")
+}

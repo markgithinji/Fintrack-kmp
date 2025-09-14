@@ -39,9 +39,7 @@ fun StatisticsScreen(
     // --- Collect UI state ---
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()       // Income / Expense
     val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle() // Week / Month
-    val selectedWeek by viewModel.selectedWeek.collectAsStateWithLifecycle()
     val availableWeeks by viewModel.availableWeeks.collectAsStateWithLifecycle()
-    val selectedMonth by viewModel.selectedMonth.collectAsStateWithLifecycle()
     val availableMonths by viewModel.availableMonths.collectAsStateWithLifecycle()
     val highlights by viewModel.highlights.collectAsStateWithLifecycle()
     val distributionResult by viewModel.distribution.collectAsStateWithLifecycle()
@@ -58,8 +56,7 @@ fun StatisticsScreen(
 
     LazyColumn(
         state = listState,
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 16.dp)
     ) {
         // --- Screen header (Income / Expense tabs) ---
@@ -84,17 +81,11 @@ fun StatisticsScreen(
         item(key = "highlightsSpacer") { Spacer(Modifier.height(16.dp)) }
 
         // --- Category totals (week or month distribution) ---
-        val activeValue = when (selectedPeriod) {
-            Period.WEEK -> selectedWeek
-            Period.MONTH -> selectedMonth
-        }
-
-        if (activeValue != null) {
+        selectedPeriod?.let { period ->
             item(key = "categoryTotals") {
                 CategoryTotalsCardWithTabs(
                     tabType = selectedTab,
-                    period = selectedPeriod,
-                    value = activeValue,
+                    period = period,
                     distributionResult = distributionResult,
                     availableWeeks = availableWeeks,
                     availableMonths = availableMonths,
