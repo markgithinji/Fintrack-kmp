@@ -78,4 +78,12 @@ class TransactionApi(
         return response.result
     }
 
+    // --- Available Months ---
+    suspend fun getAvailableMonths(): AvailableMonthsDto {
+        val response: ApiResponse<AvailableMonthsDto> =
+            client.get("$baseUrl/transactions/available-months").body()
+        return response.result
+    }
+
+
 }
