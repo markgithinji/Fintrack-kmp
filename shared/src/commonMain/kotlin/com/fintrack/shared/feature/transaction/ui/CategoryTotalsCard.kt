@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.transaction.ui
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,13 +7,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -36,14 +33,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.transaction.data.CategorySummary
@@ -97,9 +89,12 @@ fun CategoryTotalsCardWithTabs(
             }
 
             // Create a map depending on the period type
-            val weeklyMap = if (period is Period.Week) mapOf(period.code to categories) else emptyMap()
-            val monthlyMap = if (period is Period.Month) mapOf(period.code to categories) else emptyMap()
-            val yearlyMap = if (period is Period.Year) mapOf(period.code to categories) else emptyMap()
+            val weeklyMap =
+                if (period is Period.Week) mapOf(period.code to categories) else emptyMap()
+            val monthlyMap =
+                if (period is Period.Month) mapOf(period.code to categories) else emptyMap()
+            val yearlyMap =
+                if (period is Period.Year) mapOf(period.code to categories) else emptyMap()
 
             CategoryContent(
                 weeklySummary = weeklyMap,
@@ -220,9 +215,14 @@ fun PeriodSelector(
                             .background(if (isSelected) Color(0xFF2D2D2D) else Color(0xFFE0E0E0))
                             .clickable {
                                 when (span) {
-                                    TimeSpan.WEEK -> availableWeeks.firstOrNull()?.let { onPeriodSelected(Period.Week(it)) }
-                                    TimeSpan.MONTH -> availableMonths.firstOrNull()?.let { onPeriodSelected(Period.Month(it)) }
-                                    TimeSpan.YEAR -> availableYears.firstOrNull()?.let { onPeriodSelected(Period.Year(it)) }
+                                    TimeSpan.WEEK -> availableWeeks.firstOrNull()
+                                        ?.let { onPeriodSelected(Period.Week(it)) }
+
+                                    TimeSpan.MONTH -> availableMonths.firstOrNull()
+                                        ?.let { onPeriodSelected(Period.Month(it)) }
+
+                                    TimeSpan.YEAR -> availableYears.firstOrNull()
+                                        ?.let { onPeriodSelected(Period.Year(it)) }
                                 }
                             }
                             .padding(horizontal = 14.dp, vertical = 6.dp)
@@ -239,9 +239,26 @@ fun PeriodSelector(
 
             // --- Custom Dropdown ---
             val (options, selectedCode, onSelected, placeholder) = when (selectedPeriod) {
-                is Period.Week -> Quad(availableWeeks, selectedPeriod.code, onWeekSelected, "Select Week")
-                is Period.Month -> Quad(availableMonths, selectedPeriod.code, onMonthSelected, "Select Month")
-                is Period.Year -> Quad(availableYears, selectedPeriod.code, onYearSelected, "Select Year")
+                is Period.Week -> Quad(
+                    availableWeeks,
+                    selectedPeriod.code,
+                    onWeekSelected,
+                    "Select Week"
+                )
+
+                is Period.Month -> Quad(
+                    availableMonths,
+                    selectedPeriod.code,
+                    onMonthSelected,
+                    "Select Month"
+                )
+
+                is Period.Year -> Quad(
+                    availableYears,
+                    selectedPeriod.code,
+                    onYearSelected,
+                    "Select Year"
+                )
             }
 
             if (options.isNotEmpty()) {
@@ -317,7 +334,6 @@ fun SexyDropdown(
 
 // Helper data class
 private data class Quad<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
-
 
 
 @Composable
