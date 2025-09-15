@@ -1,0 +1,44 @@
+package com.fintrack.shared.feature.transaction.data
+
+import com.fintrack.shared.feature.transaction.model.Budget
+
+class BudgetRepository {
+
+    private val api: BudgetApi = BudgetApi()
+
+    suspend fun getBudgets(): Result<List<Budget>> = try {
+        val budgetsDto = api.getBudgets()
+        val budgets = budgetsDto.map { it.toDomain() }
+        Result.Success(budgets)
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
+
+    suspend fun getBudgetById(id: Int): Result<Budget> = try {
+        val budgetDto = api.getBudgetById(id)
+        Result.Success(budgetDto.toDomain())
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
+
+    suspend fun addOrUpdateBudget(budget: Budget): Result<Budget> = try {
+        val dto = budget.toDto()
+        val updatedDto = if (budget.id == null) {
+            // No id → create new budget
+            api.addBudget(dto)
+        } else {
+            // Existing id → update
+            api.updateBudget(budget.id, dto)
+        }
+        Result.Success(updatedDto.toDomain())
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
+
+    suspend fun deleteBudget(id: Int): Result<Unit> = try {
+        api.deleteBudget(id)
+        Result.Success(Unit)
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
+}
