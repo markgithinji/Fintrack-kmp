@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 
 @Composable
 fun MainScreen() {
@@ -28,7 +29,7 @@ fun MainScreen() {
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.size(60.dp).offset(y = 60.dp),
-                onClick = { navController.navigate(Screen.AddTransaction.route) },
+                onClick = { navController.navigate(Screen.AddTransaction) },
                 containerColor = Color.Black,
                 contentColor = Color.White,
                 shape = CircleShape
@@ -38,26 +39,47 @@ fun MainScreen() {
         },
         floatingActionButtonPosition = FabPosition.Center
     ) { paddingValues ->
+
+
         NavHost(
             navController = navController,
-            startDestination = Screen.Statistics.route,
-            modifier = Modifier
-                .padding(paddingValues)
+            startDestination = Screen.Budget,
+            modifier = Modifier.padding(paddingValues)
         ) {
-            composable(Screen.Home.route) {
+            composable<Screen.Home> {
                 IncomeTrackerContent()
             }
 
-            composable(Screen.AddTransaction.route) {
+            composable<Screen.AddTransaction> {
                 AddTransactionScreen(
                     onCancel = { navController.popBackStack() }
                 )
             }
 
-            composable(Screen.Statistics.route) {
+            composable<Screen.Statistics> {
                 StatisticsScreen()
             }
+
+            composable<Screen.Budget> {
+                BudgetScreen(
+                    onAddBudget = { navController.navigate(Screen.BudgetDetail(budgetId = null)) },
+                    onBudgetClick = { budget ->
+                        navController.navigate(Screen.BudgetDetail(budgetId = budget.id))
+                    }
+                )
+            }
+
+            composable<Screen.BudgetDetail> { backStackEntry ->
+                val args = backStackEntry.toRoute<Screen.BudgetDetail>()
+                BudgetDetailScreen(
+                    budgetId = args.budgetId,
+                    onSave = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
+
     }
 }
+
 

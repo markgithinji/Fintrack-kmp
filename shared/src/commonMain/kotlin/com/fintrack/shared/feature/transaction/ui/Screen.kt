@@ -18,4 +18,7 @@ sealed class Screen(val route: String) {
 
     @Serializable
     object Profile : Screen("profile")
+
+    @Serializable
+    data class BudgetDetail(val budgetId: Int?) : Screen("budget_detail")
 }
