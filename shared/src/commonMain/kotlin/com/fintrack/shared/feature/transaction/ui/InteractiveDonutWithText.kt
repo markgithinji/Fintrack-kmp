@@ -8,22 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CardGiftcard
-import androidx.compose.material.icons.filled.ContentCut
-import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.Fastfood
-import androidx.compose.material.icons.filled.Flight
-import androidx.compose.material.icons.filled.HelpOutline
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.LocalHospital
-import androidx.compose.material.icons.filled.Movie
-import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.ShoppingBag
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.Subscriptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fintrack.shared.feature.transaction.model.Category
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.pow
@@ -59,24 +44,6 @@ fun InteractiveDonutWithText(
     onSliceSelected: ((index: Int) -> Unit)? = null
 ) {
     if (categorySums.isEmpty() || totalAmount <= 0.0) return
-
-    val categoryIcons = mapOf(
-        "Food" to Icons.Default.Fastfood,
-        "Transport" to Icons.Default.DirectionsCar,
-        "Shopping" to Icons.Default.ShoppingCart,
-        "Health" to Icons.Default.LocalHospital,
-        "Bills" to Icons.Default.Receipt,
-        "Entertainment" to Icons.Default.Movie,
-        "Education" to Icons.Default.School,
-        "Gifts" to Icons.Default.CardGiftcard,
-        "Travel" to Icons.Default.Flight,
-        "Personal Care" to Icons.Default.ContentCut,
-        "Subscriptions" to Icons.Default.Subscriptions,
-        "Rent" to Icons.Default.Home,
-        "Groceries" to Icons.Default.ShoppingBag,
-        "Insurance" to Icons.Default.Shield,
-        "Misc" to Icons.Default.HelpOutline
-    )
 
     // State to track selected slice
     var selectedIndex by remember { mutableStateOf(-1) }
@@ -123,7 +90,7 @@ fun InteractiveDonutWithText(
                     }
                 }
         ) {
-            // Draw arcs
+            // Draw arcs using incoming segmentColors
             val strokeWidthPx = 40.dp.toPx()
             val diameter = size.minDimension - strokeWidthPx
             var startAngle = -90f
@@ -149,17 +116,16 @@ fun InteractiveDonutWithText(
         // --- Center label with icon ---
         val display =
             if (selectedIndex >= 0) categorySums[selectedIndex] else "Total" to totalAmount
-        val icon = categoryIcons[display.first]
+        val category = Category.fromName(display.first, isExpense = true) // assume expense
+        val icon = category.toIcon()
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = display.first,
-                    modifier = Modifier.size(28.dp),
-                    tint = Color.Gray
-                )
-            }
+            Icon(
+                imageVector = icon,
+                contentDescription = display.first,
+                modifier = Modifier.size(28.dp),
+                tint = Color.Gray
+            )
             Text(
                 text = display.first,
                 fontSize = 16.sp,
