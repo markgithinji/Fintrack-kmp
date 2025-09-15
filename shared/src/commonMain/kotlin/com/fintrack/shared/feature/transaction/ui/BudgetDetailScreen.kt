@@ -22,7 +22,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -30,6 +32,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -57,6 +60,7 @@ import com.fintrack.shared.feature.transaction.data.Result
 import com.fintrack.shared.feature.transaction.model.Budget
 import com.fintrack.shared.feature.transaction.model.Category
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.format
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -220,25 +224,49 @@ fun BudgetForm(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         val availableCategories = if (isExpense) Category.expenseCategories else Category.incomeCategories
+        val allSelected = selectedCategories.containsAll(availableCategories)
+
+        // "All" chip
+        FilterChip(
+            selected = allSelected,
+            onClick = {
+                onCategoryChange(
+                    if (allSelected) emptySet() else availableCategories.toSet()
+                )
+            },
+            label = { Text("All") },
+            leadingIcon = { Icon(Icons.Default.SelectAll, contentDescription = null) }
+        )
+
+        // Individual category chips
         availableCategories.forEach { category ->
             val isSelected = category in selectedCategories
             FilterChip(
                 selected = isSelected,
                 onClick = {
-                    onCategoryChange(
-                        if (isSelected) selectedCategories - category else selectedCategories + category
-                    )
+                    val newSelection = if (isSelected) selectedCategories - category else selectedCategories + category
+                    onCategoryChange(newSelection)
                 },
-                label = { Text(category.name) }
+                label = { Text(category.name) },
+                leadingIcon = { Icon(category.toIcon(), contentDescription = null, tint = category.toColor()) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = category.toColor().copy(alpha = 0.2f),
+                    selectedLeadingIconColor = category.toColor(),
+                    selectedLabelColor = Color.Black
+                )
             )
         }
     }
     Spacer(Modifier.height(16.dp))
 
-    // Period
+    // Period Picker
     PeriodPicker(
-        startDate = startDate,endDate = endDate, onPeriodChange = onPeriodChange)
+        startDate = startDate,
+        endDate = endDate,
+        onPeriodChange = onPeriodChange
+    )
 }
+
 
 @Composable
 fun PeriodPicker(
@@ -249,13 +277,16 @@ fun PeriodPicker(
     var showStartPicker by remember { mutableStateOf(false) }
     var showEndPicker by remember { mutableStateOf(false) }
 
+
     Column {
         // Start Date Button
         Button(
             onClick = { showStartPicker = true },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = startDate?.toString() ?: "Select Start Date")
+            Icon(Icons.Default.DateRange, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text(text = startDate?.toFormattedString() ?: "Select Start Date")
         }
         Spacer(Modifier.height(8.dp))
 
@@ -264,7 +295,10 @@ fun PeriodPicker(
             onClick = { showEndPicker = true },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = endDate?.toString() ?: "Select End Date")
+            Icon(Icons.Default.DateRange, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+
+            Text(text = endDate?.toFormattedString() ?: "Select End Date")
         }
     }
 
@@ -292,3 +326,13 @@ fun PeriodPicker(
     }
 }
 
+fun LocalDate.toFormattedString(): String {
+    // Simple custom formatting: MMM dd, yyyy
+    val month = when (this.monthNumber) {
+        1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
+        5 -> "May"; 6 -> "Jun"; 7 -> "Jul"; 8 -> "Aug"
+        9 -> "Sep"; 10 -> "Oct"; 11 -> "Nov"; 12 -> "Dec"
+        else -> ""
+    }
+    return "$month ${this.dayOfMonth}, ${this.year}"
+}
