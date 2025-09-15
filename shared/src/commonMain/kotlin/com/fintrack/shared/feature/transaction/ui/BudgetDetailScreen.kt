@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -37,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -234,19 +236,59 @@ fun BudgetForm(
     Spacer(Modifier.height(16.dp))
 
     // Period
-    Text("Period", style = MaterialTheme.typography.titleMedium)
-    Spacer(Modifier.height(8.dp))
-    OutlinedTextField(
-        value = startDate?.toString() ?: "",
-        onValueChange = { onPeriodChange(Pair(runCatching { LocalDate.parse(it) }.getOrNull(), endDate)) },
-        label = { Text("Start Date (yyyy-MM-dd)") },
-        modifier = Modifier.fillMaxWidth()
-    )
-    Spacer(Modifier.height(8.dp))
-    OutlinedTextField(
-        value = endDate?.toString() ?: "",
-        onValueChange = { onPeriodChange(Pair(startDate, runCatching { LocalDate.parse(it) }.getOrNull())) },
-        label = { Text("End Date (yyyy-MM-dd)") },
-        modifier = Modifier.fillMaxWidth()
-    )
+    PeriodPicker(
+        startDate = startDate,endDate = endDate, onPeriodChange = onPeriodChange)
 }
+
+@Composable
+fun PeriodPicker(
+    startDate: LocalDate?,
+    endDate: LocalDate?,
+    onPeriodChange: (Pair<LocalDate?, LocalDate?>) -> Unit
+) {
+    var showStartPicker by remember { mutableStateOf(false) }
+    var showEndPicker by remember { mutableStateOf(false) }
+
+    Column {
+        // Start Date Button
+        Button(
+            onClick = { showStartPicker = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = startDate?.toString() ?: "Select Start Date")
+        }
+        Spacer(Modifier.height(8.dp))
+
+        // End Date Button
+        Button(
+            onClick = { showEndPicker = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = endDate?.toString() ?: "Select End Date")
+        }
+    }
+
+    // Show native pickers conditionally
+    if (showStartPicker) {
+        PickDate(
+            initialDate = startDate,
+            onDateSelected = { date ->
+                onPeriodChange(date to endDate)
+                showStartPicker = false
+            },
+            onDismiss = { showStartPicker = false }
+        )
+    }
+
+    if (showEndPicker) {
+        PickDate(
+            initialDate = endDate,
+            onDateSelected = { date ->
+                onPeriodChange(startDate to date)
+                showEndPicker = false
+            },
+            onDismiss = { showEndPicker = false }
+        )
+    }
+}
+
