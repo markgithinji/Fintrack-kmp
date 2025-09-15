@@ -55,6 +55,7 @@ import com.fintrack.shared.feature.transaction.data.Result
 import com.fintrack.shared.feature.transaction.model.Budget
 import com.fintrack.shared.feature.transaction.model.Category
 import kotlinx.datetime.LocalDate
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BudgetDetailScreen(
@@ -73,40 +74,29 @@ fun BudgetDetailScreen(
     var startDate by remember { mutableStateOf<LocalDate?>(null) }
     var endDate by remember { mutableStateOf<LocalDate?>(null) }
 
-    // Load the budget if editing
+    // Load budget if editing
     LaunchedEffect(budgetId) {
-        if (budgetId != null) {
-            viewModel.loadBudgetById(budgetId)
-        }
+        if (budgetId != null) viewModel.loadBudgetById(budgetId)
     }
 
-    // Populate form once budget is loaded
+    // Populate form once loaded
     LaunchedEffect(selectedBudget) {
-        if (selectedBudget is Result.Success) {
-            (selectedBudget as Result.Success<Budget>).data.let { budget ->
-                name = budget.name
-                amount = budget.limit.toString()
-                selectedCategories = budget.categories.toSet()
-                isExpense = budget.isExpense
-                startDate = budget.startDate
-                endDate = budget.endDate
-            }
+        (selectedBudget as? Result.Success<Budget>)?.data?.let { budget ->
+            name = budget.name
+            amount = budget.limit.toString()
+            selectedCategories = budget.categories.toSet()
+            isExpense = budget.isExpense
+            startDate = budget.startDate
+            endDate = budget.endDate
         }
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (budgetId == null) "Add Budget" else "Edit Budget") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        },
+        topBar = { BudgetDetailTopBar(budgetId, onBack) },
         floatingActionButton = {
-            FloatingActionButton(onClick = {
+            BudgetDetailSaveButton(
+                name, amount, selectedCategories, isExpense, startDate, endDate
+            ) {
                 val limit = amount.toDoubleOrNull() ?: 0.0
                 val valid = name.isNotBlank() &&
                         selectedCategories.isNotEmpty() &&
@@ -126,8 +116,6 @@ fun BudgetDetailScreen(
                     )
                     onSave()
                 }
-            }) {
-                Icon(Icons.Default.Check, contentDescription = "Save")
             }
         }
     ) { padding ->
@@ -137,94 +125,128 @@ fun BudgetDetailScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Budget Name
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Budget Name") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            // Amount
-            OutlinedTextField(
-                value = amount,
-                onValueChange = { amount = it },
-                label = { Text("Amount (Ksh)") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            // Expense / Income toggle
-            Text("Budget Type", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            Row {
-                FilterChip(
-                    selected = isExpense,
-                    onClick = { isExpense = true },
-                    label = { Text("Expense") }
-                )
-                Spacer(Modifier.width(8.dp))
-                FilterChip(
-                    selected = !isExpense,
-                    onClick = { isExpense = false },
-                    label = { Text("Income") }
-                )
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            // Categories
-            Text("Categories", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                val availableCategories =
-                    if (isExpense) Category.expenseCategories else Category.incomeCategories
-
-                availableCategories.forEach { category ->
-                    val isSelected = category in selectedCategories
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = {
-                            selectedCategories = if (isSelected) {
-                                selectedCategories - category
-                            } else {
-                                selectedCategories + category
-                            }
-                        },
-                        label = { Text(category.name) }
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            // Period
-            Text("Period", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = startDate?.toString() ?: "",
-                onValueChange = { startDate = runCatching { LocalDate.parse(it) }.getOrNull() },
-                label = { Text("Start Date (yyyy-MM-dd)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = endDate?.toString() ?: "",
-                onValueChange = { endDate = runCatching { LocalDate.parse(it) }.getOrNull() },
-                label = { Text("End Date (yyyy-MM-dd)") },
-                modifier = Modifier.fillMaxWidth()
+            BudgetForm(
+                name = name,
+                onNameChange = { name = it },
+                amount = amount,
+                onAmountChange = { amount = it },
+                isExpense = isExpense,
+                onExpenseChange = { isExpense = it },
+                selectedCategories = selectedCategories,
+                onCategoryChange = { selectedCategories = it },
+                startDate = startDate,
+                endDate = endDate,
+                onPeriodChange = { startDate = it.first; endDate = it.second }
             )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BudgetDetailTopBar(budgetId: Int?, onBack: () -> Unit) {
+    TopAppBar(
+        title = { Text(if (budgetId == null) "Add Budget" else "Edit Budget") },
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+            }
+        }
+    )
+}
+@Composable
+fun BudgetDetailSaveButton(
+    name: String,
+    amount: String,
+    selectedCategories: Set<Category>,
+    isExpense: Boolean,
+    startDate: LocalDate?,
+    endDate: LocalDate?,
+    onSaveClick: () -> Unit
+) {
+    FloatingActionButton(onClick = onSaveClick) {
+        Icon(Icons.Default.Check, contentDescription = "Save")
+    }
+}
+
+@Composable
+fun BudgetForm(
+    name: String,
+    onNameChange: (String) -> Unit,
+    amount: String,
+    onAmountChange: (String) -> Unit,
+    isExpense: Boolean,
+    onExpenseChange: (Boolean) -> Unit,
+    selectedCategories: Set<Category>,
+    onCategoryChange: (Set<Category>) -> Unit,
+    startDate: LocalDate?,
+    endDate: LocalDate?,
+    onPeriodChange: (Pair<LocalDate?, LocalDate?>) -> Unit
+) {
+    // Name & Amount
+    OutlinedTextField(
+        value = name,
+        onValueChange = onNameChange,
+        label = { Text("Budget Name") },
+        modifier = Modifier.fillMaxWidth()
+    )
+    Spacer(Modifier.height(8.dp))
+    OutlinedTextField(
+        value = amount,
+        onValueChange = onAmountChange,
+        label = { Text("Amount (Ksh)") },
+        modifier = Modifier.fillMaxWidth(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+    )
+    Spacer(Modifier.height(16.dp))
+
+    // Expense / Income
+    Text("Budget Type", style = MaterialTheme.typography.titleMedium)
+    Spacer(Modifier.height(8.dp))
+    Row {
+        FilterChip(selected = isExpense, onClick = { onExpenseChange(true) }, label = { Text("Expense") })
+        Spacer(Modifier.width(8.dp))
+        FilterChip(selected = !isExpense, onClick = { onExpenseChange(false) }, label = { Text("Income") })
+    }
+    Spacer(Modifier.height(16.dp))
+
+    // Categories
+    Text("Categories", style = MaterialTheme.typography.titleMedium)
+    Spacer(Modifier.height(8.dp))
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        val availableCategories = if (isExpense) Category.expenseCategories else Category.incomeCategories
+        availableCategories.forEach { category ->
+            val isSelected = category in selectedCategories
+            FilterChip(
+                selected = isSelected,
+                onClick = {
+                    onCategoryChange(
+                        if (isSelected) selectedCategories - category else selectedCategories + category
+                    )
+                },
+                label = { Text(category.name) }
+            )
+        }
+    }
+    Spacer(Modifier.height(16.dp))
+
+    // Period
+    Text("Period", style = MaterialTheme.typography.titleMedium)
+    Spacer(Modifier.height(8.dp))
+    OutlinedTextField(
+        value = startDate?.toString() ?: "",
+        onValueChange = { onPeriodChange(Pair(runCatching { LocalDate.parse(it) }.getOrNull(), endDate)) },
+        label = { Text("Start Date (yyyy-MM-dd)") },
+        modifier = Modifier.fillMaxWidth()
+    )
+    Spacer(Modifier.height(8.dp))
+    OutlinedTextField(
+        value = endDate?.toString() ?: "",
+        onValueChange = { onPeriodChange(Pair(startDate, runCatching { LocalDate.parse(it) }.getOrNull())) },
+        label = { Text("End Date (yyyy-MM-dd)") },
+        modifier = Modifier.fillMaxWidth()
+    )
 }
