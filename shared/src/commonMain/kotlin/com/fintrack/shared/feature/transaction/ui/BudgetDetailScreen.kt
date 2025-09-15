@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -37,6 +38,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -62,7 +64,7 @@ import com.fintrack.shared.feature.transaction.model.Category
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun BudgetDetailScreen(
     budgetId: Int? = null,
@@ -70,7 +72,8 @@ fun BudgetDetailScreen(
     onSave: () -> Unit,
     onBack: () -> Unit = {}
 ) {
-    val selectedBudget by viewModel.selectedBudget.collectAsStateWithLifecycle()
+    val selectedBudgetResult by viewModel.selectedBudget.collectAsStateWithLifecycle()
+    val saveResult by viewModel.saveResult.collectAsStateWithLifecycle()
 
     // Form state
     var name by remember { mutableStateOf("") }
@@ -85,9 +88,10 @@ fun BudgetDetailScreen(
         if (budgetId != null) viewModel.loadBudgetById(budgetId)
     }
 
-    // Populate form once loaded
-    LaunchedEffect(selectedBudget) {
-        (selectedBudget as? Result.Success<Budget>)?.data?.let { budget ->
+    // Prefill form when budget is loaded successfully
+    LaunchedEffect(selectedBudgetResult) {
+        val budget = (selectedBudgetResult as? Result.Success<Budget>)?.data
+        if (budget != null && name.isEmpty() && amount.isEmpty() && selectedCategories.isEmpty()) {
             name = budget.name
             amount = budget.limit.toString()
             selectedCategories = budget.categories.toSet()
@@ -101,28 +105,28 @@ fun BudgetDetailScreen(
         topBar = { BudgetDetailTopBar(budgetId, onBack) },
         floatingActionButton = {
             BudgetDetailSaveButton(
-                name, amount, selectedCategories, isExpense, startDate, endDate
-            ) {
-                val limit = amount.toDoubleOrNull() ?: 0.0
-                val valid = name.isNotBlank() &&
-                        selectedCategories.isNotEmpty() &&
-                        limit > 0 &&
-                        startDate != null &&
-                        endDate != null
+                isSaving = saveResult is Result.Loading,
+                onSaveClick = {
+                    val limit = amount.toDoubleOrNull() ?: 0.0
+                    val valid = name.isNotBlank() &&
+                            selectedCategories.isNotEmpty() &&
+                            limit > 0 &&
+                            startDate != null &&
+                            endDate != null
 
-                if (valid) {
-                    viewModel.saveBudget(
-                        id = budgetId,
-                        name = name,
-                        categories = selectedCategories.toList(),
-                        limit = limit,
-                        isExpense = isExpense,
-                        startDate = startDate!!,
-                        endDate = endDate!!
-                    )
-                    onSave()
+                    if (valid) {
+                        viewModel.saveBudget(
+                            id = budgetId,
+                            name = name,
+                            categories = selectedCategories.toList(),
+                            limit = limit,
+                            isExpense = isExpense,
+                            startDate = startDate!!,
+                            endDate = endDate!!
+                        )
+                    }
                 }
-            }
+            )
         }
     ) { padding ->
         Column(
@@ -131,22 +135,73 @@ fun BudgetDetailScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            BudgetForm(
-                name = name,
-                onNameChange = { name = it },
-                amount = amount,
-                onAmountChange = { amount = it },
-                isExpense = isExpense,
-                onExpenseChange = { isExpense = it },
-                selectedCategories = selectedCategories,
-                onCategoryChange = { selectedCategories = it },
-                startDate = startDate,
-                endDate = endDate,
-                onPeriodChange = { startDate = it.first; endDate = it.second }
-            )
+            when (selectedBudgetResult) {
+                is Result.Loading -> {
+                    CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
+                }
+                is Result.Error -> {
+                    Text(
+                        text = "Failed to load budget",
+                        color = Color.Red,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
+                is Result.Success, null -> {
+                    BudgetForm(
+                        name = name,
+                        onNameChange = { name = it },
+                        amount = amount,
+                        onAmountChange = { amount = it },
+                        isExpense = isExpense,
+                        onExpenseChange = { isExpense = it },
+                        selectedCategories = selectedCategories,
+                        onCategoryChange = { selectedCategories = it },
+                        startDate = startDate,
+                        endDate = endDate,
+                        onPeriodChange = { startDate = it.first; endDate = it.second }
+                    )
+                }
+            }
+
+            // Show save errors
+            if (saveResult is Result.Error) {
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    text = (saveResult as Result.Error).exception.message ?: "Failed to save",
+                    color = Color.Red
+                )
+            }
+
+            // Handle save success
+            if (saveResult is Result.Success) {
+                LaunchedEffect(saveResult) { onSave() }
+            }
         }
     }
 }
+
+@Composable
+fun BudgetDetailSaveButton(
+    isSaving: Boolean,
+    onSaveClick: () -> Unit
+) {
+    FloatingActionButton(
+        onClick = { if (!isSaving) onSaveClick() }
+    ) {
+        if (isSaving) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                color = Color.White,
+                strokeWidth = 2.dp
+            )
+        } else {
+            Icon(Icons.Default.Check, contentDescription = "Save")
+        }
+    }
+}
+
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -159,20 +214,6 @@ fun BudgetDetailTopBar(budgetId: Int?, onBack: () -> Unit) {
             }
         }
     )
-}
-@Composable
-fun BudgetDetailSaveButton(
-    name: String,
-    amount: String,
-    selectedCategories: Set<Category>,
-    isExpense: Boolean,
-    startDate: LocalDate?,
-    endDate: LocalDate?,
-    onSaveClick: () -> Unit
-) {
-    FloatingActionButton(onClick = onSaveClick) {
-        Icon(Icons.Default.Check, contentDescription = "Save")
-    }
 }
 
 @Composable
