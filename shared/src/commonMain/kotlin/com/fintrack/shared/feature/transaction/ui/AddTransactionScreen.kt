@@ -68,12 +68,11 @@ import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun AddTransactionScreen(
-    transactionsViewModel: TransactionListViewModel = viewModel(),
-    onCancel: () -> Unit
+    transactionsViewModel: TransactionListViewModel = viewModel()
 ) {
     val saveResult by transactionsViewModel.saveResult.collectAsStateWithLifecycle()
 
-    // Form state...
+    // --- Form state ---
     var amount by remember { mutableStateOf("") }
     var isIncome by remember { mutableStateOf(false) }
     var category by remember { mutableStateOf("") }
@@ -92,7 +91,7 @@ fun AddTransactionScreen(
                 .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Spacer(modifier = Modifier.height(48.dp)) // leave space for close icon
+            Spacer(modifier = Modifier.height(48.dp)) // optional space to avoid top overlap
 
             OutlinedTextField(
                 value = amount,
@@ -166,15 +165,6 @@ fun AddTransactionScreen(
             ) {
                 Text("Save Transaction")
             }
-        }
-
-        IconButton(
-            onClick = onCancel,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-        ) {
-            Icon(Icons.Default.Close, contentDescription = "Cancel")
         }
     }
 }
