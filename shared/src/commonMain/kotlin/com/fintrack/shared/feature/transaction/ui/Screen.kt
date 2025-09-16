@@ -10,4 +10,6 @@ sealed class Screen(val route: String) {
     object BudgetDetail : Screen("budget_detail/{budgetId}") {
         fun createRoute(budgetId: Int?) = "budget_detail/${budgetId ?: -1}"
     }
+
+    object Login : Screen("login")
 }

@@ -85,7 +85,7 @@ fun BottomBar(navController: NavHostController) {
         BottomNavItem("Home", Icons.Default.Home, Screen.Home.route),
         BottomNavItem("Stats", Icons.Default.BarChart, Screen.Statistics.route),
         BottomNavItem("Budget", Icons.Default.Info, Screen.Budget.route),
-        BottomNavItem("Profile", Icons.Default.Person, Screen.Profile.route)
+        BottomNavItem("Profile", Icons.Default.Person, Screen.Login.route),
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()

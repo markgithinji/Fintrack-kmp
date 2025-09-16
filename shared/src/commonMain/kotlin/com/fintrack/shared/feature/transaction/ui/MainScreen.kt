@@ -117,6 +117,23 @@ fun MainScreen() {
                     onBack = { navController.popBackStack() }
                 )
             }
+
+            composable(Screen.Login.route) {
+                LaunchedEffect(Unit) {
+                    appBarState = AppBarState(title = "Login")
+                }
+                LoginScreen(
+                    onLoginSuccess = { user ->
+                        // Navigate to Home once logged in
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
         }
+
+
+
     }
 }
