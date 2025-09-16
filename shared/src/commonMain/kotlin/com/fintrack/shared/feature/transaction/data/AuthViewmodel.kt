@@ -6,8 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class AuthViewModel(
-) : ViewModel() {
+class AuthViewModel : ViewModel() {
 
     private val repository: AuthRepository = AuthRepository()
 
@@ -17,17 +16,44 @@ class AuthViewModel(
     private val _registerState = MutableStateFlow<Result<User>?>(null)
     val registerState: StateFlow<Result<User>?> = _registerState
 
+    var token: String? = null
+        private set
+
     fun login(email: String, password: String) {
         _loginState.value = Result.Loading
         viewModelScope.launch {
-            _loginState.value = repository.login(email, password)
+            when (val result = repository.login(email, password)) {
+                is Result.Success -> {
+                    token = result.data.token
+                    SessionManager.saveToken(token!!) // save in memory
+                    _loginState.value = result
+                    println("Login successful, token: ${token}")
+                }
+                is Result.Error -> {
+                    _loginState.value = result
+                    println("Login failed: ${result.exception.message}")
+                }
+                else -> {}
+            }
         }
     }
 
     fun register(name: String, email: String, password: String) {
         _registerState.value = Result.Loading
         viewModelScope.launch {
-            _registerState.value = repository.register(name, email, password)
+            when (val result = repository.register(name, email, password)) {
+                is Result.Success -> {
+                    token = result.data.token
+                    SessionManager.saveToken(token!!)
+                    _registerState.value = result
+                    println("Register successful, token: ${token}")
+                }
+                is Result.Error -> {
+                    _registerState.value = result
+                    println("Register failed: ${result.exception.message}")
+                }
+                else -> {}
+            }
         }
     }
 }
