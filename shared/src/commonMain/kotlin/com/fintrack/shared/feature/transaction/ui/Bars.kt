@@ -2,11 +2,14 @@ package com.fintrack.shared.feature.transaction.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
@@ -39,27 +42,33 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar() {
+fun TopBar(
+    title: String,
+    showBackButton: Boolean = false,
+    onBack: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {}
+) {
     TopAppBar(
         title = {
             Text(
-                "Fintrack",
-                style = MaterialTheme.typography.titleMedium // smaller than default
+                title,
+                style = MaterialTheme.typography.titleMedium
             )
         },
-        navigationIcon = {
-            IconButton(onClick = { /* TODO: Open menu */ }) {
-                Icon(Icons.Filled.Menu, contentDescription = "Menu")
+        navigationIcon = if (showBackButton && onBack != null) {
+            {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
+            }
+        } else {
+            {
+                IconButton(onClick = { /* TODO: Open menu */ }) {
+                    Icon(Icons.Filled.Menu, contentDescription = "Menu")
+                }
             }
         },
-        actions = {
-            IconButton(onClick = { /* TODO: Notifications */ }) {
-                Icon(Icons.Filled.Notifications, contentDescription = "Notifications")
-            }
-            IconButton(onClick = { /* TODO: Settings */ }) {
-                Icon(Icons.Filled.Settings, contentDescription = "Settings")
-            }
-        }
+        actions = actions
     )
 }
 
