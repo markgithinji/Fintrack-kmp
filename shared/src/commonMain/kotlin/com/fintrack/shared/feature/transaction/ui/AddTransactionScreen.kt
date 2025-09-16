@@ -1,15 +1,19 @@
 package com.fintrack.shared.feature.transaction.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Close
@@ -58,7 +62,10 @@ import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+
 @OptIn(ExperimentalMaterial3Api::class)
+
+
 @Composable
 fun AddTransactionScreen(
     transactionsViewModel: TransactionListViewModel = viewModel(),
@@ -66,52 +73,27 @@ fun AddTransactionScreen(
 ) {
     val saveResult by transactionsViewModel.saveResult.collectAsStateWithLifecycle()
 
-    // --- Handle save result ---
-    LaunchedEffect(saveResult) {
-        when (saveResult) {
-            is Result.Success -> {
-                onCancel()
-                transactionsViewModel.resetSaveResult()
-            }
-            is Result.Error -> {
-                val message = (saveResult as Result.Error).exception.message ?: "Failed to save"
-                println("Error saving transaction: $message")
-            }
-            else -> {}
-        }
-    }
-
-    // --- Form state ---
+    // Form state...
     var amount by remember { mutableStateOf("") }
     var isIncome by remember { mutableStateOf(false) }
     var category by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-
     var dateTime by remember {
         mutableStateOf(
             Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Add Transaction") },
-                navigationIcon = {
-                    IconButton(onClick = onCancel) {
-                        Icon(Icons.Default.Close, contentDescription = "Cancel")
-                    }
-                }
-            )
-        }
-    ) { padding ->
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            Spacer(modifier = Modifier.height(48.dp)) // leave space for close icon
+
             OutlinedTextField(
                 value = amount,
                 onValueChange = { amount = it },
@@ -146,10 +128,7 @@ fun AddTransactionScreen(
                 }
             }
 
-            CategoryDropdown(
-                selectedCategory = category,
-                onCategorySelected = { category = it }
-            )
+            CategoryDropdown(selectedCategory = category, onCategorySelected = { category = it })
 
             OutlinedTextField(
                 value = description,
@@ -158,13 +137,9 @@ fun AddTransactionScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Text(
-                "Date & Time: $dateTime",
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
+            Text("Date & Time: $dateTime", color = Color.Gray, fontSize = 14.sp)
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(24.dp))
 
             if (saveResult is Result.Loading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -175,15 +150,16 @@ fun AddTransactionScreen(
                     val parsedAmount = amount.toDoubleOrNull()
                     if (parsedAmount == null || category.isBlank()) return@Button
 
-                    val newTransaction = Transaction(
-                        id = null,
-                        amount = parsedAmount,
-                        isIncome = isIncome,
-                        category = category,
-                        description = description.takeIf { it.isNotBlank() },
-                        dateTime = dateTime
+                    transactionsViewModel.addTransaction(
+                        Transaction(
+                            id = null,
+                            amount = parsedAmount,
+                            isIncome = isIncome,
+                            category = category,
+                            description = description.takeIf { it.isNotBlank() },
+                            dateTime = dateTime
+                        )
                     )
-                    transactionsViewModel.addTransaction(newTransaction)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -191,8 +167,18 @@ fun AddTransactionScreen(
                 Text("Save Transaction")
             }
         }
+
+        IconButton(
+            onClick = onCancel,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+        ) {
+            Icon(Icons.Default.Close, contentDescription = "Cancel")
+        }
     }
 }
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
