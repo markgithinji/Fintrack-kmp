@@ -4,21 +4,13 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed class Screen(val route: String) {
-    @Serializable
     object Home : Screen("home")
-
-    @Serializable
     object AddTransaction : Screen("add_transaction")
-
-    @Serializable
     object Statistics : Screen("statistics")
-
-    @Serializable
     object Budget : Screen("budget")
-
-    @Serializable
     object Profile : Screen("profile")
 
-    @Serializable
-    data class BudgetDetail(val budgetId: Int?) : Screen("budget_detail")
+    object BudgetDetail : Screen("budget_detail/{budgetId}") {
+        fun createRoute(budgetId: Int?) = "budget_detail/${budgetId ?: -1}"
+    }
 }

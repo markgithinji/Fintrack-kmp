@@ -14,10 +14,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
+import androidx.navigation.navArgument
 
 @Composable
 fun MainScreen() {
@@ -43,41 +44,46 @@ fun MainScreen() {
 
         NavHost(
             navController = navController,
-            startDestination = Screen.Budget,
+            startDestination = Screen.Budget.route,
             modifier = Modifier.padding(paddingValues)
         ) {
-            composable<Screen.Home> {
+            composable(Screen.Home.route) {
                 IncomeTrackerContent()
             }
 
-            composable<Screen.AddTransaction> {
+            composable(Screen.AddTransaction.route) {
                 AddTransactionScreen(
                     onCancel = { navController.popBackStack() }
                 )
             }
 
-            composable<Screen.Statistics> {
+            composable(Screen.Statistics.route) {
                 StatisticsScreen()
             }
 
-            composable<Screen.Budget> {
+            composable(Screen.Budget.route) {
                 BudgetScreen(
-                    onAddBudget = { navController.navigate(Screen.BudgetDetail(budgetId = null)) },
+                    onAddBudget = { navController.navigate(Screen.BudgetDetail.createRoute(null)) },
                     onBudgetClick = { budget ->
-                        navController.navigate(Screen.BudgetDetail(budgetId = budget.id))
+                        navController.navigate(Screen.BudgetDetail.createRoute(budget.id))
                     }
                 )
             }
 
-            composable<Screen.BudgetDetail> { backStackEntry ->
-                val args = backStackEntry.toRoute<Screen.BudgetDetail>()
+            composable(
+                route = Screen.BudgetDetail.route,
+                arguments = listOf(navArgument("budgetId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                // IDE might shows "Unresolved reference 'getInt'", but this works at runtime
+                val budgetId = backStackEntry.arguments?.getInt("budgetId")
                 BudgetDetailScreen(
-                    budgetId = args.budgetId,
+                    budgetId = budgetId,
                     onSave = { navController.popBackStack() },
                     onBack = { navController.popBackStack() }
                 )
             }
         }
+
 
     }
 }
