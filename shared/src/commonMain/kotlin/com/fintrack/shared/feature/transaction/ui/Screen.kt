@@ -1,8 +1,5 @@
 package com.fintrack.shared.feature.transaction.ui
 
-import kotlinx.serialization.Serializable
-
-@Serializable
 sealed class Screen(val route: String) {
     object Home : Screen("home")
     object AddTransaction : Screen("add_transaction")

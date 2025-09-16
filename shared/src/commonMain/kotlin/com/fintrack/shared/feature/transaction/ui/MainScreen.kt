@@ -30,7 +30,7 @@ fun MainScreen() {
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.size(60.dp).offset(y = 60.dp),
-                onClick = { navController.navigate(Screen.AddTransaction) },
+                onClick = { navController.navigate(Screen.AddTransaction.route) },
                 containerColor = Color.Black,
                 contentColor = Color.White,
                 shape = CircleShape
@@ -87,5 +87,3 @@ fun MainScreen() {
 
     }
 }
-
-
