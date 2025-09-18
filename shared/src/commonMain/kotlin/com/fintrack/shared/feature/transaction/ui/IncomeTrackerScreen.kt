@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fintrack.shared.feature.transaction.data.CategoryComparison
 import com.fintrack.shared.feature.transaction.data.DaySummary
 import com.fintrack.shared.feature.transaction.data.HighlightsSummary
 import com.fintrack.shared.feature.transaction.data.OverviewSummary
@@ -85,11 +86,13 @@ fun IncomeTrackerContent(
     val summaryResult by statsViewModel.highlights.collectAsStateWithLifecycle()
     val transactionsResult by transactionsViewModel.recentTransactions.collectAsStateWithLifecycle()
     val overviewResult by statsViewModel.overview.collectAsStateWithLifecycle()
+    val categoryComparisonResult by statsViewModel.categoryComparisons.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         statsViewModel.loadHighlights()
         statsViewModel.loadOverview()
         transactionsViewModel.loadRecentTransactions()
+        statsViewModel.loadCategoryComparisons()
     }
 
     LazyColumn(
@@ -101,7 +104,8 @@ fun IncomeTrackerContent(
     ) {
         item { CurrentBalanceCard(summaryResult) }
         item { IncomeExpenseCards(summaryResult) }
-        item { IncomeExpensesOverview(overviewResult) } // <- new
+        item { IncomeExpensesOverview(overviewResult) }
+        item { CategoryComparisonCard(categoryComparisonResult) }
         item { TransactionsListCard(transactionsResult) }
     }
 }
@@ -458,11 +462,15 @@ fun MonthlyLineChartDefault(monthly: List<DaySummary>, modifier: Modifier = Modi
     val textMeasurer = rememberTextMeasurer()
     val steps = 5
 
-    // Map domain data to Points
-    val incomePoints = monthly.mapIndexed { index, day -> Point(x = index.toFloat(), y = day.income.toFloat()) }
-    val expensePoints = monthly.mapIndexed { index, day -> Point(x = index.toFloat(), y = day.expense.toFloat()) }
-
-    val labelInterval = if (monthly.size > 15) 3 else 1
+    // Map domain data to Points using day-of-month for X
+    val incomePoints = monthly.map { day ->
+        val dayNumber = day.date.split("-").last().toFloat()
+        Point(x = dayNumber, y = day.income.toFloat())
+    }
+    val expensePoints = monthly.map { day ->
+        val dayNumber = day.date.split("-").last().toFloat()
+        Point(x = dayNumber, y = day.expense.toFloat())
+    }
 
     val xAxisProperties = AxisProperties(
         font = FontFamily.SansSerif,
@@ -472,11 +480,11 @@ fun MonthlyLineChartDefault(monthly: List<DaySummary>, modifier: Modifier = Modi
         lineColor = Color.Black,
         stepCount = monthly.size - 1,
         labelFormatter = { i ->
-            if (i % labelInterval == 0) monthly[i].date.take(5) else "" // e.g., "01-09"
+            val safeIndex = i.coerceAtMost(monthly.lastIndex)
+            monthly[safeIndex].date.split("-").last() // label for every point
         },
         labelPadding = 15.dp
     )
-
 
     val yAxisProperties = AxisProperties(
         font = FontFamily.SansSerif,
@@ -488,18 +496,25 @@ fun MonthlyLineChartDefault(monthly: List<DaySummary>, modifier: Modifier = Modi
             val yMin = (incomePoints + expensePoints).minOf { it.y }
             val yMax = (incomePoints + expensePoints).maxOf { it.y }
             val yScale = (yMax - yMin) / steps
-            ((i * yScale) + yMin).formatToSinglePrecision()
+            val value = ((i * yScale) + yMin)
+
+            if (value >= 1000f) {
+                "${(value / 1000f).formatToSinglePrecision()}k"
+            } else {
+                value.formatToSinglePrecision()
+            }
         }
     )
+
 
     val lineChartProperties = LineChartProperties(
         linePlotData = LinePlotData(
             lines = listOf(
                 Line(
                     dataPoints = incomePoints,
-                    lineStyle = LineStyle(color = Color(0xFF4CAF50)), // green
+                    lineStyle = LineStyle(color = Color(0xFF4CAF50)),
                     intersectionPoint = IntersectionPoint(color = Color(0xFF388E3C)),
-                    selectionHighlightPoint = SelectionHighlightPoint(color = Color(0xFFFF4081)), // pink
+                    selectionHighlightPoint = SelectionHighlightPoint(color = Color(0xFFFF4081)),
                     shadowUnderLine = ShadowUnderLine(),
                     selectionHighlightPopUp = SelectionHighlightPopUp(
                         textMeasurer = textMeasurer,
@@ -510,7 +525,7 @@ fun MonthlyLineChartDefault(monthly: List<DaySummary>, modifier: Modifier = Modi
                 ),
                 Line(
                     dataPoints = expensePoints,
-                    lineStyle = LineStyle(color = Color(0xFF9C27B0)), // purple
+                    lineStyle = LineStyle(color = Color(0xFF9C27B0)),
                     intersectionPoint = IntersectionPoint(color = Color(0xFF7B1FA2)),
                     selectionHighlightPoint = SelectionHighlightPoint(color = Color(0xFFFF4081)),
                     shadowUnderLine = ShadowUnderLine(),
@@ -535,6 +550,84 @@ fun MonthlyLineChartDefault(monthly: List<DaySummary>, modifier: Modifier = Modi
         lineChartProperties = lineChartProperties
     )
 }
+@Composable
+fun CategoryComparisonCard(
+    categoryComparisonResult: Result<List<CategoryComparison>>?,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Category Comparison",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            when (categoryComparisonResult) {
+                is Result.Loading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+                is Result.Error -> {
+                    Text(
+                        text = "Error: ${categoryComparisonResult.exception.message ?: "Unknown error"}",
+                        color = Color.Red,
+                        fontSize = 14.sp
+                    )
+                }
+                is Result.Success -> {
+                    categoryComparisonResult.data.forEach { comparison ->
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = comparison.category,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.Gray
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        val changeText = if (comparison.changePercentage >= 0) {
+                            "${comparison.changePercentage.formatToSinglePrecision()}% more than last ${comparison.period}"
+                        } else {
+                            "${(comparison.changePercentage * -1).formatToSinglePrecision()}% less than last ${comparison.period}"
+                        }
+
+                        Text(
+                            text = changeText,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (comparison.changePercentage >= 0) Color(0xFF4CAF50) else Color.Red
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+                null -> {
+                    Text("No data", fontSize = 14.sp, color = Color.Gray)
+                }
+            }
+        }
+    }
+}
+
+fun Double.formatToSinglePrecision(): String =
+    if (this % 1.0 == 0.0) {
+        this.toInt().toString()
+    } else {
+        val multiplied = (this * 10).toInt()
+        val rounded = multiplied.toDouble() / 10
+        rounded.toString()
+    }
 
 
 

@@ -2,6 +2,7 @@ package com.fintrack.shared.feature.transaction.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fintrack.shared.feature.transaction.data.CategoryComparison
 import com.fintrack.shared.feature.transaction.data.DistributionSummary
 import com.fintrack.shared.feature.transaction.data.HighlightsSummary
 import com.fintrack.shared.feature.transaction.data.OverviewSummary
@@ -46,6 +47,9 @@ class StatisticsViewModel : ViewModel() {
 
     private val _selectedPeriod = MutableStateFlow<Period?>(null)
     val selectedPeriod: StateFlow<Period?> = _selectedPeriod
+
+    private val _categoryComparisons = MutableStateFlow<Result<List<CategoryComparison>>?>(null)
+    val categoryComparisons: StateFlow<Result<List<CategoryComparison>>?> = _categoryComparisons
 
     // --- Load highlights summary ---
     fun loadHighlights() {
@@ -189,6 +193,11 @@ class StatisticsViewModel : ViewModel() {
         }
     }
 
+    fun loadCategoryComparisons() {
+        viewModelScope.launch {
+            _categoryComparisons.value = repo.getCategoryComparisons()
+        }
+    }
 }
 
 
