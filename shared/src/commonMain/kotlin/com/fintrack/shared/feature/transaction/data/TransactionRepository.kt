@@ -83,4 +83,10 @@ class TransactionRepository(
     } catch (e: Exception) {
         Result.Error(e)
     }
+
+    suspend fun getCategoryComparisons(): Result<List<CategoryComparison>> = try {
+        Result.Success(api.getCategoryComparisons().map { it.toDomain() })
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
 }

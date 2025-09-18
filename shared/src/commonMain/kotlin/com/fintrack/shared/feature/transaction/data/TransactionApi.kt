@@ -106,4 +106,11 @@ class TransactionApi(
             client.get("$baseUrl/transactions/overview").body()
         return response.result
     }
+
+    suspend fun getCategoryComparisons(): List<CategoryComparisonDto> {
+        val response: ApiResponse<List<CategoryComparisonDto>> =
+            client.get("$baseUrl/transactions/category-comparison").body()
+        return response.result
+    }
+
 }
