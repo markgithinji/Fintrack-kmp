@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.transaction.ui
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,8 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -32,7 +29,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DividerDefaults.color
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -47,29 +43,34 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.DarkGray
 import androidx.compose.ui.graphics.Color.Companion.LightGray
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.aay.compose.lineChart.LineChart
-import com.aay.compose.lineChart.model.LineParameters
-import com.aay.compose.lineChart.model.LineType
 import com.fintrack.shared.feature.transaction.data.DaySummary
 import com.fintrack.shared.feature.transaction.data.HighlightsSummary
 import com.fintrack.shared.feature.transaction.data.OverviewSummary
 import com.fintrack.shared.feature.transaction.data.Result
-import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.Month
-import kotlin.math.max
+import network.chaintech.chartsLib.ui.linechart.model.IntersectionPoint
+import network.chaintech.cmpcharts.axis.AxisProperties
+import network.chaintech.cmpcharts.common.extensions.formatToSinglePrecision
+import network.chaintech.cmpcharts.common.model.Point
+import network.chaintech.cmpcharts.common.ui.GridLinesUtil
+import network.chaintech.cmpcharts.common.ui.SelectionHighlightPoint
+import network.chaintech.cmpcharts.common.ui.SelectionHighlightPopUp
+import network.chaintech.cmpcharts.common.ui.ShadowUnderLine
+import network.chaintech.cmpcharts.ui.linechart.LineChart
+import network.chaintech.cmpcharts.ui.linechart.model.Line
+import network.chaintech.cmpcharts.ui.linechart.model.LineChartProperties
+import network.chaintech.cmpcharts.ui.linechart.model.LinePlotData
+import network.chaintech.cmpcharts.ui.linechart.model.LineStyle
 
 
 val backgroundGray = Color(0xFFEFEFEF)
@@ -223,7 +224,6 @@ fun CurrentBalanceCard(summaryResult: Result<HighlightsSummary>) {
 }
 
 
-
 fun LocalDate.shortDayName(): String {
     // 0 = Monday ... 6 = Sunday
     return when (this.dayOfWeek.ordinal) {
@@ -341,7 +341,7 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
 
                     OverviewPeriod.Monthly -> {
                         println("DEBUG: Monthly chart data: ${overview.monthlyOverview}")
-                        MonthlyBarChart(monthly = overview.monthlyOverview)
+                        MonthlyLineChartDefault(monthly = overview.monthlyOverview)
                     }
                 }
             }
@@ -350,11 +350,9 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
 }
 
 
-
 enum class OverviewPeriod {
     Weekly, Monthly
 }
-
 
 
 @Composable
@@ -452,79 +450,90 @@ fun BarChart(
         }
     }
 }
+
 @Composable
-fun MonthlyBarChart(
-    monthly: List<DaySummary>,
-    modifier: Modifier = Modifier
-) {
-    val totalBarHeight = 200.dp
-    val barWidth = 16.dp
+fun MonthlyLineChartDefault(monthly: List<DaySummary>, modifier: Modifier = Modifier) {
+    if (monthly.isEmpty()) return
 
-    if (monthly.isEmpty()) {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(totalBarHeight),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("No data", color = Color.Gray)
+    val textMeasurer = rememberTextMeasurer()
+    val steps = 5
+
+    // Map domain data to Points
+    val incomePoints = monthly.mapIndexed { index, day -> Point(x = index.toFloat(), y = day.income.toFloat()) }
+    val expensePoints = monthly.mapIndexed { index, day -> Point(x = index.toFloat(), y = day.expense.toFloat()) }
+
+    val labelInterval = if (monthly.size > 15) 3 else 1
+
+    val xAxisProperties = AxisProperties(
+        font = FontFamily.SansSerif,
+        stepSize = 30.dp,
+        topPadding = 105.dp,
+        labelColor = Color.Black,
+        lineColor = Color.Black,
+        stepCount = monthly.size - 1,
+        labelFormatter = { i ->
+            if (i % labelInterval == 0) monthly[i].date.take(5) else "" // e.g., "01-09"
+        },
+        labelPadding = 15.dp
+    )
+
+
+    val yAxisProperties = AxisProperties(
+        font = FontFamily.SansSerif,
+        stepCount = steps,
+        labelColor = Color.Black,
+        lineColor = Color.Black,
+        labelPadding = 20.dp,
+        labelFormatter = { i ->
+            val yMin = (incomePoints + expensePoints).minOf { it.y }
+            val yMax = (incomePoints + expensePoints).maxOf { it.y }
+            val yScale = (yMax - yMin) / steps
+            ((i * yScale) + yMin).formatToSinglePrecision()
         }
-        return
-    }
+    )
 
-    // Normalize values
-    val maxTotal = (monthly.maxOfOrNull { it.income + it.expense } ?: 1.0).coerceAtLeast(1.0)
+    val lineChartProperties = LineChartProperties(
+        linePlotData = LinePlotData(
+            lines = listOf(
+                Line(
+                    dataPoints = incomePoints,
+                    lineStyle = LineStyle(color = Color(0xFF4CAF50)), // green
+                    intersectionPoint = IntersectionPoint(color = Color(0xFF388E3C)),
+                    selectionHighlightPoint = SelectionHighlightPoint(color = Color(0xFFFF4081)), // pink
+                    shadowUnderLine = ShadowUnderLine(),
+                    selectionHighlightPopUp = SelectionHighlightPopUp(
+                        textMeasurer = textMeasurer,
+                        backgroundColor = Color(0xFFFF4081),
+                        labelColor = Color.White,
+                        labelTypeface = FontWeight.Bold
+                    )
+                ),
+                Line(
+                    dataPoints = expensePoints,
+                    lineStyle = LineStyle(color = Color(0xFF9C27B0)), // purple
+                    intersectionPoint = IntersectionPoint(color = Color(0xFF7B1FA2)),
+                    selectionHighlightPoint = SelectionHighlightPoint(color = Color(0xFFFF4081)),
+                    shadowUnderLine = ShadowUnderLine(),
+                    selectionHighlightPopUp = SelectionHighlightPopUp(
+                        textMeasurer = textMeasurer,
+                        backgroundColor = Color(0xFFFF4081),
+                        labelColor = Color.White,
+                        labelTypeface = FontWeight.Bold
+                    )
+                )
+            )
+        ),
+        xAxisProperties = xAxisProperties,
+        yAxisProperties = yAxisProperties,
+        gridLines = GridLinesUtil(color = Color.LightGray)
+    )
 
-    LazyRow(
+    LineChart(
         modifier = modifier
             .fillMaxWidth()
-            .height(totalBarHeight + 24.dp), // extra space for labels
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        contentPadding = PaddingValues(horizontal = 8.dp)
-    ) {
-        items(monthly) { day ->
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Bottom
-            ) {
-                Box(
-                    modifier = Modifier
-                        .width(barWidth)
-                        .height(totalBarHeight)
-                ) {
-                    val incomeFraction = (day.income / maxTotal).toFloat()
-                    val expenseFraction = (day.expense / maxTotal).toFloat()
-
-                    // Income bar
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxHeight(incomeFraction)
-                            .width(barWidth)
-                            .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                            .background(GreenIncome)
-                    )
-
-                    // Expense stacked on income
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxHeight(expenseFraction)
-                            .width(barWidth)
-                            .offset(y = -totalBarHeight * incomeFraction)
-                            .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                            .background(PinkExpense)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = day.date.takeLast(2), // show day number
-                    fontSize = 10.sp
-                )
-            }
-        }
-    }
+            .height(300.dp),
+        lineChartProperties = lineChartProperties
+    )
 }
 
 

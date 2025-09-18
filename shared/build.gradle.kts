@@ -48,6 +48,7 @@ kotlin {
             implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
             implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
+            implementation("network.chaintech:cmpcharts:2.0.6")
 
         }
         iosMain.dependencies {
