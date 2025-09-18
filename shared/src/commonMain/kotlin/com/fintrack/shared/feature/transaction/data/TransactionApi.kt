@@ -101,4 +101,9 @@ class TransactionApi(
         return response.result
     }
 
+    suspend fun getOverviewSummary(): OverviewSummaryDto {
+        val response: ApiResponse<OverviewSummaryDto> =
+            client.get("$baseUrl/transactions/overview").body()
+        return response.result
+    }
 }

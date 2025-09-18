@@ -43,51 +43,44 @@ class TransactionRepository(
         Result.Error(e)
     }
 
-    // --- Highlights summary ---
     suspend fun getHighlightsSummary(): Result<HighlightsSummary> = try {
-        val dto = api.getHighlightsSummary()
-        Result.Success(dto.toDomain())
+        Result.Success(api.getHighlightsSummary().toDomain())
     } catch (e: Exception) {
         Result.Error(e)
     }
 
-    // --- Distribution summary ---
     suspend fun getDistributionSummary(
-        weekOrMonthCode: String,       // e.g., "2025-W37" or "2025-09"
-        type: String? = null,          // "income" | "expense" | null
-        start: String? = null,         // optional "YYYY-MM-DD"
-        end: String? = null            // optional "YYYY-MM-DD"
+        weekOrMonthCode: String,
+        type: String? = null,
+        start: String? = null,
+        end: String? = null
     ): Result<DistributionSummary> = try {
-        val dto = api.getDistributionSummary(
-            weekOrMonthCode = weekOrMonthCode,
-            type = type,
-            start = start,
-            end = end
-        )
-        Result.Success(dto.toDomain())
+        Result.Success(api.getDistributionSummary(weekOrMonthCode, type, start, end).toDomain())
     } catch (e: Exception) {
         Result.Error(e)
     }
 
     suspend fun getAvailableWeeks(): Result<List<String>> = try {
-        val dto = api.getAvailableWeeks()
-        Result.Success(dto.weeks)
+        Result.Success(api.getAvailableWeeks().weeks)
     } catch (e: Exception) {
         Result.Error(e)
     }
 
     suspend fun getAvailableMonths(): Result<AvailableMonths> = try {
-        val dto = api.getAvailableMonths()
-        Result.Success(dto.toDomain())
+        Result.Success(api.getAvailableMonths().toDomain())
     } catch (e: Exception) {
         Result.Error(e)
     }
 
     suspend fun getAvailableYears(): Result<AvailableYears> = try {
-        val dto = api.getAvailableYears()
-        Result.Success(dto.toDomain())
+        Result.Success(api.getAvailableYears().toDomain())
     } catch (e: Exception) {
         Result.Error(e)
     }
 
+    suspend fun getOverviewSummary(): Result<OverviewSummary> = try {
+        Result.Success(api.getOverviewSummary().toDomain())
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
 }
