@@ -1,6 +1,8 @@
 package com.fintrack.shared.feature.transaction.ui
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,28 +32,44 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DividerDefaults.color
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.DarkGray
 import androidx.compose.ui.graphics.Color.Companion.LightGray
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.aay.compose.lineChart.LineChart
+import com.aay.compose.lineChart.model.LineParameters
+import com.aay.compose.lineChart.model.LineType
+import com.fintrack.shared.feature.transaction.data.DaySummary
 import com.fintrack.shared.feature.transaction.data.HighlightsSummary
+import com.fintrack.shared.feature.transaction.data.OverviewSummary
 import com.fintrack.shared.feature.transaction.data.Result
 import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Month
+import kotlin.math.max
 
 
 val backgroundGray = Color(0xFFEFEFEF)
@@ -61,15 +81,13 @@ fun IncomeTrackerContent(
     transactionsViewModel: TransactionListViewModel = viewModel(),
     statsViewModel: StatisticsViewModel = viewModel()
 ) {
-    // --- Observe highlights ---
     val summaryResult by statsViewModel.highlights.collectAsStateWithLifecycle()
-
-    // --- Observe recent transactions ---
     val transactionsResult by transactionsViewModel.recentTransactions.collectAsStateWithLifecycle()
+    val overviewResult by statsViewModel.overview.collectAsStateWithLifecycle()
 
-    // --- Load data once ---
     LaunchedEffect(Unit) {
         statsViewModel.loadHighlights()
+        statsViewModel.loadOverview()
         transactionsViewModel.loadRecentTransactions()
     }
 
@@ -82,11 +100,10 @@ fun IncomeTrackerContent(
     ) {
         item { CurrentBalanceCard(summaryResult) }
         item { IncomeExpenseCards(summaryResult) }
-        item { IncomeExpensesOverview(transactionsResult) }
+        item { IncomeExpensesOverview(overviewResult) } // <- new
         item { TransactionsListCard(transactionsResult) }
     }
 }
-
 
 
 @Composable
@@ -206,93 +223,6 @@ fun CurrentBalanceCard(summaryResult: Result<HighlightsSummary>) {
 }
 
 
-@Composable
-fun IncomeExpenseCards(summaryResult: Result<HighlightsSummary>) {
-    when (summaryResult) {
-        is Result.Loading -> {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                CircularProgressIndicator(color = Color.White)
-            }
-        }
-
-        is Result.Error -> {
-            val message = summaryResult.exception.message ?: "Unknown error"
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Error: $message", color = Color.Red)
-            }
-        }
-
-        is Result.Success -> {
-            val totalIncome = summaryResult.data.income
-            val totalExpense = summaryResult.data.expense
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                InfoCard(
-                    title = "Total Income",
-                    amount = "KSh ${formatAmount(totalIncome)}",
-                    modifier = Modifier.weight(1f),
-                    icon = {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(GreenIncome),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowUpward,
-                                contentDescription = "Income",
-                                tint = Color.White,
-                                modifier = Modifier
-                                    .size(18.dp)
-                                    .rotate(135f)
-                            )
-                        }
-                    }
-                )
-
-                InfoCard(
-                    title = "Total Expense",
-                    amount = "KSh ${formatAmount(totalExpense)}",
-                    modifier = Modifier.weight(1f),
-                    icon = {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(PinkExpense),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowDownward,
-                                contentDescription = "Expense",
-                                tint = Color.White,
-                                modifier = Modifier
-                                    .size(18.dp)
-                                    .rotate(-135f)
-                            )
-                        }
-                    }
-                )
-            }
-        }
-    }
-}
-
 
 fun LocalDate.shortDayName(): String {
     // 0 = Monday ... 6 = Sunday
@@ -304,15 +234,16 @@ fun LocalDate.shortDayName(): String {
 }
 
 @Composable
-fun IncomeExpensesOverview(transactionsResult: Result<List<Transaction>>) {
-    when (transactionsResult) {
+fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
+    var selectedPeriod by remember { mutableStateOf(OverviewPeriod.Weekly) }
+    var expanded by remember { mutableStateOf(false) }
+
+    when (overviewResult) {
         is Result.Loading -> {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(Color.White),
+                    .height(150.dp),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
@@ -320,33 +251,21 @@ fun IncomeExpensesOverview(transactionsResult: Result<List<Transaction>>) {
         }
 
         is Result.Error -> {
-            val message = transactionsResult.exception.message ?: "Unknown error"
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(Color.White),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Error: $message", color = Color.Red)
-            }
+            Text("Error: ${overviewResult.exception.message}", color = Color.Red)
         }
 
         is Result.Success -> {
-            val transactions = transactionsResult.data
+            val overview = overviewResult.data
 
-            // Group transactions by date (ignore time) and compute daily income/expense
-            val weeklyData = transactions
-                .groupBy { it.dateTime.date } // extract LocalDate from LocalDateTime
-                .map { (date, txs) ->
-                    val income = txs.filter { it.isIncome }.sumOf { it.amount }
-                    val expense = txs.filter { !it.isIncome }.sumOf { it.amount }
-                    date.shortDayName() to (income to expense)
-                }
-                .sortedBy { (label, _) ->
-                    listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").indexOf(label)
-                }
+            // --- DEBUG logs ---
+            println("DEBUG: Weekly Overview:")
+            overview.weeklyOverview.forEach {
+                println("Date=${it.date}, Income=${it.income}, Expense=${it.expense}")
+            }
+            println("DEBUG: Monthly Overview:")
+            overview.monthlyOverview.forEach {
+                println("Date=${it.date}, Income=${it.income}, Expense=${it.expense}")
+            }
 
             Column(
                 modifier = Modifier
@@ -354,7 +273,7 @@ fun IncomeExpensesOverview(transactionsResult: Result<List<Transaction>>) {
                     .clip(RoundedCornerShape(24.dp))
                     .background(Color.White)
             ) {
-                // Header
+                // Header with dropdown
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -363,50 +282,79 @@ fun IncomeExpensesOverview(transactionsResult: Result<List<Transaction>>) {
                     verticalAlignment = Alignment.Top
                 ) {
                     Column {
-                        Text(
-                            text = "Overview",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
-                        )
+                        Text("Overview", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(10.dp)
-                                    .background(GreenIncome)
-                            )
-                            Text(text = " Income", fontSize = 12.sp)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Box(
-                                modifier = Modifier
-                                    .size(10.dp)
-                                    .background(PinkExpense)
-                            )
-                            Text(text = " Expenses", fontSize = 12.sp)
+                            Box(Modifier.size(10.dp).background(GreenIncome))
+                            Text(" Income", fontSize = 12.sp)
+                            Spacer(Modifier.width(8.dp))
+                            Box(Modifier.size(10.dp).background(PinkExpense))
+                            Text(" Expenses", fontSize = 12.sp)
                         }
                     }
 
-                    Row(verticalAlignment = Alignment.Top) {
-                        Text(text = "Weekly", color = Color.Gray, fontSize = 12.sp)
-                        Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = "Select period",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(20.dp)
-                        )
+                    Box {
+                        Row(
+                            modifier = Modifier.clickable { expanded = true },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(selectedPeriod.name, color = Color.Gray, fontSize = 12.sp)
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = "Select period",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            DropdownMenuItem(
+                                text = { Text("Weekly") },
+                                onClick = {
+                                    selectedPeriod = OverviewPeriod.Weekly
+                                    expanded = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Monthly") },
+                                onClick = {
+                                    selectedPeriod = OverviewPeriod.Monthly
+                                    expanded = false
+                                }
+                            )
+                        }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                BarChart(
-                    data = weeklyData,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                )
+                when (selectedPeriod) {
+                    OverviewPeriod.Weekly -> {
+                        // Map date to weekday
+                        val weeklyData = overview.weeklyOverview.map {
+                            val dayName = LocalDate.parse(it.date).shortDayName()
+                            dayName to (it.income to it.expense)
+                        }
+                        println("DEBUG: Weekly chart mapped data: $weeklyData")
+                        BarChart(data = weeklyData, modifier = Modifier.padding(16.dp))
+                    }
+
+                    OverviewPeriod.Monthly -> {
+                        println("DEBUG: Monthly chart data: ${overview.monthlyOverview}")
+                        MonthlyBarChart(monthly = overview.monthlyOverview)
+                    }
+                }
             }
         }
     }
 }
+
+
+
+enum class OverviewPeriod {
+    Weekly, Monthly
+}
+
 
 
 @Composable
@@ -500,6 +448,169 @@ fun BarChart(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(text = label, fontSize = 12.sp)
                 }
+            }
+        }
+    }
+}
+@Composable
+fun MonthlyBarChart(
+    monthly: List<DaySummary>,
+    modifier: Modifier = Modifier
+) {
+    val totalBarHeight = 200.dp
+    val barWidth = 16.dp
+
+    if (monthly.isEmpty()) {
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(totalBarHeight),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("No data", color = Color.Gray)
+        }
+        return
+    }
+
+    // Normalize values
+    val maxTotal = (monthly.maxOfOrNull { it.income + it.expense } ?: 1.0).coerceAtLeast(1.0)
+
+    LazyRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(totalBarHeight + 24.dp), // extra space for labels
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp)
+    ) {
+        items(monthly) { day ->
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(barWidth)
+                        .height(totalBarHeight)
+                ) {
+                    val incomeFraction = (day.income / maxTotal).toFloat()
+                    val expenseFraction = (day.expense / maxTotal).toFloat()
+
+                    // Income bar
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxHeight(incomeFraction)
+                            .width(barWidth)
+                            .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                            .background(GreenIncome)
+                    )
+
+                    // Expense stacked on income
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxHeight(expenseFraction)
+                            .width(barWidth)
+                            .offset(y = -totalBarHeight * incomeFraction)
+                            .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                            .background(PinkExpense)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = day.date.takeLast(2), // show day number
+                    fontSize = 10.sp
+                )
+            }
+        }
+    }
+}
+
+
+
+@Composable
+fun IncomeExpenseCards(summaryResult: Result<HighlightsSummary>) {
+    when (summaryResult) {
+        is Result.Loading -> {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircularProgressIndicator(color = Color.White)
+            }
+        }
+
+        is Result.Error -> {
+            val message = summaryResult.exception.message ?: "Unknown error"
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Error: $message", color = Color.Red)
+            }
+        }
+
+        is Result.Success -> {
+            val totalIncome = summaryResult.data.income
+            val totalExpense = summaryResult.data.expense
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                InfoCard(
+                    title = "Total Income",
+                    amount = "KSh ${formatAmount(totalIncome)}",
+                    modifier = Modifier.weight(1f),
+                    icon = {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(GreenIncome),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowUpward,
+                                contentDescription = "Income",
+                                tint = Color.White,
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .rotate(135f)
+                            )
+                        }
+                    }
+                )
+
+                InfoCard(
+                    title = "Total Expense",
+                    amount = "KSh ${formatAmount(totalExpense)}",
+                    modifier = Modifier.weight(1f),
+                    icon = {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(PinkExpense),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowDownward,
+                                contentDescription = "Expense",
+                                tint = Color.White,
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .rotate(-135f)
+                            )
+                        }
+                    }
+                )
             }
         }
     }

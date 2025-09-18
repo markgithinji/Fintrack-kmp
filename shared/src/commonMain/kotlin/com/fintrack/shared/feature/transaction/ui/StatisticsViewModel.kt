@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.transaction.data.DistributionSummary
 import com.fintrack.shared.feature.transaction.data.HighlightsSummary
+import com.fintrack.shared.feature.transaction.data.OverviewSummary
 import com.fintrack.shared.feature.transaction.data.Result
 import com.fintrack.shared.feature.transaction.data.TransactionApi
 import com.fintrack.shared.feature.transaction.data.TransactionRepository
@@ -33,6 +34,10 @@ class StatisticsViewModel : ViewModel() {
     // --- Available years state ---
     private val _availableYears = MutableStateFlow<List<String>>(emptyList())
     val availableYears: StateFlow<List<String>> = _availableYears
+
+    // --- Overview state ---
+    private val _overview = MutableStateFlow<Result<OverviewSummary>>(Result.Loading)
+    val overview: StateFlow<Result<OverviewSummary>> = _overview
 
 
     // --- UI state for StatisticsScreen ---
@@ -140,6 +145,47 @@ class StatisticsViewModel : ViewModel() {
             is Period.Month -> loadDistribution(period.code, type)
             is Period.Year -> loadDistribution(period.code, type)
             null -> println("DEBUG: No period selected")
+        }
+    }
+
+    fun loadOverview() {
+        viewModelScope.launch {
+            println("DEBUG: Starting loadOverview()")
+
+            _overview.value = Result.Loading
+
+            val result = repo.getOverviewSummary()
+            println("DEBUG: Raw repo result = $result")
+
+            _overview.value = when (result) {
+                is Result.Success -> {
+                    val dto = result.data
+                    println("DEBUG: OverviewSummaryDto = $dto")
+
+                    val domain = dto
+                    println("DEBUG: Mapped OverviewSummary domain object:")
+                    println("DEBUG: Weekly Overview:")
+                    domain.weeklyOverview.forEach { day ->
+                        println("  Date=${day.date}, Income=${day.income}, Expense=${day.expense}")
+                    }
+                    println("DEBUG: Monthly Overview:")
+                    domain.monthlyOverview.forEach { day ->
+                        println("  Date=${day.date}, Income=${day.income}, Expense=${day.expense}")
+                    }
+
+                    Result.Success(domain)
+                }
+
+                is Result.Error -> {
+                    println("DEBUG: Error loading overview = ${result.exception}")
+                    Result.Error(result.exception)
+                }
+
+                is Result.Loading -> {
+                    println("DEBUG: Repo returned Loading unexpectedly")
+                    Result.Loading
+                }
+            }
         }
     }
 
