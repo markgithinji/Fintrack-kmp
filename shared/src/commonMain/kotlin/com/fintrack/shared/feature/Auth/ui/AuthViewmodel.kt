@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.Auth.domain.AuthResponse
 import com.fintrack.shared.feature.Auth.data.repository.AuthRepository
-import com.fintrack.shared.feature.transaction.data.Result
+import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.Auth.data.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

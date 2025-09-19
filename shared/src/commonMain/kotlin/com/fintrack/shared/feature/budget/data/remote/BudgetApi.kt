@@ -1,11 +1,10 @@
 package com.fintrack.shared.feature.budget.data.remote
 
 import com.fintrack.shared.feature.Auth.data.SessionManager
-import com.fintrack.shared.feature.transaction.data.ApiConfig
-import com.fintrack.shared.feature.transaction.data.ApiResponse
+import com.fintrack.shared.feature.core.ApiConfig
+import com.fintrack.shared.feature.core.ApiResponse
 import com.fintrack.shared.feature.budget.data.model.BudgetDto
 import io.ktor.client.HttpClient
-import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest

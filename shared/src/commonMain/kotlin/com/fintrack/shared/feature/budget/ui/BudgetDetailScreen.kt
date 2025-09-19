@@ -41,7 +41,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.fintrack.shared.feature.transaction.data.Result
+import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.budget.domain.Budget
 import com.fintrack.shared.feature.transaction.model.Category
 import com.fintrack.shared.feature.transaction.ui.PickDate

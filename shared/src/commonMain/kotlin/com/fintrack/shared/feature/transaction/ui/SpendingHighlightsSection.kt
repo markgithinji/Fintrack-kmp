@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.transaction.data.Highlight
 import com.fintrack.shared.feature.transaction.data.HighlightsSummary
-import com.fintrack.shared.feature.transaction.data.Result
+import com.fintrack.shared.feature.core.Result
 
 @Composable
 fun SpendingHighlightsSection(

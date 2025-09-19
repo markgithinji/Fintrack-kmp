@@ -26,7 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fintrack.shared.feature.transaction.data.Result
+import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.transaction.model.Category
 import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.LocalDate

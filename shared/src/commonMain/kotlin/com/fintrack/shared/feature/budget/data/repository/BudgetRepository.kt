@@ -4,7 +4,7 @@ import com.fintrack.shared.feature.budget.data.model.toDomain
 import com.fintrack.shared.feature.budget.data.model.toDto
 import com.fintrack.shared.feature.budget.data.remote.BudgetApi
 import com.fintrack.shared.feature.budget.domain.Budget
-import com.fintrack.shared.feature.transaction.data.Result
+import com.fintrack.shared.feature.core.Result
 
 class BudgetRepository {
 

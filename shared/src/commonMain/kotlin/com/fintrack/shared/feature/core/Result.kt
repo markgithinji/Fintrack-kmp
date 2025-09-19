@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.data
+package com.fintrack.shared.feature.core
 
 sealed class Result<out T> {
     object Loading : Result<Nothing>()

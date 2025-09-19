@@ -1,6 +1,6 @@
 package com.fintrack.shared.feature.Auth.data.remote
 
-import com.fintrack.shared.feature.transaction.data.ApiConfig
+import com.fintrack.shared.feature.core.ApiConfig
 import com.fintrack.shared.feature.Auth.data.model.AuthResponseDto
 import com.fintrack.shared.feature.Auth.data.model.LoginRequestDto
 import com.fintrack.shared.feature.Auth.data.model.RegisterRequestDto

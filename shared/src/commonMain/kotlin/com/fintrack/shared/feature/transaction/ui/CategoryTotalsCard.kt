@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.transaction.data.CategorySummary
 import com.fintrack.shared.feature.transaction.data.DistributionSummary
-import com.fintrack.shared.feature.transaction.data.Result
+import com.fintrack.shared.feature.core.Result
 
 // --- Segment Colors ---
 val SegmentColors = listOf(

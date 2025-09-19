@@ -4,7 +4,7 @@ import com.fintrack.shared.feature.account.data.remote.AccountsApi
 import com.fintrack.shared.feature.account.data.model.toDomain
 import com.fintrack.shared.feature.account.data.model.toDto
 import com.fintrack.shared.feature.account.domain.Account
-import com.fintrack.shared.feature.transaction.data.Result
+import com.fintrack.shared.feature.core.Result
 
 class AccountRepository {
 

@@ -4,7 +4,7 @@ import com.fintrack.shared.feature.Auth.data.remote.AuthApi
 import com.fintrack.shared.feature.Auth.domain.AuthResponse
 import com.fintrack.shared.feature.Auth.data.model.LoginRequestDto
 import com.fintrack.shared.feature.Auth.data.model.RegisterRequestDto
-import com.fintrack.shared.feature.transaction.data.Result
+import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.Auth.data.model.toDomain
 
 class AuthRepository {

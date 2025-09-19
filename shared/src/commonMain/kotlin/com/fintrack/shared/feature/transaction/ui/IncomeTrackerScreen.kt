@@ -57,7 +57,7 @@ import com.fintrack.shared.feature.transaction.data.CategoryComparison
 import com.fintrack.shared.feature.transaction.data.DaySummary
 import com.fintrack.shared.feature.transaction.data.HighlightsSummary
 import com.fintrack.shared.feature.transaction.data.OverviewSummary
-import com.fintrack.shared.feature.transaction.data.Result
+import com.fintrack.shared.feature.core.Result
 import kotlinx.datetime.LocalDate
 import network.chaintech.chartsLib.ui.linechart.model.IntersectionPoint
 import network.chaintech.cmpcharts.axis.AxisProperties
