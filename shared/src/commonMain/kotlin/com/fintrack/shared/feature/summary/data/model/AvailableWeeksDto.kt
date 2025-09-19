@@ -1,10 +1,6 @@
-package com.fintrack.shared.feature.transaction.data
+package com.fintrack.shared.feature.summary.data.model
 
 import kotlinx.serialization.Serializable
-
-data class AvailableWeeks(
-    val weeks: List<String>
-)
 
 @Serializable
 data class AvailableWeeksDto(

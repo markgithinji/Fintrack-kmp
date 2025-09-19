@@ -53,11 +53,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.fintrack.shared.feature.transaction.data.CategoryComparison
-import com.fintrack.shared.feature.transaction.data.DaySummary
-import com.fintrack.shared.feature.transaction.data.HighlightsSummary
-import com.fintrack.shared.feature.transaction.data.OverviewSummary
 import com.fintrack.shared.feature.core.Result
+import com.fintrack.shared.feature.summary.domain.CategoryComparison
+import com.fintrack.shared.feature.summary.domain.DaySummary
+import com.fintrack.shared.feature.summary.domain.HighlightsSummary
+import com.fintrack.shared.feature.summary.domain.OverviewSummary
+import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import kotlinx.datetime.LocalDate
 import network.chaintech.chartsLib.ui.linechart.model.IntersectionPoint
 import network.chaintech.cmpcharts.axis.AxisProperties
@@ -550,6 +551,7 @@ fun MonthlyLineChartDefault(monthly: List<DaySummary>, modifier: Modifier = Modi
         lineChartProperties = lineChartProperties
     )
 }
+
 @Composable
 fun CategoryComparisonCard(
     categoryComparisonResult: Result<List<CategoryComparison>>?,
@@ -580,6 +582,7 @@ fun CategoryComparisonCard(
                         CircularProgressIndicator()
                     }
                 }
+
                 is Result.Error -> {
                     Text(
                         text = "Error: ${categoryComparisonResult.exception.message ?: "Unknown error"}",
@@ -587,6 +590,7 @@ fun CategoryComparisonCard(
                         fontSize = 14.sp
                     )
                 }
+
                 is Result.Success -> {
                     categoryComparisonResult.data.forEach { comparison ->
                         Spacer(modifier = Modifier.height(4.dp))
@@ -612,6 +616,7 @@ fun CategoryComparisonCard(
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
+
                 null -> {
                     Text("No data", fontSize = 14.sp, color = Color.Gray)
                 }
@@ -628,7 +633,6 @@ fun Double.formatToSinglePrecision(): String =
         val rounded = multiplied.toDouble() / 10
         rounded.toString()
     }
-
 
 
 @Composable

@@ -2,8 +2,6 @@ package com.fintrack.shared.feature.transaction.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fintrack.shared.feature.transaction.data.DistributionSummary
-import com.fintrack.shared.feature.transaction.data.HighlightsSummary
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.transaction.data.TransactionApi
 import com.fintrack.shared.feature.transaction.data.TransactionRepository

@@ -1,12 +1,12 @@
-package com.fintrack.shared.feature.transaction.ui
+package com.fintrack.shared.feature.summary.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fintrack.shared.feature.transaction.data.CategoryComparison
-import com.fintrack.shared.feature.transaction.data.DistributionSummary
-import com.fintrack.shared.feature.transaction.data.HighlightsSummary
-import com.fintrack.shared.feature.transaction.data.OverviewSummary
 import com.fintrack.shared.feature.core.Result
+import com.fintrack.shared.feature.summary.domain.CategoryComparison
+import com.fintrack.shared.feature.summary.domain.DistributionSummary
+import com.fintrack.shared.feature.summary.domain.HighlightsSummary
+import com.fintrack.shared.feature.summary.domain.OverviewSummary
 import com.fintrack.shared.feature.transaction.data.TransactionApi
 import com.fintrack.shared.feature.transaction.data.TransactionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -80,18 +80,34 @@ class StatisticsViewModel : ViewModel() {
     fun loadAvailablePeriods() {
         viewModelScope.launch {
             try {
+                // --- Weeks ---
                 val weeksResult = repo.getAvailableWeeks()
-                val weeks = if (weeksResult is Result.Success) weeksResult.data else emptyList()
+                val weeks = if (weeksResult is Result.Success) {
+                    weeksResult.data.weeks
+                } else {
+                    emptyList()
+                }
                 _availableWeeks.value = weeks
 
+                // --- Months ---
                 val monthsResult = repo.getAvailableMonths()
-                val months = if (monthsResult is Result.Success) monthsResult.data.months else emptyList()
+                val months = if (monthsResult is Result.Success) {
+                    monthsResult.data.months
+                } else {
+                    emptyList()
+                }
                 _availableMonths.value = months
 
+                // --- Years ---
                 val yearsResult = repo.getAvailableYears()
-                val years = if (yearsResult is Result.Success) yearsResult.data.years else emptyList()
+                val years = if (yearsResult is Result.Success) {
+                    yearsResult.data.years
+                } else {
+                    emptyList()
+                }
                 _availableYears.value = years
 
+                // --- Pick initial selection ---
                 _selectedPeriod.value = when {
                     weeks.isNotEmpty() -> Period.Week(weeks.first())
                     months.isNotEmpty() -> Period.Month(months.first())
@@ -100,6 +116,7 @@ class StatisticsViewModel : ViewModel() {
                 }
 
                 reloadDistributionForCurrentSelection()
+
             } catch (e: Exception) {
                 _availableWeeks.value = emptyList()
                 _availableMonths.value = emptyList()
@@ -107,7 +124,6 @@ class StatisticsViewModel : ViewModel() {
             }
         }
     }
-
 
 
     // --- UI state helpers ---
@@ -212,6 +228,7 @@ sealed class Period {
     data class Month(val code: String) : Period()
     data class Year(val code: String) : Period()
 }
+
 sealed class TransactionType(val apiName: String) {
     object Income : TransactionType("income")
     object Expense : TransactionType("expense")

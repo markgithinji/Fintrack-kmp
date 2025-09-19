@@ -27,6 +27,7 @@ import androidx.navigation.navArgument
 import com.fintrack.shared.feature.Auth.ui.LoginScreen
 import com.fintrack.shared.feature.budget.ui.BudgetDetailScreen
 import com.fintrack.shared.feature.budget.ui.BudgetScreen
+import com.fintrack.shared.feature.summary.ui.StatisticsScreen
 
 @Composable
 fun MainScreen() {

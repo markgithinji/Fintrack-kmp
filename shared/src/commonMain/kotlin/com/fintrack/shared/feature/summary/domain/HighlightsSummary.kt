@@ -1,6 +1,4 @@
-package com.fintrack.shared.feature.transaction.data
-
-import kotlinx.serialization.Serializable
+package com.fintrack.shared.feature.summary.domain
 
 data class HighlightsSummary(
     val income: Double,
@@ -8,12 +6,6 @@ data class HighlightsSummary(
     val balance: Double,
     val incomeHighlights: Highlights,
     val expenseHighlights: Highlights
-)
-
-data class DistributionSummary(
-    val period: String, // e.g. "2025-W37" or "2025-09"
-    val incomeCategories: List<CategorySummary>,
-    val expenseCategories: List<CategorySummary>
 )
 
 data class Highlights(
@@ -27,10 +19,4 @@ data class Highlight(
     val label: String,
     val value: String,
     val amount: Double
-)
-
-data class CategorySummary(
-    val category: String,
-    val total: Double,
-    val percentage: Double
 )

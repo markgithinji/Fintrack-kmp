@@ -4,6 +4,13 @@ import com.fintrack.shared.feature.Auth.data.SessionManager
 import com.fintrack.shared.feature.core.ApiConfig
 import com.fintrack.shared.feature.core.ApiResponse
 import com.fintrack.shared.feature.core.PaginatedTransactionDto
+import com.fintrack.shared.feature.summary.data.model.AvailableMonthsDto
+import com.fintrack.shared.feature.summary.data.model.AvailableWeeksDto
+import com.fintrack.shared.feature.summary.data.model.AvailableYearsDto
+import com.fintrack.shared.feature.summary.data.model.CategoryComparisonDto
+import com.fintrack.shared.feature.summary.data.model.DistributionSummaryDto
+import com.fintrack.shared.feature.summary.data.model.HighlightsSummaryDto
+import com.fintrack.shared.feature.summary.data.model.OverviewSummaryDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation

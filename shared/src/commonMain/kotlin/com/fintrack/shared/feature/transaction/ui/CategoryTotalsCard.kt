@@ -38,9 +38,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fintrack.shared.feature.transaction.data.CategorySummary
-import com.fintrack.shared.feature.transaction.data.DistributionSummary
+import com.fintrack.shared.feature.summary.domain.CategorySummary
+import com.fintrack.shared.feature.summary.domain.DistributionSummary
 import com.fintrack.shared.feature.core.Result
+import com.fintrack.shared.feature.summary.ui.Period
+import com.fintrack.shared.feature.summary.ui.TabType
 
 // --- Segment Colors ---
 val SegmentColors = listOf(

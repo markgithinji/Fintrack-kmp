@@ -1,6 +1,14 @@
 package com.fintrack.shared.feature.transaction.data
 
 import com.fintrack.shared.feature.core.Result
+import com.fintrack.shared.feature.summary.data.model.toDomain
+import com.fintrack.shared.feature.summary.domain.AvailableMonths
+import com.fintrack.shared.feature.summary.domain.AvailableWeeks
+import com.fintrack.shared.feature.summary.domain.AvailableYears
+import com.fintrack.shared.feature.summary.domain.CategoryComparison
+import com.fintrack.shared.feature.summary.domain.DistributionSummary
+import com.fintrack.shared.feature.summary.domain.HighlightsSummary
+import com.fintrack.shared.feature.summary.domain.OverviewSummary
 import com.fintrack.shared.feature.transaction.model.Transaction
 
 class TransactionRepository(
@@ -61,8 +69,9 @@ class TransactionRepository(
         Result.Error(e)
     }
 
-    suspend fun getAvailableWeeks(): Result<List<String>> = try {
-        Result.Success(api.getAvailableWeeks().weeks)
+    suspend fun getAvailableWeeks(): Result<AvailableWeeks> = try {
+        val dto = api.getAvailableWeeks()
+        Result.Success(dto.toDomain())
     } catch (e: Exception) {
         Result.Error(e)
     }
