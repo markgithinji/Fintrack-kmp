@@ -1,23 +1,19 @@
-package com.fintrack.shared.feature.transaction.ui
+package com.fintrack.shared.feature.account.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fintrack.shared.feature.transaction.data.Account
-import com.fintrack.shared.feature.transaction.data.AccountsRepository
-import com.fintrack.shared.feature.transaction.data.BudgetRepository
+import com.fintrack.shared.feature.account.domain.Account
+import com.fintrack.shared.feature.account.data.repository.AccountRepository
 import com.fintrack.shared.feature.transaction.data.Result
-import com.fintrack.shared.feature.transaction.model.Budget
-import com.fintrack.shared.feature.transaction.model.Category
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDate
 
 
 class AccountsViewModel(
 ) : ViewModel() {
 
-    private val repo: AccountsRepository = AccountsRepository()
+    private val repo: AccountRepository = AccountRepository()
 
     private val _accounts = MutableStateFlow<Result<List<Account>>>(Result.Loading)
     val accounts: StateFlow<Result<List<Account>>> = _accounts

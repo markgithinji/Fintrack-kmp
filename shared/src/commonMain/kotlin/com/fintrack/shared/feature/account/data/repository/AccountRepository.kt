@@ -1,6 +1,12 @@
-package com.fintrack.shared.feature.transaction.data
+package com.fintrack.shared.feature.account.data.repository
 
-class AccountsRepository {
+import com.fintrack.shared.feature.account.data.remote.AccountsApi
+import com.fintrack.shared.feature.account.data.toDomain
+import com.fintrack.shared.feature.account.data.toDto
+import com.fintrack.shared.feature.account.domain.Account
+import com.fintrack.shared.feature.transaction.data.Result
+
+class AccountRepository {
 
     private val api: AccountsApi = AccountsApi()
 
@@ -44,4 +50,3 @@ class AccountsRepository {
         Result.Error(e)
     }
 }
-
