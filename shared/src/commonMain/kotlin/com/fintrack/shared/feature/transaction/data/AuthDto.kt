@@ -16,9 +16,16 @@ data class RegisterRequestDto(
 )
 
 @Serializable
-data class UserDto(
-    val id: String,
-    val name: String,
-    val email: String,
+data class AuthResponseDto(
     val token: String
 )
+
+data class AuthResponse(
+    val token: String
+)
+
+fun AuthResponseDto.toDomain(): AuthResponse {
+    return AuthResponse(
+       token = token
+    )
+}

@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fintrack.shared.feature.transaction.data.AuthResponse
 import com.fintrack.shared.feature.transaction.data.AuthViewModel
 import com.fintrack.shared.feature.transaction.data.HighlightsSummary
 import com.fintrack.shared.feature.transaction.data.Result
@@ -62,7 +63,7 @@ import kotlinx.datetime.LocalDate
 @Composable
 fun LoginScreen(
     viewModel: AuthViewModel = viewModel(),
-    onLoginSuccess: (User) -> Unit,
+    onLoginSuccess: (AuthResponse) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val loginState by viewModel.loginState.collectAsStateWithLifecycle()

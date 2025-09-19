@@ -17,21 +17,21 @@ class AuthApi(private val baseUrl: String = ApiConfig.BASE_URL) {
         }
     }
 
-    suspend fun login(request: LoginRequestDto): UserDto {
+    suspend fun login(request: LoginRequestDto): AuthResponseDto {
         return client.post("$baseUrl/auth/login") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
     }
 
-    suspend fun register(request: RegisterRequestDto): UserDto {
+    suspend fun register(request: RegisterRequestDto): AuthResponseDto {
         return client.post("$baseUrl/auth/register") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
     }
 
-    suspend fun getUserById(userId: String, token: String): UserDto {
+    suspend fun getUserById(userId: String, token: String): AuthResponseDto {
         return client.get("$baseUrl/users/$userId") {
             header(HttpHeaders.Authorization, "Bearer $token")
         }.body()

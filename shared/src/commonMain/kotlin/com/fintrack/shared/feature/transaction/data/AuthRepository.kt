@@ -6,26 +6,26 @@ import kotlinx.coroutines.withContext
 class AuthRepository {
     private val api = AuthApi()
 
-    suspend fun login(email: String, password: String): Result<User> =
+    suspend fun login(email: String, password: String): Result<AuthResponse> =
         try {
-            val userDto = api.login(LoginRequestDto(email, password))
-            Result.Success(userDto.toDomain())
+            val authResponse = api.login(LoginRequestDto(email, password))
+            Result.Success(authResponse.toDomain())
         } catch (e: Exception) {
             Result.Error(e)
         }
 
-    suspend fun register(name: String, email: String, password: String): Result<User> =
+    suspend fun register(name: String, email: String, password: String): Result<AuthResponse> =
         try {
-            val userDto = api.register(RegisterRequestDto(name, email, password))
-            Result.Success(userDto.toDomain())
+            val authResponse = api.register(RegisterRequestDto(name, email, password))
+            Result.Success(authResponse.toDomain())
         } catch (e: Exception) {
             Result.Error(e)
         }
 
-    suspend fun getUserById(userId: String, token: String): Result<User> =
+    suspend fun getUserById(userId: String, token: String): Result<AuthResponse> =
         try {
-            val userDto = api.getUserById(userId, token)
-            Result.Success(userDto.toDomain())
+            val authResponse = api.getUserById(userId, token)
+            Result.Success(authResponse.toDomain())
         } catch (e: Exception) {
             Result.Error(e)
         }

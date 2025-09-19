@@ -10,11 +10,11 @@ class AuthViewModel : ViewModel() {
 
     private val repository: AuthRepository = AuthRepository()
 
-    private val _loginState = MutableStateFlow<Result<User>?>(null)
-    val loginState: StateFlow<Result<User>?> = _loginState
+    private val _loginState = MutableStateFlow<Result<AuthResponse>?>(null)
+    val loginState: StateFlow<Result<AuthResponse>?> = _loginState
 
-    private val _registerState = MutableStateFlow<Result<User>?>(null)
-    val registerState: StateFlow<Result<User>?> = _registerState
+    private val _registerState = MutableStateFlow<Result<AuthResponse>?>(null)
+    val registerState: StateFlow<Result<AuthResponse>?> = _registerState
 
     var token: String? = null
         private set

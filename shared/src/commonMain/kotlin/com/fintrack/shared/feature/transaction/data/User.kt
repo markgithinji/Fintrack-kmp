@@ -1,26 +1,22 @@
 package com.fintrack.shared.feature.transaction.data
 
+import kotlinx.serialization.Serializable
+
 data class User(
-    val id: String,
     val name: String,
     val email: String,
-    val token: String
 )
+
+@Serializable
+data class UserDto(
+    val name: String,
+    val email: String
+)
+
 
 fun UserDto.toDomain(): User {
     return User(
-        id = id,
         name = name,
         email = email,
-        token = token
-    )
-}
-
-fun User.toDto(): UserDto {
-    return UserDto(
-        id = id,
-        name = name,
-        email = email,
-        token = token
     )
 }
