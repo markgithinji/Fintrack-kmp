@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.data
+package com.fintrack.shared.feature.Auth.data
 
 object SessionManager {
     var token: String? = null

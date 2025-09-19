@@ -2,9 +2,11 @@ package com.fintrack.shared.feature.account.data.remote
 
 import com.fintrack.shared.feature.transaction.data.ApiConfig
 import com.fintrack.shared.feature.transaction.data.ApiResponse
-import com.fintrack.shared.feature.transaction.data.SessionManager
+import com.fintrack.shared.feature.Auth.data.SessionManager
+import com.fintrack.shared.feature.account.data.model.AccountDto
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
+
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -22,10 +24,10 @@ import kotlinx.serialization.json.Json
 class AccountsApi(private val baseUrl: String = ApiConfig.BASE_URL) {
 
     private val client = HttpClient {
-        HttpClientConfig.install(ContentNegotiation.Plugin) {
+        install(ContentNegotiation) {
             json(Json { ignoreUnknownKeys = true; explicitNulls = false })
         }
-        // Automatically add Authorization header for every request
+
         defaultRequest {
             SessionManager.token?.let {
                 header("Authorization", "Bearer $it")

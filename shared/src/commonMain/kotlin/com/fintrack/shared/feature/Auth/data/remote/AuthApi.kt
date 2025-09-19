@@ -1,10 +1,20 @@
-package com.fintrack.shared.feature.transaction.data
+package com.fintrack.shared.feature.Auth.data.remote
 
-import io.ktor.client.*
-import io.ktor.client.call.*
+import com.fintrack.shared.feature.transaction.data.ApiConfig
+import com.fintrack.shared.feature.Auth.data.model.AuthResponseDto
+import com.fintrack.shared.feature.Auth.data.model.LoginRequestDto
+import com.fintrack.shared.feature.Auth.data.model.RegisterRequestDto
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.request.*
-import io.ktor.http.*
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
@@ -12,7 +22,7 @@ import kotlinx.serialization.json.Json
 class AuthApi(private val baseUrl: String = ApiConfig.BASE_URL) {
 
     private val client = HttpClient {
-        install(ContentNegotiation) {
+        install(ContentNegotiation.Plugin) {
             json(Json { ignoreUnknownKeys = true; explicitNulls = false })
         }
     }

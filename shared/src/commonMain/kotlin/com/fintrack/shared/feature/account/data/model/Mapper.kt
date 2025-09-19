@@ -1,8 +1,6 @@
-package com.fintrack.shared.feature.account.data
+package com.fintrack.shared.feature.account.data.model
 
-import com.fintrack.shared.feature.account.data.model.AccountDto
 import com.fintrack.shared.feature.account.domain.Account
-import com.fintrack.shared.feature.transaction.data.AccountDto
 
 fun Account.toDto(): AccountDto = AccountDto(
     id = this.id,

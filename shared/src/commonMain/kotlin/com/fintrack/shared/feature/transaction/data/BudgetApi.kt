@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.transaction.data
 
+import com.fintrack.shared.feature.Auth.data.SessionManager
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
