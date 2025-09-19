@@ -1,10 +1,10 @@
-package com.fintrack.shared.feature.transaction.ui
+package com.fintrack.shared.feature.budget.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fintrack.shared.feature.transaction.data.BudgetRepository
+import com.fintrack.shared.feature.budget.data.repository.BudgetRepository
 import com.fintrack.shared.feature.transaction.data.Result
-import com.fintrack.shared.feature.transaction.model.Budget
+import com.fintrack.shared.feature.budget.domain.Budget
 import com.fintrack.shared.feature.transaction.model.Category
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

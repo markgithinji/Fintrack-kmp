@@ -1,14 +1,17 @@
-package com.fintrack.shared.feature.transaction.data
+package com.fintrack.shared.feature.budget.data.remote
 
 import com.fintrack.shared.feature.Auth.data.SessionManager
+import com.fintrack.shared.feature.transaction.data.ApiConfig
+import com.fintrack.shared.feature.transaction.data.ApiResponse
+import com.fintrack.shared.feature.budget.data.model.BudgetDto
 import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
-import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -19,7 +22,7 @@ import kotlinx.serialization.json.Json
 
 class BudgetApi(private val baseUrl: String = ApiConfig.BASE_URL) {
     private val client = HttpClient {
-        install(ContentNegotiation) {
+        install(ContentNegotiation.Plugin) {
             json(Json { ignoreUnknownKeys = true; explicitNulls = false })
         }
         // Automatically add Authorization header for every request
@@ -62,4 +65,3 @@ class BudgetApi(private val baseUrl: String = ApiConfig.BASE_URL) {
         return response.result
     }
 }
-

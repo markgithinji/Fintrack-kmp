@@ -1,19 +1,7 @@
-package com.fintrack.shared.feature.transaction.data
-import com.fintrack.shared.feature.transaction.model.Budget
-import com.fintrack.shared.feature.transaction.model.Category
-import kotlinx.serialization.Serializable
-import kotlinx.datetime.LocalDate
+package com.fintrack.shared.feature.budget.data.model
 
-@Serializable
-data class BudgetDto(
-    val id: Int? = null,
-    val name: String,
-    val categories: List<String>,
-    val limit: Double,
-    val isExpense: Boolean,
-    val startDate: LocalDate,
-    val endDate: LocalDate
-)
+import com.fintrack.shared.feature.budget.domain.Budget
+import com.fintrack.shared.feature.transaction.model.Category
 
 fun BudgetDto.toDomain(): Budget =
     Budget(
@@ -36,5 +24,3 @@ fun Budget.toDto(): BudgetDto =
         startDate = startDate,
         endDate = endDate
     )
-
-
