@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.Auth.data.model
+package com.fintrack.shared.feature.auth.data.model
 
 import kotlinx.serialization.Serializable
 

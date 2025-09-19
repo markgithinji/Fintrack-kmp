@@ -1,6 +1,6 @@
 package com.fintrack.shared.feature.budget.data.remote
 
-import com.fintrack.shared.feature.Auth.data.SessionManager
+import com.fintrack.shared.feature.auth.data.SessionManager
 import com.fintrack.shared.feature.core.ApiConfig
 import com.fintrack.shared.feature.core.ApiResponse
 import com.fintrack.shared.feature.budget.data.model.BudgetDto

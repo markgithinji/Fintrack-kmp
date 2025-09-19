@@ -2,7 +2,7 @@ package com.fintrack.shared.feature.account.data.remote
 
 import com.fintrack.shared.feature.core.ApiConfig
 import com.fintrack.shared.feature.core.ApiResponse
-import com.fintrack.shared.feature.Auth.data.SessionManager
+import com.fintrack.shared.feature.auth.data.SessionManager
 import com.fintrack.shared.feature.account.data.model.AccountDto
 import io.ktor.client.HttpClient
 

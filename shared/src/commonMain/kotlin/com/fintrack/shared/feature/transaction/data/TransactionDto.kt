@@ -13,24 +13,3 @@ data class TransactionDto(
     val dateTime: String,
     val description: String? = null
 )
-
-fun TransactionDto.toDomain(): Transaction =
-    Transaction(
-        id = id,
-        isIncome = isIncome,
-        amount = amount,
-        category = category,
-        dateTime = LocalDateTime.parse(dateTime),
-        description = description
-    )
-
-fun Transaction.toDto(): TransactionDto =
-    TransactionDto(
-        id = id,
-        isIncome = isIncome,
-        amount = amount,
-        category = category,
-        dateTime = dateTime.toString(),
-        description = description
-    )
-

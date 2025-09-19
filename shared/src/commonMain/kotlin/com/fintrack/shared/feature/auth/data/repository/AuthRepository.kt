@@ -1,11 +1,11 @@
-package com.fintrack.shared.feature.Auth.data.repository
+package com.fintrack.shared.feature.auth.data.repository
 
-import com.fintrack.shared.feature.Auth.data.remote.AuthApi
-import com.fintrack.shared.feature.Auth.domain.AuthResponse
-import com.fintrack.shared.feature.Auth.data.model.LoginRequestDto
-import com.fintrack.shared.feature.Auth.data.model.RegisterRequestDto
+import com.fintrack.shared.feature.auth.data.remote.AuthApi
+import com.fintrack.shared.feature.auth.domain.AuthResponse
+import com.fintrack.shared.feature.auth.data.model.LoginRequestDto
+import com.fintrack.shared.feature.auth.data.model.RegisterRequestDto
 import com.fintrack.shared.feature.core.Result
-import com.fintrack.shared.feature.Auth.data.model.toDomain
+import com.fintrack.shared.feature.auth.data.model.toDomain
 
 class AuthRepository {
     private val api = AuthApi()

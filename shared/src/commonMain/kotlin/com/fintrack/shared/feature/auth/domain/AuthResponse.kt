@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.Auth.domain
+package com.fintrack.shared.feature.auth.domain
 
 data class AuthResponse(
     val token: String

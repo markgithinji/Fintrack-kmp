@@ -9,6 +9,8 @@ import com.fintrack.shared.feature.summary.domain.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.HighlightsSummary
 import com.fintrack.shared.feature.summary.domain.OverviewSummary
+import com.fintrack.shared.feature.transaction.data.model.toDomain
+import com.fintrack.shared.feature.transaction.data.model.toDto
 import com.fintrack.shared.feature.transaction.model.Transaction
 
 class TransactionRepository(

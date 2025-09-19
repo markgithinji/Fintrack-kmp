@@ -1,11 +1,10 @@
-package com.fintrack.shared.feature.Auth.data.remote
+package com.fintrack.shared.feature.auth.data.remote
 
 import com.fintrack.shared.feature.core.ApiConfig
-import com.fintrack.shared.feature.Auth.data.model.AuthResponseDto
-import com.fintrack.shared.feature.Auth.data.model.LoginRequestDto
-import com.fintrack.shared.feature.Auth.data.model.RegisterRequestDto
+import com.fintrack.shared.feature.auth.data.model.AuthResponseDto
+import com.fintrack.shared.feature.auth.data.model.LoginRequestDto
+import com.fintrack.shared.feature.auth.data.model.RegisterRequestDto
 import io.ktor.client.HttpClient
-import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
