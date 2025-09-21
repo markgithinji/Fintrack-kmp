@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -49,6 +50,7 @@ import androidx.compose.ui.graphics.Color.Companion.LightGray
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -85,7 +87,7 @@ val PinkExpense = Color(0xFFE27C94) // pinkish-red for expense
 fun IncomeTrackerContent(
     accountsViewModel: AccountsViewModel = viewModel(),
     transactionsViewModel: TransactionListViewModel = viewModel(),
-    statsViewModel: StatisticsViewModel = viewModel() // keep for overview + comparisons
+    statsViewModel: StatisticsViewModel = viewModel()
 ) {
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
     val selectedAccountResult by accountsViewModel.selectedAccount.collectAsStateWithLifecycle()
@@ -107,7 +109,13 @@ fun IncomeTrackerContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item { CurrentBalanceCard(selectedAccountResult) }
+        item {
+            CurrentBalanceCard(
+                accountsResult = accountsResult,
+                selectedAccountResult = selectedAccountResult,
+                onAccountSelected = { id -> accountsViewModel.selectAccount(id) } // 👈 id matches VM
+            )
+        }
         item { IncomeExpenseCards(selectedAccountResult) }
         item { IncomeExpensesOverview(overviewResult) }
         item { CategoryComparisonCard(categoryComparisonResult) }
@@ -117,8 +125,14 @@ fun IncomeTrackerContent(
 
 
 @Composable
-fun CurrentBalanceCard(accountResult: Result<Account>?) {
-    when (accountResult) {
+fun CurrentBalanceCard(
+    accountsResult: Result<List<Account>>?,
+    selectedAccountResult: Result<Account>?,
+    onAccountSelected: (Int) -> Unit // 👈 expects account id
+) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    when (accountsResult) {
         null, is Result.Loading -> {
             Box(
                 modifier = Modifier
@@ -132,7 +146,7 @@ fun CurrentBalanceCard(accountResult: Result<Account>?) {
         }
 
         is Result.Error -> {
-            val message = accountResult.exception.message ?: "Unknown error"
+            val message = accountsResult.exception.message ?: "Unknown error"
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -145,7 +159,21 @@ fun CurrentBalanceCard(accountResult: Result<Account>?) {
         }
 
         is Result.Success -> {
-            val account = accountResult.data
+            val accounts = accountsResult.data
+            if (accounts.isEmpty()) {
+                Text(
+                    "No accounts found",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(130.dp)
+                        .background(DarkGray),
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+                return
+            }
+
+            val account = (selectedAccountResult as? Result.Success)?.data ?: accounts.first()
             val balance = account.balance ?: 0.0
 
             Card(
@@ -184,7 +212,7 @@ fun CurrentBalanceCard(accountResult: Result<Account>?) {
                         }
 
                         Button(
-                            onClick = { /* open account picker */ },
+                            onClick = { showDialog = true },
                             colors = ButtonDefaults.buttonColors(containerColor = LightGray),
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.height(26.dp),
@@ -222,9 +250,52 @@ fun CurrentBalanceCard(accountResult: Result<Account>?) {
                     }
                 }
             }
+
+            if (showDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDialog = false },
+                    title = { Text("Select Account") },
+                    text = {
+                        Column {
+                            accounts.forEach { acc ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            onAccountSelected(acc.id) // 👈 pass id to VM
+                                            showDialog = false
+                                        }
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AccountBalance,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp),
+                                        tint = if ((selectedAccountResult as? Result.Success)?.data?.id == acc.id)
+                                            Color.Blue else DarkGray // highlight selected
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Column {
+                                        Text(acc.name, fontWeight = FontWeight.Medium)
+                                        Text(
+                                            "KSh ${formatAmount(acc.balance ?: 0.0)}",
+                                            fontSize = 12.sp,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {}
+                )
+            }
         }
     }
 }
+
+
 
 
 
