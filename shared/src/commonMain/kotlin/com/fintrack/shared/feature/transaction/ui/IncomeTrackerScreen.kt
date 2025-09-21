@@ -63,6 +63,7 @@ import com.fintrack.shared.feature.summary.domain.DaySummary
 import com.fintrack.shared.feature.summary.domain.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.OverviewSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
+import com.fintrack.shared.feature.transaction.model.AccountIcon
 import kotlinx.datetime.LocalDate
 import network.chaintech.chartsLib.ui.linechart.model.IntersectionPoint
 import network.chaintech.cmpcharts.axis.AxisProperties
@@ -139,7 +140,7 @@ fun IncomeTrackerContent(
 fun CurrentBalanceCard(
     accountsResult: Result<List<Account>>?,
     selectedAccountResult: Result<Account>?,
-    onAccountSelected: (Int) -> Unit // 👈 expects account id
+    onAccountSelected: (Int) -> Unit
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
@@ -209,7 +210,7 @@ fun CurrentBalanceCard(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                imageVector = Icons.Default.AccountBalance,
+                                imageVector = AccountIcon.fromAccountName(account.name).icon,
                                 contentDescription = "Bank",
                                 tint = Color.White,
                                 modifier = Modifier.size(16.dp)
@@ -273,18 +274,18 @@ fun CurrentBalanceCard(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            onAccountSelected(acc.id) // 👈 pass id to VM
+                                            onAccountSelected(acc.id)
                                             showDialog = false
                                         }
                                         .padding(12.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.AccountBalance,
+                                        imageVector = AccountIcon.fromAccountName(acc.name).icon,
                                         contentDescription = null,
                                         modifier = Modifier.size(20.dp),
                                         tint = if ((selectedAccountResult as? Result.Success)?.data?.id == acc.id)
-                                            Color.Blue else DarkGray // highlight selected
+                                            Color.Blue else DarkGray
                                     )
                                     Spacer(Modifier.width(8.dp))
                                     Column {
