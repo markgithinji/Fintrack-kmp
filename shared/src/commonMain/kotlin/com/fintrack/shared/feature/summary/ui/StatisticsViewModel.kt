@@ -3,6 +3,7 @@ package com.fintrack.shared.feature.summary.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.core.Result
+import com.fintrack.shared.feature.summary.data.repository.SummaryRepository
 import com.fintrack.shared.feature.summary.domain.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.StatisticsSummary
@@ -14,7 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class StatisticsViewModel : ViewModel() {
-    private val repo = TransactionRepository(TransactionApi())
+    private val repo = SummaryRepository()
 
     // --- Highlights state ---
     private val _highlights = MutableStateFlow<Result<StatisticsSummary>>(Result.Loading)

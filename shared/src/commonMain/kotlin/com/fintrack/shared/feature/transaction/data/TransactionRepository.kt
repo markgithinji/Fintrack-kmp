@@ -54,51 +54,5 @@ class TransactionRepository(
         Result.Error(e)
     }
 
-    suspend fun getHighlightsSummary(): Result<StatisticsSummary> = try {
-        Result.Success(api.getHighlightsSummary().toDomain())
-    } catch (e: Exception) {
-        Result.Error(e)
-    }
 
-    suspend fun getDistributionSummary(
-        weekOrMonthCode: String,
-        type: String? = null,
-        start: String? = null,
-        end: String? = null
-    ): Result<DistributionSummary> = try {
-        Result.Success(api.getDistributionSummary(weekOrMonthCode, type, start, end).toDomain())
-    } catch (e: Exception) {
-        Result.Error(e)
-    }
-
-    suspend fun getAvailableWeeks(): Result<AvailableWeeks> = try {
-        val dto = api.getAvailableWeeks()
-        Result.Success(dto.toDomain())
-    } catch (e: Exception) {
-        Result.Error(e)
-    }
-
-    suspend fun getAvailableMonths(): Result<AvailableMonths> = try {
-        Result.Success(api.getAvailableMonths().toDomain())
-    } catch (e: Exception) {
-        Result.Error(e)
-    }
-
-    suspend fun getAvailableYears(): Result<AvailableYears> = try {
-        Result.Success(api.getAvailableYears().toDomain())
-    } catch (e: Exception) {
-        Result.Error(e)
-    }
-
-    suspend fun getOverviewSummary(): Result<OverviewSummary> = try {
-        Result.Success(api.getOverviewSummary().toDomain())
-    } catch (e: Exception) {
-        Result.Error(e)
-    }
-
-    suspend fun getCategoryComparisons(): Result<List<CategoryComparison>> = try {
-        Result.Success(api.getCategoryComparisons().map { it.toDomain() })
-    } catch (e: Exception) {
-        Result.Error(e)
-    }
 }
