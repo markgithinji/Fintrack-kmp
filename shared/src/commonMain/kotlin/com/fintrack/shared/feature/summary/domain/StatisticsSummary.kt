@@ -1,9 +1,6 @@
 package com.fintrack.shared.feature.summary.domain
 
-data class HighlightsSummary(
-    val income: Double,
-    val expense: Double,
-    val balance: Double,
+data class StatisticsSummary(
     val incomeHighlights: Highlights,
     val expenseHighlights: Highlights
 )

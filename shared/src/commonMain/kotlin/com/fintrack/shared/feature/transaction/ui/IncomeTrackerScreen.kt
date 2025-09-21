@@ -53,10 +53,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fintrack.shared.feature.account.domain.Account
+import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.summary.domain.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.DaySummary
-import com.fintrack.shared.feature.summary.domain.HighlightsSummary
+import com.fintrack.shared.feature.summary.domain.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.OverviewSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import kotlinx.datetime.LocalDate
@@ -81,18 +83,20 @@ val PinkExpense = Color(0xFFE27C94) // pinkish-red for expense
 
 @Composable
 fun IncomeTrackerContent(
+    accountsViewModel: AccountsViewModel = viewModel(),
     transactionsViewModel: TransactionListViewModel = viewModel(),
-    statsViewModel: StatisticsViewModel = viewModel()
+    statsViewModel: StatisticsViewModel = viewModel() // keep for overview + comparisons
 ) {
-    val summaryResult by statsViewModel.highlights.collectAsStateWithLifecycle()
+    val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
+    val selectedAccountResult by accountsViewModel.selectedAccount.collectAsStateWithLifecycle()
     val transactionsResult by transactionsViewModel.recentTransactions.collectAsStateWithLifecycle()
     val overviewResult by statsViewModel.overview.collectAsStateWithLifecycle()
     val categoryComparisonResult by statsViewModel.categoryComparisons.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        statsViewModel.loadHighlights()
-        statsViewModel.loadOverview()
+        accountsViewModel.reloadAccounts()
         transactionsViewModel.loadRecentTransactions()
+        statsViewModel.loadOverview()
         statsViewModel.loadCategoryComparisons()
     }
 
@@ -103,8 +107,8 @@ fun IncomeTrackerContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item { CurrentBalanceCard(summaryResult) }
-        item { IncomeExpenseCards(summaryResult) }
+        item { CurrentBalanceCard(selectedAccountResult) }
+        item { IncomeExpenseCards(selectedAccountResult) }
         item { IncomeExpensesOverview(overviewResult) }
         item { CategoryComparisonCard(categoryComparisonResult) }
         item { TransactionsListCard(transactionsResult) }
@@ -113,9 +117,9 @@ fun IncomeTrackerContent(
 
 
 @Composable
-fun CurrentBalanceCard(summaryResult: Result<HighlightsSummary>) {
-    when (summaryResult) {
-        is Result.Loading -> {
+fun CurrentBalanceCard(accountResult: Result<Account>?) {
+    when (accountResult) {
+        null, is Result.Loading -> {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -128,7 +132,7 @@ fun CurrentBalanceCard(summaryResult: Result<HighlightsSummary>) {
         }
 
         is Result.Error -> {
-            val message = summaryResult.exception.message ?: "Unknown error"
+            val message = accountResult.exception.message ?: "Unknown error"
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -141,7 +145,8 @@ fun CurrentBalanceCard(summaryResult: Result<HighlightsSummary>) {
         }
 
         is Result.Success -> {
-            val balance = summaryResult.data.balance
+            val account = accountResult.data
+            val balance = account.balance ?: 0.0
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -155,7 +160,6 @@ fun CurrentBalanceCard(summaryResult: Result<HighlightsSummary>) {
                 ) {
                     LowerRightWavesBackground(modifier = Modifier.matchParentSize())
 
-                    // Top row with label + button
                     Row(
                         modifier = Modifier
                             .align(Alignment.TopStart)
@@ -173,14 +177,14 @@ fun CurrentBalanceCard(summaryResult: Result<HighlightsSummary>) {
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Bank Account",
+                                text = account.name,
                                 fontSize = 12.sp,
                                 color = Color.White
                             )
                         }
 
                         Button(
-                            onClick = { /* TODO */ },
+                            onClick = { /* open account picker */ },
                             colors = ButtonDefaults.buttonColors(containerColor = LightGray),
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.height(26.dp),
@@ -195,19 +199,13 @@ fun CurrentBalanceCard(summaryResult: Result<HighlightsSummary>) {
                         }
                     }
 
-                    // Bottom section
                     Column(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
                             .padding(start = 24.dp, bottom = 8.dp)
                     ) {
                         val formattedBalance = remember(balance) {
-                            balance.toLong()
-                                .toString()
-                                .reversed()
-                                .chunked(3)
-                                .joinToString(",")
-                                .reversed()
+                            formatAmount(balance)
                         }
                         Text(
                             text = "Current Balance",
@@ -227,6 +225,7 @@ fun CurrentBalanceCard(summaryResult: Result<HighlightsSummary>) {
         }
     }
 }
+
 
 
 fun LocalDate.shortDayName(): String {
@@ -636,9 +635,9 @@ fun Double.formatToSinglePrecision(): String =
 
 
 @Composable
-fun IncomeExpenseCards(summaryResult: Result<HighlightsSummary>) {
-    when (summaryResult) {
-        is Result.Loading -> {
+fun IncomeExpenseCards(accountResult: Result<Account>?) {
+    when (accountResult) {
+        null, is Result.Loading -> {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -651,7 +650,7 @@ fun IncomeExpenseCards(summaryResult: Result<HighlightsSummary>) {
         }
 
         is Result.Error -> {
-            val message = summaryResult.exception.message ?: "Unknown error"
+            val message = accountResult.exception.message ?: "Unknown error"
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -663,8 +662,9 @@ fun IncomeExpenseCards(summaryResult: Result<HighlightsSummary>) {
         }
 
         is Result.Success -> {
-            val totalIncome = summaryResult.data.income
-            val totalExpense = summaryResult.data.expense
+            val account = accountResult.data
+            val totalIncome = account.income ?: 0.0
+            val totalExpense = account.expense ?: 0.0
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -721,6 +721,7 @@ fun IncomeExpenseCards(summaryResult: Result<HighlightsSummary>) {
         }
     }
 }
+
 
 
 @Composable

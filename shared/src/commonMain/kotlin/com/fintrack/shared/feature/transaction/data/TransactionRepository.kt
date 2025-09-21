@@ -7,7 +7,7 @@ import com.fintrack.shared.feature.summary.domain.AvailableWeeks
 import com.fintrack.shared.feature.summary.domain.AvailableYears
 import com.fintrack.shared.feature.summary.domain.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.DistributionSummary
-import com.fintrack.shared.feature.summary.domain.HighlightsSummary
+import com.fintrack.shared.feature.summary.domain.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.OverviewSummary
 import com.fintrack.shared.feature.transaction.data.model.toDomain
 import com.fintrack.shared.feature.transaction.data.model.toDto
@@ -54,7 +54,7 @@ class TransactionRepository(
         Result.Error(e)
     }
 
-    suspend fun getHighlightsSummary(): Result<HighlightsSummary> = try {
+    suspend fun getHighlightsSummary(): Result<StatisticsSummary> = try {
         Result.Success(api.getHighlightsSummary().toDomain())
     } catch (e: Exception) {
         Result.Error(e)

@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.summary.domain.Highlight
-import com.fintrack.shared.feature.summary.domain.HighlightsSummary
+import com.fintrack.shared.feature.summary.domain.StatisticsSummary
 import com.fintrack.shared.feature.summary.ui.SegmentColor2
 import com.fintrack.shared.feature.summary.ui.SegmentColor3
 import com.fintrack.shared.feature.summary.ui.SegmentColor4
@@ -35,7 +35,7 @@ import com.fintrack.shared.feature.summary.ui.TabType
 @Composable
 fun SpendingHighlightsSection(
     tabType: TabType,
-    highlightsResult: Result<HighlightsSummary>,
+    highlightsResult: Result<StatisticsSummary>,
     loadHighlights: () -> Unit
 ) {
     LaunchedEffect(Unit) {

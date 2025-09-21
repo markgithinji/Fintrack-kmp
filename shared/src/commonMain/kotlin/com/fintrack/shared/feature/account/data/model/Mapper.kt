@@ -11,5 +11,7 @@ fun Account.toDto(): AccountDto = AccountDto(
 fun AccountDto.toDomain(): Account = Account(
     id = this.id ?: 0,   // 0 for new inserts
     name = this.name,
-    balance = this.balance
+    balance = this.balance,
+    income = this.income,
+    expense = this.expense
 )

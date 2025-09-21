@@ -9,9 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-
-class AccountsViewModel(
-) : ViewModel() {
+class AccountsViewModel : ViewModel() {
 
     private val repo: AccountRepository = AccountRepository()
 
@@ -34,11 +32,28 @@ class AccountsViewModel(
     // Reload all accounts
     fun reloadAccounts() {
         viewModelScope.launch {
-            _accounts.value = repo.getAccounts()
+            val result = repo.getAccounts()
+            _accounts.value = result
+
+            if (result is Result.Success && result.data.isNotEmpty()) {
+                // pick first account by default
+                _selectedAccount.value = Result.Success(result.data.first())
+            }
         }
     }
 
-    // Add or update account
+    fun selectAccount(id: Int) {
+        viewModelScope.launch {
+            val accounts = (_accounts.value as? Result.Success)?.data
+            val account = accounts?.firstOrNull { it.id == id }
+            if (account != null) {
+                _selectedAccount.value = Result.Success(account)
+            } else {
+                _selectedAccount.value = repo.getAccountById(id)
+            }
+        }
+    }
+
     fun saveAccount(account: Account) {
         viewModelScope.launch {
             _saveResult.value = repo.addOrUpdateAccount(account)
@@ -46,29 +61,10 @@ class AccountsViewModel(
         }
     }
 
-    // Delete an account
     fun removeAccount(id: Int) {
         viewModelScope.launch {
             _deleteResult.value = repo.deleteAccount(id)
             reloadAccounts()
-        }
-    }
-
-    // Load single account by ID
-    fun loadAccountById(id: Int) {
-        viewModelScope.launch {
-            // First check in cached accounts
-            val current = _accounts.value
-            if (current is Result.Success) {
-                val found = current.data.firstOrNull { it.id == id }
-                if (found != null) {
-                    _selectedAccount.value = Result.Success(found)
-                    return@launch
-                }
-            }
-
-            // If not found locally, fetch from repo
-            _selectedAccount.value = repo.getAccountById(id)
         }
     }
 }

@@ -9,7 +9,7 @@ import com.fintrack.shared.feature.summary.domain.DaySummary
 import com.fintrack.shared.feature.summary.domain.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.Highlight
 import com.fintrack.shared.feature.summary.domain.Highlights
-import com.fintrack.shared.feature.summary.domain.HighlightsSummary
+import com.fintrack.shared.feature.summary.domain.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.OverviewSummary
 
 // --- Highlight Summary ---
@@ -24,11 +24,8 @@ fun HighlightsDto.toDomain(): Highlights =
         averagePerDay = averagePerDay
     )
 
-fun HighlightsSummaryDto.toDomain(): HighlightsSummary =
-    HighlightsSummary(
-        income = income,
-        expense = expense,
-        balance = balance,
+fun HighlightsSummaryDto.toDomain(): StatisticsSummary =
+    StatisticsSummary(
         incomeHighlights = incomeHighlights.toDomain(),
         expenseHighlights = expenseHighlights.toDomain()
     )
@@ -65,7 +62,7 @@ fun CategoryComparisonDto.toDomain() = CategoryComparison(
     changePercentage = changePercentage
 )
 
-//
+// Available Weeks
 fun AvailableWeeksDto.toDomain() = AvailableWeeks(weeks = weeks)
 
 // Available Months

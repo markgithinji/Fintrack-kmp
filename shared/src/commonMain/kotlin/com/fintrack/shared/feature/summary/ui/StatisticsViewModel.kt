@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.summary.domain.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.DistributionSummary
-import com.fintrack.shared.feature.summary.domain.HighlightsSummary
+import com.fintrack.shared.feature.summary.domain.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.OverviewSummary
 import com.fintrack.shared.feature.transaction.data.TransactionApi
 import com.fintrack.shared.feature.transaction.data.TransactionRepository
@@ -17,8 +17,8 @@ class StatisticsViewModel : ViewModel() {
     private val repo = TransactionRepository(TransactionApi())
 
     // --- Highlights state ---
-    private val _highlights = MutableStateFlow<Result<HighlightsSummary>>(Result.Loading)
-    val highlights: StateFlow<Result<HighlightsSummary>> = _highlights
+    private val _highlights = MutableStateFlow<Result<StatisticsSummary>>(Result.Loading)
+    val highlights: StateFlow<Result<StatisticsSummary>> = _highlights
 
     // --- Distribution state ---
     private val _distribution = MutableStateFlow<Result<DistributionSummary>>(Result.Loading)
