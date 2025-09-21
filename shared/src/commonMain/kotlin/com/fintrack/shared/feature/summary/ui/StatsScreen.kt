@@ -91,11 +91,11 @@ fun StatisticsScreen(
                     distributionResult = distributionResult,
                     availableWeeks = availableWeeks,
                     availableMonths = availableMonths,
-                    availableYears = availableYears,          // added year support
-                    onWeekSelected = viewModel::onWeekChanged,
-                    onMonthSelected = viewModel::onMonthChanged,
-                    onYearSelected = viewModel::onYearChanged, // new callback
-                    onPeriodSelected = viewModel::onPeriodChanged
+                    availableYears = availableYears,
+                    onWeekSelected = { week -> viewModel.onPeriodChanged(Period.Week(week)) },
+                    onMonthSelected = { month -> viewModel.onPeriodChanged(Period.Month(month)) },
+                    onYearSelected = { year -> viewModel.onPeriodChanged(Period.Year(year)) },
+                    onPeriodSelected = { period -> viewModel.onPeriodChanged(period) }
                 )
             }
         }

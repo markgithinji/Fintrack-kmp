@@ -95,11 +95,19 @@ fun IncomeTrackerContent(
     val overviewResult by statsViewModel.overview.collectAsStateWithLifecycle()
     val categoryComparisonResult by statsViewModel.categoryComparisons.collectAsStateWithLifecycle()
 
+    // Reload initial accounts
     LaunchedEffect(Unit) {
         accountsViewModel.reloadAccounts()
-        transactionsViewModel.loadRecentTransactions()
-        statsViewModel.loadOverview()
-        statsViewModel.loadCategoryComparisons()
+    }
+
+    // Reload dependent data whenever the selected account changes
+    LaunchedEffect(selectedAccountResult) {
+        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+        if (accountId != null) {
+            transactionsViewModel.loadRecentTransactions(accountId)
+            statsViewModel.loadOverview(accountId)
+            statsViewModel.loadCategoryComparisons(accountId)
+        }
     }
 
     LazyColumn(
@@ -113,7 +121,9 @@ fun IncomeTrackerContent(
             CurrentBalanceCard(
                 accountsResult = accountsResult,
                 selectedAccountResult = selectedAccountResult,
-                onAccountSelected = { id -> accountsViewModel.selectAccount(id) } // 👈 id matches VM
+                onAccountSelected = { accountId ->
+                    accountsViewModel.selectAccount(accountId)
+                }
             )
         }
         item { IncomeExpenseCards(selectedAccountResult) }
@@ -122,6 +132,7 @@ fun IncomeTrackerContent(
         item { TransactionsListCard(transactionsResult) }
     }
 }
+
 
 
 @Composable

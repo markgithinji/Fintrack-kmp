@@ -41,7 +41,6 @@ class StatisticsViewModel : ViewModel() {
     private val _overview = MutableStateFlow<Result<OverviewSummary>>(Result.Loading)
     val overview: StateFlow<Result<OverviewSummary>> = _overview
 
-
     // --- UI state for StatisticsScreen ---
     private val _selectedTab = MutableStateFlow<TabType>(TabType.Expense)
     val selectedTab: StateFlow<TabType> = _selectedTab
@@ -52,20 +51,21 @@ class StatisticsViewModel : ViewModel() {
     private val _categoryComparisons = MutableStateFlow<Result<List<CategoryComparison>>?>(null)
     val categoryComparisons: StateFlow<Result<List<CategoryComparison>>?> = _categoryComparisons
 
-    // --- Load highlights summary ---
-    fun loadHighlights() {
+    // --- Load highlights summary for optional account ---
+    fun loadHighlights(accountId: Int? = null) {
         viewModelScope.launch {
             _highlights.value = Result.Loading
-            _highlights.value = repo.getHighlightsSummary()
+            _highlights.value = repo.getHighlightsSummary(accountId)
         }
     }
 
-    // --- Load distribution summary ---
+    // --- Load distribution summary for optional account ---
     private fun loadDistribution(
         weekOrMonthCode: String,
         type: TransactionType,
         start: String? = null,
-        end: String? = null
+        end: String? = null,
+        accountId: Int? = null
     ) {
         viewModelScope.launch {
             _distribution.value = Result.Loading
@@ -73,50 +73,36 @@ class StatisticsViewModel : ViewModel() {
                 weekOrMonthCode = weekOrMonthCode,
                 type = type.apiName,
                 start = start,
-                end = end
+                end = end,
+                accountId = accountId
             )
         }
     }
 
-    fun loadAvailablePeriods() {
+    fun loadAvailablePeriods(accountId: Int? = null) {
         viewModelScope.launch {
             try {
                 // --- Weeks ---
-                val weeksResult = repo.getAvailableWeeks()
-                val weeks = if (weeksResult is Result.Success) {
-                    weeksResult.data.weeks
-                } else {
-                    emptyList()
-                }
-                _availableWeeks.value = weeks
+                val weeksResult = repo.getAvailableWeeks(accountId)
+                _availableWeeks.value = if (weeksResult is Result.Success) weeksResult.data.weeks else emptyList()
 
                 // --- Months ---
-                val monthsResult = repo.getAvailableMonths()
-                val months = if (monthsResult is Result.Success) {
-                    monthsResult.data.months
-                } else {
-                    emptyList()
-                }
-                _availableMonths.value = months
+                val monthsResult = repo.getAvailableMonths(accountId)
+                _availableMonths.value = if (monthsResult is Result.Success) monthsResult.data.months else emptyList()
 
                 // --- Years ---
-                val yearsResult = repo.getAvailableYears()
-                val years = if (yearsResult is Result.Success) {
-                    yearsResult.data.years
-                } else {
-                    emptyList()
-                }
-                _availableYears.value = years
+                val yearsResult = repo.getAvailableYears(accountId)
+                _availableYears.value = if (yearsResult is Result.Success) yearsResult.data.years else emptyList()
 
                 // --- Pick initial selection ---
                 _selectedPeriod.value = when {
-                    weeks.isNotEmpty() -> Period.Week(weeks.first())
-                    months.isNotEmpty() -> Period.Month(months.first())
-                    years.isNotEmpty() -> Period.Year(years.first())
+                    _availableWeeks.value.isNotEmpty() -> Period.Week(_availableWeeks.value.first())
+                    _availableMonths.value.isNotEmpty() -> Period.Month(_availableMonths.value.first())
+                    _availableYears.value.isNotEmpty() -> Period.Year(_availableYears.value.first())
                     else -> null
                 }
 
-                reloadDistributionForCurrentSelection()
+                reloadDistributionForCurrentSelection(accountId)
 
             } catch (e: Exception) {
                 _availableWeeks.value = emptyList()
@@ -126,96 +112,56 @@ class StatisticsViewModel : ViewModel() {
         }
     }
 
+    // --- Overview summary ---
+    fun loadOverview(accountId: Int? = null) {
+        viewModelScope.launch {
+            _overview.value = Result.Loading
+            _overview.value = repo.getOverviewSummary(accountId)
+        }
+    }
+
+    // --- Category comparisons ---
+    fun loadCategoryComparisons(accountId: Int? = null) {
+        viewModelScope.launch {
+            _categoryComparisons.value = repo.getCategoryComparisons(accountId)
+        }
+    }
 
     // --- UI state helpers ---
-    fun onTabChanged(tab: TabType) {
+    fun onTabChanged(tab: TabType, accountId: Int? = null) {
         _selectedTab.value = tab
-        reloadDistributionForCurrentSelection()
+        reloadDistributionForCurrentSelection(accountId)
     }
 
-    fun onWeekChanged(week: String) {
-        _selectedPeriod.value = Period.Week(week)
-        reloadDistributionForCurrentSelection()
-    }
-
-    fun onMonthChanged(month: String) {
-        _selectedPeriod.value = Period.Month(month)
-        reloadDistributionForCurrentSelection()
-    }
-
-    fun onYearChanged(year: String) {
-        _selectedPeriod.value = Period.Year(year)
-        reloadDistributionForCurrentSelection()
-    }
-
-    fun onPeriodChanged(period: Period) {
+    fun onPeriodChanged(period: Period, accountId: Int? = null) {
         _selectedPeriod.value = period
-        reloadDistributionForCurrentSelection()
+        reloadDistributionForCurrentSelection(accountId)
     }
 
-    private fun reloadDistributionForCurrentSelection() {
+    fun reloadDistributionForCurrentSelection(accountId: Int? = null) {
         val type = when (_selectedTab.value) {
             is TabType.Income -> TransactionType.Income
             is TabType.Expense -> TransactionType.Expense
         }
 
-        val period = _selectedPeriod.value
-
-        when (period) {
-            is Period.Week -> loadDistribution(period.code, type)
-            is Period.Month -> loadDistribution(period.code, type)
-            is Period.Year -> loadDistribution(period.code, type)
-            null -> println("DEBUG: No period selected")
-        }
-    }
-
-    fun loadOverview() {
-        viewModelScope.launch {
-            println("DEBUG: Starting loadOverview()")
-
-            _overview.value = Result.Loading
-
-            val result = repo.getOverviewSummary()
-            println("DEBUG: Raw repo result = $result")
-
-            _overview.value = when (result) {
-                is Result.Success -> {
-                    val dto = result.data
-                    println("DEBUG: OverviewSummaryDto = $dto")
-
-                    val domain = dto
-                    println("DEBUG: Mapped OverviewSummary domain object:")
-                    println("DEBUG: Weekly Overview:")
-                    domain.weeklyOverview.forEach { day ->
-                        println("  Date=${day.date}, Income=${day.income}, Expense=${day.expense}")
-                    }
-                    println("DEBUG: Monthly Overview:")
-                    domain.monthlyOverview.forEach { day ->
-                        println("  Date=${day.date}, Income=${day.income}, Expense=${day.expense}")
-                    }
-
-                    Result.Success(domain)
-                }
-
-                is Result.Error -> {
-                    println("DEBUG: Error loading overview = ${result.exception}")
-                    Result.Error(result.exception)
-                }
-
-                is Result.Loading -> {
-                    println("DEBUG: Repo returned Loading unexpectedly")
-                    Result.Loading
-                }
+        _selectedPeriod.value?.let { period ->
+            when (period) {
+                is Period.Week -> loadDistribution(period.code, type, accountId = accountId)
+                is Period.Month -> loadDistribution(period.code, type, accountId = accountId)
+                is Period.Year -> loadDistribution(period.code, type, accountId = accountId)
             }
         }
     }
 
-    fun loadCategoryComparisons() {
-        viewModelScope.launch {
-            _categoryComparisons.value = repo.getCategoryComparisons()
-        }
+    /** Call this when the selected account changes */
+    fun reloadAllForAccount(accountId: Int?) {
+        loadHighlights(accountId)
+        loadOverview(accountId)
+        loadCategoryComparisons(accountId)
+        loadAvailablePeriods(accountId)
     }
 }
+
 
 
 /** Sealed class for tab selection */

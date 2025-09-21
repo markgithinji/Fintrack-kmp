@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 
 class TransactionListViewModel : ViewModel() {
     private val repo = TransactionRepository(TransactionApi())
+    private var currentAccountId: Int? = null
 
     // --- Transactions state (full list / paginated) ---
     private val _transactions = MutableStateFlow<Result<List<Transaction>>>(Result.Loading)
@@ -32,10 +33,7 @@ class TransactionListViewModel : ViewModel() {
             _saveResult.value = Result.Loading
             _saveResult.value = repo.addTransaction(transaction).also { result ->
                 if (result is Result.Success) {
-                    val currentList = when (_transactions.value) {
-                        is Result.Success -> (_transactions.value as Result.Success).data
-                        else -> emptyList()
-                    }
+                    val currentList = (transactions.value as? Result.Success)?.data ?: emptyList()
                     _transactions.value = Result.Success(currentList + result.data)
                 }
             }
@@ -47,10 +45,11 @@ class TransactionListViewModel : ViewModel() {
     }
 
     // --- Refresh / first page ---
-    fun refresh(limit: Int = 20, sortBy: String = "date", order: String = "DESC") {
+    fun refresh(accountId: Int? = currentAccountId, limit: Int = 20, sortBy: String = "date", order: String = "DESC") {
+        currentAccountId = accountId
         viewModelScope.launch {
             _transactions.value = Result.Loading
-            val result = repo.getTransactions(limit, sortBy, order)
+            val result = repo.getTransactions(limit, sortBy, order, accountId = accountId)
 
             _transactions.value = when (result) {
                 is Result.Success -> {
@@ -59,7 +58,7 @@ class TransactionListViewModel : ViewModel() {
                     Result.Success(list)
                 }
                 is Result.Error -> Result.Error(result.exception)
-                Result.Loading -> Result.Loading
+                is Result.Loading -> Result.Loading
             }
         }
     }
@@ -70,7 +69,7 @@ class TransactionListViewModel : ViewModel() {
         val (afterDate, afterId) = cursor.split("|").let { it[0] to it[1].toInt() }
 
         viewModelScope.launch {
-            val result = repo.getTransactions(limit, sortBy, order, afterDate, afterId)
+            val result = repo.getTransactions(limit, sortBy, order, afterDate, afterId, accountId = currentAccountId)
             if (result is Result.Success) {
                 val (list, cursorNext) = result.data
                 nextCursor = cursorNext
@@ -81,10 +80,17 @@ class TransactionListViewModel : ViewModel() {
     }
 
     // --- Load recent transactions ---
-    fun loadRecentTransactions() {
+    fun loadRecentTransactions(accountId: Int? = currentAccountId) {
+        currentAccountId = accountId
         viewModelScope.launch {
             _recentTransactions.value = Result.Loading
-            _recentTransactions.value = repo.getRecentTransactions()
+            val result = repo.getTransactions(limit = 6, sortBy = "date", order = "DESC", accountId = accountId)
+            _recentTransactions.value = when (result) {
+                is Result.Success -> Result.Success(result.data.first) // extract transactions list
+                is Result.Error -> Result.Error(result.exception)
+                is Result.Loading -> Result.Loading
+            }
         }
     }
 }
+

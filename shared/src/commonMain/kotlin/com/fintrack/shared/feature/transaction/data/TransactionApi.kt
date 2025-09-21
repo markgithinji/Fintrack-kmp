@@ -47,7 +47,8 @@ class TransactionApi(
         sortBy: String = "date",
         order: String = "DESC",
         afterDate: String? = null,
-        afterId: Int? = null
+        afterId: Int? = null,
+        accountId: Int? = null // 👈 new optional parameter
     ): PaginatedTransactionDto {
         val response: ApiResponse<PaginatedTransactionDto> = client.get("$baseUrl/transactions") {
             parameter("limit", limit)
@@ -55,6 +56,7 @@ class TransactionApi(
             parameter("order", order)
             afterDate?.let { parameter("afterDate", it) }
             afterId?.let { parameter("afterId", it) }
+            accountId?.let { parameter("accountId", it) }
         }.body()
         return response.result
     }

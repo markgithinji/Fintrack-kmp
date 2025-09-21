@@ -12,53 +12,57 @@ import com.fintrack.shared.feature.summary.domain.OverviewSummary
 import com.fintrack.shared.feature.summary.domain.StatisticsSummary
 
 class SummaryRepository {
-    val api = SummaryApi()
+    private val api = SummaryApi()
 
-    suspend fun getHighlightsSummary(): com.fintrack.shared.feature.core.Result<StatisticsSummary> = try {
-        com.fintrack.shared.feature.core.Result.Success(api.getHighlightsSummary().toDomain())
+    suspend fun getHighlightsSummary(accountId: Int? = null): Result<StatisticsSummary> = try {
+        Result.Success(api.getHighlightsSummary(accountId).toDomain())
     } catch (e: Exception) {
-        com.fintrack.shared.feature.core.Result.Error(e)
+        Result.Error(e)
     }
 
     suspend fun getDistributionSummary(
         weekOrMonthCode: String,
         type: String? = null,
         start: String? = null,
-        end: String? = null
-    ): com.fintrack.shared.feature.core.Result<DistributionSummary> = try {
-        com.fintrack.shared.feature.core.Result.Success(api.getDistributionSummary(weekOrMonthCode, type, start, end).toDomain())
-    } catch (e: Exception) {
-        com.fintrack.shared.feature.core.Result.Error(e)
-    }
-
-    suspend fun getAvailableWeeks(): com.fintrack.shared.feature.core.Result<AvailableWeeks> = try {
-        val dto = api.getAvailableWeeks()
-        com.fintrack.shared.feature.core.Result.Success(dto.toDomain())
-    } catch (e: Exception) {
-        com.fintrack.shared.feature.core.Result.Error(e)
-    }
-
-    suspend fun getAvailableMonths(): com.fintrack.shared.feature.core.Result<AvailableMonths> = try {
-        com.fintrack.shared.feature.core.Result.Success(api.getAvailableMonths().toDomain())
-    } catch (e: Exception) {
-        com.fintrack.shared.feature.core.Result.Error(e)
-    }
-
-    suspend fun getAvailableYears(): com.fintrack.shared.feature.core.Result<AvailableYears> = try {
-        com.fintrack.shared.feature.core.Result.Success(api.getAvailableYears().toDomain())
-    } catch (e: Exception) {
-        com.fintrack.shared.feature.core.Result.Error(e)
-    }
-
-    suspend fun getOverviewSummary(): com.fintrack.shared.feature.core.Result<OverviewSummary> = try {
-        com.fintrack.shared.feature.core.Result.Success(api.getOverviewSummary().toDomain())
-    } catch (e: Exception) {
-        com.fintrack.shared.feature.core.Result.Error(e)
-    }
-
-    suspend fun getCategoryComparisons(): com.fintrack.shared.feature.core.Result<List<CategoryComparison>> = try {
-        com.fintrack.shared.feature.core.Result.Success(api.getCategoryComparisons().map { it.toDomain() })
+        end: String? = null,
+        accountId: Int? = null
+    ): Result<DistributionSummary> = try {
+        Result.Success(
+            api.getDistributionSummary(weekOrMonthCode, type, start, end, accountId).toDomain()
+        )
     } catch (e: Exception) {
         Result.Error(e)
     }
+
+    suspend fun getAvailableWeeks(accountId: Int? = null): Result<AvailableWeeks> = try {
+        val dto = api.getAvailableWeeks(accountId)
+        Result.Success(dto.toDomain())
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
+
+    suspend fun getAvailableMonths(accountId: Int? = null): Result<AvailableMonths> = try {
+        Result.Success(api.getAvailableMonths(accountId).toDomain())
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
+
+    suspend fun getAvailableYears(accountId: Int? = null): Result<AvailableYears> = try {
+        Result.Success(api.getAvailableYears(accountId).toDomain())
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
+
+    suspend fun getOverviewSummary(accountId: Int? = null): Result<OverviewSummary> = try {
+        Result.Success(api.getOverviewSummary(accountId).toDomain())
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
+
+    suspend fun getCategoryComparisons(accountId: Int? = null): Result<List<CategoryComparison>> =
+        try {
+            Result.Success(api.getCategoryComparisons(accountId).map { it.toDomain() })
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
 }
