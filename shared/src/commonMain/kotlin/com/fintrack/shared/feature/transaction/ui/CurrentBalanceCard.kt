@@ -1,8 +1,11 @@
 package com.fintrack.shared.feature.transaction.ui
 
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,11 +16,14 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -25,16 +31,20 @@ import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,12 +58,14 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.DarkGray
 import androidx.compose.ui.graphics.Color.Companion.LightGray
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.account.domain.Account
@@ -157,7 +169,6 @@ fun CurrentBalanceCard(
         }
     }
 }
-
 @Composable
 fun AccountSelectionDialog(
     accounts: List<Account>,
@@ -165,44 +176,106 @@ fun AccountSelectionDialog(
     onAccountSelected: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Select Account") },
-        text = {
-            Column {
-                accounts.forEach { acc ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                onAccountSelected(acc.id)
-                                onDismiss()
-                            }
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = AccountIcon.fromAccountName(acc.name).icon,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                            tint = if (selectedAccountId == acc.id) Color.Blue else DarkGray
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(12.dp),
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .wrapContentHeight()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                // Header
+                Text(
+                    "Select Account",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF212121)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Divider(color = Color.LightGray, thickness = 1.dp)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Scrollable accounts list
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 300.dp)
+                ) {
+                    items(accounts) { acc ->
+                        val isSelected = selectedAccountId == acc.id
+                        val backgroundColor by animateColorAsState(
+                            if (isSelected) Color(0xFFE0F7FA).copy(alpha = 0.5f)
+                            else Color.Transparent
                         )
-                        Spacer(Modifier.width(8.dp))
-                        Column {
-                            Text(acc.name, fontWeight = FontWeight.Medium)
-                            Text(
-                                "KSh ${formatAmount(acc.balance ?: 0.0)}",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp, horizontal = 4.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(backgroundColor)
+                                .clickable(
+                                    onClick = { onAccountSelected(acc.id); onDismiss() },
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                )
+                                .padding(vertical = 12.dp, horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ){
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(
+                                        color = if (isSelected) Color(0xFF00ACC1).copy(alpha = 0.1f)
+                                        else Color(0xFFF0F0F0),
+                                        shape = CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = AccountIcon.fromAccountName(acc.name).icon,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = if (isSelected) Color(0xFF00ACC1) else DarkGray
+                                )
+                            }
+
+                            Spacer(Modifier.width(12.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(acc.name, fontWeight = FontWeight.Medium, fontSize = 16.sp, color = Color(0xFF212121))
+                                Text("KSh ${formatAmount(acc.balance ?: 0.0)}", fontSize = 12.sp, color = Color.Gray)
+                            }
+
+                            if (isSelected) {
+                                Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF00ACC1), modifier = Modifier.size(20.dp))
+                            }
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Close button
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00ACC1)),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text(
+                        "Close",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
-        },
-        confirmButton = {}
-    )
+        }
+    }
 }
+
 
 @Composable
 fun CurrentBalanceCardWrapper(
