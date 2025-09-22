@@ -119,7 +119,7 @@ fun IncomeTrackerContent(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            CurrentBalanceCard(
+            CurrentBalanceCardWrapper(
                 accountsResult = accountsResult,
                 selectedAccountResult = selectedAccountResult,
                 onAccountSelected = { accountId ->
@@ -127,189 +127,13 @@ fun IncomeTrackerContent(
                 }
             )
         }
+
         item { IncomeExpenseCards(selectedAccountResult) }
         item { IncomeExpensesOverview(overviewResult) }
         item { CategoryComparisonCard(categoryComparisonResult) }
         item { TransactionsListCard(transactionsResult) }
     }
 }
-
-
-
-@Composable
-fun CurrentBalanceCard(
-    accountsResult: Result<List<Account>>?,
-    selectedAccountResult: Result<Account>?,
-    onAccountSelected: (Int) -> Unit
-) {
-    var showDialog by remember { mutableStateOf(false) }
-
-    when (accountsResult) {
-        null, is Result.Loading -> {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(130.dp)
-                    .background(DarkGray),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = Color.White)
-            }
-        }
-
-        is Result.Error -> {
-            val message = accountsResult.exception.message ?: "Unknown error"
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(130.dp)
-                    .background(DarkGray),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Error: $message", color = Color.Red)
-            }
-        }
-
-        is Result.Success -> {
-            val accounts = accountsResult.data
-            if (accounts.isEmpty()) {
-                Text(
-                    "No accounts found",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(130.dp)
-                        .background(DarkGray),
-                    color = Color.White,
-                    textAlign = TextAlign.Center
-                )
-                return
-            }
-
-            val account = (selectedAccountResult as? Result.Success)?.data ?: accounts.first()
-            val balance = account.balance ?: 0.0
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = DarkGray)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(130.dp)
-                ) {
-                    LowerRightWavesBackground(modifier = Modifier.matchParentSize())
-
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .fillMaxWidth()
-                            .padding(start = 24.dp, end = 24.dp, top = 18.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = AccountIcon.fromAccountName(account.name).icon,
-                                contentDescription = "Bank",
-                                tint = Color.White,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = account.name,
-                                fontSize = 12.sp,
-                                color = Color.White
-                            )
-                        }
-
-                        Button(
-                            onClick = { showDialog = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = LightGray),
-                            shape = RoundedCornerShape(14.dp),
-                            modifier = Modifier.height(26.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp)
-                        ) {
-                            Text(
-                                text = "Change Account",
-                                color = Color.Black,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(start = 24.dp, bottom = 8.dp)
-                    ) {
-                        val formattedBalance = remember(balance) {
-                            formatAmount(balance)
-                        }
-                        Text(
-                            text = "Current Balance",
-                            fontSize = 14.sp,
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "KSh $formattedBalance",
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-                }
-            }
-
-            if (showDialog) {
-                AlertDialog(
-                    onDismissRequest = { showDialog = false },
-                    title = { Text("Select Account") },
-                    text = {
-                        Column {
-                            accounts.forEach { acc ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            onAccountSelected(acc.id)
-                                            showDialog = false
-                                        }
-                                        .padding(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = AccountIcon.fromAccountName(acc.name).icon,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp),
-                                        tint = if ((selectedAccountResult as? Result.Success)?.data?.id == acc.id)
-                                            Color.Blue else DarkGray
-                                    )
-                                    Spacer(Modifier.width(8.dp))
-                                    Column {
-                                        Text(acc.name, fontWeight = FontWeight.Medium)
-                                        Text(
-                                            "KSh ${formatAmount(acc.balance ?: 0.0)}",
-                                            fontSize = 12.sp,
-                                            color = Color.Gray
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    confirmButton = {}
-                )
-            }
-        }
-    }
-}
-
-
-
-
 
 fun LocalDate.shortDayName(): String {
     // 0 = Monday ... 6 = Sunday
