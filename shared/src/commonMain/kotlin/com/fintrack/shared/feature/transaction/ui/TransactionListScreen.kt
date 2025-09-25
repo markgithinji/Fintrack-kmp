@@ -66,6 +66,7 @@ import com.fintrack.shared.feature.summary.domain.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.OverviewSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.model.AccountIcon
+import com.fintrack.shared.feature.transaction.model.Category
 import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.LocalDate
 import network.chaintech.chartsLib.ui.linechart.model.IntersectionPoint
@@ -118,7 +119,12 @@ fun TransactionListScreen(
             is Result.Error -> {
                 val message = (transactionsResult as Result.Error).exception.message ?: "Unknown error"
                 item {
-                    Text(text = "Error: $message", color = Color.Red)
+                    Text(
+                        text = "⚠️ $message",
+                        color = Color.Red,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(16.dp)
+                    )
                 }
             }
 
@@ -126,12 +132,27 @@ fun TransactionListScreen(
                 val transactions = (transactionsResult as Result.Success).data
                     .filter { isIncome == null || it.isIncome == isIncome }
 
-                items(transactions) { transaction ->
-                    TransactionItem(transaction)
-                }
+                if (transactions.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(48.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No transactions found",
+                                color = Color.Gray,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                } else {
+                    items(transactions) { transaction ->
+                        TransactionItem(transaction = transaction)
+                    }
 
-                // Load more when reaching end
-                if (transactions.isNotEmpty()) {
+                    // Load more
                     item {
                         LaunchedEffect(transactions.size) {
                             transactionsViewModel.loadMore()
@@ -139,11 +160,11 @@ fun TransactionListScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp),
+                                .padding(vertical = 12.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp
                             )
                         }
@@ -154,31 +175,83 @@ fun TransactionListScreen(
     }
 }
 
+fun LocalDate.toShortFormat(): String {
+    val month = when (this.monthNumber) {
+        1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
+        5 -> "May"; 6 -> "Jun"; 7 -> "Jul"; 8 -> "Aug"
+        9 -> "Sep"; 10 -> "Oct"; 11 -> "Nov"; 12 -> "Dec"
+        else -> ""
+    }
+    return "$month ${this.dayOfMonth}, ${this.year}"
+}
 
 @Composable
 fun TransactionItem(transaction: Transaction) {
+    val category = Category.fromName(
+        transaction.category,
+        isExpense = !transaction.isIncome
+    )
+
+    val amountColor = if (transaction.isIncome) Color(0xFF2E7D32) else Color(0xFFC62828)
+    val prefix = if (transaction.isIncome) "+ " else "- "
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
-                Text(text = transaction.category, fontWeight = FontWeight.Bold)
-                Text(text = transaction.description ?: "", fontSize = 12.sp, color = Color.Gray)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(CircleShape)
+                        .background(category.toColor().copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = category.toIcon(),
+                        contentDescription = category.name,
+                        tint = category.toColor(),
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    Text(
+                        text = category.name,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp
+                    )
+                    if (!transaction.description.isNullOrBlank()) {
+                        Text(
+                            text = transaction.description!!,
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                    }
+                    Text(
+                        text = transaction.dateTime.date.toShortFormat(),
+                        fontSize = 11.sp,
+                        color = Color.Gray
+                    )
+                }
             }
 
             Text(
-                text = "KSh ${transaction.amount}",
-                color = if (transaction.isIncome) GreenIncome else PinkExpense,
-                fontWeight = FontWeight.Bold
+                text = prefix + "KSh ${transaction.amount}",
+                color = amountColor,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp
             )
         }
     }

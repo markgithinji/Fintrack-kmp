@@ -19,6 +19,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -127,8 +128,10 @@ fun RecentTransactionsHeader(onViewAllClick: () -> Unit) {
 }
 
 @Composable
-fun TransactionRow(transaction: Transaction) {
-    // Map string name to Category object
+fun TransactionRow(
+    transaction: Transaction,
+    modifier: Modifier = Modifier
+) {
     val category = Category.fromName(transaction.category, isExpense = !transaction.isIncome)
     val isExpense = category.isExpense
 
@@ -142,48 +145,68 @@ fun TransactionRow(transaction: Transaction) {
         return "$month ${this.dayOfMonth}"
     }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = category.toIcon(),
-                contentDescription = category.name,
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(Color.LightGray, shape = RoundedCornerShape(12.dp))
-                    .padding(12.dp),
-                tint = Color.Black
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column {
-                Text(text = category.name, fontWeight = FontWeight.SemiBold)
-                transaction.description?.let {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = it, fontSize = 12.sp, color = Color.Gray)
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(
+                            color = category.toColor().copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(12.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = category.toIcon(),
+                        contentDescription = category.name,
+                        tint = category.toColor(),
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column {
+                    Text(
+                        text = category.name,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp
+                    )
+                    transaction.description?.let {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(text = it, fontSize = 13.sp, color = Color.Gray)
+                    }
+                }
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "${if (isExpense) "-" else "+"}${transaction.amount}",
+                    color = if (isExpense) PinkExpense else GreenIncome,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = transaction.dateTime.date.toShortMonthDay(),
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
             }
         }
 
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text = "${if (isExpense) "-" else "+"}${transaction.amount.toInt()}",
-                color = if (isExpense) PinkExpense else GreenIncome,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = transaction.dateTime.date.toShortMonthDay(),
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
-        }
+        HorizontalDivider(
+            color = Color.LightGray.copy(alpha = 0.4f),
+            thickness = 0.7.dp,
+            modifier = Modifier.padding(start = 80.dp)
+        )
     }
 }
 
