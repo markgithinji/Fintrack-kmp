@@ -87,12 +87,15 @@ import network.chaintech.cmpcharts.ui.linechart.model.LineStyle
 fun TransactionListScreen(
     accountId: Int,
     isIncome: Boolean? = null,
-    transactionsViewModel: TransactionListViewModel = viewModel()
+    transactionsViewModel: TransactionListViewModel = viewModel(),
+    statisticsViewModel: StatisticsViewModel = viewModel()
 ) {
     val transactionsResult by transactionsViewModel.transactions.collectAsStateWithLifecycle()
+    val transactionCounts by statisticsViewModel.transactionCounts.collectAsStateWithLifecycle()
 
     LaunchedEffect(accountId, isIncome) {
         transactionsViewModel.refresh(accountId)
+        statisticsViewModel.loadTransactionCounts(accountId)
     }
 
     LazyColumn(
@@ -102,6 +105,37 @@ fun TransactionListScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // --- Show transaction count header ---
+        item {
+            when (transactionCounts) {
+                is Result.Success -> {
+                    val counts = (transactionCounts as Result.Success).data
+                    TransactionCountHeader(
+                        isIncome = isIncome,
+                        income = counts.totalIncomeTransactions,
+                        expense = counts.totalExpenseTransactions,
+                        total = counts.totalTransactions
+                    )
+                }
+                is Result.Error -> {
+                    Text(
+                        text = "⚠️ Failed to load count",
+                        color = Color.Red,
+                        fontSize = 12.sp
+                    )
+                }
+                else -> {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    }
+                }
+            }
+        }
+
+        // --- Transactions list ---
         when (transactionsResult) {
             null, is Result.Loading -> {
                 item {
@@ -174,6 +208,28 @@ fun TransactionListScreen(
         }
     }
 }
+
+@Composable
+fun TransactionCountHeader(
+    isIncome: Boolean?,
+    income: Int,
+    expense: Int,
+    total: Int
+) {
+    val text = when (isIncome) {
+        true -> "$income Transactions"
+        false -> "$expense Transactions"
+        null -> "$total Transactions"
+    }
+
+    Text(
+        text = text,
+        fontWeight = FontWeight.Medium,
+        fontSize = 14.sp,
+        modifier = Modifier.padding(vertical = 8.dp)
+    )
+}
+
 
 fun LocalDate.toShortFormat(): String {
     val month = when (this.monthNumber) {

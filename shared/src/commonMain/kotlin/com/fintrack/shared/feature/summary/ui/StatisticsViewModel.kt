@@ -8,6 +8,7 @@ import com.fintrack.shared.feature.summary.domain.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.OverviewSummary
+import com.fintrack.shared.feature.summary.domain.TransactionCountSummary
 import com.fintrack.shared.feature.transaction.data.TransactionApi
 import com.fintrack.shared.feature.transaction.data.TransactionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,6 +51,9 @@ class StatisticsViewModel : ViewModel() {
 
     private val _categoryComparisons = MutableStateFlow<Result<List<CategoryComparison>>?>(null)
     val categoryComparisons: StateFlow<Result<List<CategoryComparison>>?> = _categoryComparisons
+
+    private val _transactionCounts = MutableStateFlow<Result<TransactionCountSummary>>(Result.Loading)
+    val transactionCounts: StateFlow<Result<TransactionCountSummary>> = _transactionCounts
 
     // --- Load highlights summary for optional account ---
     fun loadHighlights(accountId: Int? = null) {
@@ -153,12 +157,20 @@ class StatisticsViewModel : ViewModel() {
         }
     }
 
+    fun loadTransactionCounts(accountId: Int) {
+        viewModelScope.launch {
+            _transactionCounts.value = Result.Loading
+            _transactionCounts.value = repo.getTransactionCounts(accountId)
+        }
+    }
+
     /** Call this when the selected account changes */
     fun reloadAllForAccount(accountId: Int?) {
         loadHighlights(accountId)
         loadOverview(accountId)
         loadCategoryComparisons(accountId)
         loadAvailablePeriods(accountId)
+        accountId?.let { loadTransactionCounts(it) }
     }
 }
 
