@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.fintrack.shared.feature.auth.ui.LoginScreen
@@ -36,6 +37,14 @@ fun MainScreen() {
     // State to update AppBar per screen
     var appBarState by remember { mutableStateOf(AppBarState(title = "Home")) }
 
+    // Track current route
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    // Decide when to show bars
+    val hideBars = currentRoute == Screen.TransactionList.route ||
+            currentRoute == Screen.BudgetDetail.route
+
     Scaffold(
         topBar = {
             TopBar(
@@ -44,16 +53,22 @@ fun MainScreen() {
                 onBack = appBarState.onBack
             )
         },
-        bottomBar = { BottomBar(navController) },
+        bottomBar = {
+            if (!hideBars) {
+                BottomBar(navController)
+            }
+        },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navController.navigate(Screen.AddTransaction.route) },
-                modifier = Modifier.size(60.dp).offset(y = 60.dp),
-                containerColor = Color.Black,
-                contentColor = Color.White,
-                shape = CircleShape
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Transaction")
+            if (!hideBars) {
+                FloatingActionButton(
+                    onClick = { navController.navigate(Screen.AddTransaction.route) },
+                    modifier = Modifier.size(60.dp).offset(y = 60.dp),
+                    containerColor = Color.Black,
+                    contentColor = Color.White,
+                    shape = CircleShape
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Transaction")
+                }
             }
         },
         floatingActionButtonPosition = FabPosition.Center
@@ -150,8 +165,18 @@ fun MainScreen() {
             ) { backStackEntry ->
                 val accountId = backStackEntry.arguments?.getInt("accountId") ?: return@composable
                 val isIncome = backStackEntry.arguments?.getBoolean("isIncome") ?: true
+
+                LaunchedEffect(Unit) {
+                    appBarState = AppBarState(
+                        title = if (isIncome) "Income Transactions" else "Expense Transactions",
+                        showBackButton = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
                 TransactionListScreen(accountId = accountId, isIncome = isIncome)
             }
+
 
         }
 

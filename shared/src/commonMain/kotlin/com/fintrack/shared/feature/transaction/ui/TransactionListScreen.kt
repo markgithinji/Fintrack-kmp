@@ -101,14 +101,6 @@ fun TransactionListScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item {
-            Text(
-                text = "Transactions",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-        }
-
         when (transactionsResult) {
             null, is Result.Loading -> {
                 item {
