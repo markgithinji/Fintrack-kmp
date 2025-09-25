@@ -64,7 +64,10 @@ import com.fintrack.shared.feature.summary.domain.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.OverviewSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.model.AccountIcon
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.toLocalDate
+import kotlinx.datetime.until
 import network.chaintech.chartsLib.ui.linechart.model.IntersectionPoint
 import network.chaintech.cmpcharts.axis.AxisProperties
 import network.chaintech.cmpcharts.common.extensions.formatToSinglePrecision
@@ -384,20 +387,29 @@ fun BarChart(
 }
 
 @Composable
-fun MonthlyLineChartDefault(monthly: List<DaySummary>, modifier: Modifier = Modifier) {
+fun MonthlyLineChartDefault(
+    monthly: List<DaySummary>,
+    modifier: Modifier = Modifier
+) {
     if (monthly.isEmpty()) return
 
     val textMeasurer = rememberTextMeasurer()
     val steps = 5
 
-    // Map domain data to Points using day-of-month for X
-    val incomePoints = monthly.map { day ->
-        val dayNumber = day.date.split("-").last().toFloat()
-        Point(x = dayNumber, y = day.income.toFloat())
+    // --- Ensure correct order by full date ---
+    val sorted = monthly.sortedBy { LocalDate.parse(it.date) }
+    val baseDate = LocalDate.parse(sorted.first().date)
+
+    // Convert to "days since start" → x coordinate
+    val incomePoints = sorted.map { day ->
+        val date = LocalDate.parse(day.date)
+        val x = baseDate.until(date, DateTimeUnit.DAY).toFloat()
+        Point(x = x, y = day.income.toFloat())
     }
-    val expensePoints = monthly.map { day ->
-        val dayNumber = day.date.split("-").last().toFloat()
-        Point(x = dayNumber, y = day.expense.toFloat())
+    val expensePoints = sorted.map { day ->
+        val date = day.date.toLocalDate()
+        val x = baseDate.until(date, DateTimeUnit.DAY).toFloat()
+        Point(x = x, y = day.expense.toFloat())
     }
 
     val xAxisProperties = AxisProperties(
@@ -406,10 +418,11 @@ fun MonthlyLineChartDefault(monthly: List<DaySummary>, modifier: Modifier = Modi
         topPadding = 105.dp,
         labelColor = Color.Black,
         lineColor = Color.Black,
-        stepCount = monthly.size - 1,
+        stepCount = sorted.size - 1,
         labelFormatter = { i ->
-            val safeIndex = i.coerceAtMost(monthly.lastIndex)
-            monthly[safeIndex].date.split("-").last() // label for every point
+            val safeIndex = i.coerceAtMost(sorted.lastIndex)
+            // just day-of-month for label
+            sorted[safeIndex].date.split("-").last()
         },
         labelPadding = 15.dp
     )
@@ -434,32 +447,37 @@ fun MonthlyLineChartDefault(monthly: List<DaySummary>, modifier: Modifier = Modi
         }
     )
 
-
     val lineChartProperties = LineChartProperties(
         linePlotData = LinePlotData(
             lines = listOf(
                 Line(
                     dataPoints = incomePoints,
-                    lineStyle = LineStyle(color = Color(0xFF4CAF50)),
-                    intersectionPoint = IntersectionPoint(color = Color(0xFF388E3C)),
-                    selectionHighlightPoint = SelectionHighlightPoint(color = Color(0xFFFF4081)),
-                    shadowUnderLine = ShadowUnderLine(),
+                    lineStyle = LineStyle(
+                        color = GreenIncome,
+                        width = 3f
+                    ),
+                    intersectionPoint = IntersectionPoint(color = GreenIncome),
+                    selectionHighlightPoint = SelectionHighlightPoint(color = GreenIncome),
+                    shadowUnderLine = ShadowUnderLine(GreenIncome.copy(alpha = 0.2f)),
                     selectionHighlightPopUp = SelectionHighlightPopUp(
                         textMeasurer = textMeasurer,
-                        backgroundColor = Color(0xFFFF4081),
+                        backgroundColor = GreenIncome,
                         labelColor = Color.White,
                         labelTypeface = FontWeight.Bold
                     )
                 ),
                 Line(
                     dataPoints = expensePoints,
-                    lineStyle = LineStyle(color = Color(0xFF9C27B0)),
-                    intersectionPoint = IntersectionPoint(color = Color(0xFF7B1FA2)),
-                    selectionHighlightPoint = SelectionHighlightPoint(color = Color(0xFFFF4081)),
-                    shadowUnderLine = ShadowUnderLine(),
+                    lineStyle = LineStyle(
+                        color = PinkExpense,
+                        width = 3f
+                    ),
+                    intersectionPoint = IntersectionPoint(color = PinkExpense),
+                    selectionHighlightPoint = SelectionHighlightPoint(color = PinkExpense),
+                    shadowUnderLine = ShadowUnderLine(PinkExpense.copy(alpha = 0.2f)),
                     selectionHighlightPopUp = SelectionHighlightPopUp(
                         textMeasurer = textMeasurer,
-                        backgroundColor = Color(0xFFFF4081),
+                        backgroundColor = PinkExpense,
                         labelColor = Color.White,
                         labelTypeface = FontWeight.Bold
                     )
@@ -478,6 +496,7 @@ fun MonthlyLineChartDefault(monthly: List<DaySummary>, modifier: Modifier = Modi
         lineChartProperties = lineChartProperties
     )
 }
+
 
 @Composable
 fun CategoryComparisonCard(
@@ -640,7 +659,6 @@ fun InfoCard(
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Circle icon for income/expense
             Box(
                 modifier = Modifier
                     .size(32.dp)
