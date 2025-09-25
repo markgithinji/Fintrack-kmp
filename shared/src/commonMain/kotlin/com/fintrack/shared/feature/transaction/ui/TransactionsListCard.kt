@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.transaction.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +33,10 @@ import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.LocalDate
 
 @Composable
-fun TransactionsListCard(transactionsResult: Result<List<Transaction>>) {
+fun TransactionsListCard(
+    transactionsResult: Result<List<Transaction>>,
+    onViewAllClick: () -> Unit
+){
     when (transactionsResult) {
         is Result.Loading -> {
             Card(
@@ -77,7 +81,7 @@ fun TransactionsListCard(transactionsResult: Result<List<Transaction>>) {
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    RecentTransactionsHeader()
+                    RecentTransactionsHeader(onViewAllClick = onViewAllClick)
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -100,7 +104,7 @@ fun TransactionsListCard(transactionsResult: Result<List<Transaction>>) {
 
 
 @Composable
-fun RecentTransactionsHeader() {
+fun RecentTransactionsHeader(onViewAllClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -116,7 +120,8 @@ fun RecentTransactionsHeader() {
         Text(
             text = "View All",
             fontSize = 14.sp,
-            color = GreenIncome
+            color = GreenIncome,
+            modifier = Modifier.clickable { onViewAllClick() }
         )
     }
 }

@@ -157,18 +157,27 @@ fun MainScreen() {
             }
 
             composable(
-                route = Screen.TransactionList.route,
+                route = "transaction_list/{accountId}?isIncome={isIncome}",
                 arguments = listOf(
                     navArgument("accountId") { type = NavType.IntType },
-                    navArgument("isIncome") { type = NavType.BoolType }
+                    navArgument("isIncome") {
+                        type = NavType.StringType
+                        defaultValue = null
+                        nullable = true
+                    }
                 )
             ) { backStackEntry ->
                 val accountId = backStackEntry.arguments?.getInt("accountId") ?: return@composable
-                val isIncome = backStackEntry.arguments?.getBoolean("isIncome") ?: true
+                val isIncomeStr = backStackEntry.arguments?.getString("isIncome")
+                val isIncome: Boolean? = isIncomeStr?.toBooleanStrictOrNull()
 
                 LaunchedEffect(Unit) {
                     appBarState = AppBarState(
-                        title = if (isIncome) "Income Transactions" else "Expense Transactions",
+                        title = when (isIncome) {
+                            true -> "Income Transactions"
+                            false -> "Expense Transactions"
+                            null -> "All Transactions"
+                        },
                         showBackButton = true,
                         onBack = { navController.popBackStack() }
                     )
@@ -177,10 +186,6 @@ fun MainScreen() {
                 TransactionListScreen(accountId = accountId, isIncome = isIncome)
             }
 
-
         }
-
-
-
     }
 }

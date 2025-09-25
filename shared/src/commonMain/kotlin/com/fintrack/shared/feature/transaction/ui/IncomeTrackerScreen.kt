@@ -89,7 +89,7 @@ fun IncomeTrackerContent(
     accountsViewModel: AccountsViewModel = viewModel(),
     transactionsViewModel: TransactionListViewModel = viewModel(),
     statsViewModel: StatisticsViewModel = viewModel(),
-    onCardClick: (accountId: Int, isIncome: Boolean) -> Unit
+    onCardClick: (accountId: Int, isIncome: Boolean?) -> Unit
 ) {
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
     val selectedAccountResult by accountsViewModel.selectedAccount.collectAsStateWithLifecycle()
@@ -141,7 +141,16 @@ fun IncomeTrackerContent(
 
         item { IncomeExpensesOverview(overviewResult) }
         item { CategoryComparisonCard(categoryComparisonResult) }
-        item { TransactionsListCard(transactionsResult) }
+        item {
+            TransactionsListCard(
+                transactionsResult = transactionsResult,
+                onViewAllClick = {
+                    val accountId = (selectedAccountResult as? Result.Success)?.data?.id ?: return@TransactionsListCard
+                    onCardClick(accountId, null)
+                }
+            )
+        }
+
     }
 }
 
