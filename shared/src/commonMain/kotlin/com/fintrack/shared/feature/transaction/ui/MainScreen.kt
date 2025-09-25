@@ -70,7 +70,12 @@ fun MainScreen() {
                 LaunchedEffect(Unit) {
                     appBarState = AppBarState(title = "Home")
                 }
-                IncomeTrackerContent()
+                IncomeTrackerContent(
+                    onCardClick = { accountId, isIncome ->
+                        navController.navigate(Screen.TransactionList.createRoute(accountId, isIncome))
+                    }
+                )
+
             }
 
             composable(Screen.AddTransaction.route) {
@@ -135,6 +140,19 @@ fun MainScreen() {
                     }
                 )
             }
+
+            composable(
+                route = Screen.TransactionList.route,
+                arguments = listOf(
+                    navArgument("accountId") { type = NavType.IntType },
+                    navArgument("isIncome") { type = NavType.BoolType }
+                )
+            ) { backStackEntry ->
+                val accountId = backStackEntry.arguments?.getInt("accountId") ?: return@composable
+                val isIncome = backStackEntry.arguments?.getBoolean("isIncome") ?: true
+                TransactionListScreen(accountId = accountId, isIncome = isIncome)
+            }
+
         }
 
 

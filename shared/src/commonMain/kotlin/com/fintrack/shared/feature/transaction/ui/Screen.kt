@@ -12,4 +12,8 @@ sealed class Screen(val route: String) {
     }
 
     object Login : Screen("login")
+
+    object TransactionList : Screen("transaction_list/{accountId}/{isIncome}") {
+        fun createRoute(accountId: Int, isIncome: Boolean) = "transaction_list/$accountId/$isIncome"
+    }
 }

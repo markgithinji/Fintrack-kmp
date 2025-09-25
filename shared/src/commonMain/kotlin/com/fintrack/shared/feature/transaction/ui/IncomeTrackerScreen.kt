@@ -88,7 +88,8 @@ val PinkExpense = Color(0xFFE27C94) // pinkish-red for expense
 fun IncomeTrackerContent(
     accountsViewModel: AccountsViewModel = viewModel(),
     transactionsViewModel: TransactionListViewModel = viewModel(),
-    statsViewModel: StatisticsViewModel = viewModel()
+    statsViewModel: StatisticsViewModel = viewModel(),
+    onCardClick: (accountId: Int, isIncome: Boolean) -> Unit
 ) {
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
     val selectedAccountResult by accountsViewModel.selectedAccount.collectAsStateWithLifecycle()
@@ -128,12 +129,23 @@ fun IncomeTrackerContent(
             )
         }
 
-        item { IncomeExpenseCards(selectedAccountResult) }
+        item {
+            val accountId = (selectedAccountResult as? Result.Success)?.data?.id ?: return@item
+            IncomeExpenseCards(
+                accountResult = selectedAccountResult,
+                onCardClick = { isIncome ->
+                    onCardClick(accountId, isIncome)
+                }
+            )
+        }
+
         item { IncomeExpensesOverview(overviewResult) }
         item { CategoryComparisonCard(categoryComparisonResult) }
         item { TransactionsListCard(transactionsResult) }
     }
 }
+
+
 
 fun LocalDate.shortDayName(): String {
     // 0 = Monday ... 6 = Sunday
@@ -542,13 +554,14 @@ fun Double.formatToSinglePrecision(): String =
 
 
 @Composable
-fun IncomeExpenseCards(accountResult: Result<Account>?) {
+fun IncomeExpenseCards(
+    accountResult: Result<Account>?,
+    onCardClick: (isIncome: Boolean) -> Unit
+) {
     when (accountResult) {
         null, is Result.Loading -> {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp),
+                modifier = Modifier.fillMaxWidth().height(80.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -559,9 +572,7 @@ fun IncomeExpenseCards(accountResult: Result<Account>?) {
         is Result.Error -> {
             val message = accountResult.exception.message ?: "Unknown error"
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp),
+                modifier = Modifier.fillMaxWidth().height(80.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text("Error: $message", color = Color.Red)
@@ -580,49 +591,17 @@ fun IncomeExpenseCards(accountResult: Result<Account>?) {
                 InfoCard(
                     title = "Total Income",
                     amount = "KSh ${formatAmount(totalIncome)}",
-                    modifier = Modifier.weight(1f),
-                    icon = {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(GreenIncome),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowUpward,
-                                contentDescription = "Income",
-                                tint = Color.White,
-                                modifier = Modifier
-                                    .size(18.dp)
-                                    .rotate(135f)
-                            )
-                        }
-                    }
+                    isIncomeCard = true,
+                    onClick = onCardClick,
+                    modifier = Modifier.weight(1f)
                 )
 
                 InfoCard(
                     title = "Total Expense",
                     amount = "KSh ${formatAmount(totalExpense)}",
-                    modifier = Modifier.weight(1f),
-                    icon = {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(PinkExpense),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowDownward,
-                                contentDescription = "Expense",
-                                tint = Color.White,
-                                modifier = Modifier
-                                    .size(18.dp)
-                                    .rotate(-135f)
-                            )
-                        }
-                    }
+                    isIncomeCard = false,
+                    onClick = onCardClick,
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -635,11 +614,14 @@ fun IncomeExpenseCards(accountResult: Result<Account>?) {
 fun InfoCard(
     title: String,
     amount: String,
-    icon: (@Composable () -> Unit)? = null,
-    modifier: Modifier = Modifier,
+    isIncomeCard: Boolean,
+    onClick: ((isIncome: Boolean) -> Unit)? = null,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.height(70.dp),
+        modifier = modifier
+            .height(70.dp)
+            .clickable(enabled = onClick != null) { onClick?.invoke(isIncomeCard) },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
@@ -649,12 +631,24 @@ fun InfoCard(
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (icon != null) {
-                icon()
-                Spacer(modifier = Modifier.width(12.dp))
+            // Circle icon for income/expense
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(if (isIncomeCard) GreenIncome else PinkExpense),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (isIncomeCard) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                    contentDescription = if (isIncomeCard) "Income" else "Expense",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp).rotate(if (isIncomeCard) 135f else -135f)
+                )
             }
 
-            // Column for title + amount
+            Spacer(modifier = Modifier.width(12.dp))
+
             Column {
                 Text(text = title, fontSize = 12.sp)
                 Text(text = amount, fontSize = 15.sp, fontWeight = FontWeight.Bold)
@@ -662,6 +656,7 @@ fun InfoCard(
         }
     }
 }
+
 
 
 fun formatAmount(value: Double): String {
