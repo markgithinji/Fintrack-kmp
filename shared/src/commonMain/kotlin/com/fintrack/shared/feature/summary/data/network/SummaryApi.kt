@@ -11,6 +11,7 @@ import com.fintrack.shared.feature.summary.data.model.CategoryComparisonDto
 import com.fintrack.shared.feature.summary.data.model.DistributionSummaryDto
 import com.fintrack.shared.feature.summary.data.model.HighlightsSummaryDto
 import com.fintrack.shared.feature.summary.data.model.OverviewSummaryDto
+import com.fintrack.shared.feature.summary.data.model.TransactionCountSummaryDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -103,6 +104,14 @@ class SummaryApi(
         val response: ApiResponse<List<CategoryComparisonDto>> =
             client.get("$baseUrl/transactions/summary/category-comparison") {
                 accountId?.let { parameter("accountId", it) }
+            }.body()
+        return response.result
+    }
+
+    suspend fun getTransactionCounts(accountId: Int): TransactionCountSummaryDto {
+        val response: ApiResponse<TransactionCountSummaryDto> =
+            client.get("$baseUrl/transactions/summary/counts") {
+                parameter("accountId", accountId)
             }.body()
         return response.result
     }

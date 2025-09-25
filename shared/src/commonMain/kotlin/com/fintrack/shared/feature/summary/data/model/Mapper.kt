@@ -11,6 +11,7 @@ import com.fintrack.shared.feature.summary.domain.Highlight
 import com.fintrack.shared.feature.summary.domain.Highlights
 import com.fintrack.shared.feature.summary.domain.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.OverviewSummary
+import com.fintrack.shared.feature.summary.domain.TransactionCountSummary
 
 // --- Highlight Summary ---
 fun HighlightDto.toDomain(): Highlight =
@@ -70,3 +71,11 @@ fun AvailableMonthsDto.toDomain() = AvailableMonths(months = this.months)
 
 // Available Years
 fun AvailableYearsDto.toDomain() = AvailableYears(years)
+
+// Transaction Count Summary
+fun TransactionCountSummaryDto.toDomain() = TransactionCountSummary(
+    totalIncomeTransactions = totalIncomeTransactions,
+    totalExpenseTransactions = totalExpenseTransactions,
+    totalTransactions = totalTransactions
+)
+

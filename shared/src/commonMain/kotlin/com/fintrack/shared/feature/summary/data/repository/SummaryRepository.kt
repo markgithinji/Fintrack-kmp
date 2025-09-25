@@ -10,6 +10,7 @@ import com.fintrack.shared.feature.summary.domain.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.OverviewSummary
 import com.fintrack.shared.feature.summary.domain.StatisticsSummary
+import com.fintrack.shared.feature.summary.domain.TransactionCountSummary
 
 class SummaryRepository {
     private val api = SummaryApi()
@@ -65,4 +66,10 @@ class SummaryRepository {
         } catch (e: Exception) {
             Result.Error(e)
         }
+
+    suspend fun getTransactionCounts(accountId: Int): Result<TransactionCountSummary> = try {
+        Result.Success(api.getTransactionCounts(accountId).toDomain())
+    } catch (e: Exception) {
+        Result.Error(e)
+    }
 }
