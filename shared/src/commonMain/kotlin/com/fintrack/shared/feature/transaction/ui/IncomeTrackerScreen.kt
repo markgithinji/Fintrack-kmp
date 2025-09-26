@@ -30,9 +30,12 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,13 +47,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.DarkGray
 import androidx.compose.ui.graphics.Color.Companion.LightGray
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -64,18 +70,32 @@ import com.fintrack.shared.feature.summary.domain.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.OverviewSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.model.AccountIcon
+import com.fintrack.shared.feature.transaction.model.Category
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toLocalDate
 import kotlinx.datetime.until
 import network.chaintech.chartsLib.ui.linechart.model.IntersectionPoint
 import network.chaintech.cmpcharts.axis.AxisProperties
+import network.chaintech.cmpcharts.common.components.Legends
+import network.chaintech.cmpcharts.common.extensions.formatNumber
 import network.chaintech.cmpcharts.common.extensions.formatToSinglePrecision
+import network.chaintech.cmpcharts.common.extensions.getMaxElementInYAxis
+import network.chaintech.cmpcharts.common.model.LegendLabel
+import network.chaintech.cmpcharts.common.model.LegendsConfig
+import network.chaintech.cmpcharts.common.model.PlotType
 import network.chaintech.cmpcharts.common.model.Point
 import network.chaintech.cmpcharts.common.ui.GridLinesUtil
 import network.chaintech.cmpcharts.common.ui.SelectionHighlightPoint
 import network.chaintech.cmpcharts.common.ui.SelectionHighlightPopUp
 import network.chaintech.cmpcharts.common.ui.ShadowUnderLine
+import network.chaintech.cmpcharts.ui.barchart.StackedBarChart
+import network.chaintech.cmpcharts.ui.barchart.config.BarChartStyle
+import network.chaintech.cmpcharts.ui.barchart.config.BarData
+import network.chaintech.cmpcharts.ui.barchart.config.BarPlotData
+import network.chaintech.cmpcharts.ui.barchart.config.GroupBar
+import network.chaintech.cmpcharts.ui.barchart.config.GroupBarChartData
+import network.chaintech.cmpcharts.ui.barchart.config.SelectionHighlightData
 import network.chaintech.cmpcharts.ui.linechart.LineChart
 import network.chaintech.cmpcharts.ui.linechart.model.Line
 import network.chaintech.cmpcharts.ui.linechart.model.LineChartProperties
@@ -289,7 +309,6 @@ enum class OverviewPeriod {
     Weekly, Monthly
 }
 
-
 @Composable
 fun BarChart(
     data: List<Pair<String, Pair<Double, Double>>>,
@@ -496,36 +515,35 @@ fun MonthlyLineChartDefault(
         lineChartProperties = lineChartProperties
     )
 }
-
-
 @Composable
 fun CategoryComparisonCard(
     categoryComparisonResult: Result<List<CategoryComparison>>?,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "Category Comparison",
-                fontSize = 16.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color = Color(0xFF212121)
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             when (categoryComparisonResult) {
                 is Result.Loading -> {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp),
+                            .height(60.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(color = Color(0xFF6200EE))
                     }
                 }
 
@@ -538,28 +556,100 @@ fun CategoryComparisonCard(
                 }
 
                 is Result.Success -> {
-                    categoryComparisonResult.data.forEach { comparison ->
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = comparison.category,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.Gray
+                    categoryComparisonResult.data.forEachIndexed { index, comparison ->
+                        val category = Category.fromName(
+                            comparison.category,
+                            comparison.currentTotal < 0 || comparison.previousTotal < 0
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        val changeText = if (comparison.changePercentage >= 0) {
-                            "${comparison.changePercentage.formatToSinglePrecision()}% more than last ${comparison.period}"
-                        } else {
-                            "${(comparison.changePercentage * -1).formatToSinglePrecision()}% less than last ${comparison.period}"
+                        val icon = category.toIcon()
+                        val bgColor = category.toColor().copy(alpha = 0.15f)
+                        val iconTint = category.toColor()
+
+                        val positive = comparison.changePercentage >= 0
+                        val arrow = if (positive) "↑" else "↓"
+                        val changeColor = if (positive) Color(0xFF4CAF50) else Color.Red
+
+                        val periodLabel = when (comparison.period.lowercase()) {
+                            "weekly" -> "week"
+                            "monthly" -> "month"
+                            "yearly" -> "year"
+                            else -> comparison.period
                         }
 
-                        Text(
-                            text = changeText,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (comparison.changePercentage >= 0) Color(0xFF4CAF50) else Color.Red
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        val changeText = if (positive) {
+                            "${comparison.changePercentage.formatToSinglePrecision()}% more than last $periodLabel"
+                        } else {
+                            "${(comparison.changePercentage * -1).formatToSinglePrecision()}% less than last $periodLabel"
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.width(150.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(bgColor, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = comparison.category,
+                                        tint = iconTint,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = comparison.category,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.Black,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.weight(1f))
+
+                            Box(
+                                modifier = Modifier.width(180.dp),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = arrow,
+                                        color = changeColor,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = changeText,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = changeColor
+                                    )
+                                }
+                            }
+                        }
+
+                        if (index != categoryComparisonResult.data.lastIndex) {
+                            HorizontalDivider(
+                                modifier = Modifier
+                                    .padding(vertical = 8.dp)
+                                    .fillMaxWidth(0.85f)
+                                    .align(Alignment.CenterHorizontally),
+                                thickness = 0.6.dp,
+                                color = Color(0xFFE0E0E0)
+                            )
+                        }
                     }
                 }
 
@@ -570,6 +660,10 @@ fun CategoryComparisonCard(
         }
     }
 }
+
+
+
+
 
 fun Double.formatToSinglePrecision(): String =
     if (this % 1.0 == 0.0) {
