@@ -43,7 +43,9 @@ fun MainScreen() {
 
     // Decide when to show bars
     val hideBars = currentRoute == Screen.TransactionList.route ||
-            currentRoute == Screen.BudgetDetail.route
+            currentRoute == Screen.BudgetDetail.route ||
+            currentRoute == Screen.AddTransaction.route
+
 
     Scaffold(
         topBar = {
