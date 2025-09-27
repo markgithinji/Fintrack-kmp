@@ -141,7 +141,14 @@ fun AddTransactionScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(16.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                leadingIcon = { Icon(Icons.Default.AttachMoney, null, tint = Color(0xFF4CAF50)) },
+                leadingIcon = {
+                    Text(
+                        "Ksh",
+                        color = Color(0xFF4CAF50),
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color(0xFFF5F5F5),
