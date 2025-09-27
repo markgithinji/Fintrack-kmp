@@ -92,7 +92,7 @@ fun BudgetDetailScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
-                .padding(top = 56.dp, bottom = 80.dp), // leave space for top bar & FAB
+                .padding(top = 56.dp, bottom = 80.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             when (selectedBudgetResult) {
@@ -135,10 +135,6 @@ fun BudgetDetailScreen(
             }
         }
 
-//        // --- Fixed Top Bar ---
-//        BudgetDetailTopBar(budgetId = budgetId, onBack = onBack)
-
-        // --- Fixed Save Button ---
         BudgetDetailSaveButton(
             isSaving = saveResult is Result.Loading,
             onSaveClick = {
