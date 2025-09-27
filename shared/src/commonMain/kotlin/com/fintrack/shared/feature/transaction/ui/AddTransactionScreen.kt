@@ -30,6 +30,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.AttachMoney
@@ -55,6 +56,8 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -96,7 +99,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTransactionScreen(
@@ -114,6 +116,9 @@ fun AddTransactionScreen(
         )
     }
 
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -124,141 +129,206 @@ fun AddTransactionScreen(
 
         // Amount
         Text("Amount", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-        TextField(
-            value = amount,
-            onValueChange = { amount = it },
-            placeholder = { Text("Enter amount") },
-            singleLine = true,
+        Card(
             shape = RoundedCornerShape(16.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            leadingIcon = { Icon(Icons.Default.AttachMoney, null, tint = Color(0xFF4CAF50)) },
-            modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(0xFFF5F5F5),
-                unfocusedContainerColor = Color(0xFFF5F5F5),
-                disabledContainerColor = Color(0xFFF5F5F5),
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
-                cursorColor = Color(0xFF4CAF50)
-            )
-        )
-
-        // Transaction type (Income / Expense)
-        Text("Transaction Type", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
             modifier = Modifier.fillMaxWidth()
         ) {
-            ToggleChip(
-                text = "Expense",
-                icon = Icons.Default.ArrowDownward,
-                selected = !isIncome,
-                onClick = { isIncome = false },
-                color = Color.Red
+            TextField(
+                value = amount,
+                onValueChange = { amount = it },
+                placeholder = { Text("Enter amount") },
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                leadingIcon = { Icon(Icons.Default.AttachMoney, null, tint = Color(0xFF4CAF50)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFFF5F5F5),
+                    unfocusedContainerColor = Color(0xFFF5F5F5),
+                    disabledContainerColor = Color(0xFFF5F5F5),
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                    cursorColor = Color(0xFF4CAF50)
+                )
             )
-            ToggleChip(
-                text = "Income",
-                icon = Icons.Default.ArrowUpward,
-                selected = isIncome,
-                onClick = { isIncome = true },
-                color = Color(0xFF2E7D32)
-            )
+        }
+
+        // Transaction Type
+        Text("Transaction Type", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+            ) {
+                ToggleChip(
+                    text = "Expense",
+                    icon = Icons.Default.ArrowDownward,
+                    selected = !isIncome,
+                    onClick = { isIncome = false },
+                    color = Color.Red
+                )
+                ToggleChip(
+                    text = "Income",
+                    icon = Icons.Default.ArrowUpward,
+                    selected = isIncome,
+                    onClick = { isIncome = true },
+                    color = Color(0xFF2E7D32)
+                )
+            }
         }
 
         // Categories
         Text("Category", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-
-        val categories = if (isIncome) Category.incomeCategories else Category.expenseCategories
-
-        LazyHorizontalStaggeredGrid(
-            rows = StaggeredGridCells.Adaptive(48.dp),
-            horizontalItemSpacing = 8.dp,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp)
         ) {
-            items(categories.size) { index ->
-                val cat = categories[index]
-                val selected = category == cat
-                CategoryChip(
-                    text = cat.name,
-                    icon = cat.toIcon(),
-                    color = cat.toColor(),
-                    selected = selected,
-                    onClick = { category = if (selected) null else cat }
-                )
+            LazyHorizontalStaggeredGrid(
+                rows = StaggeredGridCells.Adaptive(48.dp),
+                horizontalItemSpacing = 8.dp,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp)
+            ) {
+                val categories = if (isIncome) Category.incomeCategories else Category.expenseCategories
+                items(categories.size) { index ->
+                    val cat = categories[index]
+                    val selected = category == cat
+                    CategoryChip(
+                        text = cat.name,
+                        icon = cat.toIcon(),
+                        color = cat.toColor(),
+                        selected = selected,
+                        onClick = { category = if (selected) null else cat }
+                    )
+                }
             }
         }
-
-
 
         // Description
         Text("Description", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-        TextField(
-            value = description,
-            onValueChange = { description = it },
-            placeholder = { Text("Optional description") },
-            singleLine = false,
+        Card(
             shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.fillMaxWidth(),
-            leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null, tint = Color.Gray) },
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(0xFFF5F5F5),
-                unfocusedContainerColor = Color(0xFFF5F5F5),
-                disabledContainerColor = Color(0xFFF5F5F5),
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
-                cursorColor = Color.Gray
-            )
-        )
-
-        // Date & Time
-        Text("Date & Time", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-
-        var showDatePicker by remember { mutableStateOf(false) }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp)
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Column {
-                Text("Date: ${dateTime.date}", color = Color.DarkGray)
-                val hour = dateTime.time.hour.toString().padStart(2, '0')
-                val minute = dateTime.time.minute.toString().padStart(2, '0')
-                Text("Time: $hour:$minute", color = Color.DarkGray)
-            }
-
-            // Calendar icon button
-            IconButton(onClick = { showDatePicker = true }) {
-                Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = "Pick Date",
-                    tint = MaterialTheme.colorScheme.primary
+            TextField(
+                value = description,
+                onValueChange = { description = it },
+                placeholder = { Text("Optional description") },
+                singleLine = false,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null, tint = Color.Gray) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFFF5F5F5),
+                    unfocusedContainerColor = Color(0xFFF5F5F5),
+                    disabledContainerColor = Color(0xFFF5F5F5),
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                    cursorColor = Color.Gray
                 )
+            )
+        }
+
+        // Date & Time Section
+        Text("Date & Time", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Date Column
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { showDatePicker = true },
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text("Date", fontSize = 12.sp, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "${dateTime.date}",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(Icons.Default.DateRange, contentDescription = "Pick Date", tint = MaterialTheme.colorScheme.primary)
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Time Column
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { showTimePicker = true },
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text("Time", fontSize = 12.sp, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        val hourStr = dateTime.time.hour.toString().padStart(2, '0')
+                        val minuteStr = dateTime.time.minute.toString().padStart(2, '0')
+                        Text(
+                            text = "$hourStr:$minuteStr",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(Icons.Default.AccessTime, contentDescription = "Pick Time", tint = MaterialTheme.colorScheme.primary)
+                    }
+                }
             }
         }
 
-// Show the Date Picker
+// Pickers
         if (showDatePicker) {
             PickDate(
                 initialDate = dateTime.date,
                 onDateSelected = { selectedDate ->
-                    dateTime = LocalDateTime(
-                        date = selectedDate,
-                        time = dateTime.time
-                    )
+                    dateTime = LocalDateTime(date = selectedDate, time = dateTime.time)
                     showDatePicker = false
                 },
                 onDismiss = { showDatePicker = false }
             )
         }
 
+        if (showTimePicker) {
+            PickTime(
+                initialTime = dateTime.time,
+                onTimeSelected = { selectedTime ->
+                    dateTime = LocalDateTime(date = dateTime.date, time = selectedTime)
+                    showTimePicker = false
+                },
+                onDismiss = { showTimePicker = false }
+            )
+        }
+
+
+        // Save Button
         Button(
             onClick = {
                 val parsedAmount = amount.toDoubleOrNull()
@@ -294,6 +364,7 @@ fun AddTransactionScreen(
         }
     }
 }
+
 
 
 @Composable
