@@ -78,12 +78,11 @@ fun MainScreen() {
 
         NavHost(
             navController = navController,
-            startDestination = Screen.Budget.route,
+            startDestination = Screen.Login.route,
             modifier = Modifier.padding(paddingValues)
         ) {
 
             composable(Screen.Home.route) {
-                // Update app bar
                 LaunchedEffect(Unit) {
                     appBarState = AppBarState(title = "Home")
                 }
@@ -118,31 +117,55 @@ fun MainScreen() {
                     appBarState = AppBarState(title = "Budget")
                 }
                 BudgetScreen(
-                    onAddBudget = { navController.navigate(Screen.BudgetDetail.createRoute(null)) },
-                    onBudgetClick = { budget ->
-                        navController.navigate(Screen.BudgetDetail.createRoute(budget.id))
+                    onAddBudget = {
+                        navController.navigate(Screen.BudgetDetail.createRoute(null))
+                    },
+                    onBudgetClick = { budgetWithStatus ->
+                        navController.navigate(
+                            Screen.BudgetDetail.createRoute(
+                                budgetWithStatus.budget.id,
+                                budgetWithStatus.budget.accountId
+                            )
+                        )
                     }
                 )
             }
 
+
             composable(
                 route = Screen.BudgetDetail.route,
-                arguments = listOf(navArgument("budgetId") { type = NavType.IntType })
+                arguments = listOf(
+                    navArgument("budgetId") { type = NavType.IntType },
+                    navArgument("accountId") {
+                        type = NavType.IntType
+                        defaultValue = -1
+                    }
+                )
             ) { backStackEntry ->
-                val budgetId = backStackEntry.arguments?.getInt("budgetId")
-                LaunchedEffect(Unit) {
+                val budgetIdArg = backStackEntry.arguments?.getInt("budgetId") ?: -1
+                val accountIdArg = backStackEntry.arguments?.getInt("accountId") ?: -1
+
+                val budgetId = if (budgetIdArg == -1) null else budgetIdArg
+                val accountId = if (accountIdArg == -1) null else accountIdArg
+
+                LaunchedEffect(budgetId) {
                     appBarState = AppBarState(
                         title = if (budgetId == null) "Add Budget" else "Edit Budget",
                         showBackButton = true,
                         onBack = { navController.popBackStack() }
                     )
                 }
+
                 BudgetDetailScreen(
                     budgetId = budgetId,
+                    accountId = accountId,
                     onSave = { navController.popBackStack() },
                     onBack = { navController.popBackStack() }
                 )
             }
+
+
+
 
             composable(Screen.Login.route) {
                 LaunchedEffect(Unit) {

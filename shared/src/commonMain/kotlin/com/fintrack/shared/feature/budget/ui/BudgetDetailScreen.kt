@@ -41,23 +41,31 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.budget.domain.Budget
+import com.fintrack.shared.feature.budget.domain.BudgetWithStatus
 import com.fintrack.shared.feature.transaction.model.Category
 import com.fintrack.shared.feature.transaction.ui.PickDate
 import com.fintrack.shared.feature.transaction.ui.toColor
 import com.fintrack.shared.feature.transaction.ui.toIcon
 import kotlinx.datetime.LocalDate
-
 @Composable
 fun BudgetDetailScreen(
     budgetId: Int? = null,
+    accountId: Int? = null,
     viewModel: BudgetViewModel = viewModel(),
+    accountsViewModel: AccountsViewModel = viewModel(),
     onSave: () -> Unit,
     onBack: () -> Unit = {}
 ) {
     val selectedBudgetResult by viewModel.selectedBudget.collectAsStateWithLifecycle()
     val saveResult by viewModel.saveResult.collectAsStateWithLifecycle()
+    val selectedAccountResult by accountsViewModel.selectedAccount.collectAsStateWithLifecycle()
+
+    val effectiveAccountId = remember(accountId, selectedAccountResult) {
+        accountId ?: (selectedAccountResult as? Result.Success)?.data?.id
+    }
 
     // --- Form state ---
     var name by remember { mutableStateOf("") }
@@ -72,9 +80,11 @@ fun BudgetDetailScreen(
         if (budgetId != null) viewModel.loadBudgetById(budgetId)
     }
 
-    // Prefill form
+    // Prefill form when budget loaded
     LaunchedEffect(selectedBudgetResult) {
-        val budget = (selectedBudgetResult as? Result.Success<Budget>)?.data
+        val budgetWithStatus = (selectedBudgetResult as? Result.Success<BudgetWithStatus>)?.data
+        val budget = budgetWithStatus?.budget
+
         if (budget != null && name.isEmpty() && amount.isEmpty() && selectedCategories.isEmpty()) {
             name = budget.name
             amount = budget.limit.toString()
@@ -85,8 +95,8 @@ fun BudgetDetailScreen(
         }
     }
 
+
     Box(modifier = Modifier.fillMaxSize()) {
-        // --- Scrollable form ---
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -135,6 +145,7 @@ fun BudgetDetailScreen(
             }
         }
 
+        // --- Save FAB ---
         BudgetDetailSaveButton(
             isSaving = saveResult is Result.Loading,
             onSaveClick = {
@@ -143,11 +154,13 @@ fun BudgetDetailScreen(
                         selectedCategories.isNotEmpty() &&
                         limit > 0 &&
                         startDate != null &&
-                        endDate != null
+                        endDate != null &&
+                        effectiveAccountId != null
 
                 if (valid) {
                     viewModel.saveBudget(
                         id = budgetId,
+                        accountId = effectiveAccountId,
                         name = name,
                         categories = selectedCategories.toList(),
                         limit = limit,
@@ -163,6 +176,7 @@ fun BudgetDetailScreen(
         )
     }
 }
+
 
 @Composable
 fun BudgetDetailSaveButton(

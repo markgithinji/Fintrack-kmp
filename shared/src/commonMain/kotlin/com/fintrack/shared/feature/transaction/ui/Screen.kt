@@ -7,8 +7,15 @@ sealed class Screen(val route: String) {
     object Budget : Screen("budget")
     object Profile : Screen("profile")
 
-    object BudgetDetail : Screen("budget_detail/{budgetId}") {
-        fun createRoute(budgetId: Int?) = "budget_detail/${budgetId ?: -1}"
+    object BudgetDetail : Screen("budget_detail/{budgetId}?accountId={accountId}") {
+        fun createRoute(budgetId: Int? = null, accountId: Int? = null): String {
+            val id = budgetId ?: -1
+            return if (accountId != null) {
+                "budget_detail/$id?accountId=$accountId"
+            } else {
+                "budget_detail/$id"
+            }
+        }
     }
 
     object Login : Screen("login")

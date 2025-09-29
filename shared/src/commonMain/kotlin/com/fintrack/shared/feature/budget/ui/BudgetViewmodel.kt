@@ -5,18 +5,18 @@ import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.budget.data.repository.BudgetRepository
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.budget.domain.Budget
+import com.fintrack.shared.feature.budget.domain.BudgetWithStatus
 import com.fintrack.shared.feature.transaction.model.Category
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-
 class BudgetViewModel(
     private val repo: BudgetRepository = BudgetRepository()
 ) : ViewModel() {
 
-    private val _budgets = MutableStateFlow<Result<List<Budget>>>(Result.Loading)
-    val budgets: StateFlow<Result<List<Budget>>> = _budgets
+    private val _budgets = MutableStateFlow<Result<List<BudgetWithStatus>>>(Result.Loading)
+    val budgets: StateFlow<Result<List<BudgetWithStatus>>> = _budgets
 
     private val _saveResult = MutableStateFlow<Result<Budget>?>(null)
     val saveResult: StateFlow<Result<Budget>?> = _saveResult
@@ -24,8 +24,8 @@ class BudgetViewModel(
     private val _deleteResult = MutableStateFlow<Result<Unit>?>(null)
     val deleteResult: StateFlow<Result<Unit>?> = _deleteResult
 
-    private val _selectedBudget = MutableStateFlow<Result<Budget>?>(null)
-    val selectedBudget: StateFlow<Result<Budget>?> = _selectedBudget
+    private val _selectedBudget = MutableStateFlow<Result<BudgetWithStatus>?>(null)
+    val selectedBudget: StateFlow<Result<BudgetWithStatus>?> = _selectedBudget
 
     init {
         reloadBudgets()
@@ -33,9 +33,11 @@ class BudgetViewModel(
 
     fun reloadBudgets() {
         viewModelScope.launch {
-            _budgets.value = repo.getBudgets()
+            val result = repo.getBudgets()
+            _budgets.value = result
         }
     }
+
 
     fun saveBudget(
         id: Int? = null,
@@ -44,25 +46,26 @@ class BudgetViewModel(
         limit: Double,
         isExpense: Boolean,
         startDate: LocalDate,
-        endDate: LocalDate
+        endDate: LocalDate,
+        accountId: Int
     ) {
         viewModelScope.launch {
-            _saveResult.value = repo.addOrUpdateBudget(
-                Budget(
-                    id = id,
-                    name = name,
-                    categories = categories,
-                    limit = limit,
-                    isExpense = isExpense,
-                    startDate = startDate,
-                    endDate = endDate
-                )
+            val budget = Budget(
+                id = id,
+                accountId = accountId,
+                name = name,
+                categories = categories,
+                limit = limit,
+                isExpense = isExpense,
+                startDate = startDate,
+                endDate = endDate
             )
+            _saveResult.value = repo.addOrUpdateBudget(budget)
             reloadBudgets()
         }
     }
 
-    fun removeBudget(id: Int) {
+    fun removeBudget(id: Int, accountId: Int? = null) {
         viewModelScope.launch {
             _deleteResult.value = repo.deleteBudget(id)
             reloadBudgets()
@@ -74,7 +77,7 @@ class BudgetViewModel(
             // First try from local cache
             val current = _budgets.value
             if (current is Result.Success) {
-                val found = current.data.firstOrNull { it.id == id }
+                val found = current.data.firstOrNull { it.budget.id == id }
                 if (found != null) {
                     _selectedBudget.value = Result.Success(found)
                     return@launch

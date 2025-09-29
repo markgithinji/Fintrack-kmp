@@ -27,6 +27,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -42,17 +44,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.budget.domain.Budget
+import com.fintrack.shared.feature.budget.domain.BudgetWithStatus
+import kotlin.math.pow
+import kotlin.math.round
+
 @Composable
 fun BudgetScreen(
     viewModel: BudgetViewModel = viewModel(),
     onAddBudget: () -> Unit = {},
-    onBudgetClick: (Budget) -> Unit
+    onBudgetClick: (BudgetWithStatus) -> Unit
 ) {
     val budgets by viewModel.budgets.collectAsStateWithLifecycle()
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         when (budgets) {
             is Result.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
 
@@ -70,14 +74,14 @@ fun BudgetScreen(
             }
 
             is Result.Success -> {
-                val data = (budgets as Result.Success<List<Budget>>).data
+                val data = (budgets as Result.Success<List<BudgetWithStatus>>).data
                 LazyColumn {
                     // Always show "+" at the top
                     item {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(onClick = onAddBudget)
+                                .clickable {onAddBudget()}
                                 .padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -101,10 +105,10 @@ fun BudgetScreen(
                             )
                         }
                     } else {
-                        items(data) { budget ->
+                        items(data) { budgetWithStatus ->
                             BudgetItem(
-                                budget = budget,
-                                onClick = { onBudgetClick(budget) }
+                                budgetWithStatus = budgetWithStatus,
+                                onClick = { onBudgetClick(budgetWithStatus) }
                             )
                         }
                     }
@@ -114,8 +118,15 @@ fun BudgetScreen(
     }
 }
 
+
 @Composable
-fun BudgetItem(budget: Budget, onClick: () -> Unit) {
+fun BudgetItem(
+    budgetWithStatus: BudgetWithStatus,
+    onClick: () -> Unit
+) {
+    val budget = budgetWithStatus.budget
+    val status = budgetWithStatus.status
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -127,7 +138,7 @@ fun BudgetItem(budget: Budget, onClick: () -> Unit) {
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Header row: Name + Type chip
             Row(
@@ -162,12 +173,44 @@ fun BudgetItem(budget: Budget, onClick: () -> Unit) {
                 }
             }
 
-            // Limit
-            Text(
-                text = "Limit: ${budget.limit}",
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.primary
-            )
+            // Limit + Status
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "Limit: ${budget.limit}",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Text(
+                    text = "Spent: ${status.spent}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Text(
+                    text = "Remaining: ${status.remaining}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (status.isExceeded) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurface
+                )
+
+                // Progress bar for usage
+                LinearProgressIndicator(
+                    progress = { ((status.percentageUsed / 100.0).coerceAtMost(1.0)).toFloat() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(50)),
+                    color = if (status.isExceeded) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.primary
+                )
+
+                Text(
+                    text = "${status.percentageUsed.roundToDecimals(1)}% used",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (status.isExceeded) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             // Categories
             if (budget.categories.isNotEmpty()) {
@@ -193,3 +236,9 @@ fun BudgetItem(budget: Budget, onClick: () -> Unit) {
         }
     }
 }
+
+fun Double.roundToDecimals(decimals: Int): String {
+    val factor = 10.0.pow(decimals)
+    return (round(this * factor) / factor).toString()
+}
+
