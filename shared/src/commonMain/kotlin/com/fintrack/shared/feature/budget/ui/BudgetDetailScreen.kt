@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.budget.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,22 +13,37 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.staggeredgrid.LazyHorizontalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,8 +53,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
@@ -46,10 +64,14 @@ import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.budget.domain.Budget
 import com.fintrack.shared.feature.budget.domain.BudgetWithStatus
 import com.fintrack.shared.feature.transaction.model.Category
+import com.fintrack.shared.feature.transaction.ui.CategoryChip
 import com.fintrack.shared.feature.transaction.ui.PickDate
+import com.fintrack.shared.feature.transaction.ui.ToggleChip
 import com.fintrack.shared.feature.transaction.ui.toColor
 import com.fintrack.shared.feature.transaction.ui.toIcon
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.format
+
 @Composable
 fun BudgetDetailScreen(
     budgetId: Int? = null,
@@ -199,7 +221,6 @@ fun BudgetDetailSaveButton(
         }
     }
 }
-
 @Composable
 fun BudgetForm(
     name: String,
@@ -214,84 +235,142 @@ fun BudgetForm(
     endDate: LocalDate?,
     onPeriodChange: (Pair<LocalDate?, LocalDate?>) -> Unit
 ) {
-    // Name & Amount
-    OutlinedTextField(
-        value = name,
-        onValueChange = onNameChange,
-        label = { Text("Budget Name") },
-        modifier = Modifier.fillMaxWidth()
-    )
-    Spacer(Modifier.height(8.dp))
-    OutlinedTextField(
-        value = amount,
-        onValueChange = onAmountChange,
-        label = { Text("Amount (Ksh)") },
-        modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-    )
-    Spacer(Modifier.height(16.dp))
+    Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
 
-    // Expense / Income
-    Text("Budget Type", style = MaterialTheme.typography.titleMedium)
-    Spacer(Modifier.height(8.dp))
-    Row {
-        FilterChip(selected = isExpense, onClick = { onExpenseChange(true) }, label = { Text("Expense") })
-        Spacer(Modifier.width(8.dp))
-        FilterChip(selected = !isExpense, onClick = { onExpenseChange(false) }, label = { Text("Income") })
-    }
-    Spacer(Modifier.height(16.dp))
-
-    // Categories
-    Text("Categories", style = MaterialTheme.typography.titleMedium)
-    Spacer(Modifier.height(8.dp))
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        val availableCategories = if (isExpense) Category.expenseCategories else Category.incomeCategories
-        val allSelected = selectedCategories.containsAll(availableCategories)
-
-        // "All" chip
-        FilterChip(
-            selected = allSelected,
-            onClick = {
-                onCategoryChange(
-                    if (allSelected) emptySet() else availableCategories.toSet()
-                )
-            },
-            label = { Text("All") },
-            leadingIcon = { Icon(Icons.Default.SelectAll, contentDescription = null) }
-        )
-
-        // Individual category chips
-        availableCategories.forEach { category ->
-            val isSelected = category in selectedCategories
-            FilterChip(
-                selected = isSelected,
-                onClick = {
-                    val newSelection = if (isSelected) selectedCategories - category else selectedCategories + category
-                    onCategoryChange(newSelection)
-                },
-                label = { Text(category.name) },
-                leadingIcon = { Icon(category.toIcon(), contentDescription = null, tint = category.toColor()) },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = category.toColor().copy(alpha = 0.2f),
-                    selectedLeadingIconColor = category.toColor(),
-                    selectedLabelColor = Color.Black
+        // --- Name ---
+        Text("Budget Name", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            TextField(
+                value = name,
+                onValueChange = onNameChange,
+                placeholder = { Text("Enter budget name") },
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth(),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFFF5F5F5),
+                    unfocusedContainerColor = Color(0xFFF5F5F5),
+                    disabledContainerColor = Color(0xFFF5F5F5),
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent
                 )
             )
         }
+
+        // --- Amount ---
+        Text("Limit", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            TextField(
+                value = amount,
+                onValueChange = onAmountChange,
+                placeholder = { Text("Enter amount") },
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                leadingIcon = {
+                    Text("Ksh", color = Color(0xFF4CAF50), fontWeight = FontWeight.SemiBold)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFFF5F5F5),
+                    unfocusedContainerColor = Color(0xFFF5F5F5),
+                    disabledContainerColor = Color(0xFFF5F5F5),
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent
+                )
+            )
+        }
+
+        // --- Expense / Income ---
+        Text("Budget Type", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(12.dp)
+            ) {
+                ToggleChip(
+                    text = "Expense",
+                    icon = Icons.Default.ArrowDownward,
+                    selected = isExpense,
+                    onClick = { onExpenseChange(true) },
+                    color = Color.Red
+                )
+                ToggleChip(
+                    text = "Income",
+                    icon = Icons.Default.ArrowUpward,
+                    selected = !isExpense,
+                    onClick = { onExpenseChange(false) },
+                    color = Color(0xFF2E7D32)
+                )
+            }
+        }
+
+        // --- Categories ---
+        Text("Categories", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+        ) {
+            LazyHorizontalStaggeredGrid(
+                rows = StaggeredGridCells.Adaptive(48.dp),
+                horizontalItemSpacing = 8.dp,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp)
+            ) {
+                val categories = if (isExpense) Category.expenseCategories else Category.incomeCategories
+                items(categories.size) { index ->
+                    val cat = categories[index]
+                    val selected = selectedCategories.contains(cat)
+                    CategoryChip(
+                        text = cat.name,
+                        icon = cat.toIcon(),
+                        color = cat.toColor(),
+                        selected = selected,
+                        onClick = {
+                            val newSelection = if (selected) selectedCategories - cat else selectedCategories + cat
+                            onCategoryChange(newSelection)
+                        }
+                    )
+                }
+            }
+        }
+
+        // --- Period Picker ---
+        Text("Period", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                PeriodPicker(
+                    startDate = startDate,
+                    endDate = endDate,
+                    onPeriodChange = onPeriodChange
+                )
+            }
+        }
     }
-    Spacer(Modifier.height(16.dp))
-
-    // Period Picker
-    PeriodPicker(
-        startDate = startDate,
-        endDate = endDate,
-        onPeriodChange = onPeriodChange
-    )
 }
-
 
 @Composable
 fun PeriodPicker(
@@ -299,60 +378,107 @@ fun PeriodPicker(
     endDate: LocalDate?,
     onPeriodChange: (Pair<LocalDate?, LocalDate?>) -> Unit
 ) {
-    var showStartPicker by remember { mutableStateOf(false) }
-    var showEndPicker by remember { mutableStateOf(false) }
-
-
-    Column {
-        // Start Date Button
-        Button(
-            onClick = { showStartPicker = true },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(Icons.Default.DateRange, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text(text = startDate?.toFormattedString() ?: "Select Start Date")
-        }
-        Spacer(Modifier.height(8.dp))
-
-        // End Date Button
-        Button(
-            onClick = { showEndPicker = true },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(Icons.Default.DateRange, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-
-            Text(text = endDate?.toFormattedString() ?: "Select End Date")
-        }
-    }
-
-    // Show native pickers conditionally
-    if (showStartPicker) {
-        PickDate(
-            initialDate = startDate,
-            onDateSelected = { date ->
-                onPeriodChange(date to endDate)
-                showStartPicker = false
-            },
-            onDismiss = { showStartPicker = false }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        DateField(
+            label = "Start",
+            date = startDate,
+            onDateSelected = { onPeriodChange(it to endDate) }
         )
-    }
-
-    if (showEndPicker) {
-        PickDate(
-            initialDate = endDate,
-            onDateSelected = { date ->
-                onPeriodChange(startDate to date)
-                showEndPicker = false
-            },
-            onDismiss = { showEndPicker = false }
+        DateField(
+            label = "End",
+            date = endDate,
+            onDateSelected = { onPeriodChange(startDate to it) }
         )
     }
 }
 
+@Composable
+private fun DateField(
+    label: String,
+    date: LocalDate?,
+    onDateSelected: (LocalDate) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val formatted = date?.toFormattedString() ?: "Select"
+
+    Box {
+        OutlinedCard(
+            modifier = Modifier
+                .widthIn(min = 120.dp)
+                .height(64.dp)
+                .clickable { expanded = true },
+            shape = MaterialTheme.shapes.medium,
+            colors = CardDefaults.outlinedCardColors()
+        ) {
+            Column(
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text(label, fontSize = 12.sp, color = Color.Gray)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.Gray)
+                    Spacer(Modifier.width(6.dp))
+                    Text(formatted, fontWeight = FontWeight.Medium)
+                }
+            }
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            val today = LocalDate(2025, 1, 1)
+            var year by remember { mutableStateOf(date?.year ?: today.year) }
+            var month by remember { mutableStateOf(date?.monthNumber ?: today.monthNumber) }
+            var day by remember { mutableStateOf(date?.dayOfMonth ?: today.dayOfMonth) }
+
+            Column(Modifier.padding(12.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    NumberSelector("Year", year, 2000..2100) { year = it }
+                    NumberSelector("Month", month, 1..12) { month = it }
+                    NumberSelector("Day", day, 1..31) { day = it }
+                }
+                Spacer(Modifier.height(12.dp))
+                Button(
+                    onClick = {
+                        expanded = false
+                        onDateSelected(LocalDate(year, month, day))
+                    }
+                ) { Text("Select") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NumberSelector(
+    label: String,
+    value: Int,
+    range: IntRange,
+    onValueChange: (Int) -> Unit
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, fontSize = 12.sp, color = Color.Gray)
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            IconButton(onClick = {
+                val new = if (value > range.first) value - 1 else range.last
+                onValueChange(new)
+            }) { Text("-") }
+
+            Text(value.toString(), fontWeight = FontWeight.Medium)
+
+            IconButton(onClick = {
+                val new = if (value < range.last) value + 1 else range.first
+                onValueChange(new)
+            }) { Text("+") }
+        }
+    }
+}
+
 fun LocalDate.toFormattedString(): String {
-    // Simple custom formatting: MMM dd, yyyy
     val month = when (this.monthNumber) {
         1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
         5 -> "May"; 6 -> "Jun"; 7 -> "Jul"; 8 -> "Aug"
@@ -361,3 +487,4 @@ fun LocalDate.toFormattedString(): String {
     }
     return "$month ${this.dayOfMonth}, ${this.year}"
 }
+

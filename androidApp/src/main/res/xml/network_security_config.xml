@@ -3,7 +3,7 @@
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">10.0.2.2</domain>
         <domain includeSubdomains="true">192.168.100.96</domain>
-        <domain includeSubdomains="true">10.23.120.247</domain>
+        <domain includeSubdomains="true">192.168.100.8</domain>
         <domain includeSubdomains="true">localhost</domain>
     </domain-config>
 </network-security-config>
