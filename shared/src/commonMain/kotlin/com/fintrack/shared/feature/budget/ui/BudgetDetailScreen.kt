@@ -117,7 +117,6 @@ fun BudgetDetailScreen(
         }
     }
 
-
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -236,7 +235,6 @@ fun BudgetForm(
     onPeriodChange: (Pair<LocalDate?, LocalDate?>) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
-
         // --- Name ---
         Text("Budget Name", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
@@ -337,6 +335,27 @@ fun BudgetForm(
                     .padding(8.dp)
             ) {
                 val categories = if (isExpense) Category.expenseCategories else Category.incomeCategories
+
+                // --- Add "All" chip at the start ---
+                item {
+                    val allSelected = selectedCategories.containsAll(categories)
+                    CategoryChip(
+                        text = "All",
+                        icon = Icons.Default.SelectAll,
+                        color = Color.Gray,
+                        selected = allSelected,
+                        onClick = {
+                            val newSelection = if (allSelected) {
+                                emptySet()
+                            } else {
+                                categories.toSet()
+                            }
+                            onCategoryChange(newSelection)
+                        }
+                    )
+                }
+
+                // --- Category chips ---
                 items(categories.size) { index ->
                     val cat = categories[index]
                     val selected = selectedCategories.contains(cat)
@@ -346,7 +365,8 @@ fun BudgetForm(
                         color = cat.toColor(),
                         selected = selected,
                         onClick = {
-                            val newSelection = if (selected) selectedCategories - cat else selectedCategories + cat
+                            val newSelection =
+                                if (selected) selectedCategories - cat else selectedCategories + cat
                             onCategoryChange(newSelection)
                         }
                     )
