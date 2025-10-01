@@ -17,11 +17,10 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-// Auth API using Ktor
 class AuthApi(private val baseUrl: String = ApiConfig.BASE_URL) {
 
     private val client = HttpClient {
-        install(ContentNegotiation.Plugin) {
+        install(ContentNegotiation) {
             json(Json { ignoreUnknownKeys = true; explicitNulls = false })
         }
     }

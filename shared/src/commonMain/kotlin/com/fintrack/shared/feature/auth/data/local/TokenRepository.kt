@@ -1,0 +1,27 @@
+package com.fintrack.shared.feature.auth.data.local
+
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+
+class TokenRepository(
+    private val dataStore: DataStore<Preferences>
+) {
+    val token: Flow<String?> = dataStore.data.map { prefs ->
+        prefs[TokenPreferencesKeys.TOKEN]
+    }
+
+    suspend fun saveToken(token: String) {
+        dataStore.edit { prefs ->
+            prefs[TokenPreferencesKeys.TOKEN] = token
+        }
+    }
+
+    suspend fun clearToken() {
+        dataStore.edit { prefs ->
+            prefs.remove(TokenPreferencesKeys.TOKEN)
+        }
+    }
+}

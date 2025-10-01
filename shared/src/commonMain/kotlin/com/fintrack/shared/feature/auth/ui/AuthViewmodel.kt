@@ -6,12 +6,19 @@ import com.fintrack.shared.feature.auth.domain.AuthResponse
 import com.fintrack.shared.feature.auth.data.repository.AuthRepository
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.auth.data.SessionManager
+import com.fintrack.shared.feature.auth.data.local.TokenRepository
+import com.fintrack.shared.feature.auth.data.local.createTokenDataStore
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class AuthViewModel : ViewModel() {
 
+    private val tokenRepository: TokenRepository = TokenRepository(
+        createTokenDataStore()
+    )
     private val repository: AuthRepository = AuthRepository()
 
     private val _loginState = MutableStateFlow<Result<AuthResponse>?>(null)
@@ -20,18 +27,17 @@ class AuthViewModel : ViewModel() {
     private val _registerState = MutableStateFlow<Result<AuthResponse>?>(null)
     val registerState: StateFlow<Result<AuthResponse>?> = _registerState
 
-    var token: String? = null
-        private set
+    val token: StateFlow<String?> = tokenRepository.token
+        .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     fun login(email: String, password: String) {
         _loginState.value = Result.Loading
         viewModelScope.launch {
             when (val result = repository.login(email, password)) {
                 is Result.Success -> {
-                    token = result.data.token
-                    SessionManager.saveToken(token!!) // save in memory
+                    tokenRepository.saveToken(result.data.token)
                     _loginState.value = result
-                    println("Login successful, token: ${token}")
+                    println("Login successful, token persisted: ${result.data.token}")
                 }
                 is Result.Error -> {
                     _loginState.value = result
@@ -47,10 +53,9 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             when (val result = repository.register(name, email, password)) {
                 is Result.Success -> {
-                    token = result.data.token
-                    SessionManager.saveToken(token!!)
+                    tokenRepository.saveToken(result.data.token)
                     _registerState.value = result
-                    println("Register successful, token: ${token}")
+                    println("Register successful, token persisted: ${result.data.token}")
                 }
                 is Result.Error -> {
                     _registerState.value = result
@@ -60,4 +65,13 @@ class AuthViewModel : ViewModel() {
             }
         }
     }
+
+    fun logout() {
+        viewModelScope.launch {
+            tokenRepository.clearToken()
+            println("Token cleared from DataStore")
+        }
+    }
 }
+
+
