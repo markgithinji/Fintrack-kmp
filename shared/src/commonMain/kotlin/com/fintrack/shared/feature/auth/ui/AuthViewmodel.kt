@@ -5,8 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.auth.domain.AuthResponse
 import com.fintrack.shared.feature.auth.data.repository.AuthRepository
 import com.fintrack.shared.feature.core.Result
-import com.fintrack.shared.feature.auth.data.SessionManager
-import com.fintrack.shared.feature.auth.data.local.TokenRepository
+import com.fintrack.shared.feature.auth.data.repository.TokenRepository
 import com.fintrack.shared.feature.auth.data.local.createTokenDataStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

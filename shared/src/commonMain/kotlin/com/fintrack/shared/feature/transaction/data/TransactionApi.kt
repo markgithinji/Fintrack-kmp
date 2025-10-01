@@ -1,6 +1,9 @@
 package com.fintrack.shared.feature.transaction.data
 
-import com.fintrack.shared.feature.auth.data.SessionManager
+import com.fintrack.shared.feature.auth.data.local.TokenProvider
+import com.fintrack.shared.feature.auth.data.local.TokenProviderImpl
+import com.fintrack.shared.feature.auth.data.repository.TokenRepository
+import com.fintrack.shared.feature.auth.data.local.createTokenDataStore
 import com.fintrack.shared.feature.core.ApiConfig
 import com.fintrack.shared.feature.core.ApiResponse
 import com.fintrack.shared.feature.core.PaginatedTransactionDto
@@ -13,8 +16,10 @@ import com.fintrack.shared.feature.summary.data.model.HighlightsSummaryDto
 import com.fintrack.shared.feature.summary.data.model.OverviewSummaryDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.plugin
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
@@ -28,16 +33,22 @@ import kotlinx.serialization.json.Json
 class TransactionApi(
     private val baseUrl: String = ApiConfig.BASE_URL,
 ) {
+    private val tokenRepository = TokenRepository(createTokenDataStore())
+    private val tokenProvider: TokenProvider = TokenProviderImpl(tokenRepository)
+
     private val client = HttpClient {
         install(ContentNegotiation) {
             json(Json { ignoreUnknownKeys = true; explicitNulls = false })
         }
 
-        // Automatically add Authorization header for every request
-        defaultRequest {
-            SessionManager.token?.let {
-                header("Authorization", "Bearer $it")
+        install(HttpSend)
+    }.apply {
+        plugin(HttpSend).intercept { request ->
+            val token = tokenProvider.getToken()
+            if (!token.isNullOrEmpty()) {
+                request.headers.append("Authorization", "Bearer $token")
             }
+            execute(request)
         }
     }
 

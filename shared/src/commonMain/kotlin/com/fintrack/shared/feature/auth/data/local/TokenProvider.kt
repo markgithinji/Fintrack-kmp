@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.auth.data.local
 
+import com.fintrack.shared.feature.auth.data.repository.TokenRepository
 import kotlinx.coroutines.flow.firstOrNull
 
 interface TokenProvider {
