@@ -29,8 +29,9 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
-            implementation("io.ktor:ktor-client-okhttp:2.3.12")
+            implementation("io.ktor:ktor-client-okhttp:3.3.0")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
+            implementation("androidx.datastore:datastore-preferences:1.1.1")
 
         }
         commonMain.dependencies {
@@ -43,12 +44,13 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.0-rc01")
-            implementation("io.ktor:ktor-client-core:2.3.12")
-            implementation("io.ktor:ktor-client-content-negotiation:2.3.12")
-            implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
+            implementation("io.ktor:ktor-client-core:3.3.0")
+            implementation("io.ktor:ktor-client-content-negotiation:3.3.0")
+            implementation("io.ktor:ktor-serialization-kotlinx-json:3.3.0")
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
             implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
             implementation("network.chaintech:cmpcharts:2.0.6")
+            implementation("androidx.datastore:datastore-preferences-core:1.1.1")
 
         }
         iosMain.dependencies {
