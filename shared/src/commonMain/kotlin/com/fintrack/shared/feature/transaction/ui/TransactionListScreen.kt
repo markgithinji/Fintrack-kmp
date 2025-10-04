@@ -21,10 +21,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -64,10 +68,13 @@ import com.fintrack.shared.feature.summary.domain.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.DaySummary
 import com.fintrack.shared.feature.summary.domain.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.OverviewSummary
+import com.fintrack.shared.feature.summary.domain.TransactionCountSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.ui.AccountIcon
 import com.fintrack.shared.feature.transaction.model.Category
 import com.fintrack.shared.feature.transaction.model.Transaction
+import com.fintrack.shared.feature.transaction.ui.addtransaction.AnimatedShimmerBox
+import com.fintrack.shared.feature.transaction.ui.home.GreenIncome
 import kotlinx.datetime.LocalDate
 import network.chaintech.chartsLib.ui.linechart.model.IntersectionPoint
 import network.chaintech.cmpcharts.axis.AxisProperties
@@ -82,7 +89,6 @@ import network.chaintech.cmpcharts.ui.linechart.model.Line
 import network.chaintech.cmpcharts.ui.linechart.model.LineChartProperties
 import network.chaintech.cmpcharts.ui.linechart.model.LinePlotData
 import network.chaintech.cmpcharts.ui.linechart.model.LineStyle
-
 @Composable
 fun TransactionListScreen(
     accountId: Int,
@@ -105,88 +111,43 @@ fun TransactionListScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // --- Show transaction count header ---
         item {
-            when (transactionCounts) {
-                is Result.Success -> {
-                    val counts = (transactionCounts as Result.Success).data
-                    TransactionCountHeader(
-                        isIncome = isIncome,
-                        income = counts.totalIncomeTransactions,
-                        expense = counts.totalExpenseTransactions,
-                        total = counts.totalTransactions
-                    )
-                }
-                is Result.Error -> {
-                    Text(
-                        text = "⚠️ Failed to load count",
-                        color = Color.Red,
-                        fontSize = 12.sp
-                    )
-                }
-                else -> {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                    }
-                }
-            }
+            TransactionCountHeaderWithLoading(
+                transactionCounts = transactionCounts,
+                isIncome = isIncome
+            )
         }
-
-        // --- Transactions list ---
-        when (transactionsResult) {
-            null, is Result.Loading -> {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+        when {
+            transactionsResult is Result.Loading -> {
+                // Show 5 loading transaction items
+                items(5) { index ->
+                    LoadingTransactionItem()
                 }
             }
 
-            is Result.Error -> {
-                val message = (transactionsResult as Result.Error).exception.message ?: "Unknown error"
+            transactionsResult is Result.Error -> {
                 item {
-                    Text(
-                        text = "⚠️ $message",
-                        color = Color.Red,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(16.dp)
+                    ErrorState(
+                        message = (transactionsResult as Result.Error).exception.message ?: "Failed to load transactions",
+                        onRetry = { transactionsViewModel.refresh(accountId) }
                     )
                 }
             }
 
-            is Result.Success -> {
+            transactionsResult is Result.Success -> {
                 val transactions = (transactionsResult as Result.Success).data
                     .filter { isIncome == null || it.isIncome == isIncome }
 
                 if (transactions.isEmpty()) {
                     item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(48.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "No transactions found",
-                                color = Color.Gray,
-                                fontSize = 14.sp
-                            )
-                        }
+                        EmptyState(isIncome = isIncome)
                     }
                 } else {
                     items(transactions) { transaction ->
                         TransactionItem(transaction = transaction)
                     }
 
-                    // Load more
+                    // Load more indicator
                     item {
                         LaunchedEffect(transactions.size) {
                             transactionsViewModel.loadMore()
@@ -194,12 +155,13 @@ fun TransactionListScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 12.dp),
+                                .padding(vertical = 16.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
+                                strokeWidth = 2.dp,
+                                color = GreenIncome
                             )
                         }
                     }
@@ -208,6 +170,256 @@ fun TransactionListScreen(
         }
     }
 }
+
+@Composable
+fun TransactionCountHeaderWithLoading(
+    transactionCounts: Result<TransactionCountSummary>,
+    isIncome: Boolean?
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        when (transactionCounts) {
+            is Result.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = GreenIncome
+                        )
+                        Text(
+                            text = "Loading transaction count...",
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+
+            is Result.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = "Error",
+                            tint = Color.Red,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "Failed to load count",
+                            color = Color.Red,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+
+            is Result.Success -> {
+                val counts = transactionCounts.data
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    TransactionCountHeader(
+                        isIncome = isIncome,
+                        income = counts.totalIncomeTransactions,
+                        expense = counts.totalExpenseTransactions,
+                        total = counts.totalTransactions
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LoadingTransactionItem() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Loading icon
+                AnimatedShimmerBox(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(CircleShape)
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    // Loading category name
+                    AnimatedShimmerBox(
+                        modifier = Modifier
+                            .width(120.dp)
+                            .height(16.dp)
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    // Loading description
+                    AnimatedShimmerBox(
+                        modifier = Modifier
+                            .width(80.dp)
+                            .height(12.dp)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    // Loading date
+                    AnimatedShimmerBox(
+                        modifier = Modifier
+                            .width(60.dp)
+                            .height(10.dp)
+                    )
+                }
+            }
+
+            // Loading amount
+            AnimatedShimmerBox(
+                modifier = Modifier
+                    .width(70.dp)
+                    .height(16.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun ErrorState(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.ErrorOutline,
+                contentDescription = "Error",
+                tint = Color.Red,
+                modifier = Modifier.size(48.dp)
+            )
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Unable to Load Transactions",
+                    color = Color.Black,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = message,
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Button(
+                onClick = onRetry,
+                colors = ButtonDefaults.buttonColors(containerColor = GreenIncome),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.height(40.dp)
+            ) {
+                Text(
+                    text = "Try Again",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun EmptyState(isIncome: Boolean?) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
+                contentDescription = "No transactions",
+                tint = Color.Gray,
+                modifier = Modifier.size(48.dp)
+            )
+
+            Text(
+                text = when (isIncome) {
+                    true -> "No Income Transactions"
+                    false -> "No Expense Transactions"
+                    else -> "No Transactions Found"
+                },
+                color = Color.Black,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = when (isIncome) {
+                    true -> "Income transactions will appear here"
+                    false -> "Expense transactions will appear here"
+                    else -> "Transactions will appear here once you add them"
+                },
+                color = Color.Gray,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
 
 @Composable
 fun TransactionCountHeader(
