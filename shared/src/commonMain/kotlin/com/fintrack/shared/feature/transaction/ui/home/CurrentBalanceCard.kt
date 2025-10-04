@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.transaction.ui.home
 
-
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -23,7 +23,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -51,15 +55,14 @@ import androidx.compose.ui.window.Dialog
 import com.fintrack.shared.feature.account.domain.Account
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.transaction.ui.AccountIcon
-
-
 @Composable
 fun CurrentBalanceCard(
-    account: Account,
+    account: Account?,
+    isLoading: Boolean = false,
+    isError: Boolean = false,
+    errorMessage: String? = null,
     onChangeAccountClicked: () -> Unit
 ) {
-    val balance = account.balance ?: 0.0
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -72,59 +75,151 @@ fun CurrentBalanceCard(
         ) {
             LowerRightWavesBackground(modifier = Modifier.matchParentSize())
 
-            Row(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .fillMaxWidth()
-                    .padding(start = 24.dp, end = 24.dp, top = 18.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = AccountIcon.fromAccountName(account.name).icon,
-                        contentDescription = "Bank",
-                        tint = Color.White,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(account.name, fontSize = 12.sp, color = Color.White)
+            when {
+                isLoading -> {
+                    // Loading state
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(color = Color.White)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Loading account...",
+                                color = Color.White.copy(alpha = 0.8f),
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
                 }
 
-                Button(
-                    onClick = onChangeAccountClicked,
-                    colors = ButtonDefaults.buttonColors(containerColor = LightGray),
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.height(26.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp)
-                ) {
-                    Text(
-                        text = "Change Account",
-                        color = Color.Black,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                isError -> {
+                    // Error state
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ErrorOutline,
+                            contentDescription = "Error",
+                            tint = Color.White,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = errorMessage ?: "Failed to load account",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 18.sp
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(
+                            onClick = onChangeAccountClicked,
+                            colors = ButtonDefaults.buttonColors(containerColor = LightGray),
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.height(32.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp)
+                        ) {
+                            Text(
+                                text = "Try Again",
+                                color = Color.Black,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
                 }
-            }
 
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 24.dp, bottom = 8.dp)
-            ) {
-                val formattedBalance = remember(balance) { formatAmount(balance) }
-                Text(
-                    text = "Current Balance",
-                    fontSize = 14.sp,
-                    color = Color.White.copy(alpha = 0.7f)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "KSh $formattedBalance",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+                account == null -> {
+                    // Empty state
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.AccountBalanceWallet,
+                                contentDescription = "No account",
+                                tint = Color.White.copy(alpha = 0.7f),
+                                modifier = Modifier.size(32.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "No account data",
+                                color = Color.White.copy(alpha = 0.8f),
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                }
+
+                else -> {
+                    val balance = account.balance ?: 0.0
+
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .fillMaxWidth()
+                            .padding(start = 24.dp, end = 24.dp, top = 18.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = AccountIcon.fromAccountName(account.name).icon,
+                                contentDescription = "Bank",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(account.name, fontSize = 12.sp, color = Color.White)
+                        }
+
+                        Button(
+                            onClick = onChangeAccountClicked,
+                            colors = ButtonDefaults.buttonColors(containerColor = LightGray),
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.height(26.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp)
+                        ) {
+                            Text(
+                                text = "Change Account",
+                                color = Color.Black,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 24.dp, bottom = 8.dp)
+                    ) {
+                        val formattedBalance = remember(balance) { formatAmount(balance) }
+                        Text(
+                            text = "Current Balance",
+                            fontSize = 14.sp,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "KSh $formattedBalance",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
             }
         }
     }
@@ -134,7 +229,8 @@ fun AccountSelectionDialog(
     accounts: List<Account>,
     selectedAccountId: Int?,
     onAccountSelected: (Int) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isLoading: Boolean = false
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -157,60 +253,103 @@ fun AccountSelectionDialog(
                 Divider(color = LightGray, thickness = 1.dp)
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Scrollable accounts list
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 300.dp)
-                ) {
-                    items(accounts) { acc ->
-                        val isSelected = selectedAccountId == acc.id
-                        val backgroundColor by animateColorAsState(
-                            if (isSelected) Color(0xFFE0F7FA).copy(alpha = 0.5f)
-                            else Color.Transparent
-                        )
+                if (isLoading) {
+                    // Loading state for accounts list
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(color = Color(0xFF00ACC1))
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                "Loading accounts...",
+                                color = Color.Gray,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                } else if (accounts.isEmpty()) {
+                    // Empty state
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.AccountBalance,
+                                contentDescription = "No accounts",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                "No accounts available",
+                                color = Color.Gray,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
+                } else {
+                    // Scrollable accounts list
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 300.dp)
+                    ) {
+                        items(accounts) { acc ->
+                            val isSelected = selectedAccountId == acc.id
+                            val backgroundColor by animateColorAsState(
+                                if (isSelected) Color(0xFFE0F7FA).copy(alpha = 0.5f)
+                                else Color.Transparent
+                            )
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp, horizontal = 4.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(backgroundColor)
-                                .clickable(
-                                    onClick = { onAccountSelected(acc.id); onDismiss() },
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                )
-                                .padding(vertical = 12.dp, horizontal = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ){
-                            Box(
+                            Row(
                                 modifier = Modifier
-                                    .size(36.dp)
-                                    .background(
-                                        color = if (isSelected) Color(0xFF00ACC1).copy(alpha = 0.1f)
-                                        else Color(0xFFF0F0F0),
-                                        shape = CircleShape
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = AccountIcon.fromAccountName(acc.name).icon,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp),
-                                    tint = if (isSelected) Color(0xFF00ACC1) else DarkGray
-                                )
-                            }
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp, horizontal = 4.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(backgroundColor)
+                                    .clickable(
+                                        onClick = { onAccountSelected(acc.id); onDismiss() },
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    )
+                                    .padding(vertical = 12.dp, horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ){
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .background(
+                                            color = if (isSelected) Color(0xFF00ACC1).copy(alpha = 0.1f)
+                                            else Color(0xFFF0F0F0),
+                                            shape = CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = AccountIcon.fromAccountName(acc.name).icon,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp),
+                                        tint = if (isSelected) Color(0xFF00ACC1) else DarkGray
+                                    )
+                                }
 
-                            Spacer(Modifier.width(12.dp))
+                                Spacer(Modifier.width(12.dp))
 
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(acc.name, fontWeight = FontWeight.Medium, fontSize = 16.sp, color = Color(0xFF212121))
-                                Text("KSh ${formatAmount(acc.balance ?: 0.0)}", fontSize = 12.sp, color = Color.Gray)
-                            }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(acc.name, fontWeight = FontWeight.Medium, fontSize = 16.sp, color = Color(0xFF212121))
+                                    Text("KSh ${formatAmount(acc.balance ?: 0.0)}", fontSize = 12.sp, color = Color.Gray)
+                                }
 
-                            if (isSelected) {
-                                Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF00ACC1), modifier = Modifier.size(20.dp))
+                                if (isSelected) {
+                                    Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF00ACC1), modifier = Modifier.size(20.dp))
+                                }
                             }
                         }
                     }
@@ -236,71 +375,49 @@ fun AccountSelectionDialog(
     }
 }
 
-
 @Composable
 fun CurrentBalanceCardWrapper(
     accountsResult: Result<List<Account>>?,
     selectedAccountResult: Result<Account>?,
-    onAccountSelected: (Int) -> Unit
+    onAccountSelected: (Int) -> Unit,
+    onRetry: () -> Unit = { /* Default empty retry function */ }
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
-    when (accountsResult) {
-        null, is Result.Loading -> {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(130.dp)
-                    .background(DarkGray),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = Color.White)
+    val isAccountsLoading = accountsResult is Result.Loading
+    val isSelectedAccountLoading = selectedAccountResult is Result.Loading
+    val isLoading = isAccountsLoading || isSelectedAccountLoading
+
+    val isError = accountsResult is Result.Error || selectedAccountResult is Result.Error
+    val errorMessage = when {
+        accountsResult is Result.Error -> accountsResult.exception.message ?: "Failed to load accounts"
+        selectedAccountResult is Result.Error -> selectedAccountResult.exception.message ?: "Failed to load account"
+        else -> null
+    }
+
+    CurrentBalanceCard(
+        account = when (selectedAccountResult) {
+            is Result.Success -> selectedAccountResult.data
+            else -> null
+        },
+        isLoading = isLoading,
+        isError = isError,
+        errorMessage = errorMessage,
+        onChangeAccountClicked = {
+            if (!isLoading && !isError) {
+                showDialog = true
+            } else if (isError) {
+                onRetry()
             }
         }
+    )
 
-        is Result.Error -> {
-            val message = accountsResult.exception.message ?: "Unknown error"
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(130.dp)
-                    .background(DarkGray),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Error: $message", color = Color.Red)
-            }
-        }
-
-        is Result.Success -> {
-            val accounts = accountsResult.data
-            if (accounts.isEmpty()) {
-                Text(
-                    "No accounts found",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(130.dp)
-                        .background(DarkGray),
-                    color = Color.White,
-                    textAlign = TextAlign.Center
-                )
-                return
-            }
-
-            val account = (selectedAccountResult as? Result.Success)?.data ?: accounts.first()
-
-            CurrentBalanceCard(
-                account = account,
-                onChangeAccountClicked = { showDialog = true }
-            )
-
-            if (showDialog) {
-                AccountSelectionDialog(
-                    accounts = accounts,
-                    selectedAccountId = account.id,
-                    onAccountSelected = onAccountSelected,
-                    onDismiss = { showDialog = false }
-                )
-            }
-        }
+    if (showDialog && accountsResult is Result.Success) {
+        AccountSelectionDialog(
+            accounts = accountsResult.data,
+            selectedAccountId = (selectedAccountResult as? Result.Success)?.data?.id,
+            onAccountSelected = onAccountSelected,
+            onDismiss = { showDialog = false }
+        )
     }
 }

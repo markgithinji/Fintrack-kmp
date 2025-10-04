@@ -49,8 +49,9 @@ class StatisticsViewModel : ViewModel() {
     private val _selectedPeriod = MutableStateFlow<Period?>(null)
     val selectedPeriod: StateFlow<Period?> = _selectedPeriod
 
-    private val _categoryComparisons = MutableStateFlow<Result<List<CategoryComparison>>?>(null)
-    val categoryComparisons: StateFlow<Result<List<CategoryComparison>>?> = _categoryComparisons
+    // FIX: Initialize with Result.Loading instead of null
+    private val _categoryComparisons = MutableStateFlow<Result<List<CategoryComparison>>>(Result.Loading)
+    val categoryComparisons: StateFlow<Result<List<CategoryComparison>>> = _categoryComparisons
 
     private val _transactionCounts = MutableStateFlow<Result<TransactionCountSummary>>(Result.Loading)
     val transactionCounts: StateFlow<Result<TransactionCountSummary>> = _transactionCounts
@@ -127,6 +128,8 @@ class StatisticsViewModel : ViewModel() {
     // --- Category comparisons ---
     fun loadCategoryComparisons(accountId: Int? = null) {
         viewModelScope.launch {
+            // FIX: Set loading state before making the API call
+            _categoryComparisons.value = Result.Loading
             _categoryComparisons.value = repo.getCategoryComparisons(accountId)
         }
     }
@@ -168,7 +171,7 @@ class StatisticsViewModel : ViewModel() {
     fun reloadAllForAccount(accountId: Int?) {
         loadHighlights(accountId)
         loadOverview(accountId)
-        loadCategoryComparisons(accountId)
+        loadCategoryComparisons(accountId) // This will now show loading state
         loadAvailablePeriods(accountId)
         accountId?.let { loadTransactionCounts(it) }
     }

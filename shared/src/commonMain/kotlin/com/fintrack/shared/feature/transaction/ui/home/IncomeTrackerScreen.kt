@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -59,6 +60,10 @@ import com.fintrack.shared.feature.summary.domain.OverviewSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.model.Category
 import com.fintrack.shared.feature.transaction.ui.TransactionListViewModel
+import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingBarChart
+import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingCategoryItem
+import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingInfoCard
+import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingLineChart
 import com.fintrack.shared.feature.transaction.ui.toColor
 import com.fintrack.shared.feature.transaction.ui.toIcon
 import kotlinx.datetime.DateTimeUnit
@@ -125,22 +130,32 @@ fun IncomeTrackerContent(
                 selectedAccountResult = selectedAccountResult,
                 onAccountSelected = { accountId ->
                     accountsViewModel.selectAccount(accountId)
+                },
+                onRetry = {
+                    accountsViewModel.reloadAccounts()
                 }
             )
         }
 
         item {
-            val accountId = (selectedAccountResult as? Result.Success)?.data?.id ?: return@item
             IncomeExpenseCards(
-                accountResult = selectedAccountResult,
+                accountResult = selectedAccountResult ?: Result.Loading,
                 onCardClick = { isIncome ->
-                    onCardClick(accountId, isIncome)
+                    val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                    if (accountId != null) {
+                        onCardClick(accountId, isIncome)
+                    }
                 }
             )
         }
 
         item { IncomeExpensesOverview(overviewResult) }
-        item { CategoryComparisonCard(categoryComparisonResult) }
+        item {
+            CategoryComparisonCard(
+                categoryComparisonResult = categoryComparisonResult,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
         item {
             TransactionsListCard(
                 transactionsResult = transactionsResult,
@@ -151,7 +166,6 @@ fun IncomeTrackerContent(
                 }
             )
         }
-
     }
 }
 
@@ -165,7 +179,6 @@ fun LocalDate.shortDayName(): String {
         else -> ""
     }
 }
-
 @Composable
 fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
     var selectedPeriod by remember { mutableStateOf(OverviewPeriod.Weekly) }
@@ -173,32 +186,161 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
 
     when (overviewResult) {
         is Result.Loading -> {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp),
-                contentAlignment = Alignment.Center
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color.White)
             ) {
-                CircularProgressIndicator()
+                // Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column {
+                        Text("Overview", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.size(10.dp).background(GreenIncome))
+                            Text(" Income", fontSize = 12.sp)
+                            Spacer(Modifier.width(8.dp))
+                            Box(Modifier.size(10.dp).background(PinkExpense))
+                            Text(" Expenses", fontSize = 12.sp)
+                        }
+                    }
+
+                    Box {
+                        Row(
+                            modifier = Modifier.clickable { expanded = true },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(selectedPeriod.name, color = Color.Gray, fontSize = 12.sp)
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = "Select period",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            DropdownMenuItem(
+                                text = { Text("Weekly") },
+                                onClick = {
+                                    selectedPeriod = OverviewPeriod.Weekly
+                                    expanded = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Monthly") },
+                                onClick = {
+                                    selectedPeriod = OverviewPeriod.Monthly
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Show loading chart based on selected period
+                when (selectedPeriod) {
+                    OverviewPeriod.Weekly -> LoadingBarChart()
+                    OverviewPeriod.Monthly -> LoadingLineChart()
+                }
             }
         }
 
         is Result.Error -> {
-            Text("Error: ${overviewResult.exception.message}", color = Color.Red)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color.White)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column {
+                        Text("Overview", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.size(10.dp).background(GreenIncome))
+                            Text(" Income", fontSize = 12.sp)
+                            Spacer(Modifier.width(8.dp))
+                            Box(Modifier.size(10.dp).background(PinkExpense))
+                            Text(" Expenses", fontSize = 12.sp)
+                        }
+                    }
+
+                    Box {
+                        Row(
+                            modifier = Modifier.clickable { expanded = true },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(selectedPeriod.name, color = Color.Gray, fontSize = 12.sp)
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = "Select period",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            DropdownMenuItem(
+                                text = { Text("Weekly") },
+                                onClick = {
+                                    selectedPeriod = OverviewPeriod.Weekly
+                                    expanded = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Monthly") },
+                                onClick = {
+                                    selectedPeriod = OverviewPeriod.Monthly
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // Error content
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.Error,
+                            contentDescription = "Error",
+                            tint = Color.Red,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Failed to load overview",
+                            color = Color.Red,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
         }
 
         is Result.Success -> {
             val overview = overviewResult.data
-
-            // --- DEBUG logs ---
-            println("DEBUG: Weekly Overview:")
-            overview.weeklyOverview.forEach {
-                println("Date=${it.date}, Income=${it.income}, Expense=${it.expense}")
-            }
-            println("DEBUG: Monthly Overview:")
-            overview.monthlyOverview.forEach {
-                println("Date=${it.date}, Income=${it.income}, Expense=${it.expense}")
-            }
 
             Column(
                 modifier = Modifier
@@ -263,17 +405,14 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
 
                 when (selectedPeriod) {
                     OverviewPeriod.Weekly -> {
-                        // Map date to weekday
                         val weeklyData = overview.weeklyOverview.map {
                             val dayName = LocalDate.parse(it.date).shortDayName()
                             dayName to (it.income to it.expense)
                         }
-                        println("DEBUG: Weekly chart mapped data: $weeklyData")
                         BarChart(data = weeklyData, modifier = Modifier.padding(16.dp))
                     }
 
                     OverviewPeriod.Monthly -> {
-                        println("DEBUG: Monthly chart data: ${overview.monthlyOverview}")
                         MonthlyLineChartDefault(monthly = overview.monthlyOverview)
                     }
                 }
@@ -281,7 +420,6 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
         }
     }
 }
-
 
 enum class OverviewPeriod {
     Weekly, Monthly
@@ -495,12 +633,11 @@ fun MonthlyLineChartDefault(
 }
 @Composable
 fun CategoryComparisonCard(
-    categoryComparisonResult: Result<List<CategoryComparison>>?,
+    categoryComparisonResult: Result<List<CategoryComparison>>,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier
-            .fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
@@ -515,110 +652,10 @@ fun CategoryComparisonCard(
 
             when (categoryComparisonResult) {
                 is Result.Loading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(60.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = Color(0xFF6200EE))
-                    }
-                }
-
-                is Result.Error -> {
-                    Text(
-                        text = "Error: ${categoryComparisonResult.exception.message ?: "Unknown error"}",
-                        color = Color.Red,
-                        fontSize = 14.sp
-                    )
-                }
-
-                is Result.Success -> {
-                    categoryComparisonResult.data.forEachIndexed { index, comparison ->
-                        val category = Category.fromName(
-                            comparison.category,
-                            comparison.currentTotal < 0 || comparison.previousTotal < 0
-                        )
-                        val icon = category.toIcon()
-                        val bgColor = category.toColor().copy(alpha = 0.15f)
-                        val iconTint = category.toColor()
-
-                        val positive = comparison.changePercentage >= 0
-                        val arrow = if (positive) "↑" else "↓"
-                        val changeColor = if (positive) Color(0xFF4CAF50) else Color.Red
-
-                        val periodLabel = when (comparison.period.lowercase()) {
-                            "weekly" -> "week"
-                            "monthly" -> "month"
-                            "yearly" -> "year"
-                            else -> comparison.period
-                        }
-
-                        val changeText = if (positive) {
-                            "${comparison.changePercentage.formatToSinglePrecision()}% more than last $periodLabel"
-                        } else {
-                            "${(comparison.changePercentage * -1).formatToSinglePrecision()}% less than last $periodLabel"
-                        }
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.width(150.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .background(bgColor, CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = icon,
-                                        contentDescription = comparison.category,
-                                        tint = iconTint,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(
-                                    text = comparison.category,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color.Black,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.weight(1f))
-
-                            Box(
-                                modifier = Modifier.width(180.dp),
-                                contentAlignment = Alignment.CenterStart
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = arrow,
-                                        color = changeColor,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 16.sp
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = changeText,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = changeColor
-                                    )
-                                }
-                            }
-                        }
-
-                        if (index != categoryComparisonResult.data.lastIndex) {
+                    // Show 2 loading items
+                    repeat(2) { index ->
+                        LoadingCategoryItem()
+                        if (index < 2) {
                             HorizontalDivider(
                                 modifier = Modifier
                                     .padding(vertical = 8.dp)
@@ -631,14 +668,142 @@ fun CategoryComparisonCard(
                     }
                 }
 
-                null -> {
-                    Text("No data", fontSize = 14.sp, color = Color.Gray)
+                is Result.Error -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(80.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.Error,
+                                contentDescription = "Error",
+                                tint = Color.Red,
+                                modifier = Modifier.size(32.dp)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "Failed to load categories",
+                                color = Color.Red,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                }
+
+                is Result.Success -> {
+                    if (categoryComparisonResult.data.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(60.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("No category data available", fontSize = 14.sp, color = Color.Gray)
+                        }
+                    } else {
+                        categoryComparisonResult.data.forEachIndexed { index, comparison ->
+                            val category = Category.fromName(
+                                comparison.category,
+                                comparison.currentTotal < 0 || comparison.previousTotal < 0
+                            )
+                            val icon = category.toIcon()
+                            val bgColor = category.toColor().copy(alpha = 0.15f)
+                            val iconTint = category.toColor()
+
+                            val positive = comparison.changePercentage >= 0
+                            val arrow = if (positive) "↑" else "↓"
+                            val changeColor = if (positive) Color(0xFF4CAF50) else Color.Red
+
+                            val periodLabel = when (comparison.period.lowercase()) {
+                                "weekly" -> "week"
+                                "monthly" -> "month"
+                                "yearly" -> "year"
+                                else -> comparison.period
+                            }
+
+                            val changeText = if (positive) {
+                                "${comparison.changePercentage.formatToSinglePrecision()}% more than last $periodLabel"
+                            } else {
+                                "${(comparison.changePercentage * -1).formatToSinglePrecision()}% less than last $periodLabel"
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.width(150.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .background(bgColor, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = icon,
+                                            contentDescription = comparison.category,
+                                            tint = iconTint,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        text = comparison.category,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color.Black,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.weight(1f))
+
+                                Box(
+                                    modifier = Modifier.width(180.dp),
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = arrow,
+                                            color = changeColor,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 16.sp
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = changeText,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = changeColor
+                                        )
+                                    }
+                                }
+                            }
+
+                            if (index != categoryComparisonResult.data.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier
+                                        .padding(vertical = 8.dp)
+                                        .fillMaxWidth(0.85f)
+                                        .align(Alignment.CenterHorizontally),
+                                    thickness = 0.6.dp,
+                                    color = Color(0xFFE0E0E0)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
-
 
 
 
@@ -652,42 +817,45 @@ fun Double.formatToSinglePrecision(): String =
         rounded.toString()
     }
 
-
 @Composable
 fun IncomeExpenseCards(
-    accountResult: Result<Account>?,
+    accountResult: Result<Account>,
     onCardClick: (isIncome: Boolean) -> Unit
 ) {
-    when (accountResult) {
-        null, is Result.Loading -> {
-            Row(
-                modifier = Modifier.fillMaxWidth().height(80.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                CircularProgressIndicator(color = Color.White)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        when (accountResult) {
+            is Result.Loading -> {
+                // Show loading cards
+                LoadingInfoCard(modifier = Modifier.weight(1f))
+                LoadingInfoCard(modifier = Modifier.weight(1f))
             }
-        }
 
-        is Result.Error -> {
-            val message = accountResult.exception.message ?: "Unknown error"
-            Box(
-                modifier = Modifier.fillMaxWidth().height(80.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Error: $message", color = Color.Red)
+            is Result.Error -> {
+                // Show error state
+                InfoCard(
+                    title = "Total Income",
+                    amount = "Error",
+                    isIncomeCard = true,
+                    onClick = null,
+                    modifier = Modifier.weight(1f)
+                )
+                InfoCard(
+                    title = "Total Expense",
+                    amount = "Error",
+                    isIncomeCard = false,
+                    onClick = null,
+                    modifier = Modifier.weight(1f)
+                )
             }
-        }
 
-        is Result.Success -> {
-            val account = accountResult.data
-            val totalIncome = account.income ?: 0.0
-            val totalExpense = account.expense ?: 0.0
+            is Result.Success -> {
+                val account = accountResult.data
+                val totalIncome = account.income ?: 0.0
+                val totalExpense = account.expense ?: 0.0
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
                 InfoCard(
                     title = "Total Income",
                     amount = "KSh ${formatAmount(totalIncome)}",
@@ -707,6 +875,7 @@ fun IncomeExpenseCards(
         }
     }
 }
+
 
 
 
