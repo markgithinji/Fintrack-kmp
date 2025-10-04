@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui
+package com.fintrack.shared.feature.summary.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,8 +41,6 @@ import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.summary.domain.CategorySummary
 import com.fintrack.shared.feature.summary.domain.DistributionSummary
 import com.fintrack.shared.feature.core.Result
-import com.fintrack.shared.feature.summary.ui.Period
-import com.fintrack.shared.feature.summary.ui.TabType
 
 // --- Segment Colors ---
 val SegmentColors = listOf(

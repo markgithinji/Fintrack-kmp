@@ -65,7 +65,7 @@ import com.fintrack.shared.feature.summary.domain.DaySummary
 import com.fintrack.shared.feature.summary.domain.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.OverviewSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
-import com.fintrack.shared.feature.transaction.model.AccountIcon
+import com.fintrack.shared.feature.transaction.ui.AccountIcon
 import com.fintrack.shared.feature.transaction.model.Category
 import com.fintrack.shared.feature.transaction.model.Transaction
 import kotlinx.datetime.LocalDate

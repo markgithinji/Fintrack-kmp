@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui
+package com.fintrack.shared.feature.transaction.ui.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,22 +20,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,15 +41,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.DarkGray
-import androidx.compose.ui.graphics.Color.Companion.LightGray
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,36 +55,24 @@ import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.summary.domain.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.DaySummary
-import com.fintrack.shared.feature.summary.domain.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.OverviewSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
-import com.fintrack.shared.feature.transaction.model.AccountIcon
 import com.fintrack.shared.feature.transaction.model.Category
+import com.fintrack.shared.feature.transaction.ui.TransactionListViewModel
+import com.fintrack.shared.feature.transaction.ui.toColor
+import com.fintrack.shared.feature.transaction.ui.toIcon
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toLocalDate
 import kotlinx.datetime.until
 import network.chaintech.chartsLib.ui.linechart.model.IntersectionPoint
 import network.chaintech.cmpcharts.axis.AxisProperties
-import network.chaintech.cmpcharts.common.components.Legends
-import network.chaintech.cmpcharts.common.extensions.formatNumber
 import network.chaintech.cmpcharts.common.extensions.formatToSinglePrecision
-import network.chaintech.cmpcharts.common.extensions.getMaxElementInYAxis
-import network.chaintech.cmpcharts.common.model.LegendLabel
-import network.chaintech.cmpcharts.common.model.LegendsConfig
-import network.chaintech.cmpcharts.common.model.PlotType
 import network.chaintech.cmpcharts.common.model.Point
 import network.chaintech.cmpcharts.common.ui.GridLinesUtil
 import network.chaintech.cmpcharts.common.ui.SelectionHighlightPoint
 import network.chaintech.cmpcharts.common.ui.SelectionHighlightPopUp
 import network.chaintech.cmpcharts.common.ui.ShadowUnderLine
-import network.chaintech.cmpcharts.ui.barchart.StackedBarChart
-import network.chaintech.cmpcharts.ui.barchart.config.BarChartStyle
-import network.chaintech.cmpcharts.ui.barchart.config.BarData
-import network.chaintech.cmpcharts.ui.barchart.config.BarPlotData
-import network.chaintech.cmpcharts.ui.barchart.config.GroupBar
-import network.chaintech.cmpcharts.ui.barchart.config.GroupBarChartData
-import network.chaintech.cmpcharts.ui.barchart.config.SelectionHighlightData
 import network.chaintech.cmpcharts.ui.linechart.LineChart
 import network.chaintech.cmpcharts.ui.linechart.model.Line
 import network.chaintech.cmpcharts.ui.linechart.model.LineChartProperties
@@ -168,7 +145,8 @@ fun IncomeTrackerContent(
             TransactionsListCard(
                 transactionsResult = transactionsResult,
                 onViewAllClick = {
-                    val accountId = (selectedAccountResult as? Result.Success)?.data?.id ?: return@TransactionsListCard
+                    val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                        ?: return@TransactionsListCard
                     onCardClick(accountId, null)
                 }
             )

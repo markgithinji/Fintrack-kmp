@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui
+package com.fintrack.shared.feature.transaction.ui.home
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background

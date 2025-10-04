@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui
+package com.fintrack.shared.feature.summary.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,11 +26,6 @@ import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.summary.domain.Highlight
 import com.fintrack.shared.feature.summary.domain.StatisticsSummary
-import com.fintrack.shared.feature.summary.ui.SegmentColor2
-import com.fintrack.shared.feature.summary.ui.SegmentColor3
-import com.fintrack.shared.feature.summary.ui.SegmentColor4
-import com.fintrack.shared.feature.summary.ui.SegmentColor5
-import com.fintrack.shared.feature.summary.ui.TabType
 
 @Composable
 fun SpendingHighlightsSection(

@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui
+package com.fintrack.shared.feature.transaction.ui.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,7 +19,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,6 +30,8 @@ import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.transaction.model.Category
 import com.fintrack.shared.feature.transaction.model.Transaction
+import com.fintrack.shared.feature.transaction.ui.toColor
+import com.fintrack.shared.feature.transaction.ui.toIcon
 import kotlinx.datetime.LocalDate
 
 @Composable

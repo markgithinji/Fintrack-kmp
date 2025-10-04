@@ -25,8 +25,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.fintrack.shared.feature.transaction.ui.CategoryTotalsCardWithTabs
-import com.fintrack.shared.feature.transaction.ui.SpendingHighlightsSection
 
 // Chart segments
 val SegmentColor1 = Color(0xFFE63946) // Strong red
