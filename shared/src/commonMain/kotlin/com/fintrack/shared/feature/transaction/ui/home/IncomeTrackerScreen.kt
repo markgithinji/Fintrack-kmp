@@ -16,14 +16,24 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.TrendingDown
+import androidx.compose.material.icons.automirrored.outlined.TrendingUp
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.outlined.Analytics
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.TrendingDown
+import androidx.compose.material.icons.outlined.TrendingUp
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -31,6 +41,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,6 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,6 +72,7 @@ import com.fintrack.shared.feature.summary.domain.OverviewSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.model.Category
 import com.fintrack.shared.feature.transaction.ui.TransactionListViewModel
+import com.fintrack.shared.feature.transaction.ui.addtransaction.AnimatedShimmerBox
 import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingBarChart
 import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingCategoryItem
 import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingInfoCard
@@ -139,7 +152,7 @@ fun IncomeTrackerContent(
 
         item {
             IncomeExpenseCards(
-                accountResult = selectedAccountResult ?: Result.Loading,
+                accountResult = selectedAccountResult,
                 onCardClick = { isIncome ->
                     val accountId = (selectedAccountResult as? Result.Success)?.data?.id
                     if (accountId != null) {
@@ -631,6 +644,7 @@ fun MonthlyLineChartDefault(
         lineChartProperties = lineChartProperties
     )
 }
+
 @Composable
 fun CategoryComparisonCard(
     categoryComparisonResult: Result<List<CategoryComparison>>,
@@ -641,162 +655,68 @@ fun CategoryComparisonCard(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Category Comparison",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF212121)
-            )
-            Spacer(modifier = Modifier.height(12.dp))
+        Column(modifier = Modifier.padding(20.dp)) {
+            // Header with icon
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Analytics,
+                        contentDescription = "Analytics",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Category Trends",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             when (categoryComparisonResult) {
                 is Result.Loading -> {
-                    // Show 2 loading items
-                    repeat(2) { index ->
-                        LoadingCategoryItem()
+                    repeat(3) { index ->
+                        LoadingCategoryComparisonItem()
                         if (index < 2) {
                             HorizontalDivider(
-                                modifier = Modifier
-                                    .padding(vertical = 8.dp)
-                                    .fillMaxWidth(0.85f)
-                                    .align(Alignment.CenterHorizontally),
-                                thickness = 0.6.dp,
-                                color = Color(0xFFE0E0E0)
+                                modifier = Modifier.padding(vertical = 8.dp),
+                                thickness = 1.dp,
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
                             )
                         }
                     }
                 }
 
                 is Result.Error -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(80.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                imageVector = Icons.Default.Error,
-                                contentDescription = "Error",
-                                tint = Color.Red,
-                                modifier = Modifier.size(32.dp)
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                "Failed to load categories",
-                                color = Color.Red,
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
+                    CategoryComparisonErrorState(
+                        onRetry = { /* Add retry logic */ }
+                    )
                 }
 
                 is Result.Success -> {
                     if (categoryComparisonResult.data.isEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(60.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("No category data available", fontSize = 14.sp, color = Color.Gray)
-                        }
+                        CategoryComparisonEmptyState()
                     } else {
                         categoryComparisonResult.data.forEachIndexed { index, comparison ->
-                            val category = Category.fromName(
-                                comparison.category,
-                                comparison.currentTotal < 0 || comparison.previousTotal < 0
+                            CategoryComparisonItem(
+                                comparison = comparison,
+                                isLast = index == categoryComparisonResult.data.lastIndex
                             )
-                            val icon = category.toIcon()
-                            val bgColor = category.toColor().copy(alpha = 0.15f)
-                            val iconTint = category.toColor()
-
-                            val positive = comparison.changePercentage >= 0
-                            val arrow = if (positive) "↑" else "↓"
-                            val changeColor = if (positive) Color(0xFF4CAF50) else Color.Red
-
-                            val periodLabel = when (comparison.period.lowercase()) {
-                                "weekly" -> "week"
-                                "monthly" -> "month"
-                                "yearly" -> "year"
-                                else -> comparison.period
-                            }
-
-                            val changeText = if (positive) {
-                                "${comparison.changePercentage.formatToSinglePrecision()}% more than last $periodLabel"
-                            } else {
-                                "${(comparison.changePercentage * -1).formatToSinglePrecision()}% less than last $periodLabel"
-                            }
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.width(150.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(40.dp)
-                                            .background(bgColor, CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = icon,
-                                            contentDescription = comparison.category,
-                                            tint = iconTint,
-                                            modifier = Modifier.size(22.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(
-                                        text = comparison.category,
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = Color.Black,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.weight(1f))
-
-                                Box(
-                                    modifier = Modifier.width(180.dp),
-                                    contentAlignment = Alignment.CenterStart
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(
-                                            text = arrow,
-                                            color = changeColor,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 16.sp
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = changeText,
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = changeColor
-                                        )
-                                    }
-                                }
-                            }
-
-                            if (index != categoryComparisonResult.data.lastIndex) {
-                                HorizontalDivider(
-                                    modifier = Modifier
-                                        .padding(vertical = 8.dp)
-                                        .fillMaxWidth(0.85f)
-                                        .align(Alignment.CenterHorizontally),
-                                    thickness = 0.6.dp,
-                                    color = Color(0xFFE0E0E0)
-                                )
-                            }
                         }
                     }
                 }
@@ -804,18 +724,314 @@ fun CategoryComparisonCard(
         }
     }
 }
+@Composable
+private fun CategoryComparisonItem(
+    comparison: CategoryComparison,
+    isLast: Boolean
+) {
+    val category = Category.fromName(
+        comparison.category,
+        comparison.currentTotal < 0 || comparison.previousTotal < 0
+    )
+    val icon = category.toIcon()
+    val bgColor = category.toColor().copy(alpha = 0.15f)
+    val iconTint = category.toColor()
+
+    val positive = comparison.changePercentage >= 0
+    val arrowIcon = if (positive)
+        Icons.AutoMirrored.Outlined.TrendingUp
+    else
+        Icons.AutoMirrored.Outlined.TrendingDown
+
+    val changeColor = if (positive)
+        MaterialTheme.colorScheme.primary
+    else
+        MaterialTheme.colorScheme.error
+
+    val periodLabel = when (comparison.period.lowercase()) {
+        "weekly" -> "week"
+        "monthly" -> "month"
+        "yearly" -> "year"
+        else -> comparison.period
+    }
+
+    val changeText = if (positive) {
+        "${comparison.changePercentage.formatToSinglePrecision()}% more than last $periodLabel"
+    } else {
+        "${(comparison.changePercentage * -1).formatToSinglePrecision()}% less than last $periodLabel"
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Icon
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(bgColor, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = comparison.category,
+                    tint = iconTint,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Content area
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Horizontal layout for category info
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = comparison.category,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = comparison.currentTotal.formatToCurrency(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                // Change indicator
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = changeColor.copy(alpha = 0.1f)
+                    ),
+                    elevation = CardDefaults.cardElevation(0.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = arrowIcon,
+                            contentDescription = if (positive) "Increase" else "Decrease",
+                            tint = changeColor,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = changeText,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = changeColor,
+                            maxLines = 2,
+                            lineHeight = 14.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        // Divider
+        if (!isLast) {
+            HorizontalDivider(
+                modifier = Modifier.padding(top = 12.dp),
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+            )
+        }
+    }
+}
 
 
+@Composable
+private fun LoadingCategoryComparisonItem() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Loading icon
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(Color.LightGray.copy(alpha = 0.3f))
+        )
 
+        Spacer(modifier = Modifier.width(16.dp))
 
-fun Double.formatToSinglePrecision(): String =
-    if (this % 1.0 == 0.0) {
+        Column(modifier = Modifier.weight(1f)) {
+            Box(
+                modifier = Modifier
+                    .width(120.dp)
+                    .height(20.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color.LightGray.copy(alpha = 0.3f))
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .height(16.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color.LightGray.copy(alpha = 0.3f))
+            )
+        }
+
+        // Loading change indicator
+        Box(
+            modifier = Modifier
+                .width(140.dp)
+                .height(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.LightGray.copy(alpha = 0.3f))
+        )
+    }
+}
+
+@Composable
+private fun CategoryComparisonErrorState(onRetry: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.ErrorOutline,
+                contentDescription = "Error",
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(32.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Unable to load trends",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Check your connection and try again",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(
+            onClick = onRetry,
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Refresh,
+                contentDescription = "Retry",
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Try Again")
+        }
+    }
+}
+
+@Composable
+private fun CategoryComparisonEmptyState() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Analytics,
+                contentDescription = "No Data",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(32.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "No trends available",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "Transaction data will appear here",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+private fun Double.formatToSinglePrecision(): String {
+    val multiplied = (this * 10).toInt()
+    val result = multiplied.toDouble() / 10
+    return if (result % 1.0 == 0.0) {
+        result.toInt().toString()
+    } else {
+        result.toString()
+    }
+}
+
+fun Double.formatToCurrency(): String {
+    return "KSh ${this.formatToAmount()}"
+}
+
+private fun Double.formatToAmount(): String {
+    return if (this % 1.0 == 0.0) {
         this.toInt().toString()
     } else {
-        val multiplied = (this * 10).toInt()
-        val rounded = multiplied.toDouble() / 10
-        rounded.toString()
+        val multiplied = (this * 100).toInt()
+        val result = multiplied.toDouble() / 100
+        result.toString()
     }
+}
 
 @Composable
 fun IncomeExpenseCards(
