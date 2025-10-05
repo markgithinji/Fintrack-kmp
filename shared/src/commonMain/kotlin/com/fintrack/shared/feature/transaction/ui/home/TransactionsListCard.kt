@@ -14,10 +14,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -25,13 +31,17 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.core.Result
@@ -41,120 +51,40 @@ import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingTransact
 import com.fintrack.shared.feature.transaction.ui.toColor
 import com.fintrack.shared.feature.transaction.ui.toIcon
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Month
+
 @Composable
 fun TransactionsListCard(
     transactionsResult: Result<List<Transaction>>,
-    onViewAllClick: () -> Unit
+    onViewAllClick: () -> Unit,
+    onTransactionClick: (Transaction) -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            // Header is always visible
             RecentTransactionsHeader(
                 onViewAllClick = onViewAllClick,
-                isLoading = transactionsResult is Result.Loading
+                isLoading = transactionsResult is Result.Loading,
+                hasTransactions = transactionsResult is Result.Success && transactionsResult.data.isNotEmpty()
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
             when (transactionsResult) {
-                is Result.Loading -> {
-                    // Show 2 loading transaction rows
-                    repeat(3) { index ->
-                        LoadingTransactionRow()
-                        if (index < 2) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                thickness = 0.5.dp,
-                                color = Color.LightGray.copy(alpha = 0.4f)
-                            )
-                        }
-                    }
-                }
-
-                is Result.Error -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(120.dp)
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ErrorOutline,
-                                contentDescription = "Error",
-                                tint = Color.Red,
-                                modifier = Modifier.size(32.dp)
-                            )
-                            Text(
-                                text = "Failed to load transactions",
-                                color = Color.Red,
-                                fontSize = 14.sp,
-                                textAlign = TextAlign.Center
-                            )
-                            Button(
-                                onClick = { /* You can add retry logic here */ },
-                                colors = ButtonDefaults.buttonColors(containerColor = GreenIncome),
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.height(32.dp),
-                                contentPadding = PaddingValues(horizontal = 16.dp)
-                            ) {
-                                Text(
-                                    text = "Try Again",
-                                    color = Color.White,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
-                }
-
+                is Result.Loading -> TransactionsLoadingState()
+                is Result.Error -> TransactionsErrorState()
                 is Result.Success -> {
                     val transactions = transactionsResult.data
                     if (transactions.isEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(100.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Receipt,
-                                    contentDescription = "No transactions",
-                                    tint = Color.Gray,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                                Text(
-                                    text = "No recent transactions",
-                                    color = Color.Gray,
-                                    fontSize = 14.sp
-                                )
-                            }
-                        }
+                        TransactionsEmptyState()
                     } else {
-                        transactions.forEachIndexed { index, transaction ->
-                            TransactionRow(transaction)
-
-                            if (index < transactions.lastIndex) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                    thickness = 0.5.dp,
-                                    color = Color.LightGray.copy(alpha = 0.4f)
-                                )
-                            }
-                        }
+                        TransactionsListContent(
+                            transactions = transactions,
+                            onTransactionClick = onTransactionClick
+                        )
                     }
                 }
             }
@@ -163,122 +93,301 @@ fun TransactionsListCard(
 }
 
 @Composable
-fun RecentTransactionsHeader(
+private fun RecentTransactionsHeader(
     onViewAllClick: () -> Unit,
-    isLoading: Boolean = false
+    isLoading: Boolean = false,
+    hasTransactions: Boolean = true
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 20.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = "Recent Transactions",
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.Black
         )
 
         if (isLoading) {
-            // Show small loading indicator instead of "View All" during loading
             CircularProgressIndicator(
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(20.dp),
                 strokeWidth = 2.dp,
                 color = GreenIncome
             )
-        } else {
+        } else if (hasTransactions) {
             Text(
                 text = "View All",
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.labelLarge,
                 color = GreenIncome,
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier.clickable { onViewAllClick() }
             )
         }
     }
 }
 
+@Composable
+private fun TransactionsLoadingState() {
+    Column {
+        repeat(3) { index ->
+            LoadingTransactionRow()
+            if (index < 2) {
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    thickness = 0.5.dp,
+                    color = Color.LightGray.copy(alpha = 0.4f)
+                )
+            }
+        }
+    }
+}
 
 @Composable
-fun TransactionRow(
-    transaction: Transaction,
-    modifier: Modifier = Modifier
-) {
-    val category = Category.fromName(transaction.category, isExpense = !transaction.isIncome)
-    val isExpense = category.isExpense
+private fun TransactionsErrorState() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.ErrorOutline,
+            contentDescription = "Error",
+            tint = Color.Red,
+            modifier = Modifier.size(32.dp)
+        )
 
-    fun LocalDate.toShortMonthDay(): String {
-        val month = when (this.monthNumber) {
-            1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
-            5 -> "May"; 6 -> "Jun"; 7 -> "Jul"; 8 -> "Aug"
-            9 -> "Sep"; 10 -> "Oct"; 11 -> "Nov"; 12 -> "Dec"
-            else -> ""
-        }
-        return "$month ${this.dayOfMonth}"
-    }
+        Text(
+            text = "Failed to load transactions",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Red,
+            textAlign = TextAlign.Center
+        )
 
-    Column(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+        Button(
+            onClick = { /* Add retry logic */ },
+            colors = ButtonDefaults.buttonColors(containerColor = GreenIncome),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.height(36.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(
-                            color = category.toColor().copy(alpha = 0.15f),
-                            shape = RoundedCornerShape(12.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = category.toIcon(),
-                        contentDescription = category.name,
-                        tint = category.toColor(),
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Column {
-                    Text(
-                        text = category.name,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 15.sp
-                    )
-                    transaction.description?.let {
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(text = it, fontSize = 13.sp, color = Color.Gray)
-                    }
-                }
-            }
-
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "${if (isExpense) "-" else "+"}${transaction.amount}",
-                    color = if (isExpense) PinkExpense else GreenIncome,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = transaction.dateTime.date.toShortMonthDay(),
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-            }
+            Text("Try Again")
         }
+    }
+}
 
-        HorizontalDivider(
-            color = Color.LightGray.copy(alpha = 0.4f),
-            thickness = 0.7.dp,
-            modifier = Modifier.padding(start = 80.dp)
+@Composable
+private fun TransactionsEmptyState() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.ReceiptLong,
+            contentDescription = "No Transactions",
+            tint = Color.Gray,
+            modifier = Modifier.size(32.dp)
+        )
+
+        Text(
+            text = "No recent transactions",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
         )
     }
 }
 
+@Composable
+private fun TransactionsListContent(
+    transactions: List<Transaction>,
+    onTransactionClick: (Transaction) -> Unit
+) {
+    Column {
+        transactions.forEachIndexed { index, transaction ->
+            TransactionRow(
+                transaction = transaction,
+                onClick = { onTransactionClick(transaction) }
+            )
+            if (index < transactions.lastIndex) {
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 80.dp, end = 20.dp),
+                    thickness = 0.5.dp,
+                    color = Color.LightGray.copy(alpha = 0.4f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TransactionRow(
+    transaction: Transaction,
+    onClick: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val category = Category.fromName(transaction.category, isExpense = !transaction.isIncome)
+    val isExpense = category.isExpense
+    val amountColor = if (isExpense) PinkExpense else GreenIncome
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Category Icon
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .background(
+                    color = category.toColor().copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(12.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = category.toIcon(),
+                contentDescription = category.name,
+                tint = category.toColor(),
+                modifier = Modifier.size(22.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        // Transaction Details
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = category.name,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = Color.Black,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            transaction.description?.let { description ->
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        // Amount and Date
+        Column(
+            horizontalAlignment = Alignment.End
+        ) {
+            Text(
+                text = "${if (isExpense) "-" else "+"}${transaction.amount.formatToCurrency()}",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = amountColor
+            )
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            Text(
+                text = transaction.dateTime.date.formatAsShortDate(),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray
+            )
+        }
+    }
+}
+
+@Composable
+private fun LoadingTransactionRow() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Loading icon
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.LightGray.copy(alpha = 0.3f))
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        // Loading text content
+        Column(modifier = Modifier.weight(1f)) {
+            Box(
+                modifier = Modifier
+                    .width(120.dp)
+                    .height(18.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color.LightGray.copy(alpha = 0.3f))
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .height(14.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color.LightGray.copy(alpha = 0.3f))
+            )
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        // Loading amount and date
+        Column(horizontalAlignment = Alignment.End) {
+            Box(
+                modifier = Modifier
+                    .width(60.dp)
+                    .height(18.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color.LightGray.copy(alpha = 0.3f))
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Box(
+                modifier = Modifier
+                    .width(40.dp)
+                    .height(12.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color.LightGray.copy(alpha = 0.3f))
+            )
+        }
+    }
+}
+
+// Date formatting extension
+private fun LocalDate.formatAsShortDate(): String {
+    val month = when (this.month) {
+        Month.JANUARY -> "Jan"
+        Month.FEBRUARY -> "Feb"
+        Month.MARCH -> "Mar"
+        Month.APRIL -> "Apr"
+        Month.MAY -> "May"
+        Month.JUNE -> "Jun"
+        Month.JULY -> "Jul"
+        Month.AUGUST -> "Aug"
+        Month.SEPTEMBER -> "Sep"
+        Month.OCTOBER -> "Oct"
+        Month.NOVEMBER -> "Nov"
+        Month.DECEMBER -> "Dec"
+        else -> ""
+    }
+    return "$month ${this.dayOfMonth}"
+}
