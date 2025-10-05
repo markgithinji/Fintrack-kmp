@@ -1,5 +1,12 @@
 package com.fintrack.shared.feature.summary.ui
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -7,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -17,6 +25,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,14 +44,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.summary.domain.CategorySummary
 import com.fintrack.shared.feature.summary.domain.DistributionSummary
 import com.fintrack.shared.feature.core.Result
+import com.fintrack.shared.feature.transaction.ui.addtransaction.AnimatedShimmerBox
+import com.fintrack.shared.feature.transaction.ui.home.GreenIncome
 
 // --- Segment Colors ---
 val SegmentColors = listOf(
@@ -50,7 +69,6 @@ val SegmentColors = listOf(
     Color(0xFF76B7B2), // Teal
     Color(0xFFFF9DA7)  // Pink / Others
 )
-
 @Composable
 fun CategoryTotalsCardWithTabs(
     tabType: TabType,
@@ -65,20 +83,63 @@ fun CategoryTotalsCardWithTabs(
     onPeriodSelected: (Period) -> Unit = {}
 ) {
     when (distributionResult) {
-        is Result.Loading -> Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
+        is Result.Loading -> {
+            LoadingCategoryContent(
+                selectedPeriod = period,
+                availableWeeks = availableWeeks,
+                availableMonths = availableMonths,
+                availableYears = availableYears,
+                onWeekSelected = onWeekSelected,
+                onMonthSelected = onMonthSelected,
+                onYearSelected = onYearSelected,
+                onPeriodSelected = onPeriodSelected
+            )
         }
 
         is Result.Error -> {
-            val message = distributionResult.exception.message ?: "Unknown error"
+            val message = distributionResult.exception.message ?: "Failed to load distribution"
             Box(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Error: $message", color = Color.Red)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PieChart,
+                        contentDescription = "Error",
+                        tint = Color.Gray,
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Text(
+                        text = "Unable to Load Data",
+                        color = Color.Black,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = message,
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center
+                    )
+                    Button(
+                        onClick = { /* Add retry logic */ },
+                        colors = ButtonDefaults.buttonColors(containerColor = GreenIncome),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.height(40.dp)
+                    ) {
+                        Text(
+                            text = "Try Again",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
             }
         }
 
@@ -99,20 +160,275 @@ fun CategoryTotalsCardWithTabs(
             CategoryContent(
                 weeklySummary = weeklyMap,
                 monthlySummary = monthlyMap,
-                yearlySummary = yearlyMap,          // added support for year
+                yearlySummary = yearlyMap,
                 selectedPeriod = period,
                 availableWeeks = availableWeeks,
                 availableMonths = availableMonths,
-                availableYears = availableYears,    // pass available years
+                availableYears = availableYears,
                 onWeekSelected = onWeekSelected,
                 onMonthSelected = onMonthSelected,
-                onYearSelected = onYearSelected,    // new callback
-                onPeriodSelected = onPeriodSelected
+                onYearSelected = onYearSelected,
+                onPeriodSelected = onPeriodSelected,
+                title = when (tabType) {
+                    is TabType.Income -> "Income Distribution"
+                    is TabType.Expense -> "Expense Distribution"
+                }
             )
         }
     }
 }
 
+@Composable
+fun LoadingCategoryContent(
+    selectedPeriod: Period,
+    availableWeeks: List<String> = emptyList(),
+    availableMonths: List<String> = emptyList(),
+    availableYears: List<String> = emptyList(),
+    onWeekSelected: (String) -> Unit = {},
+    onMonthSelected: (String) -> Unit = {},
+    onYearSelected: (String) -> Unit = {},
+    onPeriodSelected: (Period) -> Unit = {}
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        // Header
+        Text(
+            text = "Distribution",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Column {
+            Spacer(modifier = Modifier.height(8.dp))
+            LoadingPeriodSelector()
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        LoadingDonutChartSection()
+        Spacer(Modifier.height(16.dp))
+        LoadingCategoryList()
+    }
+}
+
+@Composable
+fun LoadingDonutChartSection() {
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            // Create mock data for 4 segments + others
+            val mockSegments = listOf(
+                "Shopping" to 1500f,
+                "Food" to 1200f,
+                "Transport" to 800f,
+                "Entertainment" to 600f,
+                "Others" to 400f
+            )
+            val mockTotal = mockSegments.sumOf { it.second.toDouble() }.toFloat()
+            val mockChartColors = mockSegments.mapIndexed { index, _ ->
+                if (index < 4) SegmentColors[index] else SegmentColors.last()
+            }
+
+            LoadingInteractiveDonutWithText(
+                mockSegments = mockSegments,
+                mockTotal = mockTotal,
+                segmentColors = mockChartColors
+            )
+        }
+    }
+}
+
+@Composable
+fun LoadingInteractiveDonutWithText(
+    mockSegments: List<Pair<String, Float>>,
+    mockTotal: Float,
+    segmentColors: List<Color>,
+    modifier: Modifier = Modifier,
+    chartSize: Dp = 250.dp
+) {
+    Box(modifier = modifier.size(chartSize), contentAlignment = Alignment.Center) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val strokeWidth = 40.dp.toPx()
+            val diameter = size.minDimension - strokeWidth
+            var startAngle = -90f
+
+            mockSegments.forEachIndexed { index, (_, amount) ->
+                val sweep = (((amount / mockTotal) * 360.0).toFloat()) - 360f * 0.02f
+                val shimmerAlpha = (0.3f + (index * 0.1f)).coerceAtMost(0.7f)
+                drawArc(
+                    color = segmentColors[index].copy(alpha = shimmerAlpha),
+                    startAngle = startAngle,
+                    sweepAngle = sweep,
+                    useCenter = false,
+                    topLeft = Offset(strokeWidth / 2, strokeWidth / 2),
+                    size = Size(diameter, diameter),
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Butt)
+                )
+                startAngle += sweep + 360f * 0.02f
+            }
+        }
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            AnimatedShimmerBox(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            AnimatedShimmerBox(
+                modifier = Modifier
+                    .width(80.dp)
+                    .height(16.dp)
+                    .clip(RoundedCornerShape(4.dp))
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            AnimatedShimmerBox(
+                modifier = Modifier
+                    .width(100.dp)
+                    .height(20.dp)
+                    .clip(RoundedCornerShape(4.dp))
+            )
+        }
+    }
+}
+
+@Composable
+fun LoadingCategoryList() {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        repeat(4) { index ->
+            LoadingCategoryListItem(
+                color = SegmentColors.getOrElse(index) { Color.LightGray }
+            )
+            if (index < 3) {
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun LoadingCategoryListItem(color: Color = Color.LightGray) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Color dot
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .background(color, CircleShape)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+
+        // Category name - using original fixed width
+        AnimatedShimmerBox(
+            modifier = Modifier
+                .width(160.dp)
+                .height(14.dp)
+                .clip(RoundedCornerShape(4.dp))
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        // Amount - original fixed width
+        AnimatedShimmerBox(
+            modifier = Modifier
+                .width(100.dp)
+                .height(14.dp)
+                .clip(RoundedCornerShape(4.dp))
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // Percentage - original fixed width
+        AnimatedShimmerBox(
+            modifier = Modifier
+                .width(40.dp)
+                .height(14.dp)
+                .clip(RoundedCornerShape(4.dp))
+        )
+    }
+}
+
+@Composable
+fun LoadingPeriodSelector() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            repeat(3) {
+                AnimatedShimmerBox(
+                    modifier = Modifier
+                        .width(60.dp)
+                        .height(32.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                )
+            }
+        }
+        AnimatedShimmerBox(
+            modifier = Modifier
+                .width(120.dp)
+                .height(32.dp)
+                .clip(RoundedCornerShape(12.dp))
+        )
+    }
+}
+
+@Composable
+fun ErrorCategoryContent(
+    message: String,
+    selectedPeriod: Period,
+    availableWeeks: List<String> = emptyList(),
+    availableMonths: List<String> = emptyList(),
+    availableYears: List<String> = emptyList(),
+    onWeekSelected: (String) -> Unit = {},
+    onMonthSelected: (String) -> Unit = {},
+    onYearSelected: (String) -> Unit = {},
+    onPeriodSelected: (Period) -> Unit = {},
+    onRetry: () -> Unit
+) {
+    Column {
+        PeriodSelector(
+            selectedPeriod = selectedPeriod,
+            availableWeeks = availableWeeks,
+            availableMonths = availableMonths,
+            availableYears = availableYears,
+            onWeekSelected = onWeekSelected,
+            onMonthSelected = onMonthSelected,
+            onYearSelected = onYearSelected,
+            onPeriodSelected = onPeriodSelected
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Icon(Icons.Default.PieChart, contentDescription = "Error", tint = Color.Gray, modifier = Modifier.size(48.dp))
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Unable to Load Data", color = Color.Black, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(message, color = Color.Gray, fontSize = 14.sp, textAlign = TextAlign.Center)
+                }
+                Button(
+                    onClick = onRetry,
+                    colors = ButtonDefaults.buttonColors(containerColor = GreenIncome),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.height(40.dp)
+                ) {
+                    Text("Try Again", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                }
+            }
+        }
+    }
+}
 @Composable
 private fun CategoryContent(
     weeklySummary: Map<String, List<CategorySummary>>,
@@ -169,7 +485,6 @@ private fun CategoryContent(
     }
 }
 
-
 @Composable
 private fun CategoryHeader(title: String) {
     Text(
@@ -178,6 +493,74 @@ private fun CategoryHeader(title: String) {
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier.padding(bottom = 8.dp)
     )
+}
+
+@Composable
+fun CategoryList(
+    categories: List<Pair<String, Float>>,
+    totalAmount: Float,
+    segmentColors: List<Color>
+) {
+    val sortedCategorySums = categories.sortedByDescending { it.second }
+    val categoryColors = sortedCategorySums.map { category ->
+        val chartIndex = categories.indexOfFirst { it.first == category.first }
+        if (chartIndex in 0..3) segmentColors[chartIndex] else segmentColors.last()
+    }
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF4F4F4))
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            sortedCategorySums.forEachIndexed { index, (categoryName, amount) ->
+                val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .background(
+                                color = categoryColors[index],
+                                shape = CircleShape
+                            )
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = categoryName,
+                        fontSize = 14.sp,
+                        color = Color.DarkGray,
+                        modifier = Modifier.width(160.dp)
+                    )
+
+                    Box(
+                        modifier = Modifier.width(100.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Text(
+                            text = formatCurrencyKmp(amount.toDouble()),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = "($percent%)",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.DarkGray.copy(alpha = 0.8f)
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -274,7 +657,6 @@ fun PeriodSelector(
     }
 }
 
-// Sexy dropdown
 @Composable
 fun SexyDropdown(
     options: List<String>,
@@ -286,7 +668,6 @@ fun SexyDropdown(
     var expanded by remember { mutableStateOf(false) }
 
     Box(modifier = modifier) {
-        // Button
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
@@ -310,7 +691,6 @@ fun SexyDropdown(
             )
         }
 
-        // Dropdown content
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
@@ -334,76 +714,6 @@ fun SexyDropdown(
 
 // Helper data class
 private data class Quad<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
-
-
-@Composable
-fun CategoryList(
-    categories: List<Pair<String, Float>>,
-    totalAmount: Float,
-    segmentColors: List<Color>
-) {
-    val sortedCategorySums = categories.sortedByDescending { it.second }
-    val categoryColors = sortedCategorySums.map { category ->
-        val chartIndex = categories.indexOfFirst { it.first == category.first }
-        if (chartIndex in 0..3) segmentColors[chartIndex] else segmentColors.last()
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF4F4F4))
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            sortedCategorySums.forEachIndexed { index, (categoryName, amount) ->
-                val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .background(
-                                color = categoryColors[index],
-                                shape = CircleShape
-                            )
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Text(
-                        text = categoryName,
-                        fontSize = 14.sp,
-                        color = Color.DarkGray,
-                        modifier = Modifier.width(160.dp)
-                    )
-
-                    Box(
-                        modifier = Modifier.width(100.dp),
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        Text(
-                            text = formatCurrencyKmp(amount.toDouble()),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Text(
-                        text = "($percent%)",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = Color.DarkGray.copy(alpha = 0.8f)
-                    )
-                }
-            }
-        }
-    }
-}
 
 
 enum class TimeSpan(val displayName: String) {

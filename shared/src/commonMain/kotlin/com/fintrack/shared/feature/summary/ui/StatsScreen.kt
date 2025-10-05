@@ -37,8 +37,8 @@ fun StatisticsScreen(
     viewModel: StatisticsViewModel = viewModel()
 ) {
     // --- Collect UI state ---
-    val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()         // Income / Expense
-    val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle()   // Week / Month / Year
+    val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
+    val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle()
     val availableWeeks by viewModel.availableWeeks.collectAsStateWithLifecycle()
     val availableMonths by viewModel.availableMonths.collectAsStateWithLifecycle()
     val availableYears by viewModel.availableYears.collectAsStateWithLifecycle()
@@ -47,15 +47,13 @@ fun StatisticsScreen(
 
     // --- Load initial data ---
     LaunchedEffect(Unit) {
-        viewModel.loadAvailablePeriods() // now loads weeks, months, and years safely
+        viewModel.loadAvailablePeriods()
         viewModel.loadHighlights()
     }
 
-    // --- Remember scroll state ---
-    val listState = rememberLazyListState()
+    val safePeriod = selectedPeriod ?: getDefaultPeriod(availableWeeks, availableMonths, availableYears)
 
     LazyColumn(
-        state = listState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 16.dp)
     ) {
@@ -80,23 +78,34 @@ fun StatisticsScreen(
 
         item(key = "spacer2") { Spacer(Modifier.height(16.dp)) }
 
-        // --- Category totals (week, month, or year) ---
-        selectedPeriod?.let { period ->
-            item(key = "categoryTotals") {
-                CategoryTotalsCardWithTabs(
-                    tabType = selectedTab,
-                    period = period,
-                    distributionResult = distributionResult,
-                    availableWeeks = availableWeeks,
-                    availableMonths = availableMonths,
-                    availableYears = availableYears,
-                    onWeekSelected = { week -> viewModel.onPeriodChanged(Period.Week(week)) },
-                    onMonthSelected = { month -> viewModel.onPeriodChanged(Period.Month(month)) },
-                    onYearSelected = { year -> viewModel.onPeriodChanged(Period.Year(year)) },
-                    onPeriodSelected = { period -> viewModel.onPeriodChanged(period) }
-                )
-            }
+        item(key = "categoryTotals") {
+            CategoryTotalsCardWithTabs(
+                tabType = selectedTab,
+                period = safePeriod,
+                distributionResult = distributionResult,
+                availableWeeks = availableWeeks,
+                availableMonths = availableMonths,
+                availableYears = availableYears,
+                onWeekSelected = { week -> viewModel.onPeriodChanged(Period.Week(week)) },
+                onMonthSelected = { month -> viewModel.onPeriodChanged(Period.Month(month)) },
+                onYearSelected = { year -> viewModel.onPeriodChanged(Period.Year(year)) },
+                onPeriodSelected = { period -> viewModel.onPeriodChanged(period) }
+            )
         }
+    }
+}
+
+// Helper function to create a default period
+private fun getDefaultPeriod(
+    availableWeeks: List<String>,
+    availableMonths: List<String>,
+    availableYears: List<String>
+): Period {
+    return when {
+        availableWeeks.isNotEmpty() -> Period.Week(availableWeeks.first())
+        availableMonths.isNotEmpty() -> Period.Month(availableMonths.first())
+        availableYears.isNotEmpty() -> Period.Year(availableYears.first())
+        else -> Period.Week("2024-W01") // Fallback default
     }
 }
 
