@@ -8,15 +8,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
 
 
 @Composable
 fun LowerRightWavesBackground(modifier: Modifier = Modifier) {
     val baseColor = Color(0xFF2B2B2B)
-    val wave1 = Color(0xFF3C3C3C)
-    val wave2 = Color(0xFF4D4D4D)
-    val wave3 = Color(0xFF5E5E5E)
+    val waveColors = listOf(
+        Color(0xFF3C3C3C),
+        Color(0xFF4D4D4D),
+        Color(0xFF5E5E5E)
+    )
 
     Box(
         modifier = modifier
@@ -26,47 +30,45 @@ fun LowerRightWavesBackground(modifier: Modifier = Modifier) {
             val w = size.width
             val h = size.height
 
-            // Wave 1
-            val path1 = Path().apply {
-                moveTo(w * 0.5f, h)
-                cubicTo(
-                    w * 0.6f, h * 0.85f,
-                    w * 0.8f, h * 0.95f,
-                    w, h * 0.7f
-                )
-                lineTo(w, h)
-                lineTo(w * 0.5f, h)
-                close()
-            }
-            drawPath(path1, color = wave1, style = Fill)
-
-            // Wave 2
-            val path2 = Path().apply {
-                moveTo(w * 0.6f, h)
-                cubicTo(
-                    w * 0.65f, h * 0.9f,
-                    w * 0.85f, h * 0.8f,
-                    w, h * 0.5f
-                )
-                lineTo(w, h)
-                lineTo(w * 0.6f, h)
-                close()
-            }
-            drawPath(path2, color = wave2, style = Fill)
-
-            // Wave 3
-            val path3 = Path().apply {
-                moveTo(w * 0.7f, h)
-                cubicTo(
-                    w * 0.75f, h * 0.95f,
-                    w * 0.9f, h * 0.6f,
-                    w, h * 0.3f
-                )
-                lineTo(w, h)
-                lineTo(w * 0.7f, h)
-                close()
-            }
-            drawPath(path3, color = wave3, style = Fill)
+            drawLayeredWaves(w, h, waveColors)
         }
     }
+}
+
+private fun DrawScope.drawLayeredWaves(w: Float, h: Float, colors: List<Color>) {
+    val path1 = Path().apply {
+        moveTo(w * 0.7f, h)
+        cubicTo(
+            w * 0.75f, h * 0.85f,
+            w * 0.85f, h * 0.9f,
+            w, h * 0.8f
+        )
+        lineTo(w, h)
+        close()
+    }
+    drawPath(path1, color = colors[0], style = Fill)
+
+    val path2 = Path().apply {
+        moveTo(w * 0.75f, h)
+        cubicTo(
+            w * 0.78f, h * 0.8f,
+            w * 0.88f, h * 0.85f,
+            w, h * 0.7f
+        )
+        lineTo(w, h)
+        close()
+    }
+    drawPath(path2, color = colors[1], style = Fill)
+
+    val path3 = Path().apply {
+        moveTo(w * 0.8f, h)
+        cubicTo(
+            w * 0.82f, h * 0.75f,
+            w * 0.9f, h * 0.8f,
+            w, h * 0.6f
+        )
+        lineTo(w, h)
+        close()
+    }
+    drawPath(path3, color = colors[2], style = Fill)
 }
