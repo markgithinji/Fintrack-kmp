@@ -6,8 +6,10 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,9 +29,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -53,9 +58,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -70,7 +77,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlin.math.pow
 import kotlin.math.round
-
 @Composable
 fun BudgetScreen(
     viewModel: BudgetViewModel = viewModel(),
@@ -93,32 +99,18 @@ fun BudgetScreen(
             is Result.Success -> {
                 val data = (budgets as Result.Success<List<BudgetWithStatus>>).data
                 LazyColumn {
-                    // Always show "+" at the top
                     item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onAddBudget() }
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Add Budget"
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text("Add Budget")
-                        }
+                        SexyAddBudgetButton(
+                            onClick = onAddBudget,
+                            modifier = Modifier.padding(16.dp)
+                        )
                     }
 
                     if (data.isEmpty()) {
                         item {
-                            Text(
-                                "No budgets yet. Add one to get started.",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                textAlign = TextAlign.Center
+                            BudgetEmptyState(
+                                onAddBudget = onAddBudget,
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     } else {
@@ -131,6 +123,195 @@ fun BudgetScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun SexyAddBudgetButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var isPressed by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(72.dp)
+            .shadow(
+                elevation = if (isPressed) 8.dp else 16.dp,
+                shape = RoundedCornerShape(20.dp),
+                clip = false
+            )
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        isPressed = true
+                        try {
+                            awaitRelease()
+                        } finally {
+                            isPressed = false
+                        }
+                    },
+                    onTap = { onClick() }
+                )
+            },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Animated icon container
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val rotation by animateFloatAsState(
+                        targetValue = if (isPressed) 90f else 0f,
+                        animationSpec = tween(durationMillis = 200),
+                        label = "add_icon_rotation"
+                    )
+
+                    val scale by animateFloatAsState(
+                        targetValue = if (isPressed) 0.8f else 1f,
+                        animationSpec = tween(durationMillis = 200),
+                        label = "add_icon_scale"
+                    )
+
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Budget",
+                        modifier = Modifier
+                            .size(24.dp)
+                            .graphicsLayer {
+                                rotationZ = rotation
+                                scaleX = scale
+                                scaleY = scale
+                            },
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+
+                Spacer(Modifier.width(16.dp))
+
+                Column {
+                    Text(
+                        text = "Create New Budget",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Text(
+                        text = "Set up a spending or income plan",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    )
+                }
+            }
+
+            // Chevron icon
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+            )
+        }
+    }
+}
+
+@Composable
+fun BudgetEmptyState(
+    onAddBudget: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // Illustration container
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.AccountBalanceWallet,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        Text(
+            text = "No Budgets Yet",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = "Start by creating your first budget to track your finances",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(Modifier.height(32.dp))
+
+        // Primary CTA button
+        Button(
+            onClick = onAddBudget,
+            modifier = Modifier
+                .height(54.dp)
+                .fillMaxWidth(0.8f),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 8.dp,
+                pressedElevation = 4.dp
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = "Create Budget",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
@@ -279,7 +460,6 @@ fun BudgetErrorRetryState(
         }
     }
 }
-
 @Composable
 fun BudgetScreenLoadingState() {
     LazyColumn(
@@ -349,27 +529,6 @@ fun BudgetScreenLoadingState() {
 
                     // Limit + Status section
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        // Limit placeholder
-                        AnimatedShimmerBox(
-                            modifier = Modifier
-                                .width(100.dp)
-                                .height(18.dp)
-                        )
-
-                        // Spent placeholder
-                        AnimatedShimmerBox(
-                            modifier = Modifier
-                                .width(80.dp)
-                                .height(16.dp)
-                        )
-
-                        // Remaining placeholder
-                        AnimatedShimmerBox(
-                            modifier = Modifier
-                                .width(90.dp)
-                                .height(16.dp)
-                        )
-
                         // Progress bar
                         Box(
                             modifier = Modifier
@@ -380,7 +539,7 @@ fun BudgetScreenLoadingState() {
                         ) {
                             AnimatedShimmerBox(
                                 modifier = Modifier
-                                    .fillMaxWidth(0.7f) // Random progress
+                                    .fillMaxWidth(0.7f)
                                     .fillMaxHeight()
                                     .clip(RoundedCornerShape(50))
                             )
@@ -392,9 +551,24 @@ fun BudgetScreenLoadingState() {
                                 .width(50.dp)
                                 .height(14.dp)
                         )
+
+                        // Stats row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            repeat(3) {
+                                AnimatedShimmerBox(
+                                    modifier = Modifier
+                                        .width(80.dp)
+                                        .height(40.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                        }
                     }
 
-                    // Categories section
+                    // Categories section (limited to 3 + more)
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -406,6 +580,13 @@ fun BudgetScreenLoadingState() {
                                     .clip(RoundedCornerShape(50))
                             )
                         }
+                        // "+X more" placeholder
+                        AnimatedShimmerBox(
+                            modifier = Modifier
+                                .width(70.dp)
+                                .height(32.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                        )
                     }
 
                     // Period placeholder
@@ -419,7 +600,6 @@ fun BudgetScreenLoadingState() {
         }
     }
 }
-
 @Composable
 fun BudgetItem(
     budgetWithStatus: BudgetWithStatus,
@@ -427,6 +607,8 @@ fun BudgetItem(
 ) {
     val budget = budgetWithStatus.budget
     val status = budgetWithStatus.status
+    val visibleCategories = budget.categories.take(3)
+    val remainingCategoriesCount = budget.categories.size - 3
 
     Card(
         modifier = Modifier
@@ -473,7 +655,7 @@ fun BudgetItem(
                 }
             }
 
-            // Limit + Status aligned to left
+
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 // Progress bar first
                 LinearProgressIndicator(
@@ -556,17 +738,55 @@ fun BudgetItem(
                 }
             }
 
-            // Categories
+            // Categories with limit of 3
             if (budget.categories.isNotEmpty()) {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start
                 ) {
-                    budget.categories.forEach { category ->
+                    // Show first 3 categories
+                    visibleCategories.forEach { category ->
                         AssistChip(
                             onClick = {},
-                            label = { Text(category.name) }
+                            label = {
+                                Text(
+                                    category.name,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    maxLines = 1
+                                )
+                            },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            border = BorderStroke(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                            ),
+                            modifier = Modifier.padding(end = 8.dp)
                         )
+                    }
+
+                    // Show "+X more" if there are more than 3 categories
+                    if (remainingCategoriesCount > 0) {
+                        Box(
+                            modifier = Modifier
+                                .height(32.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .padding(horizontal = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "+$remainingCategoriesCount more",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }
