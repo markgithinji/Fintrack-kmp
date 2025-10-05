@@ -2,11 +2,12 @@ package com.fintrack.shared.feature.auth.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fintrack.shared.feature.auth.domain.model.AuthResponse
-import com.fintrack.shared.feature.auth.data.repository.AuthRepository
-import com.fintrack.shared.feature.core.Result
-import com.fintrack.shared.feature.auth.data.repository.TokenRepository
 import com.fintrack.shared.feature.auth.data.local.createTokenDataStore
+import com.fintrack.shared.feature.auth.data.repository.AuthRepositoryImpl
+import com.fintrack.shared.feature.auth.data.repository.TokenRepository
+import com.fintrack.shared.feature.auth.domain.model.AuthResponse
+import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
+import com.fintrack.shared.feature.core.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +19,7 @@ class AuthViewModel : ViewModel() {
     private val tokenRepository: TokenRepository = TokenRepository(
         createTokenDataStore()
     )
-    private val repository: AuthRepository = AuthRepository()
+    private val repository: AuthRepository = AuthRepositoryImpl()
 
     private val _loginState = MutableStateFlow<Result<AuthResponse>?>(null)
     val loginState: StateFlow<Result<AuthResponse>?> = _loginState

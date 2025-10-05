@@ -2,15 +2,17 @@ package com.fintrack.shared.feature.account.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fintrack.shared.feature.account.data.repository.AccountRepositoryImpl
 import com.fintrack.shared.feature.account.domain.model.Account
-import com.fintrack.shared.feature.account.data.repository.AccountRepository
+import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.core.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+
 class AccountsViewModel : ViewModel() {
 
-    private val repo: AccountRepository = AccountRepository()
+    private val repo: AccountRepository = AccountRepositoryImpl()
 
     private val _accounts = MutableStateFlow<Result<List<Account>>>(Result.Loading)
     val accounts: StateFlow<Result<List<Account>>> = _accounts
