@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui.navigation
+package com.fintrack.shared.feature.navigation
 
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding

@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui.navigation
+package com.fintrack.shared.feature.navigation
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
