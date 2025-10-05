@@ -4,6 +4,7 @@ import com.fintrack.shared.feature.auth.data.local.TokenProvider
 import com.fintrack.shared.feature.auth.data.local.TokenProviderImpl
 import com.fintrack.shared.feature.auth.data.repository.TokenRepository
 import com.fintrack.shared.feature.auth.data.local.createTokenDataStore
+import com.fintrack.shared.feature.core.ApiClient
 import com.fintrack.shared.feature.core.ApiConfig
 import com.fintrack.shared.feature.core.ApiResponse
 import com.fintrack.shared.feature.core.PaginatedTransactionDto
@@ -31,27 +32,9 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 class TransactionApi(
-    private val baseUrl: String = ApiConfig.BASE_URL,
+    private val client: HttpClient = ApiClient.authenticatedClient,
+    private val baseUrl: String = ApiConfig.BASE_URL
 ) {
-    private val tokenRepository = TokenRepository(createTokenDataStore())
-    private val tokenProvider: TokenProvider = TokenProviderImpl(tokenRepository)
-
-    private val client = HttpClient {
-        install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true; explicitNulls = false })
-        }
-
-        install(HttpSend)
-    }.apply {
-        plugin(HttpSend).intercept { request ->
-            val token = tokenProvider.getToken()
-            if (!token.isNullOrEmpty()) {
-                request.headers.append("Authorization", "Bearer $token")
-            }
-            execute(request)
-        }
-    }
-
     // --- Transactions ---
     suspend fun getTransactions(
         limit: Int = 20,
@@ -59,7 +42,7 @@ class TransactionApi(
         order: String = "DESC",
         afterDate: String? = null,
         afterId: Int? = null,
-        accountId: Int? = null // 👈 new optional parameter
+        accountId: Int? = null
     ): PaginatedTransactionDto {
         val response: ApiResponse<PaginatedTransactionDto> = client.get("$baseUrl/transactions") {
             parameter("limit", limit)

@@ -4,6 +4,7 @@ import com.fintrack.shared.feature.core.ApiConfig
 import com.fintrack.shared.feature.auth.data.model.AuthResponseDto
 import com.fintrack.shared.feature.auth.data.model.LoginRequestDto
 import com.fintrack.shared.feature.auth.data.model.RegisterRequestDto
+import com.fintrack.shared.feature.core.ApiClient
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -17,13 +18,10 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-class AuthApi(private val baseUrl: String = ApiConfig.BASE_URL) {
-
-    private val client = HttpClient {
-        install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true; explicitNulls = false })
-        }
-    }
+class AuthApi(
+    private val client: HttpClient = ApiClient.simpleClient,
+    private val baseUrl: String = ApiConfig.BASE_URL
+) {
 
     suspend fun login(request: LoginRequestDto): AuthResponseDto {
         return client.post("$baseUrl/auth/login") {

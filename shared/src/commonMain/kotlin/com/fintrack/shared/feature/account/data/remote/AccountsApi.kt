@@ -7,6 +7,7 @@ import com.fintrack.shared.feature.auth.data.local.TokenProvider
 import com.fintrack.shared.feature.auth.data.local.TokenProviderImpl
 import com.fintrack.shared.feature.auth.data.repository.TokenRepository
 import com.fintrack.shared.feature.auth.data.local.createTokenDataStore
+import com.fintrack.shared.feature.core.ApiClient
 import io.ktor.client.HttpClient
 
 import io.ktor.client.call.body
@@ -26,34 +27,15 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 class AccountsApi(
+    private val client: HttpClient = ApiClient.authenticatedClient,
     private val baseUrl: String = ApiConfig.BASE_URL
 ) {
-    private val tokenRepository = TokenRepository(createTokenDataStore())
-    private val tokenProvider: TokenProvider = TokenProviderImpl(tokenRepository)
 
-    private val client = HttpClient {
-        install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true; explicitNulls = false })
-        }
-
-        install(HttpSend)
-    }.apply {
-        plugin(HttpSend).intercept { request ->
-            val token = tokenProvider.getToken()
-            if (!token.isNullOrEmpty()) {
-                request.headers.append("Authorization", "Bearer $token")
-            }
-            execute(request)
-        }
-    }
-
-    // Get all accounts for the current user
     suspend fun getAccounts(): List<AccountDto> {
         val response: ApiResponse<List<AccountDto>> = client.get("$baseUrl/accounts").body()
         return response.result
     }
 
-    // Add a new account
     suspend fun addAccount(account: AccountDto): AccountDto {
         val response: ApiResponse<AccountDto> = client.post("$baseUrl/accounts") {
             contentType(ContentType.Application.Json)
@@ -62,7 +44,6 @@ class AccountsApi(
         return response.result
     }
 
-    // Update an existing account
     suspend fun updateAccount(id: Int, account: AccountDto): AccountDto {
         val response: ApiResponse<AccountDto> = client.put("$baseUrl/accounts/$id") {
             contentType(ContentType.Application.Json)
@@ -71,12 +52,10 @@ class AccountsApi(
         return response.result
     }
 
-    // Delete an account
     suspend fun deleteAccount(id: Int) {
         client.delete("$baseUrl/accounts/$id")
     }
 
-    // Get account by ID
     suspend fun getAccountById(id: Int): AccountDto {
         val response: ApiResponse<AccountDto> = client.get("$baseUrl/accounts/$id").body()
         return response.result
