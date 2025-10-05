@@ -52,8 +52,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.core.Result
-import com.fintrack.shared.feature.transaction.model.Category
-import com.fintrack.shared.feature.transaction.model.Transaction
+import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.PickDate
 import com.fintrack.shared.feature.transaction.ui.PickTime
 import com.fintrack.shared.feature.transaction.ui.TransactionListViewModel

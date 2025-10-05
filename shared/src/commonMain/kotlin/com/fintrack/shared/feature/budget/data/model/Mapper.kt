@@ -1,9 +1,9 @@
 package com.fintrack.shared.feature.budget.data.model
 
-import com.fintrack.shared.feature.budget.domain.Budget
-import com.fintrack.shared.feature.budget.domain.BudgetStatus
-import com.fintrack.shared.feature.budget.domain.BudgetWithStatus
-import com.fintrack.shared.feature.transaction.model.Category
+import com.fintrack.shared.feature.budget.domain.model.Budget
+import com.fintrack.shared.feature.budget.domain.model.BudgetStatus
+import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
+import com.fintrack.shared.feature.transaction.domain.model.Category
 
 fun BudgetDto.toDomain(): Budget =
     Budget(

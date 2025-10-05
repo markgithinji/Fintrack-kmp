@@ -1,6 +1,6 @@
-package com.fintrack.shared.feature.budget.domain
+package com.fintrack.shared.feature.budget.domain.model
 
-import com.fintrack.shared.feature.transaction.model.Category
+import com.fintrack.shared.feature.transaction.domain.model.Category
 import kotlinx.datetime.LocalDate
 
 data class Budget(

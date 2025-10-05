@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.summary.domain
+package com.fintrack.shared.feature.summary.domain.model
 
 data class OverviewSummary(
     val weeklyOverview: List<DaySummary>,

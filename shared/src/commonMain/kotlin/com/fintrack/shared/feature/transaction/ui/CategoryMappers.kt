@@ -21,7 +21,7 @@ import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.fintrack.shared.feature.transaction.model.Category
+import com.fintrack.shared.feature.transaction.domain.model.Category
 
 
 fun Category.toIcon(): ImageVector = when (this) {

@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.summary.domain
+package com.fintrack.shared.feature.summary.domain.model
 
 data class CategoryComparison(
     val period: String,        // "weekly" or "monthly"

@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.model
+package com.fintrack.shared.feature.transaction.domain.model
 
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Contextual

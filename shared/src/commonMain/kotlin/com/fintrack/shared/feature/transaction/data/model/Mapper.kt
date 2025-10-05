@@ -1,7 +1,7 @@
 package com.fintrack.shared.feature.transaction.data.model
 
 import com.fintrack.shared.feature.transaction.data.TransactionDto
-import com.fintrack.shared.feature.transaction.model.Transaction
+import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import kotlinx.datetime.LocalDateTime
 
 fun TransactionDto.toDomain(): Transaction =

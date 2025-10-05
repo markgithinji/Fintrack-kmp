@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.budget.data.repository.BudgetRepository
 import com.fintrack.shared.feature.core.Result
-import com.fintrack.shared.feature.budget.domain.Budget
-import com.fintrack.shared.feature.budget.domain.BudgetWithStatus
-import com.fintrack.shared.feature.transaction.model.Category
+import com.fintrack.shared.feature.budget.domain.model.Budget
+import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
+import com.fintrack.shared.feature.transaction.domain.model.Category
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

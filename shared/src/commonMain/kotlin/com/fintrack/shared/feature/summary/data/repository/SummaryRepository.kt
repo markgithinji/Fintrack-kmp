@@ -3,30 +3,32 @@ package com.fintrack.shared.feature.summary.data.repository
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.summary.data.model.toDomain
 import com.fintrack.shared.feature.summary.data.network.SummaryApi
-import com.fintrack.shared.feature.summary.domain.AvailableMonths
-import com.fintrack.shared.feature.summary.domain.AvailableWeeks
-import com.fintrack.shared.feature.summary.domain.AvailableYears
-import com.fintrack.shared.feature.summary.domain.CategoryComparison
-import com.fintrack.shared.feature.summary.domain.DistributionSummary
-import com.fintrack.shared.feature.summary.domain.OverviewSummary
-import com.fintrack.shared.feature.summary.domain.StatisticsSummary
-import com.fintrack.shared.feature.summary.domain.TransactionCountSummary
+import com.fintrack.shared.feature.summary.domain.model.AvailableMonths
+import com.fintrack.shared.feature.summary.domain.model.AvailableWeeks
+import com.fintrack.shared.feature.summary.domain.model.AvailableYears
+import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
+import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
+import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
+import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
+import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
+import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
 
-class SummaryRepository {
-    private val api = SummaryApi()
+class SummaryRepositoryImpl(
+    private val api: SummaryApi = SummaryApi()
+) : SummaryRepository {
 
-    suspend fun getHighlightsSummary(accountId: Int? = null): Result<StatisticsSummary> = try {
+    override suspend fun getHighlightsSummary(accountId: Int?): Result<StatisticsSummary> = try {
         Result.Success(api.getHighlightsSummary(accountId).toDomain())
     } catch (e: Exception) {
         Result.Error(e)
     }
 
-    suspend fun getDistributionSummary(
+    override suspend fun getDistributionSummary(
         weekOrMonthCode: String,
-        type: String? = null,
-        start: String? = null,
-        end: String? = null,
-        accountId: Int? = null
+        type: String?,
+        start: String?,
+        end: String?,
+        accountId: Int?
     ): Result<DistributionSummary> = try {
         Result.Success(
             api.getDistributionSummary(weekOrMonthCode, type, start, end, accountId).toDomain()
@@ -35,39 +37,39 @@ class SummaryRepository {
         Result.Error(e)
     }
 
-    suspend fun getAvailableWeeks(accountId: Int? = null): Result<AvailableWeeks> = try {
+    override suspend fun getAvailableWeeks(accountId: Int?): Result<AvailableWeeks> = try {
         val dto = api.getAvailableWeeks(accountId)
         Result.Success(dto.toDomain())
     } catch (e: Exception) {
         Result.Error(e)
     }
 
-    suspend fun getAvailableMonths(accountId: Int? = null): Result<AvailableMonths> = try {
+    override suspend fun getAvailableMonths(accountId: Int?): Result<AvailableMonths> = try {
         Result.Success(api.getAvailableMonths(accountId).toDomain())
     } catch (e: Exception) {
         Result.Error(e)
     }
 
-    suspend fun getAvailableYears(accountId: Int? = null): Result<AvailableYears> = try {
+    override suspend fun getAvailableYears(accountId: Int?): Result<AvailableYears> = try {
         Result.Success(api.getAvailableYears(accountId).toDomain())
     } catch (e: Exception) {
         Result.Error(e)
     }
 
-    suspend fun getOverviewSummary(accountId: Int? = null): Result<OverviewSummary> = try {
+    override suspend fun getOverviewSummary(accountId: Int?): Result<OverviewSummary> = try {
         Result.Success(api.getOverviewSummary(accountId).toDomain())
     } catch (e: Exception) {
         Result.Error(e)
     }
 
-    suspend fun getCategoryComparisons(accountId: Int? = null): Result<List<CategoryComparison>> =
+    override suspend fun getCategoryComparisons(accountId: Int?): Result<List<CategoryComparison>> =
         try {
             Result.Success(api.getCategoryComparisons(accountId).map { it.toDomain() })
         } catch (e: Exception) {
             Result.Error(e)
         }
 
-    suspend fun getTransactionCounts(accountId: Int): Result<TransactionCountSummary> = try {
+    override suspend fun getTransactionCounts(accountId: Int): Result<TransactionCountSummary> = try {
         Result.Success(api.getTransactionCounts(accountId).toDomain())
     } catch (e: Exception) {
         Result.Error(e)

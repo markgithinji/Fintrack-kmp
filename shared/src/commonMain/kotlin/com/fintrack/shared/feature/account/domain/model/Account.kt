@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.account.domain
+package com.fintrack.shared.feature.account.domain.model
 
 data class Account(
     val id: Int,

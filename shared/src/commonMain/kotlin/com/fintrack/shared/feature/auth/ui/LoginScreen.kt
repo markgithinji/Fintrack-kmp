@@ -27,7 +27,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.fintrack.shared.feature.auth.domain.AuthResponse
+import com.fintrack.shared.feature.auth.domain.model.AuthResponse
 import com.fintrack.shared.feature.core.Result
 
 

@@ -1,17 +1,17 @@
 package com.fintrack.shared.feature.summary.data.model
 
-import com.fintrack.shared.feature.summary.domain.AvailableMonths
-import com.fintrack.shared.feature.summary.domain.AvailableWeeks
-import com.fintrack.shared.feature.summary.domain.AvailableYears
-import com.fintrack.shared.feature.summary.domain.CategoryComparison
-import com.fintrack.shared.feature.summary.domain.CategorySummary
-import com.fintrack.shared.feature.summary.domain.DaySummary
-import com.fintrack.shared.feature.summary.domain.DistributionSummary
-import com.fintrack.shared.feature.summary.domain.Highlight
-import com.fintrack.shared.feature.summary.domain.Highlights
-import com.fintrack.shared.feature.summary.domain.StatisticsSummary
-import com.fintrack.shared.feature.summary.domain.OverviewSummary
-import com.fintrack.shared.feature.summary.domain.TransactionCountSummary
+import com.fintrack.shared.feature.summary.domain.model.AvailableMonths
+import com.fintrack.shared.feature.summary.domain.model.AvailableWeeks
+import com.fintrack.shared.feature.summary.domain.model.AvailableYears
+import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
+import com.fintrack.shared.feature.summary.domain.model.CategorySummary
+import com.fintrack.shared.feature.summary.domain.model.DaySummary
+import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
+import com.fintrack.shared.feature.summary.domain.model.Highlight
+import com.fintrack.shared.feature.summary.domain.model.Highlights
+import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
+import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
+import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 
 // --- Highlight Summary ---
 fun HighlightDto.toDomain(): Highlight =

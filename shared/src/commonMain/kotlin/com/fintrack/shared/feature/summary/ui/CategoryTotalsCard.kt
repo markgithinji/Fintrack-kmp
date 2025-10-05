@@ -1,11 +1,5 @@
 package com.fintrack.shared.feature.summary.ui
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,7 +24,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -55,8 +48,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fintrack.shared.feature.summary.domain.CategorySummary
-import com.fintrack.shared.feature.summary.domain.DistributionSummary
+import com.fintrack.shared.feature.summary.domain.model.CategorySummary
+import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.transaction.ui.addtransaction.AnimatedShimmerBox
 import com.fintrack.shared.feature.transaction.ui.home.GreenIncome

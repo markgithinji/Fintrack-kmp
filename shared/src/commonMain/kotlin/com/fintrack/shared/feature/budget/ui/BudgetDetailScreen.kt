@@ -55,8 +55,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.core.Result
-import com.fintrack.shared.feature.budget.domain.BudgetWithStatus
-import com.fintrack.shared.feature.transaction.model.Category
+import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
+import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.ui.addtransaction.CategoryChip
 import com.fintrack.shared.feature.transaction.ui.addtransaction.ToggleChip
 import com.fintrack.shared.feature.transaction.ui.toColor

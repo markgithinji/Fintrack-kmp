@@ -1,29 +1,22 @@
 package com.fintrack.shared.feature.transaction.data
 
 import com.fintrack.shared.feature.core.Result
-import com.fintrack.shared.feature.summary.data.model.toDomain
-import com.fintrack.shared.feature.summary.domain.AvailableMonths
-import com.fintrack.shared.feature.summary.domain.AvailableWeeks
-import com.fintrack.shared.feature.summary.domain.AvailableYears
-import com.fintrack.shared.feature.summary.domain.CategoryComparison
-import com.fintrack.shared.feature.summary.domain.DistributionSummary
-import com.fintrack.shared.feature.summary.domain.StatisticsSummary
-import com.fintrack.shared.feature.summary.domain.OverviewSummary
 import com.fintrack.shared.feature.transaction.data.model.toDomain
 import com.fintrack.shared.feature.transaction.data.model.toDto
-import com.fintrack.shared.feature.transaction.model.Transaction
+import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 
-class TransactionRepository(
-    private val api: TransactionApi
-) {
-    // --- Paginated / all transactions ---
-    suspend fun getTransactions(
-        limit: Int = 20,
-        sortBy: String = "date",
-        order: String = "DESC",
-        afterDate: String? = null,
-        afterId: Int? = null,
-        accountId: Int? = null
+class TransactionRepositoryImpl(
+    private val api: TransactionApi = TransactionApi()
+) : TransactionRepository {
+
+    override suspend fun getTransactions(
+        limit: Int,
+        sortBy: String,
+        order: String,
+        afterDate: String?,
+        afterId: Int?,
+        accountId: Int?
     ): Result<Pair<List<Transaction>, String?>> = try {
         val paginated = api.getTransactions(
             limit = limit,
@@ -39,8 +32,7 @@ class TransactionRepository(
         Result.Error(e)
     }
 
-    // --- Recent transactions ---
-    suspend fun getRecentTransactions(accountId: Int? = null): Result<List<Transaction>> = try {
+    override suspend fun getRecentTransactions(accountId: Int?): Result<List<Transaction>> = try {
         val paginated = api.getTransactions(
             limit = 6,
             sortBy = "date",
@@ -52,8 +44,7 @@ class TransactionRepository(
         Result.Error(e)
     }
 
-    // --- Add new transaction ---
-    suspend fun addTransaction(transaction: Transaction): Result<Transaction> = try {
+    override suspend fun addTransaction(transaction: Transaction): Result<Transaction> = try {
         val dto = api.addTransaction(transaction.toDto())
         Result.Success(dto.toDomain())
     } catch (e: Exception) {

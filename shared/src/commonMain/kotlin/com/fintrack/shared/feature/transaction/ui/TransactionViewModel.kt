@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.transaction.data.TransactionApi
 import com.fintrack.shared.feature.transaction.data.TransactionRepository
-import com.fintrack.shared.feature.transaction.model.Transaction
+import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

@@ -1,7 +1,6 @@
 package com.fintrack.shared.feature.summary.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -19,7 +18,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,8 +31,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.core.Result
-import com.fintrack.shared.feature.summary.domain.Highlight
-import com.fintrack.shared.feature.summary.domain.StatisticsSummary
+import com.fintrack.shared.feature.summary.domain.model.Highlight
+import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
 import com.fintrack.shared.feature.transaction.ui.addtransaction.AnimatedShimmerBox
 import com.fintrack.shared.feature.transaction.ui.home.GreenIncome
 

@@ -2,7 +2,7 @@ package com.fintrack.shared.feature.auth.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fintrack.shared.feature.auth.domain.AuthResponse
+import com.fintrack.shared.feature.auth.domain.model.AuthResponse
 import com.fintrack.shared.feature.auth.data.repository.AuthRepository
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.auth.data.repository.TokenRepository
