@@ -14,12 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class AuthViewModel : ViewModel() {
-
-    private val tokenRepository: TokenRepository = TokenRepository(
-        createTokenDataStore()
-    )
-    private val repository: AuthRepository = AuthRepositoryImpl()
+class AuthViewModel(private val repository: AuthRepository,private val tokenRepository: TokenRepository) : ViewModel() {
 
     private val _loginState = MutableStateFlow<Result<AuthResponse>?>(null)
     val loginState: StateFlow<Result<AuthResponse>?> = _loginState

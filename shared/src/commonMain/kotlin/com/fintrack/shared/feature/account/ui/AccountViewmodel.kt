@@ -10,9 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class AccountsViewModel : ViewModel() {
-
-    private val repo: AccountRepository = AccountRepositoryImpl()
+class AccountsViewModel(private val repo: AccountRepository) : ViewModel() {
 
     private val _accounts = MutableStateFlow<Result<List<Account>>>(Result.Loading)
     val accounts: StateFlow<Result<List<Account>>> = _accounts

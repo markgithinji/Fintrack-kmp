@@ -29,11 +29,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.auth.domain.model.AuthResponse
 import com.fintrack.shared.feature.core.Result
+import org.koin.compose.viewmodel.koinViewModel
 
 
 @Composable
 fun LoginScreen(
-    viewModel: AuthViewModel = viewModel(),
+    viewModel: AuthViewModel = koinViewModel(),
     onLoginSuccess: (AuthResponse) -> Unit,
     modifier: Modifier = Modifier
 ) {

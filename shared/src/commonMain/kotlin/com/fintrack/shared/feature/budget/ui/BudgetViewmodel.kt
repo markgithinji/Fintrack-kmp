@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 
 class BudgetViewModel(
-    private val repo: BudgetRepository = BudgetRepositoryImpl()
+    private val repo: BudgetRepository
 ) : ViewModel() {
 
     private val _budgets = MutableStateFlow<Result<List<BudgetWithStatus>>>(Result.Loading)

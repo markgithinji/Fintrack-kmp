@@ -26,10 +26,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.Result
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AccountsTestScreen(
-    viewModel: AccountsViewModel = viewModel()
+    viewModel: AccountsViewModel = koinViewModel()
 ) {
     val accountsState by viewModel.accounts.collectAsStateWithLifecycle()
 

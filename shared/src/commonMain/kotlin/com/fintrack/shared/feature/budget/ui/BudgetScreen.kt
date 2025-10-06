@@ -67,11 +67,12 @@ import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.transaction.ui.addtransaction.AnimatedShimmerBox
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
+import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.pow
 import kotlin.math.round
 @Composable
 fun BudgetScreen(
-    viewModel: BudgetViewModel = viewModel(),
+    viewModel: BudgetViewModel = koinViewModel(),
     onAddBudget: () -> Unit = {},
     onBudgetClick: (BudgetWithStatus) -> Unit
 ) {
