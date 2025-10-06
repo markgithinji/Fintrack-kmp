@@ -69,9 +69,10 @@ class SummaryRepositoryImpl(
             Result.Error(e)
         }
 
-    override suspend fun getTransactionCounts(accountId: Int): Result<TransactionCountSummary> = try {
-        Result.Success(api.getTransactionCounts(accountId).toDomain())
-    } catch (e: Exception) {
-        Result.Error(e)
-    }
+    override suspend fun getTransactionCounts(accountId: Int): Result<TransactionCountSummary> =
+        try {
+            Result.Success(api.getTransactionCounts(accountId).toDomain())
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
 }

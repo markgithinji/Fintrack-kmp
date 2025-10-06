@@ -54,8 +54,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
-import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
+import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.ui.addtransaction.CategoryChip
 import com.fintrack.shared.feature.transaction.ui.addtransaction.ToggleChip
@@ -121,6 +121,7 @@ fun BudgetDetailScreen(
                 is Result.Loading -> {
                     CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
                 }
+
                 is Result.Error -> {
                     Text(
                         text = "Failed to load budget",
@@ -128,6 +129,7 @@ fun BudgetDetailScreen(
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
                 }
+
                 is Result.Success, null -> {
                     BudgetForm(
                         name = name,
@@ -211,6 +213,7 @@ fun BudgetDetailSaveButton(
         }
     }
 }
+
 @Composable
 fun BudgetForm(
     name: String,
@@ -325,7 +328,8 @@ fun BudgetForm(
                     .fillMaxSize()
                     .padding(8.dp)
             ) {
-                val categories = if (isExpense) Category.expenseCategories else Category.incomeCategories
+                val categories =
+                    if (isExpense) Category.expenseCategories else Category.incomeCategories
 
                 // --- Add "All" chip at the start ---
                 item {

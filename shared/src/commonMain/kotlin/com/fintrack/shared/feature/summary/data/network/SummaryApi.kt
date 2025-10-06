@@ -1,13 +1,6 @@
 package com.fintrack.shared.feature.summary.data.network
 
-import com.fintrack.shared.feature.auth.data.local.TokenProvider
-import com.fintrack.shared.feature.auth.data.local.TokenProviderImpl
-import com.fintrack.shared.feature.auth.data.repository.TokenRepository
-import com.fintrack.shared.feature.auth.data.local.createTokenDataStore
-import com.fintrack.shared.feature.core.ApiClient
-import com.fintrack.shared.feature.core.ApiConfig
 import com.fintrack.shared.feature.core.ApiResponse
-import com.fintrack.shared.feature.core.PaginatedTransactionDto
 import com.fintrack.shared.feature.summary.data.model.AvailableMonthsDto
 import com.fintrack.shared.feature.summary.data.model.AvailableWeeksDto
 import com.fintrack.shared.feature.summary.data.model.AvailableYearsDto
@@ -18,19 +11,8 @@ import com.fintrack.shared.feature.summary.data.model.OverviewSummaryDto
 import com.fintrack.shared.feature.summary.data.model.TransactionCountSummaryDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.HttpSend
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.plugins.plugin
 import io.ktor.client.request.get
-import io.ktor.client.request.header
 import io.ktor.client.request.parameter
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.json.Json
 
 
 class SummaryApi(

@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.firstOrNull
 interface TokenProvider {
     suspend fun getToken(): String?
 }
+
 class TokenProviderImpl(
     private val tokenRepository: TokenRepository
 ) : TokenProvider {

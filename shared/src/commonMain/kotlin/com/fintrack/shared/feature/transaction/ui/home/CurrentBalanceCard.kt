@@ -26,7 +26,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -55,6 +54,7 @@ import androidx.compose.ui.window.Dialog
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.transaction.ui.AccountIcon
+
 @Composable
 fun CurrentBalanceCard(
     account: Account?,
@@ -224,6 +224,7 @@ fun CurrentBalanceCard(
         }
     }
 }
+
 @Composable
 fun AccountSelectionDialog(
     accounts: List<Account>,
@@ -321,7 +322,7 @@ fun AccountSelectionDialog(
                                     )
                                     .padding(vertical = 12.dp, horizontal = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
-                            ){
+                            ) {
                                 Box(
                                     modifier = Modifier
                                         .size(36.dp)
@@ -343,12 +344,26 @@ fun AccountSelectionDialog(
                                 Spacer(Modifier.width(12.dp))
 
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(acc.name, fontWeight = FontWeight.Medium, fontSize = 16.sp, color = Color(0xFF212121))
-                                    Text("KSh ${formatAmount(acc.balance ?: 0.0)}", fontSize = 12.sp, color = Color.Gray)
+                                    Text(
+                                        acc.name,
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 16.sp,
+                                        color = Color(0xFF212121)
+                                    )
+                                    Text(
+                                        "KSh ${formatAmount(acc.balance ?: 0.0)}",
+                                        fontSize = 12.sp,
+                                        color = Color.Gray
+                                    )
                                 }
 
                                 if (isSelected) {
-                                    Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF00ACC1), modifier = Modifier.size(20.dp))
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = Color(0xFF00ACC1),
+                                        modifier = Modifier.size(20.dp)
+                                    )
                                 }
                             }
                         }
@@ -390,8 +405,12 @@ fun CurrentBalanceCardWrapper(
 
     val isError = accountsResult is Result.Error || selectedAccountResult is Result.Error
     val errorMessage = when {
-        accountsResult is Result.Error -> accountsResult.exception.message ?: "Failed to load accounts"
-        selectedAccountResult is Result.Error -> selectedAccountResult.exception.message ?: "Failed to load account"
+        accountsResult is Result.Error -> accountsResult.exception.message
+            ?: "Failed to load accounts"
+
+        selectedAccountResult is Result.Error -> selectedAccountResult.exception.message
+            ?: "Failed to load account"
+
         else -> null
     }
 

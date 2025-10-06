@@ -48,9 +48,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.summary.domain.model.CategorySummary
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
-import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.transaction.ui.addtransaction.AnimatedShimmerBox
 import com.fintrack.shared.feature.transaction.ui.home.GreenIncome
 
@@ -62,6 +62,7 @@ val SegmentColors = listOf(
     Color(0xFF76B7B2), // Teal
     Color(0xFFFF9DA7)  // Pink / Others
 )
+
 @Composable
 fun CategoryTotalsCardWithTabs(
     tabType: TabType,
@@ -402,13 +403,34 @@ fun ErrorCategoryContent(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Icon(Icons.Default.PieChart, contentDescription = "Error", tint = Color.Gray, modifier = Modifier.size(48.dp))
+        Box(
+            modifier = Modifier.fillMaxWidth().height(200.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Icon(
+                    Icons.Default.PieChart,
+                    contentDescription = "Error",
+                    tint = Color.Gray,
+                    modifier = Modifier.size(48.dp)
+                )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Unable to Load Data", color = Color.Black, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Unable to Load Data",
+                        color = Color.Black,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(message, color = Color.Gray, fontSize = 14.sp, textAlign = TextAlign.Center)
+                    Text(
+                        message,
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center
+                    )
                 }
                 Button(
                     onClick = onRetry,
@@ -416,12 +438,18 @@ fun ErrorCategoryContent(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.height(40.dp)
                 ) {
-                    Text("Try Again", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    Text(
+                        "Try Again",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }
     }
 }
+
 @Composable
 private fun CategoryContent(
     weeklySummary: Map<String, List<CategorySummary>>,

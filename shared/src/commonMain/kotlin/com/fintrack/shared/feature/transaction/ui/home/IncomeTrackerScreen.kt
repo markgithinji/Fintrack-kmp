@@ -58,7 +58,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.core.Result
@@ -90,7 +89,6 @@ import network.chaintech.cmpcharts.ui.linechart.model.Line
 import network.chaintech.cmpcharts.ui.linechart.model.LineChartProperties
 import network.chaintech.cmpcharts.ui.linechart.model.LinePlotData
 import network.chaintech.cmpcharts.ui.linechart.model.LineStyle
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 
@@ -179,7 +177,6 @@ fun IncomeTrackerContent(
 }
 
 
-
 fun LocalDate.shortDayName(): String {
     // 0 = Monday ... 6 = Sunday
     return when (this.dayOfWeek.ordinal) {
@@ -188,6 +185,7 @@ fun LocalDate.shortDayName(): String {
         else -> ""
     }
 }
+
 @Composable
 fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
     var selectedPeriod by remember { mutableStateOf(OverviewPeriod.Weekly) }
@@ -720,6 +718,7 @@ fun CategoryComparisonCard(
         }
     }
 }
+
 @Composable
 private fun CategoryComparisonItem(
     comparison: CategoryComparison,
@@ -1089,8 +1088,6 @@ fun IncomeExpenseCards(
 }
 
 
-
-
 @Composable
 fun InfoCard(
     title: String,
@@ -1136,7 +1133,6 @@ fun InfoCard(
         }
     }
 }
-
 
 
 fun formatAmount(value: Double): String {

@@ -2,8 +2,6 @@ package com.fintrack.shared.feature.auth.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fintrack.shared.feature.auth.data.local.createTokenDataStore
-import com.fintrack.shared.feature.auth.data.repository.AuthRepositoryImpl
 import com.fintrack.shared.feature.auth.data.repository.TokenRepository
 import com.fintrack.shared.feature.auth.domain.model.AuthResponse
 import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
@@ -14,7 +12,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class AuthViewModel(private val repository: AuthRepository,private val tokenRepository: TokenRepository) : ViewModel() {
+class AuthViewModel(
+    private val repository: AuthRepository,
+    private val tokenRepository: TokenRepository
+) : ViewModel() {
 
     private val _loginState = MutableStateFlow<Result<AuthResponse>?>(null)
     val loginState: StateFlow<Result<AuthResponse>?> = _loginState
@@ -34,10 +35,12 @@ class AuthViewModel(private val repository: AuthRepository,private val tokenRepo
                     _loginState.value = result
                     println("Login successful, token persisted: ${result.data.token}")
                 }
+
                 is Result.Error -> {
                     _loginState.value = result
                     println("Login failed: ${result.exception.message}")
                 }
+
                 else -> {}
             }
         }
@@ -52,10 +55,12 @@ class AuthViewModel(private val repository: AuthRepository,private val tokenRepo
                     _registerState.value = result
                     println("Register successful, token persisted: ${result.data.token}")
                 }
+
                 is Result.Error -> {
                     _registerState.value = result
                     println("Register failed: ${result.exception.message}")
                 }
+
                 else -> {}
             }
         }

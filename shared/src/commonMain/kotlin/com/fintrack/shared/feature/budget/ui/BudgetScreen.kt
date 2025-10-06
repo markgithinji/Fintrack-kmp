@@ -61,15 +61,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
+import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.transaction.ui.addtransaction.AnimatedShimmerBox
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.pow
 import kotlin.math.round
+
 @Composable
 fun BudgetScreen(
     viewModel: BudgetViewModel = koinViewModel(),
@@ -453,6 +453,7 @@ fun BudgetErrorRetryState(
         }
     }
 }
+
 @Composable
 fun BudgetScreenLoadingState() {
     LazyColumn(
@@ -593,6 +594,7 @@ fun BudgetScreenLoadingState() {
         }
     }
 }
+
 @Composable
 fun BudgetItem(
     budgetWithStatus: BudgetWithStatus,
@@ -813,6 +815,7 @@ fun formatBudgetDate(localDate: LocalDate): String {
     val year = localDate.year.toString().takeLast(2)
     return "$day $monthName $year"
 }
+
 fun Double.roundToDecimals(decimals: Int): String {
     val factor = 10.0.pow(decimals)
     return (round(this * factor) / factor).toString()

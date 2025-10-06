@@ -1,12 +1,12 @@
 package com.fintrack.shared.feature.auth.data.repository
 
-import com.fintrack.shared.feature.auth.data.remote.AuthApi
-import com.fintrack.shared.feature.auth.domain.model.AuthResponse
 import com.fintrack.shared.feature.auth.data.model.LoginRequestDto
 import com.fintrack.shared.feature.auth.data.model.RegisterRequestDto
-import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.auth.data.model.toDomain
+import com.fintrack.shared.feature.auth.data.remote.AuthApi
+import com.fintrack.shared.feature.auth.domain.model.AuthResponse
 import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
+import com.fintrack.shared.feature.core.Result
 
 class AuthRepositoryImpl(
     private val api: AuthApi
@@ -20,7 +20,11 @@ class AuthRepositoryImpl(
             Result.Error(e)
         }
 
-    override suspend fun register(name: String, email: String, password: String): Result<AuthResponse> =
+    override suspend fun register(
+        name: String,
+        email: String,
+        password: String
+    ): Result<AuthResponse> =
         try {
             val authResponse = api.register(RegisterRequestDto(name, email, password))
             Result.Success(authResponse.toDomain())

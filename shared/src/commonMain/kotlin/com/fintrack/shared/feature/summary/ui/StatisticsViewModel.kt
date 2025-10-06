@@ -3,11 +3,10 @@ package com.fintrack.shared.feature.summary.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.core.Result
-import com.fintrack.shared.feature.summary.data.repository.SummaryRepositoryImpl
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
-import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
+import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,10 +47,12 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
     val selectedPeriod: StateFlow<Period?> = _selectedPeriod
 
     // FIX: Initialize with Result.Loading instead of null
-    private val _categoryComparisons = MutableStateFlow<Result<List<CategoryComparison>>>(Result.Loading)
+    private val _categoryComparisons =
+        MutableStateFlow<Result<List<CategoryComparison>>>(Result.Loading)
     val categoryComparisons: StateFlow<Result<List<CategoryComparison>>> = _categoryComparisons
 
-    private val _transactionCounts = MutableStateFlow<Result<TransactionCountSummary>>(Result.Loading)
+    private val _transactionCounts =
+        MutableStateFlow<Result<TransactionCountSummary>>(Result.Loading)
     val transactionCounts: StateFlow<Result<TransactionCountSummary>> = _transactionCounts
 
     // --- Load highlights summary for optional account ---
@@ -87,15 +88,18 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
             try {
                 // --- Weeks ---
                 val weeksResult = repo.getAvailableWeeks(accountId)
-                _availableWeeks.value = if (weeksResult is Result.Success) weeksResult.data.weeks else emptyList()
+                _availableWeeks.value =
+                    if (weeksResult is Result.Success) weeksResult.data.weeks else emptyList()
 
                 // --- Months ---
                 val monthsResult = repo.getAvailableMonths(accountId)
-                _availableMonths.value = if (monthsResult is Result.Success) monthsResult.data.months else emptyList()
+                _availableMonths.value =
+                    if (monthsResult is Result.Success) monthsResult.data.months else emptyList()
 
                 // --- Years ---
                 val yearsResult = repo.getAvailableYears(accountId)
-                _availableYears.value = if (yearsResult is Result.Success) yearsResult.data.years else emptyList()
+                _availableYears.value =
+                    if (yearsResult is Result.Success) yearsResult.data.years else emptyList()
 
                 // --- Pick initial selection ---
                 _selectedPeriod.value = when {
@@ -174,7 +178,6 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
         accountId?.let { loadTransactionCounts(it) }
     }
 }
-
 
 
 /** Sealed class for tab selection */

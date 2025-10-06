@@ -46,7 +46,12 @@ class TransactionViewModel(
     }
 
     // --- Refresh / first page ---
-    fun refresh(accountId: Int? = currentAccountId, limit: Int = 20, sortBy: String = "date", order: String = "DESC") {
+    fun refresh(
+        accountId: Int? = currentAccountId,
+        limit: Int = 20,
+        sortBy: String = "date",
+        order: String = "DESC"
+    ) {
         currentAccountId = accountId
         viewModelScope.launch {
             _transactions.value = Result.Loading
@@ -58,6 +63,7 @@ class TransactionViewModel(
                     nextCursor = cursor
                     Result.Success(list)
                 }
+
                 is Result.Error -> Result.Error(result.exception)
                 is Result.Loading -> Result.Loading
             }
@@ -70,7 +76,14 @@ class TransactionViewModel(
         val (afterDate, afterId) = cursor.split("|").let { it[0] to it[1].toInt() }
 
         viewModelScope.launch {
-            val result = repo.getTransactions(limit, sortBy, order, afterDate, afterId, accountId = currentAccountId)
+            val result = repo.getTransactions(
+                limit,
+                sortBy,
+                order,
+                afterDate,
+                afterId,
+                accountId = currentAccountId
+            )
             if (result is Result.Success) {
                 val (list, cursorNext) = result.data
                 nextCursor = cursorNext
@@ -85,7 +98,12 @@ class TransactionViewModel(
         currentAccountId = accountId
         viewModelScope.launch {
             _recentTransactions.value = Result.Loading
-            val result = repo.getTransactions(limit = 6, sortBy = "date", order = "DESC", accountId = accountId)
+            val result = repo.getTransactions(
+                limit = 6,
+                sortBy = "date",
+                order = "DESC",
+                accountId = accountId
+            )
             _recentTransactions.value = when (result) {
                 is Result.Success -> Result.Success(result.data.first) // extract transactions list
                 is Result.Error -> Result.Error(result.exception)

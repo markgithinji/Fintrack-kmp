@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +23,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 // Chart segments
@@ -33,6 +31,7 @@ val SegmentColor2 = Color(0xFF228B22) // Forest Green
 val SegmentColor3 = Color(0xFF457B9D) // Vibrant blue
 val SegmentColor4 = Color(0xFFF4A261) // Warm orange
 val SegmentColor5 = Color(0xFF2A9D8F) // Teal / turquoise
+
 @Composable
 fun StatisticsScreen(
     viewModel: StatisticsViewModel = koinViewModel()
@@ -52,7 +51,8 @@ fun StatisticsScreen(
         viewModel.loadHighlights()
     }
 
-    val safePeriod = selectedPeriod ?: getDefaultPeriod(availableWeeks, availableMonths, availableYears)
+    val safePeriod =
+        selectedPeriod ?: getDefaultPeriod(availableWeeks, availableMonths, availableYears)
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),

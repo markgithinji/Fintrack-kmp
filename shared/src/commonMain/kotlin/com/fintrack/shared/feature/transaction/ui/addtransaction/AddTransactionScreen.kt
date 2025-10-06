@@ -50,7 +50,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
@@ -63,7 +62,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -176,7 +174,8 @@ fun AddTransactionScreen(
                     .fillMaxSize()
                     .padding(8.dp)
             ) {
-                val categories = if (isIncome) Category.incomeCategories else Category.expenseCategories
+                val categories =
+                    if (isIncome) Category.incomeCategories else Category.expenseCategories
                 items(categories.size) { index ->
                     val cat = categories[index]
                     val selected = category == cat
@@ -248,7 +247,11 @@ fun AddTransactionScreen(
                             fontSize = 16.sp
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Icon(Icons.Default.DateRange, contentDescription = "Pick Date", tint = MaterialTheme.colorScheme.primary)
+                        Icon(
+                            Icons.Default.DateRange,
+                            contentDescription = "Pick Date",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
 
@@ -272,7 +275,11 @@ fun AddTransactionScreen(
                             fontSize = 16.sp
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Icon(Icons.Default.AccessTime, contentDescription = "Pick Time", tint = MaterialTheme.colorScheme.primary)
+                        Icon(
+                            Icons.Default.AccessTime,
+                            contentDescription = "Pick Time",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             }
@@ -338,7 +345,6 @@ fun AddTransactionScreen(
         }
     }
 }
-
 
 
 @Composable

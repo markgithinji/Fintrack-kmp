@@ -40,7 +40,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
@@ -49,7 +48,6 @@ import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.addtransaction.AnimatedShimmerBox
 import com.fintrack.shared.feature.transaction.ui.home.GreenIncome
 import kotlinx.datetime.LocalDate
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -91,7 +89,8 @@ fun TransactionListScreen(
             transactionsResult is Result.Error -> {
                 item {
                     ErrorState(
-                        message = (transactionsResult as Result.Error).exception.message ?: "Failed to load transactions",
+                        message = (transactionsResult as Result.Error).exception.message
+                            ?: "Failed to load transactions",
                         onRetry = { transactionsViewModel.refresh(accountId) }
                     )
                 }

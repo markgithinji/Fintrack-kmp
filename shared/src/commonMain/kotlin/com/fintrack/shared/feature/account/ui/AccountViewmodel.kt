@@ -2,7 +2,6 @@ package com.fintrack.shared.feature.account.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fintrack.shared.feature.account.data.repository.AccountRepositoryImpl
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.core.Result

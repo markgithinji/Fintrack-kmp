@@ -1,12 +1,9 @@
 package com.fintrack.shared.feature.transaction.ui
 
 import android.app.DatePickerDialog
-import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.datetime.LocalDate
-
-
 
 @Composable
 actual fun PickDate(
@@ -15,7 +12,7 @@ actual fun PickDate(
     onDismiss: () -> Unit
 ) {
     val ctx = LocalContext.current
-    val date = initialDate ?: LocalDate(2025,1,1)
+    val date = initialDate ?: LocalDate(2025, 1, 1)
 
     DatePickerDialog(
         ctx,
