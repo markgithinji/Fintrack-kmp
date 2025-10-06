@@ -32,7 +32,7 @@ kotlin {
             implementation("io.ktor:ktor-client-okhttp:3.3.0")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
             implementation("androidx.datastore:datastore-preferences:1.1.1")
-
+            implementation("io.insert-koin:koin-android:3.5.0")
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -51,10 +51,12 @@ kotlin {
             implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
             implementation("network.chaintech:cmpcharts:2.0.6")
             implementation("androidx.datastore:datastore-preferences-core:1.1.1")
+            implementation("io.insert-koin:koin-core:3.5.0")
 
         }
         iosMain.dependencies {
             implementation("io.ktor:ktor-client-darwin:2.3.12")
+            implementation("io.insert-koin:koin-core:3.5.0")
         }
 
         commonTest.dependencies {

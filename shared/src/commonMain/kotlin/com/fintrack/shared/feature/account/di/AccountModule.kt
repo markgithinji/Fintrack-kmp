@@ -1,0 +1,11 @@
+package com.fintrack.shared.feature.account.di
+
+import com.fintrack.shared.feature.account.data.remote.AccountsApi
+import com.fintrack.shared.feature.account.data.repository.AccountRepositoryImpl
+import com.fintrack.shared.feature.account.domain.repository.AccountRepository
+import org.koin.dsl.module
+
+val accountModule = module {
+    factory { AccountsApi(get(), getProperty("baseUrl")) }
+    single<AccountRepository> { AccountRepositoryImpl(get()) }
+}
