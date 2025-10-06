@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 // Chart segments
 val SegmentColor1 = Color(0xFFE63946) // Strong red
@@ -34,7 +35,7 @@ val SegmentColor4 = Color(0xFFF4A261) // Warm orange
 val SegmentColor5 = Color(0xFF2A9D8F) // Teal / turquoise
 @Composable
 fun StatisticsScreen(
-    viewModel: StatisticsViewModel = viewModel()
+    viewModel: StatisticsViewModel = koinViewModel()
 ) {
     // --- Collect UI state ---
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()

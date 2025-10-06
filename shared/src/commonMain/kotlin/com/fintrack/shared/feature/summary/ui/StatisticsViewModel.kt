@@ -9,12 +9,12 @@ import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
+import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class StatisticsViewModel : ViewModel() {
-    private val repo = SummaryRepositoryImpl()
+class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
 
     // --- Highlights state ---
     private val _highlights = MutableStateFlow<Result<StatisticsSummary>>(Result.Loading)
