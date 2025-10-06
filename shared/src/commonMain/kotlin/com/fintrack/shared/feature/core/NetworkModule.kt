@@ -13,5 +13,4 @@ val networkModule = module {
     single<TokenProvider> { TokenProviderImpl(get()) }
 
     single { ApiClient.authenticatedClient }
-    single { ApiClient.simpleClient }
 }

@@ -57,7 +57,7 @@ fun TransactionListScreen(
     accountId: Int,
     isIncome: Boolean? = null,
     transactionsViewModel: TransactionViewModel = koinViewModel(),
-    statisticsViewModel: StatisticsViewModel = viewModel()
+    statisticsViewModel: StatisticsViewModel = koinViewModel()
 ) {
     val transactionsResult by transactionsViewModel.transactions.collectAsStateWithLifecycle()
     val transactionCounts by statisticsViewModel.transactionCounts.collectAsStateWithLifecycle()
