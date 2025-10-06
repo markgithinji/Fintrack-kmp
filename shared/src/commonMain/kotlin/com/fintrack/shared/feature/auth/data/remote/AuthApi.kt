@@ -19,8 +19,8 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 class AuthApi(
-    private val client: HttpClient = ApiClient.simpleClient,
-    private val baseUrl: String = ApiConfig.BASE_URL
+    private val client: HttpClient,
+    private val baseUrl: String
 ) {
 
     suspend fun login(request: LoginRequestDto): AuthResponseDto {

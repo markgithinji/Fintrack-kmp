@@ -29,8 +29,8 @@ import kotlinx.serialization.json.Json
 
 
 class BudgetApi(
-    private val client: HttpClient = ApiClient.authenticatedClient,
-    private val baseUrl: String = ApiConfig.BASE_URL
+    private val client: HttpClient,
+    private val baseUrl: String
 ) {
 
     suspend fun addBudget(budget: BudgetDto): BudgetDto {

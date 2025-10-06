@@ -9,7 +9,7 @@ import com.fintrack.shared.feature.auth.data.model.toDomain
 import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
 
 class AuthRepositoryImpl(
-    private val api: AuthApi = AuthApi()
+    private val api: AuthApi
 ) : AuthRepository {
 
     override suspend fun login(email: String, password: String): Result<AuthResponse> =

@@ -34,8 +34,8 @@ import kotlinx.serialization.json.Json
 
 
 class SummaryApi(
-    private val client: HttpClient = ApiClient.authenticatedClient,
-    private val baseUrl: String = ApiConfig.BASE_URL
+    private val client: HttpClient,
+    private val baseUrl: String
 ) {
     // --- Highlights ---
     suspend fun getHighlightsSummary(accountId: Int? = null): HighlightsSummaryDto {

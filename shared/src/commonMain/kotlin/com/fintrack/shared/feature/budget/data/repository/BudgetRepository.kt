@@ -9,7 +9,7 @@ import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.core.Result
 
 class BudgetRepositoryImpl(
-    private val api: BudgetApi = BudgetApi()
+    private val api: BudgetApi
 ) : BudgetRepository {
 
     override suspend fun getBudgets(): Result<List<BudgetWithStatus>> = try {

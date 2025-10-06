@@ -14,7 +14,7 @@ import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
 
 class SummaryRepositoryImpl(
-    private val api: SummaryApi = SummaryApi()
+    private val api: SummaryApi
 ) : SummaryRepository {
 
     override suspend fun getHighlightsSummary(accountId: Int?): Result<StatisticsSummary> = try {

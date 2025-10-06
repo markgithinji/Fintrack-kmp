@@ -7,7 +7,7 @@ import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 
 class TransactionRepositoryImpl(
-    private val api: TransactionApi = TransactionApi()
+    private val api: TransactionApi
 ) : TransactionRepository {
 
     override suspend fun getTransactions(

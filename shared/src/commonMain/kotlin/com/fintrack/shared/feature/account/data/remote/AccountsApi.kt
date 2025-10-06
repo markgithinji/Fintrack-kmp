@@ -27,8 +27,8 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 class AccountsApi(
-    private val client: HttpClient = ApiClient.authenticatedClient,
-    private val baseUrl: String = ApiConfig.BASE_URL
+    private val client: HttpClient,
+    private val baseUrl: String
 ) {
 
     suspend fun getAccounts(): List<AccountDto> {

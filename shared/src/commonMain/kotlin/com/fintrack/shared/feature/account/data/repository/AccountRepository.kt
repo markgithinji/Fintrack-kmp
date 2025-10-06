@@ -8,7 +8,7 @@ import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.core.Result
 
 class AccountRepositoryImpl(
-    private val api: AccountsApi = AccountsApi()
+    private val api: AccountsApi
 ) : AccountRepository {
 
     override suspend fun getAccounts(): Result<List<Account>> = try {
