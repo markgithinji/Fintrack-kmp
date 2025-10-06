@@ -56,18 +56,20 @@ import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.PickDate
 import com.fintrack.shared.feature.transaction.ui.PickTime
-import com.fintrack.shared.feature.transaction.ui.TransactionListViewModel
+import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import com.fintrack.shared.feature.transaction.ui.toColor
 import com.fintrack.shared.feature.transaction.ui.toIcon
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTransactionScreen(
-    transactionsViewModel: TransactionListViewModel = viewModel()
+    transactionsViewModel: TransactionViewModel = koinViewModel()
 ) {
     val saveResult by transactionsViewModel.saveResult.collectAsStateWithLifecycle()
 

@@ -49,12 +49,14 @@ import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.addtransaction.AnimatedShimmerBox
 import com.fintrack.shared.feature.transaction.ui.home.GreenIncome
 import kotlinx.datetime.LocalDate
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun TransactionListScreen(
     accountId: Int,
     isIncome: Boolean? = null,
-    transactionsViewModel: TransactionListViewModel = viewModel(),
+    transactionsViewModel: TransactionViewModel = koinViewModel(),
     statisticsViewModel: StatisticsViewModel = viewModel()
 ) {
     val transactionsResult by transactionsViewModel.transactions.collectAsStateWithLifecycle()

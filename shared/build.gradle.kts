@@ -51,8 +51,9 @@ kotlin {
             implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
             implementation("network.chaintech:cmpcharts:2.0.6")
             implementation("androidx.datastore:datastore-preferences-core:1.1.1")
-            implementation("io.insert-koin:koin-core:3.5.0")
-
+            implementation("io.insert-koin:koin-core:4.1.1")
+            implementation("io.insert-koin:koin-compose-viewmodel:4.1.1")
+            implementation("io.ktor:ktor-client-logging:3.3.0")
         }
         iosMain.dependencies {
             implementation("io.ktor:ktor-client-darwin:2.3.12")

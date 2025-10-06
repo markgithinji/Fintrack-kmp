@@ -3,16 +3,16 @@ package com.fintrack.shared.feature.transaction.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.core.Result
-import com.fintrack.shared.feature.transaction.data.TransactionApi
-import com.fintrack.shared.feature.transaction.data.TransactionRepositoryImpl
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class TransactionListViewModel : ViewModel() {
-    private val repo: TransactionRepository = TransactionRepositoryImpl()
+class TransactionViewModel(
+    private val repo: TransactionRepository
+) : ViewModel() {
+
     private var currentAccountId: Int? = null
 
     // --- Transactions state (full list / paginated) ---

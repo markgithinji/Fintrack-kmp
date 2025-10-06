@@ -67,7 +67,7 @@ import com.fintrack.shared.feature.summary.domain.model.DaySummary
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.domain.model.Category
-import com.fintrack.shared.feature.transaction.ui.TransactionListViewModel
+import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingBarChart
 import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingInfoCard
 import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingLineChart
@@ -90,6 +90,8 @@ import network.chaintech.cmpcharts.ui.linechart.model.Line
 import network.chaintech.cmpcharts.ui.linechart.model.LineChartProperties
 import network.chaintech.cmpcharts.ui.linechart.model.LinePlotData
 import network.chaintech.cmpcharts.ui.linechart.model.LineStyle
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 
 val backgroundGray = Color(0xFFEFEFEF)
@@ -99,7 +101,7 @@ val PinkExpense = Color(0xFFE27C94) // pinkish-red for expense
 @Composable
 fun IncomeTrackerContent(
     accountsViewModel: AccountsViewModel = viewModel(),
-    transactionsViewModel: TransactionListViewModel = viewModel(),
+    transactionsViewModel: TransactionViewModel = koinViewModel(),
     statsViewModel: StatisticsViewModel = viewModel(),
     onCardClick: (accountId: Int, isIncome: Boolean?) -> Unit
 ) {
