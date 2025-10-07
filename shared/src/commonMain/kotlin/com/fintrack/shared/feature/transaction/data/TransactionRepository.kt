@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.transaction.data
 
 import com.fintrack.shared.feature.core.Result
+import com.fintrack.shared.feature.core.safeApiCall
 import com.fintrack.shared.feature.transaction.data.model.toDomain
 import com.fintrack.shared.feature.transaction.data.model.toDto
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
@@ -17,38 +18,34 @@ class TransactionRepositoryImpl(
         afterDate: String?,
         afterId: Int?,
         accountId: Int?
-    ): Result<Pair<List<Transaction>, String?>> = try {
-        val paginated = api.getTransactions(
-            limit = limit,
-            sortBy = sortBy,
-            order = order,
-            afterDate = afterDate,
-            afterId = afterId,
-            accountId = accountId
-        )
-        val transactions = paginated.data.map { it.toDomain() }
-        Result.Success(transactions to paginated.nextCursor)
-    } catch (e: Exception) {
-        Result.Error(e)
-    }
+    ): Result<Pair<List<Transaction>, String?>> =
+        safeApiCall {
+            val paginated = api.getTransactions(
+                limit = limit,
+                sortBy = sortBy,
+                order = order,
+                afterDate = afterDate,
+                afterId = afterId,
+                accountId = accountId
+            )
+            val transactions = paginated.data.map { it.toDomain() }
+            transactions to paginated.nextCursor
+        }
 
-    override suspend fun getRecentTransactions(accountId: Int?): Result<List<Transaction>> = try {
-        val paginated = api.getTransactions(
-            limit = 6,
-            sortBy = "date",
-            order = "DESC",
-            accountId = accountId
-        )
-        Result.Success(paginated.data.map { it.toDomain() })
-    } catch (e: Exception) {
-        Result.Error(e)
-    }
+    override suspend fun getRecentTransactions(accountId: Int?): Result<List<Transaction>> =
+        safeApiCall {
+            val paginated = api.getTransactions(
+                limit = 6,
+                sortBy = "date",
+                order = "DESC",
+                accountId = accountId
+            )
+            paginated.data.map { it.toDomain() }
+        }
 
-    override suspend fun addTransaction(transaction: Transaction): Result<Transaction> = try {
-        val dto = api.addTransaction(transaction.toDto())
-        Result.Success(dto.toDomain())
-    } catch (e: Exception) {
-        Result.Error(e)
-    }
+    override suspend fun addTransaction(transaction: Transaction): Result<Transaction> =
+        safeApiCall {
+            val dto = api.addTransaction(transaction.toDto())
+            dto.toDomain()
+        }
 }
-

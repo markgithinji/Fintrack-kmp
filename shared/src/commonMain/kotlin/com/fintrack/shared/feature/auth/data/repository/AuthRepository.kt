@@ -7,17 +7,16 @@ import com.fintrack.shared.feature.auth.data.remote.AuthApi
 import com.fintrack.shared.feature.auth.domain.model.AuthResponse
 import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
 import com.fintrack.shared.feature.core.Result
+import com.fintrack.shared.feature.core.safeApiCall
 
 class AuthRepositoryImpl(
     private val api: AuthApi
 ) : AuthRepository {
 
     override suspend fun login(email: String, password: String): Result<AuthResponse> =
-        try {
+        safeApiCall {
             val authResponse = api.login(LoginRequestDto(email, password))
-            Result.Success(authResponse.toDomain())
-        } catch (e: Exception) {
-            Result.Error(e)
+            authResponse.toDomain()
         }
 
     override suspend fun register(
@@ -25,18 +24,14 @@ class AuthRepositoryImpl(
         email: String,
         password: String
     ): Result<AuthResponse> =
-        try {
+        safeApiCall {
             val authResponse = api.register(RegisterRequestDto(name, email, password))
-            Result.Success(authResponse.toDomain())
-        } catch (e: Exception) {
-            Result.Error(e)
+            authResponse.toDomain()
         }
 
     override suspend fun getUserById(userId: String, token: String): Result<AuthResponse> =
-        try {
+        safeApiCall {
             val authResponse = api.getUserById(userId, token)
-            Result.Success(authResponse.toDomain())
-        } catch (e: Exception) {
-            Result.Error(e)
+            authResponse.toDomain()
         }
 }
