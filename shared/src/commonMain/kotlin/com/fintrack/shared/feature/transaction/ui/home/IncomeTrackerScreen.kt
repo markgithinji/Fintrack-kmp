@@ -70,8 +70,8 @@ import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingBarChart
 import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingInfoCard
 import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingLineChart
-import com.fintrack.shared.feature.transaction.ui.toColor
-import com.fintrack.shared.feature.transaction.ui.toIcon
+import com.fintrack.shared.feature.transaction.ui.util.toColor
+import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toLocalDate

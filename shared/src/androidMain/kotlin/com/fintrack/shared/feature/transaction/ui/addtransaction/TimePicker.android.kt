@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui
+package com.fintrack.shared.feature.transaction.ui.addtransaction
 
 import android.app.TimePickerDialog
 import androidx.compose.runtime.Composable

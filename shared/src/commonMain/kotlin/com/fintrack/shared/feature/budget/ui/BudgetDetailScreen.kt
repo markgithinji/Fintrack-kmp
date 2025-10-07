@@ -59,8 +59,8 @@ import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.ui.addtransaction.CategoryChip
 import com.fintrack.shared.feature.transaction.ui.addtransaction.ToggleChip
-import com.fintrack.shared.feature.transaction.ui.toColor
-import com.fintrack.shared.feature.transaction.ui.toIcon
+import com.fintrack.shared.feature.transaction.ui.util.toColor
+import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import kotlinx.datetime.LocalDate
 
 @Composable

@@ -29,7 +29,7 @@ import com.fintrack.shared.feature.auth.ui.LoginScreen
 import com.fintrack.shared.feature.budget.ui.BudgetDetailScreen
 import com.fintrack.shared.feature.budget.ui.BudgetScreen
 import com.fintrack.shared.feature.summary.ui.StatisticsScreen
-import com.fintrack.shared.feature.transaction.ui.TransactionListScreen
+import com.fintrack.shared.feature.transaction.ui.transactionlist.TransactionListScreen
 import com.fintrack.shared.feature.transaction.ui.addtransaction.AddTransactionScreen
 import com.fintrack.shared.feature.transaction.ui.home.IncomeTrackerContent
 
