@@ -16,6 +16,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 object ApiClient {
+    private val logger = KMPLogger()
     private val tokenRepository = TokenRepository(createTokenDataStore())
     private val tokenProvider: TokenProvider = TokenProviderImpl(tokenRepository)
 
@@ -34,17 +35,26 @@ object ApiClient {
                 socketTimeoutMillis = 30000L
             }
 
-            expectSuccess = true // This will throw exceptions for non-2xx responses
+            expectSuccess = true
 
             defaultRequest {
                 contentType(ContentType.Application.Json)
             }
         }.apply {
+            // Add network monitoring
+            NetworkMonitorInterceptor(logger).setupNetworkMonitoring(this)
+
             plugin(HttpSend).intercept { request ->
+                logger.debug("ApiClient", "Making request to: ${request.url}")
+
                 val token = tokenProvider.getToken()
                 if (!token.isNullOrEmpty()) {
                     request.headers.append("Authorization", "Bearer $token")
+                    logger.debug("ApiClient", "Added auth token to request")
+                } else {
+                    logger.warning("ApiClient", "No auth token available")
                 }
+
                 execute(request)
             }
         }
