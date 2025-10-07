@@ -12,5 +12,5 @@ val networkModule = module {
     single<TokenRepository> { TokenRepository(get()) }
     single<TokenProvider> { TokenProviderImpl(get()) }
 
-    single { ApiClient.authenticatedClient }
+    single { ApiClient.httpClient }
 }
