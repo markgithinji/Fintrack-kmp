@@ -11,52 +11,52 @@ private val logger = KMPLogger()
 suspend fun <T> safeApiCall(apiCall: suspend () -> T): Result<T> {
     return try {
         val result = apiCall()
-        logger.debug("SafeApiCall", "API call completed successfully")
+        logger.debug(LogTags.API, "API call completed successfully")
         Result.Success(result)
     } catch (e: Exception) {
         val domainException = convertToDomainException(e)
-        logger.error("SafeApiCall", "API call failed: ${domainException.details}", e)
+        logger.error(LogTags.API, "API call failed: ${domainException.details}", e)
         Result.Error(domainException)
     }
 }
 
 private fun convertToDomainException(e: Exception): ApiException = when (e) {
     is ApiException -> {
-        logger.debug("ExceptionHandler", "Already domain exception: ${e::class.simpleName}")
+        logger.debug(LogTags.ERROR, "Already domain exception: ${e::class.simpleName}")
         e
     }
     is SerializationException -> {
-        logger.error("ExceptionHandler", "Serialization failure", e)
+        logger.error(LogTags.ERROR, "Serialization failure", e)
         ApiException.SerializationFailure("Failed to parse response: ${e.message}")
     }
     is IOException -> {
-        logger.warning("ExceptionHandler", "Network connection failed")
+        logger.warning(LogTags.NETWORK, "Network connection failed")
         ApiException.Network("Network connection failed: ${e.message}")
     }
     is IllegalStateException -> {
-        logger.error("ExceptionHandler", "Invalid app state", e)
+        logger.error(LogTags.ERROR, "Invalid app state", e)
         ApiException.InvalidState("Invalid app state: ${e.message}")
     }
     is kotlinx.coroutines.CancellationException -> {
-        logger.debug("ExceptionHandler", "Request cancelled")
+        logger.debug(LogTags.ERROR, "Request cancelled")
         throw e
     }
     is HttpRequestTimeoutException -> {
-        logger.warning("ExceptionHandler", "Request timeout")
+        logger.warning(LogTags.NETWORK, "Request timeout")
         ApiException.Network("Request timeout: ${e.message}")
     }
     is RedirectResponseException -> handleRedirectException(e)
     is ClientRequestException -> handleClientException(e)
     is ServerResponseException -> handleServerException(e)
     else -> {
-        logger.error("ExceptionHandler", "Unknown exception type: ${e::class.simpleName}", e)
+        logger.error(LogTags.ERROR, "Unknown exception type: ${e::class.simpleName}", e)
         handleUnknownException(e)
     }
 }
 
 private fun handleRedirectException(e: RedirectResponseException): ApiException {
     val statusCode = e.response.status.value
-    logger.warning("ExceptionHandler", "Redirect response: $statusCode")
+    logger.warning(LogTags.ERROR, "Redirect response: $statusCode")
     return when (statusCode) {
         401 -> ApiException.Unauthorized("Authentication required")
         403 -> ApiException.Forbidden("Access denied")
@@ -66,7 +66,7 @@ private fun handleRedirectException(e: RedirectResponseException): ApiException 
 
 private fun handleClientException(e: ClientRequestException): ApiException {
     val statusCode = e.response.status.value
-    logger.warning("ExceptionHandler", "Client error: $statusCode - ${e.message}")
+    logger.warning(LogTags.ERROR, "Client error: $statusCode - ${e.message}")
 
     return when (statusCode) {
         400 -> ApiException.ClientError("Bad request: ${e.message}", statusCode)
@@ -82,7 +82,7 @@ private fun handleClientException(e: ClientRequestException): ApiException {
 
 private fun handleServerException(e: ServerResponseException): ApiException {
     val statusCode = e.response.status.value
-    logger.error("ExceptionHandler", "Server error: $statusCode - ${e.message}")
+    logger.error(LogTags.ERROR, "Server error: $statusCode - ${e.message}")
 
     return when (statusCode) {
         500 -> ApiException.ServerError("Internal server error: ${e.message}", statusCode)
@@ -96,7 +96,7 @@ private fun handleServerException(e: ServerResponseException): ApiException {
 
 private fun handleUnknownException(e: Exception): ApiException {
     val message = e.message ?: "Unknown error occurred"
-    logger.error("ExceptionHandler", "Unhandled exception: $message", e)
+    logger.error(LogTags.ERROR, "Unhandled exception: $message", e)
 
     return when {
         message.contains("401", ignoreCase = true) -> ApiException.Unauthorized("Authentication required")

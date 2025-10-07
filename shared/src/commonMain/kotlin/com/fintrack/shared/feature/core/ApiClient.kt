@@ -45,14 +45,14 @@ object ApiClient {
             NetworkMonitorInterceptor(logger).setupNetworkMonitoring(this)
 
             plugin(HttpSend).intercept { request ->
-                logger.debug("ApiClient", "Making request to: ${request.url}")
+                logger.debug(LogTags.NETWORK, "Making request to: ${request.url}")
 
                 val token = tokenProvider.getToken()
                 if (!token.isNullOrEmpty()) {
                     request.headers.append("Authorization", "Bearer $token")
-                    logger.debug("ApiClient", "Added auth token to request")
+                    logger.debug(LogTags.AUTH, "Added auth token to request")
                 } else {
-                    logger.warning("ApiClient", "No auth token available")
+                    logger.warning(LogTags.AUTH, "No auth token available")
                 }
 
                 execute(request)
