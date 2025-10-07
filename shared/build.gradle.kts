@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     kotlin("plugin.serialization") version "2.2.10"
+    id("io.gitlab.arturbosch.detekt") version "1.23.3"
+    id("com.diffplug.spotless") version "6.22.0"
 }
 
 kotlin {
@@ -14,17 +16,17 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     listOf(
         iosArm64(),
-        iosSimulatorArm64()
+        iosSimulatorArm64(),
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
         }
     }
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
@@ -94,3 +96,62 @@ dependencies {
     debugImplementation(compose.uiTooling)
 }
 
+// Detekt Configuration
+detekt {
+    toolVersion = "1.23.3"
+    config = files("$rootDir/config/detekt/detekt.yml")
+    buildUponDefaultConfig = true
+
+    // Configure for KMP source sets
+    source = files(
+        "src/commonMain/kotlin",
+        "src/androidMain/kotlin",
+        "src/iosMain/kotlin",
+        "src/commonTest/kotlin",
+    )
+}
+
+dependencies {
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.3")
+}
+
+// Spotless Configuration
+spotless {
+    kotlin {
+        target("src/**/*.kt")
+        ktlint("0.50.0")
+        trimTrailingWhitespace()
+        indentWithSpaces(4)
+        endWithNewline()
+    }
+
+    kotlinGradle {
+        target("*.gradle.kts")
+        ktlint("0.50.0")
+    }
+}
+
+// Configure tasks for KMP
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    exclude("**/build/**")
+    jvmTarget = "11"
+
+    reports {
+        html.required.set(true)
+        xml.required.set(true)
+        txt.required.set(true)
+    }
+}
+
+// Create convenience tasks
+tasks.register("staticAnalysis") {
+    group = "verification"
+    description = "Run all static analysis tools"
+    dependsOn("detekt", "spotlessCheck")
+}
+
+tasks.register("formatCode") {
+    group = "formatting"
+    description = "Format all code"
+    dependsOn("spotlessApply")
+}
