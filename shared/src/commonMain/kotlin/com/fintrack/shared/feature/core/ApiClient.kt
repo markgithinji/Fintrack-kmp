@@ -1,9 +1,8 @@
 package com.fintrack.shared.feature.core
 
-import com.fintrack.shared.feature.auth.data.local.TokenProvider
-import com.fintrack.shared.feature.auth.data.local.TokenProviderImpl
 import com.fintrack.shared.feature.auth.data.local.createTokenDataStore
-import com.fintrack.shared.feature.auth.data.repository.TokenRepository
+import com.fintrack.shared.feature.auth.data.repository.TokenDataSourceImpl
+import com.fintrack.shared.feature.auth.domain.repository.TokenDataSource
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.HttpTimeout
@@ -13,13 +12,13 @@ import io.ktor.client.plugins.plugin
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.serialization.json.Json
 
-object ApiClient {
-    private val logger = KMPLogger()
-    private val tokenRepository = TokenRepository(createTokenDataStore())
-    private val tokenProvider: TokenProvider = TokenProviderImpl(tokenRepository)
-
+class ApiClient(
+    private val tokenDataSource: TokenDataSource,
+    private val logger: KMPLogger
+) {
     val httpClient: HttpClient by lazy {
         HttpClient {
             install(ContentNegotiation) {
@@ -36,18 +35,14 @@ object ApiClient {
             }
 
             expectSuccess = true
-
-            defaultRequest {
-                contentType(ContentType.Application.Json)
-            }
+            defaultRequest { contentType(ContentType.Application.Json) }
         }.apply {
-            // Add network monitoring
             NetworkMonitorInterceptor(logger).setupNetworkMonitoring(this)
 
             plugin(HttpSend).intercept { request ->
                 logger.debug(LogTags.NETWORK, "Making request to: ${request.url}")
 
-                val token = tokenProvider.getToken()
+                val token = tokenDataSource.token.firstOrNull()
                 if (!token.isNullOrEmpty()) {
                     request.headers.append("Authorization", "Bearer $token")
                     logger.debug(LogTags.AUTH, "Added auth token to request")
