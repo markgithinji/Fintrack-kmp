@@ -88,13 +88,13 @@ fun BudgetDetailScreen(
     var startDate by remember { mutableStateOf<LocalDate?>(null) }
     var endDate by remember { mutableStateOf<LocalDate?>(null) }
 
-    // Load budget if editing
-    LaunchedEffect(budgetId) {
-        if (budgetId != null) viewModel.loadBudgetById(budgetId)
-    }
+    LaunchedEffect(budgetId, selectedBudgetResult) {
+        // Load budget if we have an ID and no data yet
+        if (budgetId != null && selectedBudgetResult == null) {
+            viewModel.loadBudgetById(budgetId)
+        }
 
-    // Prefill form when budget loaded
-    LaunchedEffect(selectedBudgetResult) {
+        // Prefill form when budget is successfully loaded
         val budgetWithStatus = (selectedBudgetResult as? Result.Success<BudgetWithStatus>)?.data
         val budget = budgetWithStatus?.budget
 
