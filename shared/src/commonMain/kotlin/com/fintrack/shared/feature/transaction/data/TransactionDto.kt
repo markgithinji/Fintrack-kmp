@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class TransactionDto(
-    val id: Int? = null,
+    val id: String? = null,
     val isIncome: Boolean,
     val amount: Double,
     val category: String,

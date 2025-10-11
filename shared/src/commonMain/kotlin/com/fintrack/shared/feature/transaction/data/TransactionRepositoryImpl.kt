@@ -16,8 +16,8 @@ class TransactionRepositoryImpl(
         sortBy: String,
         order: String,
         afterDate: String?,
-        afterId: Int?,
-        accountId: Int?
+        afterId: String?,
+        accountId: String?
     ): Result<Pair<List<Transaction>, String?>> =
         safeApiCall {
             val paginated = api.getTransactions(
@@ -32,7 +32,7 @@ class TransactionRepositoryImpl(
             transactions to paginated.nextCursor
         }
 
-    override suspend fun getRecentTransactions(accountId: Int?): Result<List<Transaction>> =
+    override suspend fun getRecentTransactions(accountId: String?): Result<List<Transaction>> =
         safeApiCall {
             val paginated = api.getTransactions(
                 limit = 6,

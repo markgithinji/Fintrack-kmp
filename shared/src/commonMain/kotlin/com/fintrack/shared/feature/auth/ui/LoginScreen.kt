@@ -39,8 +39,8 @@ fun LoginScreen(
 ) {
     val loginState by viewModel.loginState.collectAsStateWithLifecycle()
 
-    var email by remember { mutableStateOf("mark") } // prefilled
-    var password by remember { mutableStateOf("mypassword") }   // prefilled
+    var email by remember { mutableStateOf("mark@example.com") } // prefilled
+    var password by remember { mutableStateOf("securepassword123") }   // prefilled
 
     Box(
         modifier = modifier

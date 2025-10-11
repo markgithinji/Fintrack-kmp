@@ -52,10 +52,9 @@ import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import kotlinx.datetime.LocalDate
 import org.koin.compose.viewmodel.koinViewModel
-
 @Composable
 fun TransactionListScreen(
-    accountId: Int,
+    accountId: String,
     isIncome: Boolean? = null,
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     statisticsViewModel: StatisticsViewModel = koinViewModel()

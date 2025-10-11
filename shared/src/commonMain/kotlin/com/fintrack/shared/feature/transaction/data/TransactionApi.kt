@@ -15,14 +15,13 @@ class TransactionApi(
     private val client: HttpClient,
     private val baseUrl: String
 ) {
-    // --- Transactions ---
     suspend fun getTransactions(
         limit: Int = 20,
         sortBy: String = "date",
         order: String = "DESC",
         afterDate: String? = null,
-        afterId: Int? = null,
-        accountId: Int? = null
+        afterId: String? = null,
+        accountId: String? = null
     ): PaginatedTransactionDto {
         val response: ApiResponse<PaginatedTransactionDto> = client.get("$baseUrl/transactions") {
             parameter("limit", limit)

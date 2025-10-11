@@ -101,7 +101,7 @@ fun IncomeTrackerContent(
     accountsViewModel: AccountsViewModel = koinViewModel(),
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     statsViewModel: StatisticsViewModel = koinViewModel(),
-    onCardClick: (accountId: Int, isIncome: Boolean?) -> Unit
+    onCardClick: (accountId: String, isIncome: Boolean?) -> Unit
 ) {
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
     val selectedAccountResult by accountsViewModel.selectedAccount.collectAsStateWithLifecycle()

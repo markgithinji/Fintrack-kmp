@@ -224,12 +224,11 @@ fun CurrentBalanceCard(
         }
     }
 }
-
 @Composable
 fun AccountSelectionDialog(
     accounts: List<Account>,
-    selectedAccountId: Int?,
-    onAccountSelected: (Int) -> Unit,
+    selectedAccountId: String?,
+    onAccountSelected: (String) -> Unit,
     onDismiss: () -> Unit,
     isLoading: Boolean = false
 ) {
@@ -389,13 +388,12 @@ fun AccountSelectionDialog(
         }
     }
 }
-
 @Composable
 fun CurrentBalanceCardWrapper(
     accountsResult: Result<List<Account>>?,
     selectedAccountResult: Result<Account>?,
-    onAccountSelected: (Int) -> Unit,
-    onRetry: () -> Unit = { /* Default empty retry function */ }
+    onAccountSelected: (String) -> Unit,
+    onRetry: () -> Unit = {}
 ) {
     var showDialog by remember { mutableStateOf(false) }
 

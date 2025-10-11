@@ -13,7 +13,7 @@ class TransactionViewModel(
     private val repo: TransactionRepository
 ) : ViewModel() {
 
-    private var currentAccountId: Int? = null
+    private var currentAccountId: String? = null
 
     // --- Transactions state (full list / paginated) ---
     private val _transactions = MutableStateFlow<Result<List<Transaction>>>(Result.Loading)
@@ -47,7 +47,7 @@ class TransactionViewModel(
 
     // --- Refresh / first page ---
     fun refresh(
-        accountId: Int? = currentAccountId,
+        accountId: String? = currentAccountId,
         limit: Int = 20,
         sortBy: String = "date",
         order: String = "DESC"
@@ -73,7 +73,7 @@ class TransactionViewModel(
     // --- Load next page ---
     fun loadMore(limit: Int = 20, sortBy: String = "date", order: String = "DESC") {
         val cursor = nextCursor ?: return
-        val (afterDate, afterId) = cursor.split("|").let { it[0] to it[1].toInt() }
+        val (afterDate, afterId) = cursor.split("|").let { it[0] to it[1] }
 
         viewModelScope.launch {
             val result = repo.getTransactions(
@@ -94,7 +94,7 @@ class TransactionViewModel(
     }
 
     // --- Load recent transactions ---
-    fun loadRecentTransactions(accountId: Int? = currentAccountId) {
+    fun loadRecentTransactions(accountId: String? = currentAccountId) {
         currentAccountId = accountId
         viewModelScope.launch {
             _recentTransactions.value = Result.Loading
@@ -112,4 +112,3 @@ class TransactionViewModel(
         }
     }
 }
-
