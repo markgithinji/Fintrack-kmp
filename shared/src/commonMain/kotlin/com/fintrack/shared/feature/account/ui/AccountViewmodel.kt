@@ -49,7 +49,7 @@ class AccountsViewModel(private val repo: AccountRepository) : ViewModel() {
         }
     }
 
-    fun selectAccount(id: Int) {
+    fun selectAccount(id: String) {
         viewModelScope.launch {
             _selectedAccount.value = Result.Loading
             val accounts = (_accounts.value as? Result.Success)?.data
@@ -70,7 +70,7 @@ class AccountsViewModel(private val repo: AccountRepository) : ViewModel() {
         }
     }
 
-    fun removeAccount(id: Int) {
+    fun removeAccount(id: String) {
         viewModelScope.launch {
             _deleteResult.value = Result.Loading
             _deleteResult.value = repo.deleteAccount(id)

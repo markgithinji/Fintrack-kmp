@@ -9,7 +9,7 @@ fun Account.toDto(): AccountDto = AccountDto(
 )
 
 fun AccountDto.toDomain(): Account = Account(
-    id = this.id ?: 0,   // 0 for new inserts
+    id = this.id ?: "",   // Empty string for new inserts
     name = this.name,
     balance = this.balance,
     income = this.income,

@@ -17,14 +17,14 @@ class AccountRepositoryImpl(
         accountsDto.map { it.toDomain() }
     }
 
-    override suspend fun getAccountById(id: Int): Result<Account> = safeApiCall {
+    override suspend fun getAccountById(id: String): Result<Account> = safeApiCall {
         val accountDto = api.getAccountById(id)
         accountDto.toDomain()
     }
 
     override suspend fun addOrUpdateAccount(account: Account): Result<Account> = safeApiCall {
         val dto = account.toDto()
-        val updatedDto = if (account.id == 0) {
+        val updatedDto = if (account.id.isEmpty()) {
             api.addAccount(dto)
         } else {
             api.updateAccount(account.id, dto)
@@ -32,7 +32,7 @@ class AccountRepositoryImpl(
         updatedDto.toDomain()
     }
 
-    override suspend fun deleteAccount(id: Int): Result<Unit> = safeApiCall {
+    override suspend fun deleteAccount(id: String): Result<Unit> = safeApiCall {
         api.deleteAccount(id)
     }
 }

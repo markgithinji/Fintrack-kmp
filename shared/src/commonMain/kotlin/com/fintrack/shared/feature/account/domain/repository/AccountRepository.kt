@@ -5,7 +5,7 @@ import com.fintrack.shared.feature.core.Result
 
 interface AccountRepository {
     suspend fun getAccounts(): Result<List<Account>>
-    suspend fun getAccountById(id: Int): Result<Account>
+    suspend fun getAccountById(id: String): Result<Account>
     suspend fun addOrUpdateAccount(account: Account): Result<Account>
-    suspend fun deleteAccount(id: Int): Result<Unit>
+    suspend fun deleteAccount(id: String): Result<Unit>
 }

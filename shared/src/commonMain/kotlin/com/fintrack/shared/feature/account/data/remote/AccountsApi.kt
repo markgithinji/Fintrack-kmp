@@ -30,7 +30,7 @@ class AccountsApi(
         return response.result
     }
 
-    suspend fun updateAccount(id: Int, account: AccountDto): AccountDto {
+    suspend fun updateAccount(id: String, account: AccountDto): AccountDto {
         val response: ApiResponse<AccountDto> = client.put("$baseUrl/accounts/$id") {
             contentType(ContentType.Application.Json)
             setBody(account)
@@ -38,11 +38,11 @@ class AccountsApi(
         return response.result
     }
 
-    suspend fun deleteAccount(id: Int) {
+    suspend fun deleteAccount(id: String) {
         client.delete("$baseUrl/accounts/$id")
     }
 
-    suspend fun getAccountById(id: Int): AccountDto {
+    suspend fun getAccountById(id: String): AccountDto {
         val response: ApiResponse<AccountDto> = client.get("$baseUrl/accounts/$id").body()
         return response.result
     }
