@@ -39,16 +39,15 @@ class BudgetViewModel(
         }
     }
 
-
     fun saveBudget(
-        id: Int? = null,
+        id: String? = null,
         name: String,
         categories: List<Category>,
         limit: Double,
         isExpense: Boolean,
         startDate: LocalDate,
         endDate: LocalDate,
-        accountId: Int
+        accountId: String
     ) {
         viewModelScope.launch {
             val budget = Budget(
@@ -66,14 +65,14 @@ class BudgetViewModel(
         }
     }
 
-    fun removeBudget(id: Int, accountId: Int? = null) {
+    fun removeBudget(id: String, accountId: String? = null) {
         viewModelScope.launch {
             _deleteResult.value = repo.deleteBudget(id)
             reloadBudgets()
         }
     }
 
-    fun loadBudgetById(id: Int) {
+    fun loadBudgetById(id: String) {
         viewModelScope.launch {
             // First try from local cache
             val current = _budgets.value

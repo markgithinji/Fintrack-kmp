@@ -65,8 +65,8 @@ import kotlinx.datetime.LocalDate
 
 @Composable
 fun BudgetDetailScreen(
-    budgetId: Int? = null,
-    accountId: Int? = null,
+    budgetId: String? = null,
+    accountId: String? = null,
     viewModel: BudgetViewModel = viewModel(),
     accountsViewModel: AccountsViewModel = viewModel(),
     onSave: () -> Unit,
@@ -174,13 +174,13 @@ fun BudgetDetailScreen(
                 if (valid) {
                     viewModel.saveBudget(
                         id = budgetId,
-                        accountId = effectiveAccountId,
                         name = name,
                         categories = selectedCategories.toList(),
                         limit = limit,
                         isExpense = isExpense,
                         startDate = startDate!!,
-                        endDate = endDate!!
+                        endDate = endDate!!,
+                        accountId = effectiveAccountId
                     )
                 }
             },
@@ -190,7 +190,6 @@ fun BudgetDetailScreen(
         )
     }
 }
-
 
 @Composable
 fun BudgetDetailSaveButton(

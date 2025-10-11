@@ -6,7 +6,7 @@ import com.fintrack.shared.feature.core.Result
 
 interface BudgetRepository {
     suspend fun getBudgets(): Result<List<BudgetWithStatus>>
-    suspend fun getBudgetById(id: Int): Result<BudgetWithStatus>
+    suspend fun getBudgetById(id: String): Result<BudgetWithStatus>
     suspend fun addOrUpdateBudget(budget: Budget): Result<Budget>
-    suspend fun deleteBudget(id: Int): Result<Unit>
+    suspend fun deleteBudget(id: String): Result<Unit>
 }

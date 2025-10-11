@@ -19,7 +19,7 @@ class BudgetRepositoryImpl(
             budgetsWithStatusDto.map { it.toDomain() }
         }
 
-    override suspend fun getBudgetById(id: Int): Result<BudgetWithStatus> =
+    override suspend fun getBudgetById(id: String): Result<BudgetWithStatus> =
         safeApiCall {
             val budgetWithStatusDto = api.getBudgetById(id)
             budgetWithStatusDto.toDomain()
@@ -36,7 +36,7 @@ class BudgetRepositoryImpl(
             updatedDto.toDomain()
         }
 
-    override suspend fun deleteBudget(id: Int): Result<Unit> =
+    override suspend fun deleteBudget(id: String): Result<Unit> =
         safeApiCall {
             api.deleteBudget(id)
         }

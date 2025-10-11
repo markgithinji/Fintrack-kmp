@@ -27,7 +27,7 @@ class BudgetApi(
         return response.result
     }
 
-    suspend fun updateBudget(id: Int, budget: BudgetDto): BudgetDto {
+    suspend fun updateBudget(id: String, budget: BudgetDto): BudgetDto {
         val response: ApiResponse<BudgetDto> = client.put("$baseUrl/budgets/$id") {
             contentType(ContentType.Application.Json)
             setBody(budget)
@@ -35,7 +35,7 @@ class BudgetApi(
         return response.result
     }
 
-    suspend fun deleteBudget(id: Int) {
+    suspend fun deleteBudget(id: String) {
         client.delete("$baseUrl/budgets/$id")
     }
 
@@ -44,7 +44,7 @@ class BudgetApi(
         return response.result
     }
 
-    suspend fun getBudgetById(id: Int): BudgetWithStatusDto {
+    suspend fun getBudgetById(id: String): BudgetWithStatusDto {
         val response: ApiResponse<BudgetWithStatusDto> = client.get("$baseUrl/budgets/$id").body()
         return response.result
     }

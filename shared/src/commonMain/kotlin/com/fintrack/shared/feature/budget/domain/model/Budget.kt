@@ -4,8 +4,8 @@ import com.fintrack.shared.feature.transaction.domain.model.Category
 import kotlinx.datetime.LocalDate
 
 data class Budget(
-    val id: Int? = null,
-    val accountId: Int,
+    val id: String? = null,
+    val accountId: String,
     val name: String,
     val categories: List<Category>,
     val limit: Double,
