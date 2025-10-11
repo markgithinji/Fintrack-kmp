@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.navigation
 
+
 sealed class Screen(val route: String) {
     object Home : Screen("home")
     object AddTransaction : Screen("add_transaction")
@@ -8,8 +9,8 @@ sealed class Screen(val route: String) {
     object Profile : Screen("profile")
 
     object BudgetDetail : Screen("budget_detail/{budgetId}?accountId={accountId}") {
-        fun createRoute(budgetId: Int? = null, accountId: Int? = null): String {
-            val id = budgetId ?: -1
+        fun createRoute(budgetId: String? = null, accountId: String? = null): String {
+            val id = budgetId ?: ""
             return if (accountId != null) {
                 "budget_detail/$id?accountId=$accountId"
             } else {
@@ -21,7 +22,7 @@ sealed class Screen(val route: String) {
     object Login : Screen("login")
 
     object TransactionList : Screen("transaction_list/{accountId}?isIncome={isIncome}") {
-        fun createRoute(accountId: Int, isIncome: Boolean? = null): String {
+        fun createRoute(accountId: String, isIncome: Boolean? = null): String {
             return if (isIncome == null) {
                 "transaction_list/$accountId"
             } else {
@@ -29,5 +30,4 @@ sealed class Screen(val route: String) {
             }
         }
     }
-
 }

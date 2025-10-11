@@ -143,18 +143,18 @@ fun MainScreen() {
             composable(
                 route = Screen.BudgetDetail.route,
                 arguments = listOf(
-                    navArgument("budgetId") { type = NavType.IntType },
+                    navArgument("budgetId") { type = NavType.StringType },
                     navArgument("accountId") {
-                        type = NavType.IntType
-                        defaultValue = -1
+                        type = NavType.StringType
+                        nullable = true
                     }
                 )
             ) { backStackEntry ->
-                val budgetIdArg = backStackEntry.arguments?.getInt("budgetId") ?: -1
-                val accountIdArg = backStackEntry.arguments?.getInt("accountId") ?: -1
+                val budgetIdArg = backStackEntry.arguments?.getString("budgetId")
+                val accountIdArg = backStackEntry.arguments?.getString("accountId")
 
-                val budgetId = if (budgetIdArg == -1) null else budgetIdArg
-                val accountId = if (accountIdArg == -1) null else accountIdArg
+                val budgetId = if (budgetIdArg.isNullOrEmpty()) null else budgetIdArg
+                val accountId = if (accountIdArg.isNullOrEmpty()) null else accountIdArg
 
                 LaunchedEffect(budgetId) {
                     appBarState = AppBarState(
@@ -192,7 +192,7 @@ fun MainScreen() {
             composable(
                 route = "transaction_list/{accountId}?isIncome={isIncome}",
                 arguments = listOf(
-                    navArgument("accountId") { type = NavType.IntType },
+                    navArgument("accountId") { type = NavType.StringType },
                     navArgument("isIncome") {
                         type = NavType.StringType
                         defaultValue = null
@@ -200,7 +200,7 @@ fun MainScreen() {
                     }
                 )
             ) { backStackEntry ->
-                val accountId = backStackEntry.arguments?.getInt("accountId") ?: return@composable
+                val accountId = backStackEntry.arguments?.getString("accountId") ?: return@composable
                 val isIncomeStr = backStackEntry.arguments?.getString("isIncome")
                 val isIncome: Boolean? = isIncomeStr?.toBooleanStrictOrNull()
 
