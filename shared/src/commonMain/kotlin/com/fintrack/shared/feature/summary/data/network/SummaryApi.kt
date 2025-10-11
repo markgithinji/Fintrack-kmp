@@ -20,7 +20,7 @@ class SummaryApi(
     private val baseUrl: String
 ) {
     // --- Highlights ---
-    suspend fun getHighlightsSummary(accountId: Int? = null): HighlightsSummaryDto {
+    suspend fun getHighlightsSummary(accountId: String? = null): HighlightsSummaryDto {
         val response: ApiResponse<HighlightsSummaryDto> =
             client.get("$baseUrl/transactions/summary/highlights") {
                 accountId?.let { parameter("accountId", it) }
@@ -34,7 +34,7 @@ class SummaryApi(
         type: String? = null,
         start: String? = null,
         end: String? = null,
-        accountId: Int? = null
+        accountId: String? = null
     ): DistributionSummaryDto {
         val response: ApiResponse<DistributionSummaryDto> =
             client.get("$baseUrl/transactions/summary/distribution") {
@@ -48,7 +48,7 @@ class SummaryApi(
     }
 
     // --- Available ranges ---
-    suspend fun getAvailableWeeks(accountId: Int? = null): AvailableWeeksDto {
+    suspend fun getAvailableWeeks(accountId: String? = null): AvailableWeeksDto {
         val response: ApiResponse<AvailableWeeksDto> =
             client.get("$baseUrl/transactions/summary/available-weeks") {
                 accountId?.let { parameter("accountId", it) }
@@ -56,7 +56,7 @@ class SummaryApi(
         return response.result
     }
 
-    suspend fun getAvailableMonths(accountId: Int? = null): AvailableMonthsDto {
+    suspend fun getAvailableMonths(accountId: String? = null): AvailableMonthsDto {
         val response: ApiResponse<AvailableMonthsDto> =
             client.get("$baseUrl/transactions/summary/available-months") {
                 accountId?.let { parameter("accountId", it) }
@@ -64,7 +64,7 @@ class SummaryApi(
         return response.result
     }
 
-    suspend fun getAvailableYears(accountId: Int? = null): AvailableYearsDto {
+    suspend fun getAvailableYears(accountId: String? = null): AvailableYearsDto {
         val response: ApiResponse<AvailableYearsDto> =
             client.get("$baseUrl/transactions/summary/available-years") {
                 accountId?.let { parameter("accountId", it) }
@@ -73,7 +73,7 @@ class SummaryApi(
     }
 
     // --- Overview ---
-    suspend fun getOverviewSummary(accountId: Int? = null): OverviewSummaryDto {
+    suspend fun getOverviewSummary(accountId: String? = null): OverviewSummaryDto {
         val response: ApiResponse<OverviewSummaryDto> =
             client.get("$baseUrl/transactions/summary/overview") {
                 accountId?.let { parameter("accountId", it) }
@@ -81,7 +81,7 @@ class SummaryApi(
         return response.result
     }
 
-    suspend fun getCategoryComparisons(accountId: Int? = null): List<CategoryComparisonDto> {
+    suspend fun getCategoryComparisons(accountId: String? = null): List<CategoryComparisonDto> {
         val response: ApiResponse<List<CategoryComparisonDto>> =
             client.get("$baseUrl/transactions/summary/category-comparison") {
                 accountId?.let { parameter("accountId", it) }
@@ -89,7 +89,7 @@ class SummaryApi(
         return response.result
     }
 
-    suspend fun getTransactionCounts(accountId: Int): TransactionCountSummaryDto {
+    suspend fun getTransactionCounts(accountId: String): TransactionCountSummaryDto {
         val response: ApiResponse<TransactionCountSummaryDto> =
             client.get("$baseUrl/transactions/summary/counts") {
                 parameter("accountId", accountId)

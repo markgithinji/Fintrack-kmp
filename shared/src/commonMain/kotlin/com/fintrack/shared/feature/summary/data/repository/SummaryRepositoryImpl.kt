@@ -18,7 +18,7 @@ class SummaryRepositoryImpl(
     private val api: SummaryApi
 ) : SummaryRepository {
 
-    override suspend fun getHighlightsSummary(accountId: Int?): Result<StatisticsSummary> =
+    override suspend fun getHighlightsSummary(accountId: String?): Result<StatisticsSummary> =
         safeApiCall {
             api.getHighlightsSummary(accountId).toDomain()
         }
@@ -28,38 +28,38 @@ class SummaryRepositoryImpl(
         type: String?,
         start: String?,
         end: String?,
-        accountId: Int?
+        accountId: String?
     ): Result<DistributionSummary> =
         safeApiCall {
             api.getDistributionSummary(weekOrMonthCode, type, start, end, accountId).toDomain()
         }
 
-    override suspend fun getAvailableWeeks(accountId: Int?): Result<AvailableWeeks> =
+    override suspend fun getAvailableWeeks(accountId: String?): Result<AvailableWeeks> =
         safeApiCall {
             api.getAvailableWeeks(accountId).toDomain()
         }
 
-    override suspend fun getAvailableMonths(accountId: Int?): Result<AvailableMonths> =
+    override suspend fun getAvailableMonths(accountId: String?): Result<AvailableMonths> =
         safeApiCall {
             api.getAvailableMonths(accountId).toDomain()
         }
 
-    override suspend fun getAvailableYears(accountId: Int?): Result<AvailableYears> =
+    override suspend fun getAvailableYears(accountId: String?): Result<AvailableYears> =
         safeApiCall {
             api.getAvailableYears(accountId).toDomain()
         }
 
-    override suspend fun getOverviewSummary(accountId: Int?): Result<OverviewSummary> =
+    override suspend fun getOverviewSummary(accountId: String?): Result<OverviewSummary> =
         safeApiCall {
             api.getOverviewSummary(accountId).toDomain()
         }
 
-    override suspend fun getCategoryComparisons(accountId: Int?): Result<List<CategoryComparison>> =
+    override suspend fun getCategoryComparisons(accountId: String?): Result<List<CategoryComparison>> =
         safeApiCall {
             api.getCategoryComparisons(accountId).map { it.toDomain() }
         }
 
-    override suspend fun getTransactionCounts(accountId: Int): Result<TransactionCountSummary> =
+    override suspend fun getTransactionCounts(accountId: String): Result<TransactionCountSummary> =
         safeApiCall {
             api.getTransactionCounts(accountId).toDomain()
         }

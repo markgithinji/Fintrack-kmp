@@ -46,7 +46,6 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
     private val _selectedPeriod = MutableStateFlow<Period?>(null)
     val selectedPeriod: StateFlow<Period?> = _selectedPeriod
 
-    // FIX: Initialize with Result.Loading instead of null
     private val _categoryComparisons =
         MutableStateFlow<Result<List<CategoryComparison>>>(Result.Loading)
     val categoryComparisons: StateFlow<Result<List<CategoryComparison>>> = _categoryComparisons
@@ -56,7 +55,7 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
     val transactionCounts: StateFlow<Result<TransactionCountSummary>> = _transactionCounts
 
     // --- Load highlights summary for optional account ---
-    fun loadHighlights(accountId: Int? = null) {
+    fun loadHighlights(accountId: String? = null) {
         viewModelScope.launch {
             _highlights.value = Result.Loading
             _highlights.value = repo.getHighlightsSummary(accountId)
@@ -69,7 +68,7 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
         type: TransactionType,
         start: String? = null,
         end: String? = null,
-        accountId: Int? = null
+        accountId: String? = null
     ) {
         viewModelScope.launch {
             _distribution.value = Result.Loading
@@ -83,7 +82,7 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
         }
     }
 
-    fun loadAvailablePeriods(accountId: Int? = null) {
+    fun loadAvailablePeriods(accountId: String? = null) {
         viewModelScope.launch {
             try {
                 // --- Weeks ---
@@ -120,7 +119,7 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
     }
 
     // --- Overview summary ---
-    fun loadOverview(accountId: Int? = null) {
+    fun loadOverview(accountId: String? = null) {
         viewModelScope.launch {
             _overview.value = Result.Loading
             _overview.value = repo.getOverviewSummary(accountId)
@@ -128,26 +127,25 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
     }
 
     // --- Category comparisons ---
-    fun loadCategoryComparisons(accountId: Int? = null) {
+    fun loadCategoryComparisons(accountId: String? = null) {
         viewModelScope.launch {
-            // FIX: Set loading state before making the API call
             _categoryComparisons.value = Result.Loading
             _categoryComparisons.value = repo.getCategoryComparisons(accountId)
         }
     }
 
     // --- UI state helpers ---
-    fun onTabChanged(tab: TabType, accountId: Int? = null) {
+    fun onTabChanged(tab: TabType, accountId: String? = null) {
         _selectedTab.value = tab
         reloadDistributionForCurrentSelection(accountId)
     }
 
-    fun onPeriodChanged(period: Period, accountId: Int? = null) {
+    fun onPeriodChanged(period: Period, accountId: String? = null) {
         _selectedPeriod.value = period
         reloadDistributionForCurrentSelection(accountId)
     }
 
-    fun reloadDistributionForCurrentSelection(accountId: Int? = null) {
+    fun reloadDistributionForCurrentSelection(accountId: String? = null) {
         val type = when (_selectedTab.value) {
             is TabType.Income -> TransactionType.Income
             is TabType.Expense -> TransactionType.Expense
@@ -162,7 +160,7 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
         }
     }
 
-    fun loadTransactionCounts(accountId: Int) {
+    fun loadTransactionCounts(accountId: String) {
         viewModelScope.launch {
             _transactionCounts.value = Result.Loading
             _transactionCounts.value = repo.getTransactionCounts(accountId)
@@ -170,15 +168,14 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
     }
 
     /** Call this when the selected account changes */
-    fun reloadAllForAccount(accountId: Int?) {
+    fun reloadAllForAccount(accountId: String?) {
         loadHighlights(accountId)
         loadOverview(accountId)
-        loadCategoryComparisons(accountId) // This will now show loading state
+        loadCategoryComparisons(accountId)
         loadAvailablePeriods(accountId)
         accountId?.let { loadTransactionCounts(it) }
     }
 }
-
 
 /** Sealed class for tab selection */
 sealed class TabType(val displayName: String) {
