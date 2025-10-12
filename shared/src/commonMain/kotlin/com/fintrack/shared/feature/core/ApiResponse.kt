@@ -1,6 +1,6 @@
 package com.fintrack.shared.feature.core
 
-import com.fintrack.shared.feature.transaction.data.TransactionDto
+import com.fintrack.shared.feature.transaction.data.model.TransactionDto
 import kotlinx.serialization.Serializable
 
 @Serializable

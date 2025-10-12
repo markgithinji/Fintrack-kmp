@@ -1,15 +1,14 @@
-package com.fintrack.shared.feature.transaction.domain.model
+package com.fintrack.shared.feature.transaction.data.model
 
 import kotlinx.datetime.LocalDateTime
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Transaction(
-    val id: String? = null,
+data class CreateTransactionRequest(
+    val accountId: String,
     val isIncome: Boolean,
     val amount: Double,
     val category: String,
     val dateTime: LocalDateTime,
-    val description: String? = null
+    val description: String? = ""
 )

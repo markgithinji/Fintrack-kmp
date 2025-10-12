@@ -1,8 +1,6 @@
 package com.fintrack.shared.feature.transaction.data.model
 
-import com.fintrack.shared.feature.transaction.data.TransactionDto
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
-import kotlinx.datetime.LocalDateTime
 
 fun TransactionDto.toDomain(): Transaction =
     Transaction(
@@ -10,16 +8,17 @@ fun TransactionDto.toDomain(): Transaction =
         isIncome = isIncome,
         amount = amount,
         category = category,
-        dateTime = LocalDateTime.parse(dateTime),
+        dateTime = dateTime,
         description = description
     )
 
-fun Transaction.toDto(): TransactionDto =
-    TransactionDto(
-        id = id,
-        isIncome = isIncome,
-        amount = amount,
-        category = category,
-        dateTime = dateTime.toString(),
-        description = description
+fun Transaction.toCreateRequest(): CreateTransactionRequest {
+    return CreateTransactionRequest(
+        accountId = this.id.toString(),
+        isIncome = this.isIncome,
+        amount = this.amount,
+        category = this.category,
+        dateTime = this.dateTime,
+        description = this.description
     )
+}

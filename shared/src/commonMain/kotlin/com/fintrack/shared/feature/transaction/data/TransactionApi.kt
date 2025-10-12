@@ -2,6 +2,8 @@ package com.fintrack.shared.feature.transaction.data
 
 import com.fintrack.shared.feature.core.ApiResponse
 import com.fintrack.shared.feature.core.PaginatedTransactionDto
+import com.fintrack.shared.feature.transaction.data.model.CreateTransactionRequest
+import com.fintrack.shared.feature.transaction.data.model.TransactionDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -34,10 +36,10 @@ class TransactionApi(
         return response.result
     }
 
-    suspend fun addTransaction(transaction: TransactionDto): TransactionDto {
+    suspend fun addTransaction(request: CreateTransactionRequest): TransactionDto {
         val response: ApiResponse<TransactionDto> = client.post("$baseUrl/transactions") {
             contentType(ContentType.Application.Json)
-            setBody(transaction)
+            setBody(request)
         }.body()
         return response.result
     }

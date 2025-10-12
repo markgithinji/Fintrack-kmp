@@ -2,8 +2,8 @@ package com.fintrack.shared.feature.transaction.data
 
 import com.fintrack.shared.feature.core.Result
 import com.fintrack.shared.feature.core.safeApiCall
+import com.fintrack.shared.feature.transaction.data.model.toCreateRequest
 import com.fintrack.shared.feature.transaction.data.model.toDomain
-import com.fintrack.shared.feature.transaction.data.model.toDto
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 
@@ -45,7 +45,8 @@ class TransactionRepositoryImpl(
 
     override suspend fun addTransaction(transaction: Transaction): Result<Transaction> =
         safeApiCall {
-            val dto = api.addTransaction(transaction.toDto())
+            val createRequest = transaction.toCreateRequest()
+            val dto = api.addTransaction(createRequest)
             dto.toDomain()
         }
 }
