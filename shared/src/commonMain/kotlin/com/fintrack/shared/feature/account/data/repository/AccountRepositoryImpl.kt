@@ -1,7 +1,8 @@
 package com.fintrack.shared.feature.account.data.repository
 
+import com.fintrack.shared.feature.account.data.model.toCreateRequest
 import com.fintrack.shared.feature.account.data.model.toDomain
-import com.fintrack.shared.feature.account.data.model.toDto
+import com.fintrack.shared.feature.account.data.model.toUpdateRequest
 import com.fintrack.shared.feature.account.data.remote.AccountsApi
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
@@ -23,13 +24,17 @@ class AccountRepositoryImpl(
     }
 
     override suspend fun addOrUpdateAccount(account: Account): Result<Account> = safeApiCall {
-        val dto = account.toDto()
-        val updatedDto = if (account.id.isEmpty()) {
-            api.addAccount(dto)
+        if (account.id.isEmpty()) {
+            // Create account
+            val createRequest = account.toCreateRequest()
+            val dto = api.addAccount(createRequest)
+            dto.toDomain()
         } else {
-            api.updateAccount(account.id, dto)
+            // Update account
+            val updateRequest = account.toUpdateRequest()
+            val dto = api.updateAccount(account.id, updateRequest)
+            dto.toDomain()
         }
-        updatedDto.toDomain()
     }
 
     override suspend fun deleteAccount(id: String): Result<Unit> = safeApiCall {

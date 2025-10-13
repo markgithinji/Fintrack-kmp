@@ -2,10 +2,12 @@ package com.fintrack.shared.feature.account.data.model
 
 import com.fintrack.shared.feature.account.domain.model.Account
 
-fun Account.toDto(): AccountDto = AccountDto(
-    id = this.id,
-    name = this.name,
-    balance = this.balance
+fun Account.toCreateRequest(): CreateAccountRequest = CreateAccountRequest(
+    name = this.name
+)
+
+fun Account.toUpdateRequest(): UpdateAccountRequest = UpdateAccountRequest(
+    name = this.name
 )
 
 fun AccountDto.toDomain(): Account = Account(
