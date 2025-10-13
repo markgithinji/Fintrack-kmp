@@ -1,8 +1,10 @@
-package com.fintrack.shared.feature.core
+package com.fintrack.shared.feature.core.di
 
 import com.fintrack.shared.feature.account.di.accountModule
 import com.fintrack.shared.feature.auth.di.authModule
 import com.fintrack.shared.feature.budget.di.budgetModule
+import com.fintrack.shared.feature.core.data.remote.ApiConfig
+import com.fintrack.shared.feature.core.data.remote.Environment
 import com.fintrack.shared.feature.summary.di.summaryModule
 import com.fintrack.shared.feature.transaction.di.transactionModule
 import org.koin.core.KoinApplication
@@ -30,7 +32,7 @@ object Koin {
 
             // Modules
             modules(
-                networkModule,
+                coreModule,
                 authModule,
                 accountModule,
                 transactionModule,

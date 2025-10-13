@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.core
+package com.fintrack.shared.feature.core.data.domain
 
 sealed class ApiException(open val details: String) : Exception(details) {
     data class Network(override val details: String) : ApiException(details)

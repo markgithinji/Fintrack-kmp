@@ -2,8 +2,8 @@ package com.fintrack.android
 
 import android.app.Application
 import com.fintrack.shared.feature.auth.data.local.initTokenDataStore
-import com.fintrack.shared.feature.core.Environment
-import com.fintrack.shared.feature.core.Koin
+import com.fintrack.shared.feature.core.data.remote.Environment
+import com.fintrack.shared.feature.core.di.Koin
 
 class FintrackApp : Application() {
     override fun onCreate() {

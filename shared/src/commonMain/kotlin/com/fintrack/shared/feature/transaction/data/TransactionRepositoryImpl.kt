@@ -1,7 +1,7 @@
 package com.fintrack.shared.feature.transaction.data
 
-import com.fintrack.shared.feature.core.Result
-import com.fintrack.shared.feature.core.safeApiCall
+import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.safeApiCall
 import com.fintrack.shared.feature.transaction.data.model.toCreateRequest
 import com.fintrack.shared.feature.transaction.data.model.toDomain
 import com.fintrack.shared.feature.transaction.domain.model.Transaction

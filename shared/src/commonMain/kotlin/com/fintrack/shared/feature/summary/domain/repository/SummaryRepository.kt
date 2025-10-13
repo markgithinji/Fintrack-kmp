@@ -1,6 +1,6 @@
 package com.fintrack.shared.feature.summary.domain.repository
 
-import com.fintrack.shared.feature.core.Result
+import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.AvailableMonths
 import com.fintrack.shared.feature.summary.domain.model.AvailableWeeks
 import com.fintrack.shared.feature.summary.domain.model.AvailableYears

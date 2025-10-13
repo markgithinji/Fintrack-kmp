@@ -3,7 +3,7 @@ package com.fintrack.shared.feature.account.data.remote
 import com.fintrack.shared.feature.account.data.model.AccountDto
 import com.fintrack.shared.feature.account.data.model.CreateAccountRequest
 import com.fintrack.shared.feature.account.data.model.UpdateAccountRequest
-import com.fintrack.shared.feature.core.ApiResponse
+import com.fintrack.shared.feature.core.data.domain.ApiResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete

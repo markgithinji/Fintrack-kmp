@@ -1,9 +1,13 @@
-package com.fintrack.shared.feature.core
+package com.fintrack.shared.feature.core.util
 
+import com.fintrack.shared.feature.core.data.domain.ApiException
+import com.fintrack.shared.feature.core.logger.KMPLogger
+import com.fintrack.shared.feature.core.logger.LogTags
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.RedirectResponseException
 import io.ktor.client.plugins.ServerResponseException
+import kotlinx.coroutines.CancellationException
 import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
 private val logger = KMPLogger()
@@ -37,7 +41,7 @@ private fun convertToDomainException(e: Exception): ApiException = when (e) {
         logger.error(LogTags.ERROR, "Invalid app state", e)
         ApiException.InvalidState("Invalid app state: ${e.message}")
     }
-    is kotlinx.coroutines.CancellationException -> {
+    is CancellationException -> {
         logger.debug(LogTags.ERROR, "Request cancelled")
         throw e
     }

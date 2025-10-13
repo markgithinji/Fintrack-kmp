@@ -1,7 +1,7 @@
 package com.fintrack.shared.feature.transaction.data
 
-import com.fintrack.shared.feature.core.ApiResponse
-import com.fintrack.shared.feature.core.PaginatedTransactionDto
+import com.fintrack.shared.feature.core.data.domain.ApiResponse
+import com.fintrack.shared.feature.core.data.domain.PaginatedTransactionDto
 import com.fintrack.shared.feature.transaction.data.model.CreateTransactionRequest
 import com.fintrack.shared.feature.transaction.data.model.TransactionDto
 import io.ktor.client.HttpClient

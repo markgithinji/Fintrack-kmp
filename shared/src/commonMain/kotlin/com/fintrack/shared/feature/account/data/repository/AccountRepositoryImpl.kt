@@ -6,8 +6,8 @@ import com.fintrack.shared.feature.account.data.model.toUpdateRequest
 import com.fintrack.shared.feature.account.data.remote.AccountsApi
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
-import com.fintrack.shared.feature.core.Result
-import com.fintrack.shared.feature.core.safeApiCall
+import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.safeApiCall
 
 class AccountRepositoryImpl(
     private val api: AccountsApi

@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.core
+package com.fintrack.shared.feature.core.data.remote
 
 enum class Environment {
     DEVELOPMENT,

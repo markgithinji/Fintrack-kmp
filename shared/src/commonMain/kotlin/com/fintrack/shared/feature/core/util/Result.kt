@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.core
+package com.fintrack.shared.feature.core.util
 
 sealed class Result<out T> {
     object Loading : Result<Nothing>()

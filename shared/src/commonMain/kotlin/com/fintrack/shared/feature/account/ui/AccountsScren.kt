@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.account.domain.model.Account
-import com.fintrack.shared.feature.core.Result
+import com.fintrack.shared.feature.core.util.Result
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable

@@ -1,7 +1,7 @@
 package com.fintrack.shared.feature.account.domain.repository
 
 import com.fintrack.shared.feature.account.domain.model.Account
-import com.fintrack.shared.feature.core.Result
+import com.fintrack.shared.feature.core.util.Result
 
 interface AccountRepository {
     suspend fun getAccounts(): Result<List<Account>>

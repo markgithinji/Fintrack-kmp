@@ -52,8 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.fintrack.shared.feature.account.domain.model.Account
-import com.fintrack.shared.feature.core.Result
-import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
+import com.fintrack.shared.feature.core.util.Result
 
 @Composable
 fun CurrentBalanceCard(

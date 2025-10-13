@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.core
+package com.fintrack.shared.feature.core.data.domain
 
 import com.fintrack.shared.feature.transaction.data.model.TransactionDto
 import kotlinx.serialization.Serializable

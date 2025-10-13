@@ -4,7 +4,7 @@ import com.fintrack.shared.feature.budget.data.model.BudgetDto
 import com.fintrack.shared.feature.budget.data.model.BudgetWithStatusDto
 import com.fintrack.shared.feature.budget.data.model.CreateBudgetRequest
 import com.fintrack.shared.feature.budget.data.model.UpdateBudgetRequest
-import com.fintrack.shared.feature.core.ApiResponse
+import com.fintrack.shared.feature.core.data.domain.ApiResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete

@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.core
+package com.fintrack.shared.feature.core.logger
 
 object LogTags {
     const val NETWORK = "Network"

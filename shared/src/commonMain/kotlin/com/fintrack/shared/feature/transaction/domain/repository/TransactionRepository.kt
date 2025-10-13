@@ -1,6 +1,6 @@
 package com.fintrack.shared.feature.transaction.domain.repository
 
-import com.fintrack.shared.feature.core.Result
+import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 
 interface TransactionRepository {

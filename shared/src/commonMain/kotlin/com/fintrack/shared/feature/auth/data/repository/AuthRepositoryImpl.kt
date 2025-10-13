@@ -6,8 +6,8 @@ import com.fintrack.shared.feature.auth.data.model.toDomain
 import com.fintrack.shared.feature.auth.data.remote.AuthApi
 import com.fintrack.shared.feature.auth.domain.model.AuthResponse
 import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
-import com.fintrack.shared.feature.core.Result
-import com.fintrack.shared.feature.core.safeApiCall
+import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.safeApiCall
 
 class AuthRepositoryImpl(
     private val api: AuthApi

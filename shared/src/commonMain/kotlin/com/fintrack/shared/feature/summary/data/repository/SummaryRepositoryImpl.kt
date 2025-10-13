@@ -1,7 +1,7 @@
 package com.fintrack.shared.feature.summary.data.repository
 
-import com.fintrack.shared.feature.core.Result
-import com.fintrack.shared.feature.core.safeApiCall
+import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.safeApiCall
 import com.fintrack.shared.feature.summary.data.model.toDomain
 import com.fintrack.shared.feature.summary.data.network.SummaryApi
 import com.fintrack.shared.feature.summary.domain.model.AvailableMonths
