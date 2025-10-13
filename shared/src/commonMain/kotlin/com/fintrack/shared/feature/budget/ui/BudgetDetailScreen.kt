@@ -52,7 +52,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.Result
@@ -62,13 +61,14 @@ import com.fintrack.shared.feature.transaction.ui.addtransaction.ToggleChip
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import kotlinx.datetime.LocalDate
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun BudgetDetailScreen(
     budgetId: String? = null,
     accountId: String? = null,
-    viewModel: BudgetViewModel = viewModel(),
-    accountsViewModel: AccountsViewModel = viewModel(),
+    viewModel: BudgetViewModel = koinViewModel(),
+    accountsViewModel: AccountsViewModel = koinViewModel(),
     onSave: () -> Unit,
     onBack: () -> Unit = {}
 ) {
