@@ -1,7 +1,7 @@
 package com.fintrack.shared.feature.auth.data.repository
 
-import com.fintrack.shared.feature.auth.data.model.LoginRequestDto
-import com.fintrack.shared.feature.auth.data.model.RegisterRequestDto
+import com.fintrack.shared.feature.auth.data.model.LoginRequest
+import com.fintrack.shared.feature.auth.data.model.RegisterRequest
 import com.fintrack.shared.feature.auth.data.model.toDomain
 import com.fintrack.shared.feature.auth.data.remote.AuthApi
 import com.fintrack.shared.feature.auth.domain.model.AuthResponse
@@ -15,7 +15,7 @@ class AuthRepositoryImpl(
 
     override suspend fun login(email: String, password: String): Result<AuthResponse> =
         safeApiCall {
-            val authResponse = api.login(LoginRequestDto(email, password))
+            val authResponse = api.login(LoginRequest(email, password))
             authResponse.toDomain()
         }
 
@@ -25,7 +25,7 @@ class AuthRepositoryImpl(
         password: String
     ): Result<AuthResponse> =
         safeApiCall {
-            val authResponse = api.register(RegisterRequestDto(name, email, password))
+            val authResponse = api.register(RegisterRequest(name, email, password))
             authResponse.toDomain()
         }
 

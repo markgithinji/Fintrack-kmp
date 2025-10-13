@@ -1,8 +1,8 @@
 package com.fintrack.shared.feature.auth.data.remote
 
 import com.fintrack.shared.feature.auth.data.model.AuthResponseDto
-import com.fintrack.shared.feature.auth.data.model.LoginRequestDto
-import com.fintrack.shared.feature.auth.data.model.RegisterRequestDto
+import com.fintrack.shared.feature.auth.data.model.LoginRequest
+import com.fintrack.shared.feature.auth.data.model.RegisterRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -18,14 +18,14 @@ class AuthApi(
     private val baseUrl: String
 ) {
 
-    suspend fun login(request: LoginRequestDto): AuthResponseDto {
+    suspend fun login(request: LoginRequest): AuthResponseDto {
         return client.post("$baseUrl/auth/login") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
     }
 
-    suspend fun register(request: RegisterRequestDto): AuthResponseDto {
+    suspend fun register(request: RegisterRequest): AuthResponseDto {
         return client.post("$baseUrl/auth/register") {
             contentType(ContentType.Application.Json)
             setBody(request)
