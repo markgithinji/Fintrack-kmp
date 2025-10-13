@@ -17,18 +17,25 @@ fun BudgetDto.toDomain(): Budget =
         endDate = endDate
     )
 
-fun Budget.toDto(): BudgetDto =
-    BudgetDto(
-        id = id,
-        accountId = accountId,
-        name = name,
-        categories = categories.map { it.name },
-        limit = limit,
-        isExpense = isExpense,
-        startDate = startDate,
-        endDate = endDate
-    )
+fun Budget.toCreateRequest(): CreateBudgetRequest = CreateBudgetRequest(
+    accountId = this.accountId,
+    name = this.name,
+    categories = this.categories.map { it.name },
+    limit = this.limit,
+    isExpense = this.isExpense,
+    startDate = this.startDate,
+    endDate = this.endDate
+)
 
+fun Budget.toUpdateRequest(): UpdateBudgetRequest = UpdateBudgetRequest(
+    accountId = this.accountId,
+    name = this.name,
+    categories = this.categories.map { it.name },
+    limit = this.limit,
+    isExpense = this.isExpense,
+    startDate = this.startDate,
+    endDate = this.endDate
+)
 
 fun BudgetWithStatusDto.toDomain(): BudgetWithStatus {
     return BudgetWithStatus(

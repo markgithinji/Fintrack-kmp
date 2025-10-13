@@ -1,7 +1,8 @@
 package com.fintrack.shared.feature.budget.data.repository
 
+import com.fintrack.shared.feature.budget.data.model.toCreateRequest
 import com.fintrack.shared.feature.budget.data.model.toDomain
-import com.fintrack.shared.feature.budget.data.model.toDto
+import com.fintrack.shared.feature.budget.data.model.toUpdateRequest
 import com.fintrack.shared.feature.budget.data.remote.BudgetApi
 import com.fintrack.shared.feature.budget.domain.model.Budget
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
@@ -27,13 +28,17 @@ class BudgetRepositoryImpl(
 
     override suspend fun addOrUpdateBudget(budget: Budget): Result<Budget> =
         safeApiCall {
-            val dto = budget.toDto()
-            val updatedDto = if (budget.id == null) {
-                api.addBudget(dto)
+            if (budget.id == null) {
+                // Create new budget
+                val createRequest = budget.toCreateRequest()
+                val dto = api.addBudget(createRequest)
+                dto.toDomain()
             } else {
-                api.updateBudget(budget.id, dto)
+                // Update existing budget
+                val updateRequest = budget.toUpdateRequest()
+                val dto = api.updateBudget(budget.id, updateRequest)
+                dto.toDomain()
             }
-            updatedDto.toDomain()
         }
 
     override suspend fun deleteBudget(id: String): Result<Unit> =

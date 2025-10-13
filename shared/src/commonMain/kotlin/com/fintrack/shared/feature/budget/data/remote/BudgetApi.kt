@@ -2,6 +2,8 @@ package com.fintrack.shared.feature.budget.data.remote
 
 import com.fintrack.shared.feature.budget.data.model.BudgetDto
 import com.fintrack.shared.feature.budget.data.model.BudgetWithStatusDto
+import com.fintrack.shared.feature.budget.data.model.CreateBudgetRequest
+import com.fintrack.shared.feature.budget.data.model.UpdateBudgetRequest
 import com.fintrack.shared.feature.core.ApiResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -19,18 +21,18 @@ class BudgetApi(
     private val baseUrl: String
 ) {
 
-    suspend fun addBudget(budget: BudgetDto): BudgetDto {
+    suspend fun addBudget(request: CreateBudgetRequest): BudgetDto {
         val response: ApiResponse<BudgetDto> = client.post("$baseUrl/budgets") {
             contentType(ContentType.Application.Json)
-            setBody(budget)
+            setBody(request)
         }.body()
         return response.result
     }
 
-    suspend fun updateBudget(id: String, budget: BudgetDto): BudgetDto {
+    suspend fun updateBudget(id: String, request: UpdateBudgetRequest): BudgetDto {
         val response: ApiResponse<BudgetDto> = client.put("$baseUrl/budgets/$id") {
             contentType(ContentType.Application.Json)
-            setBody(budget)
+            setBody(request)
         }.body()
         return response.result
     }
