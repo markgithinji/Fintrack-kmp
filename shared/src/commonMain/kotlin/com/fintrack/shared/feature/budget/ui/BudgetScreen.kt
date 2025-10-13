@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.budget.ui
 
-
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloatAsState
@@ -92,25 +91,25 @@ fun BudgetScreen(
             is Result.Success -> {
                 val data = (budgets as Result.Success<List<BudgetWithStatus>>).data
                 LazyColumn {
-                    item {
-                        SexyAddBudgetButton(
-                            onClick = onAddBudget,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
-
-                    if (data.isEmpty()) {
+                    if (data.isNotEmpty()) {
                         item {
-                            BudgetEmptyState(
-                                onAddBudget = onAddBudget,
-                                modifier = Modifier.fillMaxWidth()
+                            SexyAddBudgetButton(
+                                onClick = onAddBudget,
+                                modifier = Modifier.padding(16.dp)
                             )
                         }
-                    } else {
+
                         items(data) { budgetWithStatus ->
                             BudgetItem(
                                 budgetWithStatus = budgetWithStatus,
                                 onClick = { onBudgetClick(budgetWithStatus) }
+                            )
+                        }
+                    } else {
+                        item {
+                            BudgetEmptyState(
+                                onAddBudget = onAddBudget,
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }
