@@ -28,6 +28,10 @@ import androidx.navigation.navArgument
 import com.fintrack.shared.feature.auth.ui.LoginScreen
 import com.fintrack.shared.feature.budget.ui.BudgetDetailScreen
 import com.fintrack.shared.feature.budget.ui.BudgetScreen
+import com.fintrack.shared.feature.profile.AccountsScreen
+import com.fintrack.shared.feature.profile.CategoriesScreen
+import com.fintrack.shared.feature.profile.ProfileScreen
+import com.fintrack.shared.feature.profile.SettingsScreen
 import com.fintrack.shared.feature.summary.ui.StatisticsScreen
 import com.fintrack.shared.feature.transaction.ui.transactionlist.TransactionListScreen
 import com.fintrack.shared.feature.transaction.ui.addtransaction.AddTransactionScreen
@@ -47,7 +51,10 @@ fun MainScreen() {
     // Decide when to show bars
     val hideBars = currentRoute == Screen.TransactionList.route ||
             currentRoute == Screen.BudgetDetail.route ||
-            currentRoute == Screen.AddTransaction.route
+            currentRoute == Screen.AddTransaction.route ||
+            currentRoute == Screen.Accounts.route ||
+            currentRoute == Screen.Categories.route ||
+            currentRoute == Screen.Settings.route
 
 
     Scaffold(
@@ -99,7 +106,6 @@ fun MainScreen() {
                         )
                     }
                 )
-
             }
 
             composable(Screen.AddTransaction.route) {
@@ -139,6 +145,56 @@ fun MainScreen() {
                 )
             }
 
+            composable(Screen.Profile.route) {
+                LaunchedEffect(Unit) {
+                    appBarState = AppBarState(title = "Profile")
+                }
+                ProfileScreen(
+                    onNavigateToAccounts = { navController.navigate(Screen.Accounts.route) },
+                    onNavigateToCategories = { navController.navigate(Screen.Categories.route) },
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onNavigateToBudgets = { navController.navigate(Screen.Budget.route) },
+                    onLogout = {
+                        // Clear user session and navigate to login
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable(Screen.Accounts.route) {
+                LaunchedEffect(Unit) {
+                    appBarState = AppBarState(
+                        title = "Accounts",
+                        showBackButton = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                AccountsScreen()
+            }
+
+            composable(Screen.Categories.route) {
+                LaunchedEffect(Unit) {
+                    appBarState = AppBarState(
+                        title = "Categories",
+                        showBackButton = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                CategoriesScreen()
+            }
+
+            composable(Screen.Settings.route) {
+                LaunchedEffect(Unit) {
+                    appBarState = AppBarState(
+                        title = "Settings",
+                        showBackButton = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                SettingsScreen()
+            }
 
             composable(
                 route = Screen.BudgetDetail.route,
@@ -171,9 +227,6 @@ fun MainScreen() {
                     onBack = { navController.popBackStack() }
                 )
             }
-
-
-
 
             composable(Screen.Login.route) {
                 LaunchedEffect(Unit) {
@@ -218,7 +271,6 @@ fun MainScreen() {
 
                 TransactionListScreen(accountId = accountId, isIncome = isIncome)
             }
-
         }
     }
 }
