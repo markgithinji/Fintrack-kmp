@@ -1,20 +1,21 @@
-package com.fintrack.shared.feature.core
+package com.fintrack.shared.feature.core.logger
+
+import android.util.Log
 
 actual class KMPLogger actual constructor() {
     actual fun debug(tag: String, message: String) {
-        println("DEBUG: $tag: $message")
+        Log.d(tag, message)
     }
 
     actual fun info(tag: String, message: String) {
-        println("INFO: $tag: $message")
+        Log.i(tag, message)
     }
 
     actual fun warning(tag: String, message: String) {
-        println("WARNING: $tag: $message")
+        Log.w(tag, message)
     }
 
     actual fun error(tag: String, message: String, throwable: Throwable?) {
-        println("ERROR: $tag: $message")
-        throwable?.printStackTrace()
+        Log.e(tag, message, throwable)
     }
 }
