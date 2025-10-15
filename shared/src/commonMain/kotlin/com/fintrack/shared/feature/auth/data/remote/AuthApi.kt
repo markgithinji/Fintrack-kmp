@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.auth.data.remote
 
 import com.fintrack.shared.feature.auth.data.model.AuthResponseDto
+import com.fintrack.shared.feature.auth.data.model.AuthValidationResponse
 import com.fintrack.shared.feature.auth.data.model.LoginRequest
 import com.fintrack.shared.feature.auth.data.model.RegisterRequest
 import io.ktor.client.HttpClient
@@ -35,6 +36,11 @@ class AuthApi(
     suspend fun getUserById(userId: String, token: String): AuthResponseDto {
         return client.get("$baseUrl/users/$userId") {
             header(HttpHeaders.Authorization, "Bearer $token")
+        }.body()
+    }
+
+    suspend fun validateToken(): AuthValidationResponse {
+        return client.get("$baseUrl/auth/validate") {
         }.body()
     }
 }

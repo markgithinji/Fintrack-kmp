@@ -34,4 +34,10 @@ class AuthRepositoryImpl(
             val authResponse = api.getUserById(userId, token)
             authResponse.toDomain()
         }
+
+    override suspend fun validateToken(token: String): Result<Boolean> =
+        safeApiCall {
+            val response = api.validateToken()
+            response.isValid
+        }
 }
