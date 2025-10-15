@@ -26,7 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.fintrack.shared.feature.auth.domain.model.AuthResponse
 import com.fintrack.shared.feature.core.util.Result
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -34,13 +33,20 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun LoginScreen(
     viewModel: AuthViewModel = koinViewModel(),
-    onLoginSuccess: (AuthResponse) -> Unit,
+    onLoginSuccess: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val loginState by viewModel.loginState.collectAsStateWithLifecycle()
 
-    var email by remember { mutableStateOf("mark@example.com") } // prefilled
-    var password by remember { mutableStateOf("securepassword123") }   // prefilled
+    var email by remember { mutableStateOf("mark@example.com") }
+    var password by remember { mutableStateOf("securepassword123") }
+
+    // Navigate when login is successful
+    LaunchedEffect(loginState) {
+        if (loginState is Result.Success) {
+            onLoginSuccess()
+        }
+    }
 
     Box(
         modifier = modifier
@@ -102,11 +108,8 @@ fun LoginScreen(
                 }
 
                 is Result.Success -> {
-                    // Call success callback once we get user
-                    LaunchedEffect(state.data) {
-                        onLoginSuccess(state.data)
-                    }
-                    Text("Login successful!", color = Color.Green)
+                    Text("Login successful! Redirecting...", color = Color.Green)
+                    // Navigation is handled by LaunchedEffect above
                 }
 
                 null -> {
