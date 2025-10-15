@@ -45,7 +45,6 @@ fun ProfileScreen(
     onNavigateToCategories: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToBudgets: () -> Unit,
-    onLogout: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -124,7 +123,7 @@ fun ProfileScreen(
 
                 // Logout Button
                 Button(
-                    onClick = onLogout,
+                    onClick = {  },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
