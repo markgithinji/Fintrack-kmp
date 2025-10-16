@@ -3,7 +3,7 @@ package com.fintrack.shared.feature.auth.data.local
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
-import com.fintrack.shared.feature.auth.domain.repository.TokenDataSource
+import com.fintrack.shared.feature.auth.domain.datasource.TokenDataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update

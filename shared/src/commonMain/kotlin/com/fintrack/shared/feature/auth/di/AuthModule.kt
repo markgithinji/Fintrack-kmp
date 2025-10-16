@@ -4,7 +4,7 @@ import com.fintrack.shared.feature.auth.data.local.createTokenDataSource
 import com.fintrack.shared.feature.auth.data.remote.AuthApi
 import com.fintrack.shared.feature.auth.data.repository.AuthRepositoryImpl
 import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
-import com.fintrack.shared.feature.auth.domain.repository.TokenDataSource
+import com.fintrack.shared.feature.auth.domain.datasource.TokenDataSource
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module

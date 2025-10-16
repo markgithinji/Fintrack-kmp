@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.auth.domain.repository
+package com.fintrack.shared.feature.auth.domain.datasource
 
 import kotlinx.coroutines.flow.Flow
 

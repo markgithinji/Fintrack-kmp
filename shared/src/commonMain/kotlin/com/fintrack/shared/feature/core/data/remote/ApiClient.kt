@@ -1,6 +1,6 @@
 package com.fintrack.shared.feature.core.data.remote
 
-import com.fintrack.shared.feature.auth.domain.repository.TokenDataSource
+import com.fintrack.shared.feature.auth.domain.datasource.TokenDataSource
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.logger.LogTags
 import io.ktor.client.HttpClient

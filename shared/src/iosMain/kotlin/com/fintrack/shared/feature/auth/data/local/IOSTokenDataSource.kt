@@ -1,6 +1,6 @@
 package com.fintrack.shared.feature.auth.data.local
 
-import com.fintrack.shared.feature.auth.domain.repository.TokenDataSource
+import com.fintrack.shared.feature.auth.domain.datasource.TokenDataSource
 import kotlinx.coroutines.flow.update
 import platform.Foundation.*
 import platform.Security.*

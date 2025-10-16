@@ -1,7 +1,7 @@
 package com.fintrack.shared.feature.auth.data.local
 
 import android.content.Context
-import com.fintrack.shared.feature.auth.domain.repository.TokenDataSource
+import com.fintrack.shared.feature.auth.domain.datasource.TokenDataSource
 
 private lateinit var appContext: Context
 
