@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
@@ -52,6 +54,8 @@ import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import kotlinx.datetime.LocalDate
 import org.koin.compose.viewmodel.koinViewModel
+import androidx.paging.compose.collectAsLazyPagingItems
+
 @Composable
 fun TransactionListScreen(
     accountId: String,
@@ -59,11 +63,15 @@ fun TransactionListScreen(
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     statisticsViewModel: StatisticsViewModel = koinViewModel()
 ) {
-    val transactionsResult by transactionsViewModel.transactions.collectAsStateWithLifecycle()
     val transactionCounts by statisticsViewModel.transactionCounts.collectAsStateWithLifecycle()
 
+    val transactionsFlow = remember(accountId, isIncome) {
+        transactionsViewModel.getTransactionsPagingData(accountId, isIncome)
+    }
+    val transactions = transactionsFlow.collectAsLazyPagingItems()
+
+
     LaunchedEffect(accountId, isIncome) {
-        transactionsViewModel.refresh(accountId)
         statisticsViewModel.loadTransactionCounts(accountId)
     }
 
@@ -80,56 +88,75 @@ fun TransactionListScreen(
                 isIncome = isIncome
             )
         }
-        when {
-            transactionsResult is Result.Loading -> {
-                // Show 5 loading transaction items
-                items(5) { index ->
-                    LoadingTransactionItem()
-                }
-            }
 
-            transactionsResult is Result.Error -> {
+        // Initial loading state
+        if (transactions.loadState.refresh is LoadState.Loading) {
+            items(5) { index ->
+                LoadingTransactionItem()
+            }
+        }
+
+        // Error state for initial load
+        transactions.loadState.refresh.let { loadState ->
+            if (loadState is LoadState.Error) {
                 item {
                     ErrorState(
-                        message = (transactionsResult as Result.Error).exception.message
-                            ?: "Failed to load transactions",
-                        onRetry = { transactionsViewModel.refresh(accountId) }
+                        message = loadState.error.message ?: "Failed to load transactions",
+                        onRetry = { transactions.retry() }
                     )
                 }
             }
+        }
 
-            transactionsResult is Result.Success -> {
-                val transactions = (transactionsResult as Result.Success).data
-                    .filter { isIncome == null || it.isIncome == isIncome }
+        // Transactions list
+        items(
+            count = transactions.itemCount,
+            key = { index ->
+                val transaction = transactions.peek(index)
+                // Combine ID + index for uniqueness
+                transaction?.let { "${it.id}_$index" } ?: "loading_$index"
+            }
+        ) { index ->
+            val transaction = transactions[index]
+            if (transaction != null) {
+                TransactionItem(transaction = transaction)
+            }
+        }
 
-                if (transactions.isEmpty()) {
-                    item {
-                        EmptyState(isIncome = isIncome)
-                    }
-                } else {
-                    items(transactions) { transaction ->
-                        TransactionItem(transaction = transaction)
-                    }
 
-                    // Load more indicator
-                    item {
-                        LaunchedEffect(transactions.size) {
-                            transactionsViewModel.loadMore()
-                        }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                                color = GreenIncome
-                            )
-                        }
+        // Loading more state
+        transactions.loadState.append.let { loadState ->
+            if (loadState is LoadState.Loading) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = GreenIncome
+                        )
                     }
                 }
+            }
+
+            if (loadState is LoadState.Error) {
+                item {
+                    ErrorState(
+                        message = loadState.error.message ?: "Failed to load more transactions",
+                        onRetry = { transactions.retry() }
+                    )
+                }
+            }
+        }
+
+        // Empty state
+        if (transactions.loadState.refresh is LoadState.NotLoading && transactions.itemCount == 0) {
+            item {
+                EmptyState(isIncome = isIncome)
             }
         }
     }

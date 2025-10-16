@@ -35,6 +35,7 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
             implementation("androidx.datastore:datastore-preferences:1.1.1")
             implementation("io.insert-koin:koin-android:3.5.0")
+            implementation("androidx.paging:paging-runtime:3.3.6")
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -56,6 +57,8 @@ kotlin {
             implementation("io.insert-koin:koin-core:4.1.1")
             implementation("io.insert-koin:koin-compose-viewmodel:4.1.1")
             implementation("io.ktor:ktor-client-logging:3.3.0")
+            implementation("androidx.paging:paging-common:3.3.6")
+            implementation("androidx.paging:paging-compose:3.3.6")
         }
         iosMain.dependencies {
             implementation("io.ktor:ktor-client-darwin:2.3.12")

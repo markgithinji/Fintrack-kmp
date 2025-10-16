@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.transaction.data
 
+import androidx.paging.PagingSource
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.safeApiCall
 import com.fintrack.shared.feature.transaction.data.model.toCreateRequest
@@ -17,16 +18,18 @@ class TransactionRepositoryImpl(
         order: String,
         afterDate: String?,
         afterId: String?,
-        accountId: String?
+        accountId: String?,
+        isIncome: Boolean?
     ): Result<Pair<List<Transaction>, String?>> =
         safeApiCall {
             val paginated = api.getTransactions(
                 limit = limit,
                 sortBy = sortBy,
                 order = order,
-                afterDate = afterDate,
+                afterDateTime  = afterDate,
                 afterId = afterId,
-                accountId = accountId
+                accountId = accountId,
+                isIncome = isIncome
             )
             val transactions = paginated.data.map { it.toDomain() }
             transactions to paginated.nextCursor
@@ -49,4 +52,15 @@ class TransactionRepositoryImpl(
             val dto = api.addTransaction(createRequest)
             dto.toDomain()
         }
+
+    override fun getTransactionsPagingSource(
+        accountId: String?,
+        isIncome: Boolean?
+    ): PagingSource<String, Transaction> {
+        return TransactionPagingSource(
+            repo = this,
+            accountId = accountId,
+            isIncome = isIncome
+        )
+    }
 }
