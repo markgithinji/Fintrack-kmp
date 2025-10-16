@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.auth.data.local
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
+import com.fintrack.shared.feature.auth.domain.repository.TokenDataSource
 
-expect fun createTokenDataStore(): DataStore<Preferences>
+expect fun createTokenDataSource(): TokenDataSource
