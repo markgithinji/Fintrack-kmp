@@ -48,11 +48,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.compose.GreenIncome
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.CategorySummary
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.transaction.ui.addtransaction.AnimatedShimmerBox
-import com.fintrack.shared.feature.transaction.ui.home.GreenIncome
 
 // --- Segment Colors ---
 val SegmentColors = listOf(

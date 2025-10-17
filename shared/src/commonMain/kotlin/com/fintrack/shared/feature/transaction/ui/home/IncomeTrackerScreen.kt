@@ -58,6 +58,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.compose.GreenIncome
+import com.example.compose.PinkExpense
+import com.example.compose.backgroundGray
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.core.util.Result
@@ -90,11 +93,6 @@ import network.chaintech.cmpcharts.ui.linechart.model.LineChartProperties
 import network.chaintech.cmpcharts.ui.linechart.model.LinePlotData
 import network.chaintech.cmpcharts.ui.linechart.model.LineStyle
 import org.koin.compose.viewmodel.koinViewModel
-
-
-val backgroundGray = Color(0xFFEFEFEF)
-val GreenIncome = Color(0xFF1FC287) // green for income
-val PinkExpense = Color(0xFFE27C94) // pinkish-red for expense
 
 @Composable
 fun IncomeTrackerContent(
@@ -197,7 +195,7 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(24.dp))
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
                 // Header
                 Row(
@@ -208,14 +206,22 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
                     verticalAlignment = Alignment.Top
                 ) {
                     Column {
-                        Text("Overview", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(
+                            "Overview",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(Modifier.size(10.dp).background(GreenIncome))
-                            Text(" Income", fontSize = 12.sp)
+                            Text(" Income",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Spacer(Modifier.width(8.dp))
                             Box(Modifier.size(10.dp).background(PinkExpense))
-                            Text(" Expenses", fontSize = 12.sp)
+                            Text(" Expenses",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
 
@@ -224,25 +230,35 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
                             modifier = Modifier.clickable { expanded = true },
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(selectedPeriod.name, color = Color.Gray, fontSize = 12.sp)
+                            Text(
+                                selectedPeriod.name,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                             Icon(
                                 imageVector = Icons.Default.ArrowDropDown,
                                 contentDescription = "Select period",
-                                tint = Color.Gray,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
 
                         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                             DropdownMenuItem(
-                                text = { Text("Weekly") },
+                                text = {
+                                    Text("Weekly",
+                                        style = MaterialTheme.typography.bodyMedium)
+                                },
                                 onClick = {
                                     selectedPeriod = OverviewPeriod.Weekly
                                     expanded = false
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Monthly") },
+                                text = {
+                                    Text("Monthly",
+                                        style = MaterialTheme.typography.bodyMedium)
+                                },
                                 onClick = {
                                     selectedPeriod = OverviewPeriod.Monthly
                                     expanded = false
@@ -267,7 +283,7 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(24.dp))
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
                 Row(
                     modifier = Modifier
@@ -277,14 +293,22 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
                     verticalAlignment = Alignment.Top
                 ) {
                     Column {
-                        Text("Overview", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(
+                            "Overview",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(Modifier.size(10.dp).background(GreenIncome))
-                            Text(" Income", fontSize = 12.sp)
+                            Text(" Income",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Spacer(Modifier.width(8.dp))
                             Box(Modifier.size(10.dp).background(PinkExpense))
-                            Text(" Expenses", fontSize = 12.sp)
+                            Text(" Expenses",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
 
@@ -293,25 +317,35 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
                             modifier = Modifier.clickable { expanded = true },
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(selectedPeriod.name, color = Color.Gray, fontSize = 12.sp)
+                            Text(
+                                selectedPeriod.name,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                             Icon(
                                 imageVector = Icons.Default.ArrowDropDown,
                                 contentDescription = "Select period",
-                                tint = Color.Gray,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
 
                         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                             DropdownMenuItem(
-                                text = { Text("Weekly") },
+                                text = {
+                                    Text("Weekly",
+                                        style = MaterialTheme.typography.bodyMedium)
+                                },
                                 onClick = {
                                     selectedPeriod = OverviewPeriod.Weekly
                                     expanded = false
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Monthly") },
+                                text = {
+                                    Text("Monthly",
+                                        style = MaterialTheme.typography.bodyMedium)
+                                },
                                 onClick = {
                                     selectedPeriod = OverviewPeriod.Monthly
                                     expanded = false
@@ -332,14 +366,14 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
                         Icon(
                             imageVector = Icons.Default.Error,
                             contentDescription = "Error",
-                            tint = Color.Red,
+                            tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(32.dp)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             "Failed to load overview",
-                            color = Color.Red,
-                            fontSize = 14.sp
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
                 }
@@ -353,7 +387,7 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(24.dp))
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
                 // Header with dropdown
                 Row(
@@ -364,14 +398,22 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
                     verticalAlignment = Alignment.Top
                 ) {
                     Column {
-                        Text("Overview", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(
+                            "Overview",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(Modifier.size(10.dp).background(GreenIncome))
-                            Text(" Income", fontSize = 12.sp)
+                            Text(" Income",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Spacer(Modifier.width(8.dp))
                             Box(Modifier.size(10.dp).background(PinkExpense))
-                            Text(" Expenses", fontSize = 12.sp)
+                            Text(" Expenses",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
 
@@ -380,25 +422,35 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
                             modifier = Modifier.clickable { expanded = true },
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(selectedPeriod.name, color = Color.Gray, fontSize = 12.sp)
+                            Text(
+                                selectedPeriod.name,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                             Icon(
                                 imageVector = Icons.Default.ArrowDropDown,
                                 contentDescription = "Select period",
-                                tint = Color.Gray,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
 
                         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                             DropdownMenuItem(
-                                text = { Text("Weekly") },
+                                text = {
+                                    Text("Weekly",
+                                        style = MaterialTheme.typography.bodyMedium)
+                                },
                                 onClick = {
                                     selectedPeriod = OverviewPeriod.Weekly
                                     expanded = false
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Monthly") },
+                                text = {
+                                    Text("Monthly",
+                                        style = MaterialTheme.typography.bodyMedium)
+                                },
                                 onClick = {
                                     selectedPeriod = OverviewPeriod.Monthly
                                     expanded = false
@@ -474,7 +526,8 @@ fun BarChart(
                 }
                 Text(
                     text = text,
-                    fontSize = 10.sp
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -521,7 +574,11 @@ fun BarChart(
                     }
 
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = label, fontSize = 12.sp)
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
@@ -647,7 +704,7 @@ fun CategoryComparisonCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             // Header with icon
@@ -675,7 +732,6 @@ fun CategoryComparisonCard(
                 Text(
                     text = "Category Trends",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -718,7 +774,6 @@ fun CategoryComparisonCard(
         }
     }
 }
-
 @Composable
 private fun CategoryComparisonItem(
     comparison: CategoryComparison,
@@ -796,7 +851,6 @@ private fun CategoryComparisonItem(
                     Text(
                         text = comparison.category,
                         style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -808,7 +862,6 @@ private fun CategoryComparisonItem(
                     Text(
                         text = comparison.currentTotal.formatToCurrency(),
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -837,7 +890,6 @@ private fun CategoryComparisonItem(
                         Text(
                             text = changeText,
                             style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Medium,
                             color = changeColor,
                             maxLines = 2,
                             lineHeight = 14.sp
@@ -934,7 +986,6 @@ private fun CategoryComparisonErrorState(onRetry: () -> Unit) {
         Text(
             text = "Unable to load trends",
             style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -992,7 +1043,6 @@ private fun CategoryComparisonEmptyState() {
         Text(
             text = "No trends available",
             style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(4.dp))
@@ -1101,7 +1151,7 @@ fun InfoCard(
             .height(70.dp)
             .clickable(enabled = onClick != null) { onClick?.invoke(isIncomeCard) },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier
@@ -1127,13 +1177,21 @@ fun InfoCard(
             Spacer(modifier = Modifier.width(12.dp))
 
             Column {
-                Text(text = title, fontSize = 12.sp)
-                Text(text = amount, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = amount,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         }
     }
 }
-
 
 fun formatAmount(value: Double): String {
     return value.toLong()

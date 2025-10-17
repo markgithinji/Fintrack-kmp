@@ -34,6 +34,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -65,7 +66,7 @@ fun CurrentBalanceCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkGray)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {
         Box(
             modifier = Modifier
@@ -84,12 +85,12 @@ fun CurrentBalanceCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(color = Color.White)
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "Loading account...",
-                                color = Color.White.copy(alpha = 0.8f),
-                                fontSize = 14.sp
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                             )
                         }
                     }
@@ -107,30 +108,31 @@ fun CurrentBalanceCard(
                         Icon(
                             imageVector = Icons.Default.ErrorOutline,
                             contentDescription = "Error",
-                            tint = Color.White,
+                            tint = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(32.dp)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = errorMessage ?: "Failed to load account",
-                            color = Color.White,
-                            fontSize = 14.sp,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             textAlign = TextAlign.Center,
                             lineHeight = 18.sp
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Button(
                             onClick = onChangeAccountClicked,
-                            colors = ButtonDefaults.buttonColors(containerColor = LightGray),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ),
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.height(32.dp),
                             contentPadding = PaddingValues(horizontal = 16.dp)
                         ) {
                             Text(
                                 text = "Try Again",
-                                color = Color.Black,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium
+                                style = MaterialTheme.typography.labelMedium
                             )
                         }
                     }
@@ -148,14 +150,14 @@ fun CurrentBalanceCard(
                             Icon(
                                 imageVector = Icons.Default.AccountBalanceWallet,
                                 contentDescription = "No account",
-                                tint = Color.White.copy(alpha = 0.7f),
+                                tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
                                 modifier = Modifier.size(32.dp)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "No account data",
-                                color = Color.White.copy(alpha = 0.8f),
-                                fontSize = 14.sp
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                             )
                         }
                     }
@@ -176,25 +178,30 @@ fun CurrentBalanceCard(
                             Icon(
                                 imageVector = AccountIcon.fromAccountName(account.name).icon,
                                 contentDescription = "Bank",
-                                tint = Color.White,
+                                tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(account.name, fontSize = 12.sp, color = Color.White)
+                            Text(
+                                account.name,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
                         }
 
                         Button(
                             onClick = onChangeAccountClicked,
-                            colors = ButtonDefaults.buttonColors(containerColor = LightGray),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ),
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.height(26.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp)
                         ) {
                             Text(
                                 text = "Change Account",
-                                color = Color.Black,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium
+                                style = MaterialTheme.typography.labelMedium
                             )
                         }
                     }
@@ -207,15 +214,14 @@ fun CurrentBalanceCard(
                         val formattedBalance = remember(balance) { formatAmount(balance) }
                         Text(
                             text = "Current Balance",
-                            fontSize = 14.sp,
-                            color = Color.White.copy(alpha = 0.7f)
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "KSh $formattedBalance",
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 }
@@ -223,6 +229,7 @@ fun CurrentBalanceCard(
         }
     }
 }
+
 @Composable
 fun AccountSelectionDialog(
     accounts: List<Account>,
@@ -234,7 +241,7 @@ fun AccountSelectionDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(12.dp),
             modifier = Modifier
                 .fillMaxWidth(0.85f)
@@ -244,12 +251,14 @@ fun AccountSelectionDialog(
                 // Header
                 Text(
                     "Select Account",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF212121)
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                Divider(color = LightGray, thickness = 1.dp)
+                Divider(
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                    thickness = 1.dp
+                )
                 Spacer(modifier = Modifier.height(8.dp))
 
                 if (isLoading) {
@@ -261,12 +270,12 @@ fun AccountSelectionDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(color = Color(0xFF00ACC1))
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 "Loading accounts...",
-                                color = Color.Gray,
-                                fontSize = 14.sp
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -282,14 +291,14 @@ fun AccountSelectionDialog(
                             Icon(
                                 imageVector = Icons.Default.AccountBalance,
                                 contentDescription = "No accounts",
-                                tint = Color.Gray,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(48.dp)
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 "No accounts available",
-                                color = Color.Gray,
-                                fontSize = 16.sp
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -303,7 +312,7 @@ fun AccountSelectionDialog(
                         items(accounts) { acc ->
                             val isSelected = selectedAccountId == acc.id
                             val backgroundColor by animateColorAsState(
-                                if (isSelected) Color(0xFFE0F7FA).copy(alpha = 0.5f)
+                                if (isSelected) MaterialTheme.colorScheme.primaryContainer
                                 else Color.Transparent
                             )
 
@@ -325,8 +334,8 @@ fun AccountSelectionDialog(
                                     modifier = Modifier
                                         .size(36.dp)
                                         .background(
-                                            color = if (isSelected) Color(0xFF00ACC1).copy(alpha = 0.1f)
-                                            else Color(0xFFF0F0F0),
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                            else MaterialTheme.colorScheme.surfaceVariant,
                                             shape = CircleShape
                                         ),
                                     contentAlignment = Alignment.Center
@@ -335,7 +344,8 @@ fun AccountSelectionDialog(
                                         imageVector = AccountIcon.fromAccountName(acc.name).icon,
                                         contentDescription = null,
                                         modifier = Modifier.size(20.dp),
-                                        tint = if (isSelected) Color(0xFF00ACC1) else DarkGray
+                                        tint = if (isSelected) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
 
@@ -344,14 +354,13 @@ fun AccountSelectionDialog(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         acc.name,
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 16.sp,
-                                        color = Color(0xFF212121)
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
                                         "KSh ${formatAmount(acc.balance ?: 0.0)}",
-                                        fontSize = 12.sp,
-                                        color = Color.Gray
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
 
@@ -359,7 +368,7 @@ fun AccountSelectionDialog(
                                     Icon(
                                         Icons.Default.Check,
                                         contentDescription = null,
-                                        tint = Color(0xFF00ACC1),
+                                        tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -374,19 +383,22 @@ fun AccountSelectionDialog(
                 Button(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00ACC1)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
                     shape = RoundedCornerShape(14.dp)
                 ) {
                     Text(
                         "Close",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 }
             }
         }
     }
 }
+
 @Composable
 fun CurrentBalanceCardWrapper(
     accountsResult: Result<List<Account>>?,

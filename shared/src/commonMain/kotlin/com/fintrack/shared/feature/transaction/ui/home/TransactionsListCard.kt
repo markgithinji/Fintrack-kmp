@@ -34,6 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.compose.GreenIncome
+import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
@@ -98,8 +100,7 @@ private fun RecentTransactionsHeader(
         Text(
             text = "Recent Transactions",
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = Color.Black
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         if (isLoading) {
@@ -113,7 +114,6 @@ private fun RecentTransactionsHeader(
                 text = "View All",
                 style = MaterialTheme.typography.labelLarge,
                 color = GreenIncome,
-                fontWeight = FontWeight.Medium,
                 modifier = Modifier.clickable { onViewAllClick() }
             )
         }
@@ -135,7 +135,6 @@ private fun TransactionsLoadingState() {
         }
     }
 }
-
 @Composable
 private fun TransactionsErrorState() {
     Column(
@@ -148,20 +147,23 @@ private fun TransactionsErrorState() {
         Icon(
             imageVector = Icons.Outlined.ErrorOutline,
             contentDescription = "Error",
-            tint = Color.Red,
+            tint = MaterialTheme.colorScheme.error,
             modifier = Modifier.size(32.dp)
         )
 
         Text(
             text = "Failed to load transactions",
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.Red,
+            color = MaterialTheme.colorScheme.error,
             textAlign = TextAlign.Center
         )
 
         Button(
             onClick = { /* Add retry logic */ },
-            colors = ButtonDefaults.buttonColors(containerColor = GreenIncome),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.height(36.dp)
         ) {
@@ -182,17 +184,18 @@ private fun TransactionsEmptyState() {
         Icon(
             imageVector = Icons.Outlined.ReceiptLong,
             contentDescription = "No Transactions",
-            tint = Color.Gray,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(32.dp)
         )
 
         Text(
             text = "No recent transactions",
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
+
 
 @Composable
 private fun TransactionsListContent(
@@ -209,7 +212,7 @@ private fun TransactionsListContent(
                 HorizontalDivider(
                     modifier = Modifier.padding(start = 80.dp, end = 20.dp),
                     thickness = 0.5.dp,
-                    color = Color.LightGray.copy(alpha = 0.4f)
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
                 )
             }
         }
@@ -260,8 +263,7 @@ fun TransactionRow(
             Text(
                 text = category.name,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -271,7 +273,7 @@ fun TransactionRow(
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -287,7 +289,6 @@ fun TransactionRow(
             Text(
                 text = "${if (isExpense) "-" else "+"}${transaction.amount.formatToCurrency()}",
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold,
                 color = amountColor
             )
 
@@ -296,7 +297,7 @@ fun TransactionRow(
             Text(
                 text = transaction.dateTime.date.formatAsShortDate(),
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

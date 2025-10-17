@@ -49,12 +49,12 @@ import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import com.fintrack.shared.feature.transaction.ui.addtransaction.AnimatedShimmerBox
-import com.fintrack.shared.feature.transaction.ui.home.GreenIncome
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import kotlinx.datetime.LocalDate
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.compose.GreenIncome
 
 @Composable
 fun TransactionListScreen(
