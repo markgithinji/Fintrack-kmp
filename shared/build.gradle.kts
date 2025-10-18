@@ -5,9 +5,9 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-    kotlin("plugin.serialization") version "2.2.10"
-    id("io.gitlab.arturbosch.detekt") version "1.23.3"
-    id("com.diffplug.spotless") version "6.22.0"
+    alias(libs.plugins.kotlinxSerialization)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.spotless)
 }
 
 kotlin {
@@ -31,10 +31,10 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
-            implementation("io.ktor:ktor-client-okhttp:3.3.0")
-            implementation("androidx.security:security-crypto-ktx:1.1.0")
-            implementation("io.insert-koin:koin-android:3.5.0")
-            implementation("androidx.paging:paging-runtime:3.3.6")
+            implementation(libs.ktor.client.okhttp)
+            implementation(libs.androidx.security.crypto.ktx)
+            implementation(libs.koin.android)
+            implementation(libs.androidx.paging.runtime)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -45,22 +45,23 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
-            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.0-rc01")
-            implementation("io.ktor:ktor-client-core:3.3.0")
-            implementation("io.ktor:ktor-client-content-negotiation:3.3.0")
-            implementation("io.ktor:ktor-serialization-kotlinx-json:3.3.0")
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
-            implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
-            implementation("network.chaintech:cmpcharts:2.0.6")
-            implementation("io.insert-koin:koin-core:4.1.1")
-            implementation("io.insert-koin:koin-compose-viewmodel:4.1.1")
-            implementation("io.ktor:ktor-client-logging:3.3.0")
-            implementation("androidx.paging:paging-common:3.3.0")
-            implementation("androidx.paging:paging-compose:3.3.0")
+            implementation(libs.navigation.compose)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.ktor.serialization.kotlinx.json)
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.material.icons.extended)
+            implementation(libs.cmpcharts)
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose.viewmodel)
+            implementation(libs.ktor.client.logging)
+            implementation(libs.androidx.paging.common)
+            implementation(libs.androidx.paging.compose)
+            implementation(libs.kotlinx.serialization.json)
         }
         iosMain.dependencies {
-            implementation("io.ktor:ktor-client-darwin:2.3.12")
-            implementation("io.insert-koin:koin-core:3.5.0")
+            implementation(libs.ktor.client.darwin)
+            implementation(libs.koin.core)
         }
 
         commonTest.dependencies {
@@ -97,9 +98,8 @@ dependencies {
     debugImplementation(compose.uiTooling)
 }
 
-// Detekt Configuration
 detekt {
-    toolVersion = "1.23.3"
+    toolVersion = libs.versions.detekt.get()
     config = files("$rootDir/config/detekt/detekt.yml")
     buildUponDefaultConfig = true
 
@@ -113,10 +113,9 @@ detekt {
 }
 
 dependencies {
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.3")
+    detektPlugins(libs.detekt.formatting)
 }
 
-// Spotless Configuration
 spotless {
     kotlin {
         target("src/**/*.kt")
