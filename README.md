@@ -8,6 +8,17 @@ It allows users to **track income, expenses, and balances**, visualize **financi
 
 ---
 
+## 📸 Screenshot
+
+<div align="center">
+  
+![Fintrack KMP App Preview](assets/android/Fintrack_preview.png)
+*Main dashboard showing account balances, trends, budgets, stats&summaries and recent transactions*
+
+</div>
+
+---
+
 ## 🚀 Tech Stack
 
 **Cross-Platform Core:**
@@ -43,17 +54,6 @@ It allows users to **track income, expenses, and balances**, visualize **financi
 - **Transaction History**: Comprehensive ledger with search, filter, and export capabilities
 - **Financial Highlights**: Key insights showing top expenses, savings rate, and financial health metrics
 - **Secure Authentication**: Encrypted token storage
-
----
-
-## 📸 Screenshot
-
-<div align="center">
-  
-![Fintrack KMP App Preview](assets/android/Fintrack_preview.png)
-*Main dashboard showing account balances, trends, budgets, stats&summaries and recent transactions*
-
-</div>
 
 ---
 
