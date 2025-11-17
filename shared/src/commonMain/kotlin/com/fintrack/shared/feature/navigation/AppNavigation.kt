@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import com.fintrack.shared.feature.auth.ui.LoginScreen
+import com.fintrack.shared.feature.auth.ui.RegisterScreen
 import com.fintrack.shared.feature.budget.ui.BudgetDetailScreen
 import com.fintrack.shared.feature.budget.ui.BudgetScreen
 import com.fintrack.shared.feature.profile.AccountsScreen
@@ -194,6 +195,36 @@ fun AppNavigation(
                 onLoginSuccess = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                },
+                onSignUp = {
+                    navController.navigate(Screen.Register.route)
+                },
+                onForgotPassword = {
+                }
+            )
+        }
+
+        // Register Screen
+        composable(Screen.Register.route) {
+            LaunchedEffect(Unit) {
+                onUpdateAppBarState(
+                    AppBarState(
+                        title = "Create Account",
+                        showBackButton = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                )
+            }
+            RegisterScreen(
+                onRegisterSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                },
+                onLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 }
             )

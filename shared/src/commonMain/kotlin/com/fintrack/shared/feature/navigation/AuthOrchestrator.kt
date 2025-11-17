@@ -30,7 +30,6 @@ fun AuthOrchestrator(
         handleAuthNavigation(authStatus, currentRoute, navController)
     }
 
-    // Show UI based on auth status
     when (authStatus) {
         is Result.Loading -> AuthLoadingScreen()
         is Result.Success -> {
@@ -45,9 +44,6 @@ fun AuthOrchestrator(
     }
 }
 
-
-
-// Pure function for navigation logic (easier to test)
 private fun handleAuthNavigation(
     authStatus: Result<Boolean>,
     currentRoute: String?,
@@ -60,21 +56,21 @@ private fun handleAuthNavigation(
                 navController.navigate(Screen.Home.route) {
                     popUpTo(Screen.Login.route) { inclusive = true }
                 }
-            } else if (!isAuthenticated && currentRoute != Screen.Login.route) {
+            } else if (!isAuthenticated && currentRoute != Screen.Login.route && currentRoute != Screen.Register.route) {
                 navController.navigate(Screen.Login.route) {
                     popUpTo(0) { inclusive = true }
                 }
             }
         }
         is Result.Error -> {
-            if (currentRoute != Screen.Login.route) {
+            if (currentRoute != Screen.Login.route && currentRoute != Screen.Register.route) {
                 navController.navigate(Screen.Login.route) {
                     popUpTo(0) { inclusive = true }
                 }
             }
         }
         else -> {
-            // Loading state - no navigation needed
+            // Loading state; no navigation needed
         }
     }
 }
@@ -98,7 +94,7 @@ fun AuthLoadingScreen() {
 
 @Composable
 fun AuthErrorScreen() {
-    val authViewModel: AuthViewModel = koinViewModel() // Get ViewModel here
+    val authViewModel: AuthViewModel = koinViewModel()
 
     Box(
         modifier = Modifier.fillMaxSize(),
