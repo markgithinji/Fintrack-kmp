@@ -194,13 +194,18 @@ fun AppNavigation(
             LoginScreen(
                 onLoginSuccess = {
                     navController.navigate(Screen.Home.route) {
+                        // Clear the entire back stack including login
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
                 onSignUp = {
-                    navController.navigate(Screen.Register.route)
+                    // Replace login with register (no back stack buildup)
+                    navController.navigate(Screen.Register.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
                 },
                 onForgotPassword = {
+                    // Handle forgot password
                 }
             )
         }
@@ -212,17 +217,24 @@ fun AppNavigation(
                     AppBarState(
                         title = "Create Account",
                         showBackButton = true,
-                        onBack = { navController.popBackStack() }
+                        onBack = {
+                            // Go back to login, but clear any existing login instances
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(Screen.Register.route) { inclusive = true }
+                            }
+                        }
                     )
                 )
             }
             RegisterScreen(
                 onRegisterSuccess = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                        // Clear the entire back stack
+                        popUpTo(0) { inclusive = true }
                     }
                 },
                 onLogin = {
+                    // Go back to login, but clear any existing login instances
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
