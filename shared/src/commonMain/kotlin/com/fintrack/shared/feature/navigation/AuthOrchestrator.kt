@@ -26,10 +26,6 @@ fun AuthOrchestrator(
     currentRoute: String?,
     navController: NavHostController
 ) {
-    LaunchedEffect(authStatus, currentRoute) {
-        handleAuthNavigation(authStatus, currentRoute, navController)
-    }
-
     when (authStatus) {
         is Result.Loading -> AuthLoadingScreen()
         is Result.Success -> {
@@ -44,36 +40,6 @@ fun AuthOrchestrator(
     }
 }
 
-private fun handleAuthNavigation(
-    authStatus: Result<Boolean>,
-    currentRoute: String?,
-    navController: NavHostController
-) {
-    when (authStatus) {
-        is Result.Success -> {
-            val isAuthenticated = authStatus.data
-            if (isAuthenticated && currentRoute == Screen.Login.route) {
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Login.route) { inclusive = true }
-                }
-            } else if (!isAuthenticated && currentRoute != Screen.Login.route && currentRoute != Screen.Register.route) {
-                navController.navigate(Screen.Login.route) {
-                    popUpTo(0) { inclusive = true }
-                }
-            }
-        }
-        is Result.Error -> {
-            if (currentRoute != Screen.Login.route && currentRoute != Screen.Register.route) {
-                navController.navigate(Screen.Login.route) {
-                    popUpTo(0) { inclusive = true }
-                }
-            }
-        }
-        else -> {
-            // Loading state; no navigation needed
-        }
-    }
-}
 
 @Composable
 fun AuthLoadingScreen() {

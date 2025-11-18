@@ -11,7 +11,7 @@ object ApiConfig {
 
     val BASE_URL: String
         get() = when (currentEnvironment) {
-            Environment.DEVELOPMENT -> "http://192.168.100.8:8080"
+            Environment.DEVELOPMENT -> "http://192.168.1.4:8080"
             Environment.STAGING -> "https://staging-api.example.com"
             Environment.PRODUCTION -> "https://api.example.com"
         }
