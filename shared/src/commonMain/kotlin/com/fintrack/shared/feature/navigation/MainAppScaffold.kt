@@ -24,11 +24,13 @@ fun MainAppScaffold(
             currentRoute == Screen.AddTransaction.route ||
             currentRoute == Screen.Accounts.route ||
             currentRoute == Screen.Categories.route ||
-            currentRoute == Screen.Settings.route
+            currentRoute == Screen.Settings.route ||
+            currentRoute == Screen.Login.route ||
+            currentRoute == Screen.Register.route
 
     Scaffold(
         topBar = {
-            if (isAuthenticated && !hideBars) {
+            if (!hideBars) {
                 AppTopBar(
                     appBarState = appBarState,
                     onUpdateAppBarState = { newState -> appBarState = newState }
@@ -36,12 +38,12 @@ fun MainAppScaffold(
             }
         },
         bottomBar = {
-            if (isAuthenticated && !hideBars) {
+            if (!hideBars) {
                 BottomBar(navController)
             }
         },
         floatingActionButton = {
-            if (isAuthenticated && !hideBars) {
+            if (!hideBars) {
                 AddTransactionFAB(
                     onClick = { navController.navigate(Screen.AddTransaction.route) }
                 )
