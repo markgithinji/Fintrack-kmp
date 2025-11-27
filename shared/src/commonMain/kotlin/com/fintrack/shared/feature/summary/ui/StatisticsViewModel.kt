@@ -160,10 +160,10 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
         }
     }
 
-    fun loadTransactionCounts(accountId: String) {
+    fun loadTransactionCounts(accountId: String, isIncome: Boolean? = null) {
         viewModelScope.launch {
             _transactionCounts.value = Result.Loading
-            _transactionCounts.value = repo.getTransactionCounts(accountId)
+            _transactionCounts.value = repo.getTransactionCounts(accountId, isIncome)
         }
     }
 

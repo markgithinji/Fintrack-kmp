@@ -24,5 +24,8 @@ interface SummaryRepository {
     suspend fun getAvailableYears(accountId: String?): Result<AvailableYears>
     suspend fun getOverviewSummary(accountId: String?): Result<OverviewSummary>
     suspend fun getCategoryComparisons(accountId: String?): Result<List<CategoryComparison>>
-    suspend fun getTransactionCounts(accountId: String): Result<TransactionCountSummary>
+    suspend fun getTransactionCounts(
+        accountId: String,
+        isIncome: Boolean? = null
+    ): Result<TransactionCountSummary>
 }

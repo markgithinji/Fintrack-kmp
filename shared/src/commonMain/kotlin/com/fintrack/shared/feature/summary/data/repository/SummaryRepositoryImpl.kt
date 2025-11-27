@@ -59,8 +59,10 @@ class SummaryRepositoryImpl(
             api.getCategoryComparisons(accountId).map { it.toDomain() }
         }
 
-    override suspend fun getTransactionCounts(accountId: String): Result<TransactionCountSummary> =
-        safeApiCall {
-            api.getTransactionCounts(accountId).toDomain()
-        }
+    override suspend fun getTransactionCounts(
+        accountId: String,
+        isIncome: Boolean?
+    ): Result<TransactionCountSummary> = safeApiCall {
+        api.getTransactionCounts(accountId, isIncome).toDomain()
+    }
 }
