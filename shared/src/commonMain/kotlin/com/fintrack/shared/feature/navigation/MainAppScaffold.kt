@@ -18,19 +18,39 @@ fun MainAppScaffold(
     // State to update AppBar per screen
     var appBarState by remember { mutableStateOf(AppBarState(title = "Home")) }
 
-    // Decide when to show bars
-    val hideBars = currentRoute == Screen.TransactionList.route ||
-            currentRoute == Screen.BudgetDetail.route ||
-            currentRoute == Screen.AddTransaction.route ||
-            currentRoute == Screen.Accounts.route ||
-            currentRoute == Screen.Categories.route ||
-            currentRoute == Screen.Settings.route ||
-            currentRoute == Screen.Login.route ||
-            currentRoute == Screen.Register.route
+    val showTopBar = remember(currentRoute) {
+        when (currentRoute) {
+            Screen.Login.route -> false
+            Screen.Register.route -> false
+            else -> true  // Show top bar on all other screens
+        }
+    }
+
+    val showBottomBar = remember(currentRoute) {
+        when (currentRoute) {
+            Screen.Home.route -> true
+            Screen.Statistics.route -> true
+            Screen.Budget.route -> true
+            Screen.Profile.route -> true
+            Screen.Login.route -> false
+            Screen.Register.route -> false
+            else -> false  // Hide bottom bar on all other screens
+        }
+    }
+
+    val showFAB = remember(currentRoute) {
+        when (currentRoute) {
+            Screen.Home.route -> true
+            Screen.Statistics.route -> true
+            Screen.Budget.route -> true
+            Screen.Profile.route -> true
+            else -> false  // Hide FAB on all other screens
+        }
+    }
 
     Scaffold(
         topBar = {
-            if (!hideBars) {
+            if (showTopBar) {
                 AppTopBar(
                     appBarState = appBarState,
                     onUpdateAppBarState = { newState -> appBarState = newState }
@@ -38,12 +58,12 @@ fun MainAppScaffold(
             }
         },
         bottomBar = {
-            if (!hideBars) {
+            if (showBottomBar) {
                 BottomBar(navController)
             }
         },
         floatingActionButton = {
-            if (!hideBars) {
+            if (showFAB) {
                 AddTransactionFAB(
                     onClick = { navController.navigate(Screen.AddTransaction.route) }
                 )
