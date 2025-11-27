@@ -9,7 +9,7 @@ interface TransactionRepository {
         limit: Int,
         sortBy: String,
         order: String,
-        afterDate: String? = null,
+        afterDateTime: String? = null,
         afterId: String? = null,
         accountId: String? = null,
         isIncome: Boolean? = null

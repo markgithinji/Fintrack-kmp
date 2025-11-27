@@ -16,7 +16,7 @@ class TransactionRepositoryImpl(
         limit: Int,
         sortBy: String,
         order: String,
-        afterDate: String?,
+        afterDateTime: String?,
         afterId: String?,
         accountId: String?,
         isIncome: Boolean?
@@ -26,7 +26,7 @@ class TransactionRepositoryImpl(
                 limit = limit,
                 sortBy = sortBy,
                 order = order,
-                afterDateTime  = afterDate,
+                afterDateTime = afterDateTime,
                 afterId = afterId,
                 accountId = accountId,
                 isIncome = isIncome

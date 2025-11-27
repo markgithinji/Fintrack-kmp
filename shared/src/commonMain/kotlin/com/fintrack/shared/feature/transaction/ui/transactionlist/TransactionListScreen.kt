@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -42,6 +41,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.compose.GreenIncome
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
@@ -53,8 +54,6 @@ import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import kotlinx.datetime.LocalDate
 import org.koin.compose.viewmodel.koinViewModel
-import androidx.paging.compose.collectAsLazyPagingItems
-import com.example.compose.GreenIncome
 
 @Composable
 fun TransactionListScreen(
@@ -72,7 +71,7 @@ fun TransactionListScreen(
 
 
     LaunchedEffect(accountId, isIncome) {
-        statisticsViewModel.loadTransactionCounts(accountId)
+        statisticsViewModel.loadTransactionCounts(accountId, isIncome)
     }
 
     LazyColumn(
@@ -167,6 +166,17 @@ fun TransactionCountHeaderWithLoading(
     transactionCounts: Result<TransactionCountSummary>,
     isIncome: Boolean?
 ) {
+    LaunchedEffect(transactionCounts) {
+        if (transactionCounts is Result.Success) {
+            println(
+                "DEBUG: Transaction counts - Total: ${transactionCounts.data.totalTransactions}, " +
+                        "Income: ${transactionCounts.data.totalIncomeTransactions}, " +
+                        "Expense: ${transactionCounts.data.totalExpenseTransactions}, " +
+                        "Filter: $isIncome"
+            )
+        }
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),

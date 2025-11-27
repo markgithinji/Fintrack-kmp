@@ -15,31 +15,27 @@ class TransactionPagingSource(
     override suspend fun load(params: LoadParams<String>): LoadResult<String, Transaction> {
         return try {
             val cursor = params.key
-            val afterDate = cursor?.split("|")?.getOrNull(0)
+            val afterDateTime = cursor?.split("|")?.getOrNull(0)
             val afterId = cursor?.split("|")?.getOrNull(1)
 
             val result = repo.getTransactions(
                 limit = params.loadSize,
                 sortBy = "date",
                 order = "DESC",
-                afterDate = afterDate,
+                afterDateTime = afterDateTime,
                 afterId = afterId,
-                accountId = accountId
+                accountId = accountId,
+                isIncome = isIncome
             )
 
             when (result) {
                 is Result.Success -> {
                     val (transactions, nextCursor) = result.data
 
-                    val filtered = if (isIncome != null) {
-                        transactions.filter { it.isIncome == isIncome }
-                    } else transactions
-
-                    val validNextKey =
-                        if (filtered.isEmpty() || nextCursor == cursor) null else nextCursor
+                    val validNextKey = if (transactions.isEmpty() || nextCursor == cursor) null else nextCursor
 
                     LoadResult.Page(
-                        data = filtered,
+                        data = transactions,
                         prevKey = null,
                         nextKey = validNextKey
                     )

@@ -21,7 +21,7 @@ class TransactionApi(
         limit: Int = 20,
         sortBy: String = "date",
         order: String = "DESC",
-        afterDateTime : String? = null,
+        afterDateTime: String? = null,
         afterId: String? = null,
         accountId: String? = null,
         isIncome: Boolean? = null
@@ -30,7 +30,7 @@ class TransactionApi(
             parameter("limit", limit)
             parameter("sortBy", sortBy)
             parameter("order", order)
-            afterDateTime ?.let { parameter("afterDate", it) }
+            afterDateTime?.let { parameter("afterDateTime", it) }
             afterId?.let { parameter("afterId", it) }
             accountId?.let { parameter("accountId", it) }
             isIncome?.let { parameter("isIncome", it) }
