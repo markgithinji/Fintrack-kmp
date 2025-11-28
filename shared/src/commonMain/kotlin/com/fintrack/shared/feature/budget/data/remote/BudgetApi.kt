@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.budget.data.remote
 
-import com.fintrack.shared.feature.budget.data.model.BudgetDto
 import com.fintrack.shared.feature.budget.data.model.BudgetWithStatusDto
 import com.fintrack.shared.feature.budget.data.model.CreateBudgetRequest
 import com.fintrack.shared.feature.budget.data.model.UpdateBudgetRequest
@@ -21,16 +20,16 @@ class BudgetApi(
     private val baseUrl: String
 ) {
 
-    suspend fun addBudget(request: CreateBudgetRequest): BudgetDto {
-        val response: ApiResponse<BudgetDto> = client.post("$baseUrl/budgets") {
+    suspend fun addBudget(request: CreateBudgetRequest): BudgetWithStatusDto {
+        val response: ApiResponse<BudgetWithStatusDto> = client.post("$baseUrl/budgets") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
         return response.result
     }
 
-    suspend fun updateBudget(id: String, request: UpdateBudgetRequest): BudgetDto {
-        val response: ApiResponse<BudgetDto> = client.put("$baseUrl/budgets/$id") {
+    suspend fun updateBudget(id: String, request: UpdateBudgetRequest): BudgetWithStatusDto {
+        val response: ApiResponse<BudgetWithStatusDto> = client.put("$baseUrl/budgets/$id") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()

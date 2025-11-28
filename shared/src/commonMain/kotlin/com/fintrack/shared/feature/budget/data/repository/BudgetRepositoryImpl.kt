@@ -29,15 +29,13 @@ class BudgetRepositoryImpl(
     override suspend fun addOrUpdateBudget(budget: Budget): Result<Budget> =
         safeApiCall {
             if (budget.id == null) {
-                // Create new budget
                 val createRequest = budget.toCreateRequest()
                 val dto = api.addBudget(createRequest)
-                dto.toDomain()
+                dto.budget.toDomain()
             } else {
-                // Update existing budget
                 val updateRequest = budget.toUpdateRequest()
                 val dto = api.updateBudget(budget.id, updateRequest)
-                dto.toDomain()
+                dto.budget.toDomain()
             }
         }
 

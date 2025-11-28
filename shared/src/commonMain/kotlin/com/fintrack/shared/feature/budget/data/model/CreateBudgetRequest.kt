@@ -1,7 +1,9 @@
 package com.fintrack.shared.feature.budget.data.model
 
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class CreateBudgetRequest(
     val accountId: String,
     val name: String,
