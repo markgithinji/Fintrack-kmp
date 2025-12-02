@@ -19,14 +19,15 @@ class BudgetViewModel(
     private val _budgets = MutableStateFlow<Result<List<BudgetWithStatus>>>(Result.Loading)
     val budgets: StateFlow<Result<List<BudgetWithStatus>>> = _budgets
 
-    private val _saveResult = MutableStateFlow<Result<Budget>?>(null)
-    val saveResult: StateFlow<Result<Budget>?> = _saveResult
+    private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
+    val saveState: StateFlow<SaveState> = _saveState
 
     private val _deleteResult = MutableStateFlow<Result<Unit>?>(null)
     val deleteResult: StateFlow<Result<Unit>?> = _deleteResult
 
-    private val _selectedBudget = MutableStateFlow<Result<BudgetWithStatus>?>(null)
-    val selectedBudget: StateFlow<Result<BudgetWithStatus>?> = _selectedBudget
+    private val _selectedBudget = MutableStateFlow<Result<BudgetWithStatus>>(Result.Loading)
+    val selectedBudget: StateFlow<Result<BudgetWithStatus>> = _selectedBudget
+
 
     init {
         reloadBudgets()
@@ -50,6 +51,7 @@ class BudgetViewModel(
         accountId: String
     ) {
         viewModelScope.launch {
+            _saveState.value = SaveState.Loading
             val budget = Budget(
                 id = id,
                 accountId = accountId,
@@ -60,8 +62,13 @@ class BudgetViewModel(
                 startDate = startDate,
                 endDate = endDate
             )
-            _saveResult.value = repo.addOrUpdateBudget(budget)
-            reloadBudgets()
+
+            val result = repo.addOrUpdateBudget(budget)
+            _saveState.value = when (result) {
+                is Result.Success -> SaveState.Success(result.data)
+                is Result.Error -> SaveState.Error(result.exception)
+                is Result.Loading -> SaveState.Loading
+            }
         }
     }
 
@@ -74,18 +81,14 @@ class BudgetViewModel(
 
     fun loadBudgetById(id: String) {
         viewModelScope.launch {
-            // First try from local cache
-            val current = _budgets.value
-            if (current is Result.Success) {
-                val found = current.data.firstOrNull { it.budget.id == id }
-                if (found != null) {
-                    _selectedBudget.value = Result.Success(found)
-                    return@launch
-                }
-            }
-
-            // If not found locally, fetch from repo
             _selectedBudget.value = repo.getBudgetById(id)
         }
     }
+}
+
+sealed class SaveState {
+    object Idle : SaveState()
+    object Loading : SaveState()
+    data class Success(val budget: Budget) : SaveState()
+    data class Error(val exception: Throwable) : SaveState()
 }
