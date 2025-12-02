@@ -77,6 +77,10 @@ fun BudgetScreen(
 ) {
     val budgets by viewModel.budgets.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        viewModel.reloadBudgets()
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         when (budgets) {
             is Result.Loading -> BudgetScreenLoadingState()
