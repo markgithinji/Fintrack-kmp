@@ -10,7 +10,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import com.fintrack.shared.feature.auth.ui.LoginScreen
 import com.fintrack.shared.feature.auth.ui.RegisterScreen
 import com.fintrack.shared.feature.budget.ui.BudgetDetailScreen
@@ -21,9 +20,8 @@ import com.fintrack.shared.feature.profile.ProfileScreen
 import com.fintrack.shared.feature.profile.SettingsScreen
 import com.fintrack.shared.feature.summary.ui.StatisticsScreen
 import com.fintrack.shared.feature.transaction.ui.addtransaction.AddTransactionScreen
-import com.fintrack.shared.feature.transaction.ui.home.IncomeTrackerContent
+import com.fintrack.shared.feature.transaction.ui.home.HomeScreen
 import com.fintrack.shared.feature.transaction.ui.transactionlist.TransactionListScreen
-import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AppNavigation(
@@ -42,7 +40,7 @@ fun AppNavigation(
             LaunchedEffect(Unit) {
                 onUpdateAppBarState(AppBarState(title = "Home"))
             }
-            IncomeTrackerContent(
+            HomeScreen(
                 onCardClick = { accountId, isIncome ->
                     navController.navigate(
                         Screen.TransactionList.createRoute(

@@ -95,7 +95,7 @@ import network.chaintech.cmpcharts.ui.linechart.model.LineStyle
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun IncomeTrackerContent(
+fun HomeScreen(
     accountsViewModel: AccountsViewModel = koinViewModel(),
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     statsViewModel: StatisticsViewModel = koinViewModel(),
