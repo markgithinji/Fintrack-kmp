@@ -54,6 +54,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.domain.model.Budget
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.util.Result
@@ -72,18 +73,19 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 // TODO: Improve state handling in these composable; reduce the no of LaunchedEffects and move some states & validation logic to ViewModel
-
 @OptIn(ExperimentalTime::class)
 @Composable
 fun BudgetDetailScreen(
     budgetId: String?,
     accountId: String?,
     viewModel: BudgetViewModel = koinViewModel(),
+    accountsViewModel: AccountsViewModel = koinViewModel(),
     onSave: () -> Unit,
     onBack: () -> Unit
 ) {
     val selectedBudgetResult by viewModel.selectedBudget.collectAsStateWithLifecycle()
     val saveState by viewModel.saveState.collectAsStateWithLifecycle()
+    val selectedAccountResult by accountsViewModel.selectedAccount.collectAsStateWithLifecycle()
 
     // Track if we've initialized the form with existing budget data
     var isInitialized by remember { mutableStateOf(false) }
@@ -99,6 +101,11 @@ fun BudgetDetailScreen(
     var isExpense by remember { mutableStateOf(true) }
     var startDate by remember { mutableStateOf<LocalDate?>(null) }
     var endDate by remember { mutableStateOf<LocalDate?>(null) }
+
+    // Get the final account ID to use
+    val finalAccountId = remember(accountId, selectedAccountResult) {
+        accountId ?: (selectedAccountResult as? Result.Success)?.data?.id
+    }
 
     LaunchedEffect(budgetId) {
         budgetId?.let { viewModel.loadBudgetById(it) }
@@ -171,6 +178,15 @@ fun BudgetDetailScreen(
                 }
 
                 else -> {
+                    // Show account info if creating new budget
+                    if (budgetId == null && finalAccountId == null) {
+                        Text(
+                            text = "No account selected. Please select an account first.",
+                            color = Color.Red,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
+
                     BudgetForm(
                         name = name,
                         onNameChange = { name = it },
@@ -214,7 +230,7 @@ fun BudgetDetailScreen(
                         limit > 0 &&
                         startDate != null &&
                         endDate != null &&
-                        accountId != null
+                        finalAccountId != null  // Use finalAccountId instead of accountId
 
                 if (valid) {
                     viewModel.saveBudget(
@@ -225,7 +241,7 @@ fun BudgetDetailScreen(
                         isExpense = isExpense,
                         startDate = startDate!!,
                         endDate = endDate!!,
-                        accountId = accountId
+                        accountId = finalAccountId!!  // Use finalAccountId
                     )
                 } else {
                     // Show validation error toast
@@ -245,8 +261,8 @@ fun BudgetDetailScreen(
                         if (endDate == null) {
                             append("End date is required\n")
                         }
-                        if (accountId == null) {
-                            append("Account is required\n")
+                        if (finalAccountId == null) {  // Use finalAccountId
+                            append("Account is required. Please select an account first.\n")
                         }
                     }.trim()
                     showValidationError = true
