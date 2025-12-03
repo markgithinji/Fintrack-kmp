@@ -86,8 +86,7 @@ fun AppNavigation(
                 onBudgetClick = { budgetWithStatus ->
                     navController.navigate(
                         Screen.BudgetDetail.createRoute(
-                            budgetWithStatus.budget.id,
-                            budgetWithStatus.budget.accountId
+                            budgetWithStatus.budget.id
                         )
                     )
                 }
@@ -153,18 +152,13 @@ fun AppNavigation(
         composable(
             route = Screen.BudgetDetail.route,
             arguments = listOf(
-                navArgument("budgetId") { type = NavType.StringType },
-                navArgument("accountId") {
+                navArgument("budgetId") {
                     type = NavType.StringType
-                    nullable = true
                 }
             )
         ) { backStackEntry ->
             val budgetIdArg = backStackEntry.arguments?.getString("budgetId")
-            val accountIdArg = backStackEntry.arguments?.getString("accountId")
-
             val budgetId = if (budgetIdArg.isNullOrEmpty()) null else budgetIdArg
-            val accountId = if (accountIdArg.isNullOrEmpty()) null else accountIdArg
 
             LaunchedEffect(budgetId) {
                 onUpdateAppBarState(
@@ -178,7 +172,6 @@ fun AppNavigation(
 
             BudgetDetailScreen(
                 budgetId = budgetId,
-                accountId = accountId,
                 onSave = { navController.popBackStack() },
                 onBack = { navController.popBackStack() }
             )

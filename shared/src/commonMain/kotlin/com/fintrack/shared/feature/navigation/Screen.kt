@@ -11,14 +11,10 @@ sealed class Screen(val route: String) {
     object Categories : Screen("categories")
     object Settings : Screen("settings")
 
-    object BudgetDetail : Screen("budget_detail/{budgetId}?accountId={accountId}") {
-        fun createRoute(budgetId: String? = null, accountId: String? = null): String {
+    object BudgetDetail : Screen("budget_detail/{budgetId}") {
+        fun createRoute(budgetId: String? = null): String {
             val id = budgetId ?: ""
-            return if (accountId != null) {
-                "budget_detail/$id?accountId=$accountId"
-            } else {
-                "budget_detail/$id"
-            }
+            return "budget_detail/$id"
         }
     }
 
