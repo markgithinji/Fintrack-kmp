@@ -108,9 +108,9 @@ fun HomeScreen(
     val categoryComparisonResult by statsViewModel.categoryComparisons.collectAsStateWithLifecycle()
 
     // Reload initial accounts
-    LaunchedEffect(Unit) {
-        accountsViewModel.reloadAccounts()
-    }
+//    LaunchedEffect(accountsResult) {
+//        accountsViewModel.reloadAccounts()
+//    }
 
     // Reload dependent data whenever the selected account changes
     LaunchedEffect(selectedAccountResult) {
