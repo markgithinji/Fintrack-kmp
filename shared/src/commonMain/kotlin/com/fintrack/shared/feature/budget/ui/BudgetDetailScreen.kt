@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.budget.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.staggeredgrid.LazyHorizontalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.rememberScrollState
@@ -28,6 +31,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -51,9 +55,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.domain.model.Budget
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
@@ -61,6 +67,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.ui.addtransaction.CategoryChip
 import com.fintrack.shared.feature.transaction.ui.addtransaction.ToggleChip
+import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import kotlinx.datetime.DatePeriod
@@ -77,7 +84,6 @@ import kotlin.time.ExperimentalTime
 @Composable
 fun BudgetDetailScreen(
     budgetId: String?,
-    accountId: String?,
     viewModel: BudgetViewModel = koinViewModel(),
     accountsViewModel: AccountsViewModel = koinViewModel(),
     onSave: () -> Unit,
@@ -85,7 +91,7 @@ fun BudgetDetailScreen(
 ) {
     val selectedBudgetResult by viewModel.selectedBudget.collectAsStateWithLifecycle()
     val saveState by viewModel.saveState.collectAsStateWithLifecycle()
-    val selectedAccountResult by accountsViewModel.selectedAccount.collectAsStateWithLifecycle()
+    val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
 
     // Track if we've initialized the form with existing budget data
     var isInitialized by remember { mutableStateOf(false) }
@@ -101,30 +107,33 @@ fun BudgetDetailScreen(
     var isExpense by remember { mutableStateOf(true) }
     var startDate by remember { mutableStateOf<LocalDate?>(null) }
     var endDate by remember { mutableStateOf<LocalDate?>(null) }
-
-    // Get the final account ID to use
-    val finalAccountId = remember(accountId, selectedAccountResult) {
-        accountId ?: (selectedAccountResult as? Result.Success)?.data?.id
-    }
+    var selectedAccount by remember { mutableStateOf<Account?>(null) }
 
     LaunchedEffect(budgetId) {
         budgetId?.let { viewModel.loadBudgetById(it) }
     }
 
     // Initialize form
-    LaunchedEffect(selectedBudgetResult) {
+    LaunchedEffect(selectedBudgetResult, accountsResult) {
         if (!isInitialized) {
             if (budgetId == null) {
                 // For new budget, set default values
                 val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
                 startDate = today
                 endDate = today.plus(DatePeriod(months = 1))
+
                 // Add default category for new budgets
                 selectedCategories = if (Category.expenseCategories.isNotEmpty()) {
                     setOf(Category.expenseCategories[0])
                 } else {
                     emptySet()
                 }
+
+                // Try to auto-select first account if available
+                if (accountsResult is Result.Success && (accountsResult as Result.Success<List<Account>>).data.isNotEmpty()) {
+                    selectedAccount = (accountsResult as Result.Success<List<Account>>).data.first()
+                }
+
                 isInitialized = true
             } else if (selectedBudgetResult is Result.Success) {
                 // For existing budget, load the data
@@ -137,6 +146,11 @@ fun BudgetDetailScreen(
                 isExpense = budget.isExpense
                 startDate = budget.startDate
                 endDate = budget.endDate
+
+                // Try to find and select the account from accounts list
+                if (accountsResult is Result.Success) {
+                    selectedAccount = (accountsResult as Result.Success<List<Account>>).data.firstOrNull { it.id == budget.accountId }
+                }
 
                 isInitialized = true
             }
@@ -178,14 +192,16 @@ fun BudgetDetailScreen(
                 }
 
                 else -> {
-                    // Show account info if creating new budget
-                    if (budgetId == null && finalAccountId == null) {
-                        Text(
-                            text = "No account selected. Please select an account first.",
-                            color = Color.Red,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                    }
+                    AccountSelectionSection(
+                        accountsResult = accountsResult,
+                        selectedAccount = selectedAccount,
+                        onAccountSelected = { account ->
+                            selectedAccount = account
+                        },
+                        onRetry = {
+                            accountsViewModel.reloadAccounts()
+                        }
+                    )
 
                     BudgetForm(
                         name = name,
@@ -230,7 +246,7 @@ fun BudgetDetailScreen(
                         limit > 0 &&
                         startDate != null &&
                         endDate != null &&
-                        finalAccountId != null  // Use finalAccountId instead of accountId
+                        selectedAccount != null
 
                 if (valid) {
                     viewModel.saveBudget(
@@ -241,7 +257,7 @@ fun BudgetDetailScreen(
                         isExpense = isExpense,
                         startDate = startDate!!,
                         endDate = endDate!!,
-                        accountId = finalAccountId!!  // Use finalAccountId
+                        accountId = selectedAccount!!.id
                     )
                 } else {
                     // Show validation error toast
@@ -261,8 +277,8 @@ fun BudgetDetailScreen(
                         if (endDate == null) {
                             append("End date is required\n")
                         }
-                        if (finalAccountId == null) {  // Use finalAccountId
-                            append("Account is required. Please select an account first.\n")
+                        if (selectedAccount == null) {
+                            append("Please select an account for this budget\n")
                         }
                     }.trim()
                     showValidationError = true
@@ -272,6 +288,175 @@ fun BudgetDetailScreen(
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
         )
+    }
+}
+@Composable
+fun AccountSelectionSection(
+    accountsResult: Result<List<Account>>,
+    selectedAccount: Account?,
+    onAccountSelected: (Account) -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "Select Account",
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 16.sp
+        )
+
+        when (accountsResult) {
+            is Result.Loading -> {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(80.dp)
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+            }
+
+            is Result.Error -> {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Failed to load accounts",
+                            color = Color.Red,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Button(
+                            onClick = onRetry,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF2196F3)
+                            )
+                        ) {
+                            Text("Retry")
+                        }
+                    }
+                }
+            }
+
+            is Result.Success -> {
+                if (accountsResult.data.isEmpty()) {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(80.dp)
+                        ) {
+                            Text(
+                                text = "No accounts available. Create an account first.",
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                } else {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(accountsResult.data) { account ->
+                            AccountChip(
+                                account = account,
+                                isSelected = selectedAccount?.id == account.id,
+                                onClick = { onAccountSelected(account) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AccountChip(
+    account: Account,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val accountIcon = AccountIcon.fromAccountName(account.name)
+
+    Card(
+        modifier = modifier
+            .clickable { onClick() }
+            .widthIn(min = 120.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) {
+                Color(0xFFE3F2FD)
+            } else {
+                Color(0xFFF5F5F5)
+            }
+        ),
+        border = if (isSelected) {
+            BorderStroke(2.dp, Color(0xFF2196F3))
+        } else {
+            null
+        }
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = accountIcon.icon,
+                contentDescription = account.name,
+                tint = accountIcon.color,
+                modifier = Modifier.size(24.dp)
+            )
+
+            Spacer(Modifier.height(4.dp))
+
+            Text(
+                text = account.name,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            val balanceText = when {
+                account.balance == null -> "Ksh --"
+                else -> {
+                    val balanceValue = account.balance
+                    val integerPart = balanceValue.toLong()
+                    val decimalPart = ((balanceValue - integerPart) * 100).toInt()
+                    "Ksh $integerPart.${decimalPart.toString().padStart(2, '0')}"
+                }
+            }
+
+            Text(
+                text = balanceText,
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
+        }
     }
 }
 @Composable
