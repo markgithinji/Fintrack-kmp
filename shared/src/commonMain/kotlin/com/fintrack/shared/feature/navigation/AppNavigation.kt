@@ -63,7 +63,9 @@ fun AppNavigation(
                     )
                 )
             }
-            AddTransactionScreen()
+            AddTransactionScreen(
+                onBack = { navController.popBackStack() }
+            )
         }
 
         // Statistics Screen

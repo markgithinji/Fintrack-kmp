@@ -101,6 +101,9 @@ fun AddTransactionScreen(
     var showValidationToast by remember { mutableStateOf(false) }
     var validationMessage by remember { mutableStateOf("") }
 
+    LaunchedEffect(Unit) {
+        transactionsViewModel.resetSaveResult()
+    }
 
     LaunchedEffect(saveResult) {
         when (saveResult) {
