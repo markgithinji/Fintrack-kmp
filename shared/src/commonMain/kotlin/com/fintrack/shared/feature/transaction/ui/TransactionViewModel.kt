@@ -18,8 +18,51 @@ class TransactionViewModel(
     private val repo: TransactionRepository
 ) : ViewModel() {
 
+    // TODO: check if these can be removed while also move some logic to use cases
     private var currentAccountId: String? = null
     private var currentIsIncome: Boolean? = null
+
+    private val _recentTransactions = MutableStateFlow<Result<List<Transaction>>>(Result.Loading)
+    val recentTransactions: StateFlow<Result<List<Transaction>>> = _recentTransactions
+
+    private val _saveResult = MutableStateFlow<Result<Transaction>?>(null)
+    val saveResult: StateFlow<Result<Transaction>?> = _saveResult
+
+    fun loadRecentTransactions(accountId: String? = null) {
+        val effectiveAccountId = accountId ?: currentAccountId
+
+        if (effectiveAccountId == null) {
+            _recentTransactions.value = Result.Error(Exception("No account selected"))
+            return
+        }
+
+        viewModelScope.launch {
+            _recentTransactions.value = Result.Loading
+            val result = repo.getTransactions(
+                limit = 6,                    // Get 6 recent transactions
+                sortBy = "date",              // Sort by date
+                order = "DESC",               // Most recent first
+                accountId = effectiveAccountId,
+                isIncome = null               // Get both income and expense
+            )
+            _recentTransactions.value = when (result) {
+                is Result.Success -> Result.Success(result.data.first)
+                is Result.Error -> Result.Error(result.exception)
+                is Result.Loading -> Result.Loading
+            }
+        }
+    }
+
+    fun addTransaction(transaction: Transaction) {
+        viewModelScope.launch {
+            _saveResult.value = Result.Loading
+            _saveResult.value = repo.addTransaction(transaction)
+        }
+    }
+
+    fun resetSaveResult() {
+        _saveResult.value = null
+    }
 
     fun getTransactionsPagingData(
         accountId: String?,
@@ -41,35 +84,5 @@ class TransactionViewModel(
                 )
             }
         ).flow.cachedIn(viewModelScope)
-    }
-
-    private val _recentTransactions = MutableStateFlow<Result<List<Transaction>>>(Result.Loading)
-    val recentTransactions: StateFlow<Result<List<Transaction>>> = _recentTransactions
-
-    private val _saveResult = MutableStateFlow<Result<Transaction>?>(null)
-    val saveResult: StateFlow<Result<Transaction>?> = _saveResult
-
-    fun addTransaction(transaction: Transaction) {
-        viewModelScope.launch {
-            _saveResult.value = Result.Loading
-            _saveResult.value = repo.addTransaction(transaction)
-        }
-    }
-
-    fun resetSaveResult() {
-        _saveResult.value = null
-    }
-
-    fun loadRecentTransactions(accountId: String? = currentAccountId) {
-        currentAccountId = accountId
-        viewModelScope.launch {
-            _recentTransactions.value = Result.Loading
-            val result = repo.getRecentTransactions(accountId)
-            _recentTransactions.value = when (result) {
-                is Result.Success -> Result.Success(result.data)
-                is Result.Error -> Result.Error(result.exception)
-                is Result.Loading -> Result.Loading
-            }
-        }
     }
 }
