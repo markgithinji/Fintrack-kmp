@@ -5,6 +5,7 @@ import com.fintrack.shared.feature.transaction.domain.model.Transaction
 fun TransactionDto.toDomain(): Transaction =
     Transaction(
         id = id,
+        accountId = accountId,
         isIncome = isIncome,
         amount = amount,
         category = category,
@@ -14,7 +15,7 @@ fun TransactionDto.toDomain(): Transaction =
 
 fun Transaction.toCreateRequest(): CreateTransactionRequest {
     return CreateTransactionRequest(
-        accountId = this.id.toString(),
+        accountId = this.accountId,
         isIncome = this.isIncome,
         amount = this.amount,
         category = this.category,
