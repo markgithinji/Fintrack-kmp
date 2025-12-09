@@ -1,8 +1,10 @@
 package com.fintrack.shared.feature.transaction.domain.repository
 
+import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import kotlinx.coroutines.flow.Flow
 
 interface TransactionRepository {
     suspend fun getTransactions(
@@ -15,11 +17,10 @@ interface TransactionRepository {
         isIncome: Boolean? = null
     ): Result<Pair<List<Transaction>, String?>>
 
-    suspend fun getRecentTransactions(accountId: String?): Result<List<Transaction>>
     suspend fun addTransaction(transaction: Transaction): Result<Transaction>
 
-    fun getTransactionsPagingSource(
+    fun getTransactionsPagingFlow(
         accountId: String?,
         isIncome: Boolean? = null
-    ): PagingSource<String, Transaction>
+    ): Flow<PagingData<Transaction>>
 }

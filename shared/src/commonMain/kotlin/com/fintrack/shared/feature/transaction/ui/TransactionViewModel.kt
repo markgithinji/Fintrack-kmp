@@ -18,20 +18,14 @@ class TransactionViewModel(
     private val repo: TransactionRepository
 ) : ViewModel() {
 
-    // TODO: check if these can be removed while also move some logic to use cases
-    private var currentAccountId: String? = null
-    private var currentIsIncome: Boolean? = null
-
     private val _recentTransactions = MutableStateFlow<Result<List<Transaction>>>(Result.Loading)
     val recentTransactions: StateFlow<Result<List<Transaction>>> = _recentTransactions
 
     private val _saveResult = MutableStateFlow<Result<Transaction>?>(null)
     val saveResult: StateFlow<Result<Transaction>?> = _saveResult
 
-    fun loadRecentTransactions(accountId: String? = null) {
-        val effectiveAccountId = accountId ?: currentAccountId
-
-        if (effectiveAccountId == null) {
+    fun loadRecentTransactions(accountId: String?) {
+        if (accountId == null) {
             _recentTransactions.value = Result.Error(Exception("No account selected"))
             return
         }
@@ -39,11 +33,11 @@ class TransactionViewModel(
         viewModelScope.launch {
             _recentTransactions.value = Result.Loading
             val result = repo.getTransactions(
-                limit = 6,                    // Get 6 recent transactions
-                sortBy = "date",              // Sort by date
-                order = "DESC",               // Most recent first
-                accountId = effectiveAccountId,
-                isIncome = null               // Get both income and expense
+                limit = 6,
+                sortBy = "date",
+                order = "DESC",
+                accountId = accountId,
+                isIncome = null
             )
             _recentTransactions.value = when (result) {
                 is Result.Success -> Result.Success(result.data.first)
@@ -68,21 +62,7 @@ class TransactionViewModel(
         accountId: String?,
         isIncome: Boolean? = null
     ): Flow<PagingData<Transaction>> {
-        currentAccountId = accountId
-        currentIsIncome = isIncome
-
-        return Pager(
-            config = PagingConfig(
-                pageSize = 20,
-                enablePlaceholders = false,
-                initialLoadSize = 20
-            ),
-            pagingSourceFactory = {
-                repo.getTransactionsPagingSource(
-                    accountId = accountId,
-                    isIncome = isIncome
-                )
-            }
-        ).flow.cachedIn(viewModelScope)
+        return repo.getTransactionsPagingFlow(accountId, isIncome)
+            .cachedIn(viewModelScope)
     }
 }
