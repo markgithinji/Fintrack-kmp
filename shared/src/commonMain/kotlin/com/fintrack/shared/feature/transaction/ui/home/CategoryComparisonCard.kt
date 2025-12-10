@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -72,8 +73,8 @@ fun CategoryComparisonCard(
                         if (index < 2) {
                             HorizontalDivider(
                                 modifier = Modifier.padding(vertical = 8.dp),
-                                thickness = 1.dp,
-                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                thickness = 0.5.dp,
+                                color = Color.LightGray.copy(alpha = 0.4f)
                             )
                         }
                     }
