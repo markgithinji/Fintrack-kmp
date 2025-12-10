@@ -28,9 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -40,11 +38,10 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingTransactionRow
+import com.fintrack.shared.feature.transaction.ui.util.formatAsShortDate
 import com.fintrack.shared.feature.transaction.ui.util.formatToCurrency
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.Month
 
 @Composable
 fun TransactionsListCard(
@@ -56,14 +53,13 @@ fun TransactionsListCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             RecentTransactionsHeader(
-                onViewAllClick = onViewAllClick,
-                isLoading = transactionsResult is Result.Loading,
-                hasTransactions = transactionsResult is Result.Success && transactionsResult.data.isNotEmpty()
+                transactionsResult = transactionsResult,
+                onViewAllClick = onViewAllClick
             )
 
             when (transactionsResult) {
@@ -87,9 +83,8 @@ fun TransactionsListCard(
 
 @Composable
 private fun RecentTransactionsHeader(
-    onViewAllClick: () -> Unit,
-    isLoading: Boolean = false,
-    hasTransactions: Boolean = true
+    transactionsResult: Result<List<Transaction>>,
+    onViewAllClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -104,19 +99,29 @@ private fun RecentTransactionsHeader(
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                strokeWidth = 2.dp,
-                color = GreenIncome
-            )
-        } else if (hasTransactions) {
-            Text(
-                text = "View All",
-                style = MaterialTheme.typography.labelLarge,
-                color = GreenIncome,
-                modifier = Modifier.clickable { onViewAllClick() }
-            )
+        when (transactionsResult) {
+            is Result.Loading -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = GreenIncome
+                )
+            }
+
+            is Result.Success -> {
+                if (transactionsResult.data.isNotEmpty()) {
+                    Text(
+                        text = "View All",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = GreenIncome,
+                        modifier = Modifier.clickable { onViewAllClick() }
+                    )
+                }
+            }
+
+            else -> {
+                // Don't show anything for Error state
+            }
         }
     }
 }
@@ -136,6 +141,7 @@ private fun TransactionsLoadingState() {
         }
     }
 }
+
 @Composable
 private fun TransactionsErrorState() {
     Column(
@@ -197,7 +203,6 @@ private fun TransactionsEmptyState() {
     }
 }
 
-
 @Composable
 private fun TransactionsListContent(
     transactions: List<Transaction>,
@@ -237,7 +242,6 @@ fun TransactionRow(
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Category Icon
         Box(
             modifier = Modifier
                 .size(48.dp)
@@ -302,84 +306,4 @@ fun TransactionRow(
             )
         }
     }
-}
-
-@Composable
-private fun LoadingTransactionRow() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Loading icon
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.LightGray.copy(alpha = 0.3f))
-        )
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        // Loading text content
-        Column(modifier = Modifier.weight(1f)) {
-            Box(
-                modifier = Modifier
-                    .width(120.dp)
-                    .height(18.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(Color.LightGray.copy(alpha = 0.3f))
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .height(14.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(Color.LightGray.copy(alpha = 0.3f))
-            )
-        }
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        // Loading amount and date
-        Column(horizontalAlignment = Alignment.End) {
-            Box(
-                modifier = Modifier
-                    .width(60.dp)
-                    .height(18.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(Color.LightGray.copy(alpha = 0.3f))
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Box(
-                modifier = Modifier
-                    .width(40.dp)
-                    .height(12.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(Color.LightGray.copy(alpha = 0.3f))
-            )
-        }
-    }
-}
-
-// Date formatting extension
-private fun LocalDate.formatAsShortDate(): String {
-    val month = when (this.month) {
-        Month.JANUARY -> "Jan"
-        Month.FEBRUARY -> "Feb"
-        Month.MARCH -> "Mar"
-        Month.APRIL -> "Apr"
-        Month.MAY -> "May"
-        Month.JUNE -> "Jun"
-        Month.JULY -> "Jul"
-        Month.AUGUST -> "Aug"
-        Month.SEPTEMBER -> "Sep"
-        Month.OCTOBER -> "Oct"
-        Month.NOVEMBER -> "Nov"
-        Month.DECEMBER -> "Dec"
-        else -> ""
-    }
-    return "$month ${this.dayOfMonth}"
 }
