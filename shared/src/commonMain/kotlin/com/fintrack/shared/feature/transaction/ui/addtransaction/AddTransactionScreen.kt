@@ -53,6 +53,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.compose.GreenIncome
+import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.ui.AccountSelectionSection
@@ -98,6 +100,17 @@ fun AddTransactionScreen(
     var showValidationToast by remember { mutableStateOf(false) }
     var validationMessage by remember { mutableStateOf("") }
 
+    val onAccountSelected = remember { { account: Account? -> selectedAccount = account } }
+    val onRetry = remember(accountsViewModel) { { accountsViewModel.reloadAccounts() } }
+
+    val onAmountChange = remember { { newAmount: String -> amount = newAmount } }
+    val onIncomeChange = remember { { newIsIncome: Boolean -> isIncome = newIsIncome } }
+    val onCategorySelected = remember { { newCategory: Category? -> category = newCategory } }
+    val onDescriptionChange = remember { { newDescription: String -> description = newDescription } }
+
+    val onDateClicked = remember { { showDatePicker = true } }
+    val onTimeClicked = remember { { showTimePicker = true } }
+
     val validationResult = remember(amount, category, selectedAccount) {
         validateTransactionForm(
             amount = amount,
@@ -106,18 +119,7 @@ fun AddTransactionScreen(
         )
     }
 
-    val onSaveClick = remember(
-        amount,
-        isIncome,
-        category,
-        description,
-        selectedAccount,
-        dateTime,
-        validationResult,
-        validationMessage,
-        showValidationToast,
-        transactionsViewModel
-    ) {
+    val onSaveClick = remember(validationResult) {
         {
             if (validationResult.isValid) {
                 val parsedAmount = amount.toDoubleOrNull()
@@ -141,10 +143,6 @@ fun AddTransactionScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        transactionsViewModel.resetSaveState()
-    }
-
     LaunchedEffect(saveState) {
         when (saveState) {
             is SaveState.Success -> {
@@ -153,6 +151,14 @@ fun AddTransactionScreen(
             }
 
             else -> Unit
+        }
+    }
+
+    // Auto-hide validation toast
+    LaunchedEffect(showValidationToast) {
+        if (showValidationToast) {
+            delay(3000)
+            showValidationToast = false
         }
     }
 
@@ -168,219 +174,36 @@ fun AddTransactionScreen(
             AccountSelectionSection(
                 accountsResult = accountsResult,
                 selectedAccount = selectedAccount,
-                onAccountSelected = { account ->
-                    selectedAccount = account
-                },
-                onRetry = {
-                    accountsViewModel.reloadAccounts()
-                }
+                onAccountSelected = onAccountSelected,
+                onRetry = onRetry
             )
 
-            Text("Amount", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                TextField(
-                    value = amount,
-                    onValueChange = { newAmount ->
-                        val filtered = newAmount.filter { it.isDigit() || it == '.' }
-                        val dotCount = filtered.count { it == '.' }
+            AmountInputSection(
+                amount = amount,
+                onAmountChange = onAmountChange
+            )
 
-                        if (dotCount <= 1) {
-                            if (dotCount == 1) {
-                                val parts = filtered.split('.')
-                                if (parts[1].length <= 2) {
-                                    amount = filtered
-                                }
-                            } else {
-                                amount = filtered
-                            }
-                        }
-                    },
-                    placeholder = { Text("Enter amount") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    leadingIcon = {
-                        Text(
-                            "Ksh",
-                            color = Color(0xFF4CAF50),
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 16.sp
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFFF5F5F5),
-                        unfocusedContainerColor = Color(0xFFF5F5F5),
-                        disabledContainerColor = Color(0xFFF5F5F5),
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent,
-                        cursorColor = Color(0xFF4CAF50)
-                    )
-                )
-            }
+            TransactionTypeSection(
+                isIncome = isIncome,
+                onIncomeChange = onIncomeChange
+            )
 
-            Text("Transaction Type", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp)
-                ) {
-                    ToggleChip(
-                        text = "Expense",
-                        icon = Icons.Default.ArrowDownward,
-                        selected = !isIncome,
-                        onClick = { isIncome = false },
-                        color = Color.Red
-                    )
-                    ToggleChip(
-                        text = "Income",
-                        icon = Icons.Default.ArrowUpward,
-                        selected = isIncome,
-                        onClick = { isIncome = true },
-                        color = Color(0xFF2E7D32)
-                    )
-                }
-            }
+            CategorySelectionSection(
+                isIncome = isIncome,
+                selectedCategory = category,
+                onCategorySelected = onCategorySelected
+            )
 
-            Text("Category", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp)
-            ) {
-                LazyHorizontalStaggeredGrid(
-                    rows = StaggeredGridCells.Adaptive(48.dp),
-                    horizontalItemSpacing = 8.dp,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp)
-                ) {
-                    val categories =
-                        if (isIncome) Category.incomeCategories else Category.expenseCategories
-                    items(categories.size) { index ->
-                        val cat = categories[index]
-                        val selected = category == cat
-                        CategoryChip(
-                            text = cat.name,
-                            icon = cat.toIcon(),
-                            color = cat.toColor(),
-                            selected = selected,
-                            onClick = { category = if (selected) null else cat }
-                        )
-                    }
-                }
-            }
+            DescriptionInputSection(
+                description = description,
+                onDescriptionChange = onDescriptionChange
+            )
 
-            Text("Description", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                TextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    placeholder = { Text("Optional description") },
-                    singleLine = false,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Notes,
-                            null,
-                            tint = Color.Gray
-                        )
-                    },
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFFF5F5F5),
-                        unfocusedContainerColor = Color(0xFFF5F5F5),
-                        disabledContainerColor = Color(0xFFF5F5F5),
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent,
-                        cursorColor = Color.Gray
-                    )
-                )
-            }
-
-            Text("Date & Time", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { showDatePicker = true },
-                        horizontalAlignment = Alignment.Start
-                    ) {
-                        Text("Date", fontSize = 12.sp, color = Color.Gray)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "${dateTime.date}",
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 16.sp
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Icon(
-                                Icons.Default.DateRange,
-                                contentDescription = "Pick Date",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { showTimePicker = true },
-                        horizontalAlignment = Alignment.Start
-                    ) {
-                        Text("Time", fontSize = 12.sp, color = Color.Gray)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            val hourStr = dateTime.time.hour.toString().padStart(2, '0')
-                            val minuteStr = dateTime.time.minute.toString().padStart(2, '0')
-                            Text(
-                                text = "$hourStr:$minuteStr",
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 16.sp
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Icon(
-                                Icons.Default.AccessTime,
-                                contentDescription = "Pick Time",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-            }
+            DateTimeSelectionSection(
+                dateTime = dateTime,
+                onDateClicked = onDateClicked,
+                onTimeClicked = onTimeClicked
+            )
 
             if (showDatePicker) {
                 PickDate(
@@ -404,46 +227,13 @@ fun AddTransactionScreen(
                 )
             }
 
-            Button(
-                onClick = onSaveClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = category?.toColor() ?: MaterialTheme.colorScheme.primary
-                ),
-                enabled = amount.isNotBlank() && category != null && selectedAccount != null &&
-                        saveState !is SaveState.Loading && saveState !is SaveState.Success
-            ) {
-                when (saveState) {
-                    is SaveState.Loading -> {
-                        CircularProgressIndicator(
-                            color = Color.White,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-
-                    is SaveState.Success -> {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.CheckCircle,
-                                contentDescription = "Saved",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text("Saved ✓", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                        }
-                    }
-
-                    else -> {
-                        Text("Save Transaction", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                    }
-                }
-            }
+            SaveTransactionButton(
+                saveState = saveState,
+                amount = amount,
+                category = category,
+                selectedAccount = selectedAccount,
+                onSaveClick = onSaveClick
+            )
         }
 
         if (showValidationToast) {
@@ -465,7 +255,325 @@ fun AddTransactionScreen(
     }
 }
 
-// Validation helper function
+@Composable
+fun AmountInputSection(
+    amount: String,
+    onAmountChange: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Amount", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            TextField(
+                value = amount,
+                onValueChange = { newAmount ->
+                    val filtered = newAmount.filter { it.isDigit() || it == '.' }
+                    val dotCount = filtered.count { it == '.' }
+
+                    if (dotCount <= 1) {
+                        if (dotCount == 1) {
+                            val parts = filtered.split('.')
+                            if (parts[1].length <= 2) {
+                                onAmountChange(filtered)
+                            }
+                        } else {
+                            onAmountChange(filtered)
+                        }
+                    }
+                },
+                placeholder = { Text("Enter amount") },
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                leadingIcon = {
+                    Text(
+                        "Ksh",
+                        color = Color(0xFF4CAF50),
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFFF5F5F5),
+                    unfocusedContainerColor = Color(0xFFF5F5F5),
+                    disabledContainerColor = Color(0xFFF5F5F5),
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                    cursorColor = Color(0xFF4CAF50)
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun TransactionTypeSection(
+    isIncome: Boolean,
+    onIncomeChange: (Boolean) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Transaction Type", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+            ) {
+                ToggleChip(
+                    text = "Expense",
+                    icon = Icons.Default.ArrowDownward,
+                    selected = !isIncome,
+                    onClick = { onIncomeChange(false) },
+                    color = Color.Red
+                )
+                ToggleChip(
+                    text = "Income",
+                    icon = Icons.Default.ArrowUpward,
+                    selected = isIncome,
+                    onClick = { onIncomeChange(true) },
+                    color = Color(0xFF2E7D32)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CategorySelectionSection(
+    isIncome: Boolean,
+    selectedCategory: Category?,
+    onCategorySelected: (Category?) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Category", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+        ) {
+            LazyHorizontalStaggeredGrid(
+                rows = StaggeredGridCells.Adaptive(48.dp),
+                horizontalItemSpacing = 8.dp,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp)
+            ) {
+                val categories =
+                    if (isIncome) Category.incomeCategories else Category.expenseCategories
+                items(categories.size) { index ->
+                    val cat = categories[index]
+                    val selected = selectedCategory == cat
+                    CategoryChip(
+                        text = cat.name,
+                        icon = cat.toIcon(),
+                        color = cat.toColor(),
+                        selected = selected,
+                        onClick = { onCategorySelected(if (selected) null else cat) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DescriptionInputSection(
+    description: String,
+    onDescriptionChange: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Description", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            TextField(
+                value = description,
+                onValueChange = onDescriptionChange,
+                placeholder = { Text("Optional description") },
+                singleLine = false,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Notes,
+                        null,
+                        tint = Color.Gray
+                    )
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFFF5F5F5),
+                    unfocusedContainerColor = Color(0xFFF5F5F5),
+                    disabledContainerColor = Color(0xFFF5F5F5),
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                    cursorColor = Color.Gray
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun DateTimeSelectionSection(
+    dateTime: LocalDateTime,
+    onDateClicked: () -> Unit,
+    onTimeClicked: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Date & Time", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(onClick = onDateClicked),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text("Date", fontSize = 12.sp, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "${dateTime.date}",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            Icons.Default.DateRange,
+                            contentDescription = "Pick Date",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(onClick = onTimeClicked),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text("Time", fontSize = 12.sp, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        val hourStr = dateTime.time.hour.toString().padStart(2, '0')
+                        val minuteStr = dateTime.time.minute.toString().padStart(2, '0')
+                        Text(
+                            text = "$hourStr:$minuteStr",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            Icons.Default.AccessTime,
+                            contentDescription = "Pick Time",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SaveTransactionButton(
+    saveState: SaveState<Transaction>,
+    amount: String,
+    category: Category?,
+    selectedAccount: Account?,
+    onSaveClick: () -> Unit
+) {
+    // Determine if we should show the button as interactive
+    val isFormValid = amount.isNotBlank() && category != null && selectedAccount != null
+    val isInProgress = saveState is SaveState.Loading
+    val isSuccess = saveState is SaveState.Success<*>
+
+    val baseColor = category?.toColor() ?: MaterialTheme.colorScheme.primary
+
+    val buttonColor = when {
+        isSuccess -> GreenIncome
+        else -> baseColor
+    }
+
+    Button(
+        onClick = onSaveClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = buttonColor,
+            disabledContainerColor = when {
+                isSuccess -> GreenIncome.copy(alpha = 0.9f)
+                isInProgress -> baseColor.copy(alpha = 0.9f)
+                else -> MaterialTheme.colorScheme.surfaceVariant
+            },
+            disabledContentColor = when {
+                isSuccess -> Color.White
+                isInProgress -> Color.White
+                else -> MaterialTheme.colorScheme.onSurfaceVariant
+            }
+        ),
+        enabled = !isInProgress && !isSuccess && isFormValid
+    ) {
+        when (saveState) {
+            is SaveState.Loading -> {
+                CircularProgressIndicator(
+                    color = Color.White,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+
+            is SaveState.Success<*> -> {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = "Saved",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text("Saved ✓", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                }
+            }
+
+            else -> {
+                Text("Save Transaction", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+            }
+        }
+    }
+}
+
 data class ValidationResult(
     val isValid: Boolean,
     val errorMessage: String = ""
@@ -512,21 +620,27 @@ fun ToggleChip(
     icon: ImageVector,
     selected: Boolean,
     onClick: () -> Unit,
-    color: Color
+    color: Color? = null
 ) {
+    val chipColor = color ?: when (text.lowercase()) {
+        "expense" -> PinkExpense
+        "income" -> GreenIncome
+        else -> MaterialTheme.colorScheme.primary
+    }
+
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(50),
-        color = if (selected) color.copy(alpha = 0.15f) else Color(0xFFF0F0F0),
-        border = BorderStroke(1.dp, if (selected) color else Color.Transparent)
+        color = if (selected) chipColor.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, if (selected) chipColor else Color.Transparent)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
         ) {
-            Icon(icon, null, tint = if (selected) color else Color.Gray)
-            Text(text, color = if (selected) color else Color.Gray)
+            Icon(icon, null, tint = if (selected) chipColor else MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text, color = if (selected) chipColor else MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
