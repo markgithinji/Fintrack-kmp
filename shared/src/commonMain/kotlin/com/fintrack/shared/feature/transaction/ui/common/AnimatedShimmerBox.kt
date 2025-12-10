@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui.addtransaction
+package com.fintrack.shared.feature.transaction.ui.common
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode

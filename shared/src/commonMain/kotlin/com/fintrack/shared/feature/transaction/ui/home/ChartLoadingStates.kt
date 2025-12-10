@@ -16,7 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.fintrack.shared.feature.transaction.ui.addtransaction.AnimatedShimmerBox
+import com.fintrack.shared.feature.transaction.ui.common.AnimatedShimmerBox
 
 @Composable
 fun LoadingBarChart() {

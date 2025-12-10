@@ -35,7 +35,7 @@ import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.transaction.ui.addtransaction.AnimatedShimmerBox
+import com.fintrack.shared.feature.transaction.ui.common.AnimatedShimmerBox
 
 @Composable
 fun IncomeExpenseCards(

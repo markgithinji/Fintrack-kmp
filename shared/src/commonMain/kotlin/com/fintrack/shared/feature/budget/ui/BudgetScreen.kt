@@ -62,7 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.transaction.ui.addtransaction.AnimatedShimmerBox
+import com.fintrack.shared.feature.transaction.ui.common.AnimatedShimmerBox
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import org.koin.compose.viewmodel.koinViewModel
