@@ -57,7 +57,7 @@ import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.ui.AccountSelectionSection
 import com.fintrack.shared.feature.budget.ui.MaterialToast
-import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
@@ -71,8 +71,6 @@ import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.ExperimentalTime
 
 //TODO: better organise states and move validation logic to viewmodel or usecases
-
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
 fun AddTransactionScreen(
@@ -80,7 +78,7 @@ fun AddTransactionScreen(
     accountsViewModel: AccountsViewModel = koinViewModel(),
     onBack: () -> Unit = {}
 ) {
-    val saveResult by transactionsViewModel.saveResult.collectAsStateWithLifecycle()
+    val saveState by transactionsViewModel.saveState.collectAsStateWithLifecycle()
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
 
     var amount by remember { mutableStateOf("") }
@@ -97,21 +95,63 @@ fun AddTransactionScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
-    // State for showing validation toast
     var showValidationToast by remember { mutableStateOf(false) }
     var validationMessage by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
-        transactionsViewModel.resetSaveResult()
+    val validationResult = remember(amount, category, selectedAccount) {
+        validateTransactionForm(
+            amount = amount,
+            category = category,
+            selectedAccount = selectedAccount
+        )
     }
 
-    LaunchedEffect(saveResult) {
-        when (saveResult) {
-            is Result.Success -> {
-                // Navigate back after a short delay to show success state
+    val onSaveClick = remember(
+        amount,
+        isIncome,
+        category,
+        description,
+        selectedAccount,
+        dateTime,
+        validationResult,
+        validationMessage,
+        showValidationToast,
+        transactionsViewModel
+    ) {
+        {
+            if (validationResult.isValid) {
+                val parsedAmount = amount.toDoubleOrNull()
+                if (parsedAmount != null) {
+                    transactionsViewModel.addTransaction(
+                        transaction = Transaction(
+                            id = null,
+                            accountId = selectedAccount!!.id,
+                            amount = parsedAmount,
+                            isIncome = isIncome,
+                            category = category!!.name,
+                            description = description.takeIf { it.isNotBlank() },
+                            dateTime = dateTime
+                        )
+                    )
+                }
+            } else {
+                validationMessage = validationResult.errorMessage
+                showValidationToast = true
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        transactionsViewModel.resetSaveState()
+    }
+
+    LaunchedEffect(saveState) {
+        when (saveState) {
+            is SaveState.Success -> {
                 delay(1000)
                 onBack()
             }
+
             else -> Unit
         }
     }
@@ -125,7 +165,6 @@ fun AddTransactionScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
 
-            // Account Selection
             AccountSelectionSection(
                 accountsResult = accountsResult,
                 selectedAccount = selectedAccount,
@@ -137,7 +176,6 @@ fun AddTransactionScreen(
                 }
             )
 
-            // Amount
             Text("Amount", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
             Card(
                 shape = RoundedCornerShape(16.dp),
@@ -147,13 +185,10 @@ fun AddTransactionScreen(
                 TextField(
                     value = amount,
                     onValueChange = { newAmount ->
-                        // Validate amount input
                         val filtered = newAmount.filter { it.isDigit() || it == '.' }
                         val dotCount = filtered.count { it == '.' }
 
-                        // Allow only one decimal point
                         if (dotCount <= 1) {
-                            // Allow only 2 decimal places
                             if (dotCount == 1) {
                                 val parts = filtered.split('.')
                                 if (parts[1].length <= 2) {
@@ -189,7 +224,6 @@ fun AddTransactionScreen(
                 )
             }
 
-            // Transaction Type
             Text("Transaction Type", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
             Card(
                 shape = RoundedCornerShape(16.dp),
@@ -219,7 +253,6 @@ fun AddTransactionScreen(
                 }
             }
 
-            // Categories
             Text("Category", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
             Card(
                 shape = RoundedCornerShape(16.dp),
@@ -252,7 +285,6 @@ fun AddTransactionScreen(
                 }
             }
 
-            // Description
             Text("Description", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
             Card(
                 shape = RoundedCornerShape(16.dp),
@@ -266,7 +298,13 @@ fun AddTransactionScreen(
                     singleLine = false,
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null, tint = Color.Gray) },
+                    leadingIcon = {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Notes,
+                            null,
+                            tint = Color.Gray
+                        )
+                    },
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color(0xFFF5F5F5),
                         unfocusedContainerColor = Color(0xFFF5F5F5),
@@ -279,7 +317,6 @@ fun AddTransactionScreen(
                 )
             }
 
-            // Date & Time Section
             Text("Date & Time", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
             Card(
                 shape = RoundedCornerShape(16.dp),
@@ -293,7 +330,6 @@ fun AddTransactionScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Date Column
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -319,7 +355,6 @@ fun AddTransactionScreen(
 
                     Spacer(modifier = Modifier.width(16.dp))
 
-                    // Time Column
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -347,7 +382,6 @@ fun AddTransactionScreen(
                 }
             }
 
-            // Pickers
             if (showDatePicker) {
                 PickDate(
                     initialDate = dateTime.date,
@@ -370,37 +404,8 @@ fun AddTransactionScreen(
                 )
             }
 
-            // Save Button
             Button(
-                onClick = {
-                    // Validate all fields
-                    val validation = validateTransactionForm(
-                        amount = amount,
-                        category = category,
-                        selectedAccount = selectedAccount
-                    )
-
-                    if (validation.isValid) {
-                        val parsedAmount = amount.toDoubleOrNull()
-                        if (parsedAmount != null) {
-                            transactionsViewModel.addTransaction(
-                                transaction = Transaction(
-                                    id = null,
-                                    accountId = selectedAccount!!.id,
-                                    amount = parsedAmount,
-                                    isIncome = isIncome,
-                                    category = category!!.name,
-                                    description = description.takeIf { it.isNotBlank() },
-                                    dateTime = dateTime
-                                )
-                            )
-                        }
-                    } else {
-                        // Show validation error toast
-                        validationMessage = validation.errorMessage
-                        showValidationToast = true
-                    }
-                },
+                onClick = onSaveClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -408,16 +413,18 @@ fun AddTransactionScreen(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = category?.toColor() ?: MaterialTheme.colorScheme.primary
                 ),
-                enabled = amount.isNotBlank() && category != null && selectedAccount != null
+                enabled = amount.isNotBlank() && category != null && selectedAccount != null &&
+                        saveState !is SaveState.Loading && saveState !is SaveState.Success
             ) {
-                when (saveResult) {
-                    is Result.Loading -> {
+                when (saveState) {
+                    is SaveState.Loading -> {
                         CircularProgressIndicator(
                             color = Color.White,
                             modifier = Modifier.size(22.dp)
                         )
                     }
-                    is Result.Success -> {
+
+                    is SaveState.Success -> {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -431,6 +438,7 @@ fun AddTransactionScreen(
                             Text("Saved ✓", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                         }
                     }
+
                     else -> {
                         Text("Save Transaction", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                     }
@@ -438,7 +446,6 @@ fun AddTransactionScreen(
             }
         }
 
-        // Show validation error toast
         if (showValidationToast) {
             MaterialToast(
                 message = validationMessage,
@@ -447,9 +454,8 @@ fun AddTransactionScreen(
             )
         }
 
-        // Show API error toast
-        if (saveResult is Result.Error) {
-            val error = (saveResult as Result.Error).exception
+        if (saveState is SaveState.Error) {
+            val error = (saveState as SaveState.Error).exception
             MaterialToast(
                 message = error.message ?: "Failed to save transaction",
                 isError = true,
@@ -475,22 +481,27 @@ fun validateTransactionForm(
             isValid = false,
             errorMessage = "Please enter an amount"
         )
+
         amount.toDoubleOrNull() == null -> ValidationResult(
             isValid = false,
             errorMessage = "Please enter a valid amount"
         )
+
         amount.toDoubleOrNull()?.let { it <= 0 } == true -> ValidationResult(
             isValid = false,
             errorMessage = "Amount must be greater than zero"
         )
+
         category == null -> ValidationResult(
             isValid = false,
             errorMessage = "Please select a category"
         )
+
         selectedAccount == null -> ValidationResult(
             isValid = false,
             errorMessage = "Please select an account"
         )
+
         else -> ValidationResult(isValid = true)
     }
 }
@@ -544,5 +555,4 @@ fun CategoryChip(
         }
     }
 }
-
 

@@ -2,10 +2,9 @@ package com.fintrack.shared.feature.transaction.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
@@ -21,8 +20,8 @@ class TransactionViewModel(
     private val _recentTransactions = MutableStateFlow<Result<List<Transaction>>>(Result.Loading)
     val recentTransactions: StateFlow<Result<List<Transaction>>> = _recentTransactions
 
-    private val _saveResult = MutableStateFlow<Result<Transaction>?>(null)
-    val saveResult: StateFlow<Result<Transaction>?> = _saveResult
+    private val _saveState = MutableStateFlow<SaveState<Transaction>>(SaveState.Idle)
+    val saveState: StateFlow<SaveState<Transaction>> = _saveState
 
     fun loadRecentTransactions(accountId: String?) {
         if (accountId == null) {
@@ -49,13 +48,22 @@ class TransactionViewModel(
 
     fun addTransaction(transaction: Transaction) {
         viewModelScope.launch {
-            _saveResult.value = Result.Loading
-            _saveResult.value = repo.addTransaction(transaction)
+            _saveState.value = SaveState.Loading
+            try {
+                val result = repo.addTransaction(transaction)
+                _saveState.value = when (result) {
+                    is Result.Success -> SaveState.Success(result.data)
+                    is Result.Error -> SaveState.Error(result.exception)
+                    is Result.Loading -> SaveState.Loading
+                }
+            } catch (e: Exception) {
+                _saveState.value = SaveState.Error(e)
+            }
         }
     }
 
-    fun resetSaveResult() {
-        _saveResult.value = null
+    fun resetSaveState() {
+        _saveState.value = SaveState.Idle
     }
 
     fun getTransactionsPagingData(
