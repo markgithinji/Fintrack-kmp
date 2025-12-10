@@ -310,11 +310,15 @@ fun BarChart(
 
     // Ensure all days are present
     val weekDays = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-    val fullData = weekDays.map { day ->
-        data.find { it.first == day } ?: (day to (0.0 to 0.0))
+    val fullData = remember(data) {
+        weekDays.map { day ->
+            data.find { it.first == day } ?: (day to (0.0 to 0.0))
+        }
     }
 
-    val maxTotal = fullData.maxOfOrNull { it.second.first + it.second.second } ?: 1.0
+    val maxTotal = remember(fullData) {
+        fullData.maxOfOrNull { it.second.first + it.second.second } ?: 1.0
+    }
 
     // number of Y-axis levels
     val levels = 5
@@ -334,11 +338,13 @@ fun BarChart(
         ) {
             for (i in levels downTo 0) {
                 val value = step * i
-                val text = if (value >= 1000) {
-                    val kValue = (value / 100).toInt() / 10.0
-                    "${kValue}k"
-                } else {
-                    value.toInt().toString()
+                val text = remember(value) {
+                    if (value >= 1000) {
+                        val kValue = (value / 100).toInt() / 10.0
+                        "${kValue}k"
+                    } else {
+                        value.toInt().toString()
+                    }
                 }
                 Text(
                     text = text,
@@ -355,8 +361,12 @@ fun BarChart(
             verticalAlignment = Alignment.Bottom
         ) {
             fullData.forEach { (label, values) ->
-                val incomeHeightFraction = (values.first / maxTotal).toFloat()
-                val expenseHeightFraction = (values.second / maxTotal).toFloat()
+                val incomeHeightFraction = remember(values.first, maxTotal) {
+                    (values.first / maxTotal).toFloat()
+                }
+                val expenseHeightFraction = remember(values.second, maxTotal) {
+                    (values.second / maxTotal).toFloat()
+                }
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -412,97 +422,111 @@ fun MonthlyLineChartDefault(
     val steps = 5
 
     // --- Ensure correct order by full date ---
-    val sorted = monthly.sortedBy { LocalDate.parse(it.date) }
-    val baseDate = LocalDate.parse(sorted.first().date)
+    val sorted = remember(monthly) {
+        monthly.sortedBy { LocalDate.parse(it.date) }
+    }
+    val baseDate = remember(sorted) {
+        LocalDate.parse(sorted.first().date)
+    }
 
     // Convert to "days since start" → x coordinate
-    val incomePoints = sorted.map { day ->
-        val date = LocalDate.parse(day.date)
-        val x = baseDate.until(date, DateTimeUnit.DAY).toFloat()
-        Point(x = x, y = day.income.toFloat())
-    }
-    val expensePoints = sorted.map { day ->
-        val date = day.date.toLocalDate()
-        val x = baseDate.until(date, DateTimeUnit.DAY).toFloat()
-        Point(x = x, y = day.expense.toFloat())
-    }
-
-    val xAxisProperties = AxisProperties(
-        font = FontFamily.SansSerif,
-        stepSize = 30.dp,
-        topPadding = 105.dp,
-        labelColor = Color.Black,
-        lineColor = Color.Black,
-        stepCount = sorted.size - 1,
-        labelFormatter = { i ->
-            val safeIndex = i.coerceAtMost(sorted.lastIndex)
-            // just day-of-month for label
-            sorted[safeIndex].date.split("-").last()
-        },
-        labelPadding = 15.dp
-    )
-
-    val yAxisProperties = AxisProperties(
-        font = FontFamily.SansSerif,
-        stepCount = steps,
-        labelColor = Color.Black,
-        lineColor = Color.Black,
-        labelPadding = 20.dp,
-        labelFormatter = { i ->
-            val yMin = (incomePoints + expensePoints).minOf { it.y }
-            val yMax = (incomePoints + expensePoints).maxOf { it.y }
-            val yScale = (yMax - yMin) / steps
-            val value = ((i * yScale) + yMin)
-
-            if (value >= 1000f) {
-                "${(value / 1000f).formatToSinglePrecision()}k"
-            } else {
-                value.formatToSinglePrecision()
-            }
+    val incomePoints = remember(sorted, baseDate) {
+        sorted.map { day ->
+            val date = LocalDate.parse(day.date)
+            val x = baseDate.until(date, DateTimeUnit.DAY).toFloat()
+            Point(x = x, y = day.income.toFloat())
         }
-    )
+    }
+    val expensePoints = remember(sorted, baseDate) {
+        sorted.map { day ->
+            val date = day.date.toLocalDate()
+            val x = baseDate.until(date, DateTimeUnit.DAY).toFloat()
+            Point(x = x, y = day.expense.toFloat())
+        }
+    }
 
-    val lineChartProperties = LineChartProperties(
-        linePlotData = LinePlotData(
-            lines = listOf(
-                Line(
-                    dataPoints = incomePoints,
-                    lineStyle = LineStyle(
-                        color = GreenIncome,
-                        width = 3f
+    val xAxisProperties = remember(sorted) {
+        AxisProperties(
+            font = FontFamily.SansSerif,
+            stepSize = 30.dp,
+            topPadding = 105.dp,
+            labelColor = Color.Black,
+            lineColor = Color.Black,
+            stepCount = sorted.size - 1,
+            labelFormatter = { i ->
+                val safeIndex = i.coerceAtMost(sorted.lastIndex)
+                // just day-of-month for label
+                sorted[safeIndex].date.split("-").last()
+            },
+            labelPadding = 15.dp
+        )
+    }
+
+    val yAxisProperties = remember(incomePoints, expensePoints) {
+        AxisProperties(
+            font = FontFamily.SansSerif,
+            stepCount = steps,
+            labelColor = Color.Black,
+            lineColor = Color.Black,
+            labelPadding = 20.dp,
+            labelFormatter = { i ->
+                val yMin = (incomePoints + expensePoints).minOf { it.y }
+                val yMax = (incomePoints + expensePoints).maxOf { it.y }
+                val yScale = (yMax - yMin) / steps
+                val value = ((i * yScale) + yMin)
+
+                if (value >= 1000f) {
+                    "${(value / 1000f).formatToSinglePrecision()}k"
+                } else {
+                    value.formatToSinglePrecision()
+                }
+            }
+        )
+    }
+
+    val lineChartProperties = remember(xAxisProperties, yAxisProperties, incomePoints, expensePoints, textMeasurer) {
+        LineChartProperties(
+            linePlotData = LinePlotData(
+                lines = listOf(
+                    Line(
+                        dataPoints = incomePoints,
+                        lineStyle = LineStyle(
+                            color = GreenIncome,
+                            width = 3f
+                        ),
+                        intersectionPoint = IntersectionPoint(color = GreenIncome),
+                        selectionHighlightPoint = SelectionHighlightPoint(color = GreenIncome),
+                        shadowUnderLine = ShadowUnderLine(GreenIncome.copy(alpha = 0.2f)),
+                        selectionHighlightPopUp = SelectionHighlightPopUp(
+                            textMeasurer = textMeasurer,
+                            backgroundColor = GreenIncome,
+                            labelColor = Color.White,
+                            labelTypeface = FontWeight.Bold
+                        )
                     ),
-                    intersectionPoint = IntersectionPoint(color = GreenIncome),
-                    selectionHighlightPoint = SelectionHighlightPoint(color = GreenIncome),
-                    shadowUnderLine = ShadowUnderLine(GreenIncome.copy(alpha = 0.2f)),
-                    selectionHighlightPopUp = SelectionHighlightPopUp(
-                        textMeasurer = textMeasurer,
-                        backgroundColor = GreenIncome,
-                        labelColor = Color.White,
-                        labelTypeface = FontWeight.Bold
-                    )
-                ),
-                Line(
-                    dataPoints = expensePoints,
-                    lineStyle = LineStyle(
-                        color = PinkExpense,
-                        width = 3f
-                    ),
-                    intersectionPoint = IntersectionPoint(color = PinkExpense),
-                    selectionHighlightPoint = SelectionHighlightPoint(color = PinkExpense),
-                    shadowUnderLine = ShadowUnderLine(PinkExpense.copy(alpha = 0.2f)),
-                    selectionHighlightPopUp = SelectionHighlightPopUp(
-                        textMeasurer = textMeasurer,
-                        backgroundColor = PinkExpense,
-                        labelColor = Color.White,
-                        labelTypeface = FontWeight.Bold
+                    Line(
+                        dataPoints = expensePoints,
+                        lineStyle = LineStyle(
+                            color = PinkExpense,
+                            width = 3f
+                        ),
+                        intersectionPoint = IntersectionPoint(color = PinkExpense),
+                        selectionHighlightPoint = SelectionHighlightPoint(color = PinkExpense),
+                        shadowUnderLine = ShadowUnderLine(PinkExpense.copy(alpha = 0.2f)),
+                        selectionHighlightPopUp = SelectionHighlightPopUp(
+                            textMeasurer = textMeasurer,
+                            backgroundColor = PinkExpense,
+                            labelColor = Color.White,
+                            labelTypeface = FontWeight.Bold
+                        )
                     )
                 )
-            )
-        ),
-        xAxisProperties = xAxisProperties,
-        yAxisProperties = yAxisProperties,
-        gridLines = GridLinesUtil(color = Color.LightGray)
-    )
+            ),
+            xAxisProperties = xAxisProperties,
+            yAxisProperties = yAxisProperties,
+            gridLines = GridLinesUtil(color = Color.LightGray)
+        )
+    }
 
     LineChart(
         modifier = modifier
