@@ -41,8 +41,6 @@ import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.DaySummary
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
-import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingBarChart
-import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingLineChart
 import com.fintrack.shared.feature.transaction.ui.util.shortDayName
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -484,49 +482,50 @@ fun MonthlyLineChartDefault(
         )
     }
 
-    val lineChartProperties = remember(xAxisProperties, yAxisProperties, incomePoints, expensePoints, textMeasurer) {
-        LineChartProperties(
-            linePlotData = LinePlotData(
-                lines = listOf(
-                    Line(
-                        dataPoints = incomePoints,
-                        lineStyle = LineStyle(
-                            color = GreenIncome,
-                            width = 3f
+    val lineChartProperties =
+        remember(xAxisProperties, yAxisProperties, incomePoints, expensePoints, textMeasurer) {
+            LineChartProperties(
+                linePlotData = LinePlotData(
+                    lines = listOf(
+                        Line(
+                            dataPoints = incomePoints,
+                            lineStyle = LineStyle(
+                                color = GreenIncome,
+                                width = 3f
+                            ),
+                            intersectionPoint = IntersectionPoint(color = GreenIncome),
+                            selectionHighlightPoint = SelectionHighlightPoint(color = GreenIncome),
+                            shadowUnderLine = ShadowUnderLine(GreenIncome.copy(alpha = 0.2f)),
+                            selectionHighlightPopUp = SelectionHighlightPopUp(
+                                textMeasurer = textMeasurer,
+                                backgroundColor = GreenIncome,
+                                labelColor = Color.White,
+                                labelTypeface = FontWeight.Bold
+                            )
                         ),
-                        intersectionPoint = IntersectionPoint(color = GreenIncome),
-                        selectionHighlightPoint = SelectionHighlightPoint(color = GreenIncome),
-                        shadowUnderLine = ShadowUnderLine(GreenIncome.copy(alpha = 0.2f)),
-                        selectionHighlightPopUp = SelectionHighlightPopUp(
-                            textMeasurer = textMeasurer,
-                            backgroundColor = GreenIncome,
-                            labelColor = Color.White,
-                            labelTypeface = FontWeight.Bold
-                        )
-                    ),
-                    Line(
-                        dataPoints = expensePoints,
-                        lineStyle = LineStyle(
-                            color = PinkExpense,
-                            width = 3f
-                        ),
-                        intersectionPoint = IntersectionPoint(color = PinkExpense),
-                        selectionHighlightPoint = SelectionHighlightPoint(color = PinkExpense),
-                        shadowUnderLine = ShadowUnderLine(PinkExpense.copy(alpha = 0.2f)),
-                        selectionHighlightPopUp = SelectionHighlightPopUp(
-                            textMeasurer = textMeasurer,
-                            backgroundColor = PinkExpense,
-                            labelColor = Color.White,
-                            labelTypeface = FontWeight.Bold
+                        Line(
+                            dataPoints = expensePoints,
+                            lineStyle = LineStyle(
+                                color = PinkExpense,
+                                width = 3f
+                            ),
+                            intersectionPoint = IntersectionPoint(color = PinkExpense),
+                            selectionHighlightPoint = SelectionHighlightPoint(color = PinkExpense),
+                            shadowUnderLine = ShadowUnderLine(PinkExpense.copy(alpha = 0.2f)),
+                            selectionHighlightPopUp = SelectionHighlightPopUp(
+                                textMeasurer = textMeasurer,
+                                backgroundColor = PinkExpense,
+                                labelColor = Color.White,
+                                labelTypeface = FontWeight.Bold
+                            )
                         )
                     )
-                )
-            ),
-            xAxisProperties = xAxisProperties,
-            yAxisProperties = yAxisProperties,
-            gridLines = GridLinesUtil(color = Color.LightGray)
-        )
-    }
+                ),
+                xAxisProperties = xAxisProperties,
+                yAxisProperties = yAxisProperties,
+                gridLines = GridLinesUtil(color = Color.LightGray)
+            )
+        }
 
     LineChart(
         modifier = modifier

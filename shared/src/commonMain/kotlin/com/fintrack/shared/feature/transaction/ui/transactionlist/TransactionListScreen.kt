@@ -71,7 +71,9 @@ private fun TransactionListContent(
         when (val refreshState = transactions.loadState.refresh) {
             is LoadState.Loading -> {
                 items(5) { index ->
-                    LoadingTransactionItem()
+                    TransactionLoadingItem(
+                        padding = PaddingValues(14.dp)
+                    )
                 }
             }
 

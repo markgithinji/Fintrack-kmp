@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,8 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.ErrorOutline
-import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -37,7 +38,7 @@ import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
-import com.fintrack.shared.feature.transaction.ui.addtransaction.LoadingTransactionRow
+import com.fintrack.shared.feature.transaction.ui.transactionlist.TransactionLoadingItem
 import com.fintrack.shared.feature.transaction.ui.util.formatAsShortDate
 import com.fintrack.shared.feature.transaction.ui.util.formatToCurrency
 import com.fintrack.shared.feature.transaction.ui.util.toColor
@@ -130,7 +131,9 @@ private fun RecentTransactionsHeader(
 private fun TransactionsLoadingState() {
     Column {
         repeat(3) { index ->
-            LoadingTransactionRow()
+            TransactionLoadingItem(
+                padding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
+            )
             if (index < 2) {
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = 20.dp),
@@ -189,7 +192,7 @@ private fun TransactionsEmptyState() {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Icon(
-            imageVector = Icons.Outlined.ReceiptLong,
+            imageVector = Icons.AutoMirrored.Outlined.ReceiptLong,
             contentDescription = "No Transactions",
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(32.dp)
