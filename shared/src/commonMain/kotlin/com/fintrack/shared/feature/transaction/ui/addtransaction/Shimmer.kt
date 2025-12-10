@@ -169,45 +169,6 @@ fun LoadingCategoryItem() {
 }
 
 @Composable
-fun LoadingInfoCard(modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier.height(70.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Icon placeholder with shimmer
-            AnimatedShimmerBox(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-            )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column {
-                AnimatedShimmerBox(
-                    modifier = Modifier
-                        .width(60.dp)
-                        .height(12.dp)
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                AnimatedShimmerBox(
-                    modifier = Modifier
-                        .width(80.dp)
-                        .height(15.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
 fun LoadingTransactionRow() {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
