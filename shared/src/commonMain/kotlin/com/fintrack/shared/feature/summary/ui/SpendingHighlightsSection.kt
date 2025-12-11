@@ -1,7 +1,18 @@
 package com.fintrack.shared.feature.summary.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -28,10 +39,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
@@ -73,111 +86,245 @@ fun SpendingHighlightsSection(
         }
     }
 
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+    // Animation for tab/content changes
+    val animatedAlpha by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = tween(durationMillis = 300),
+        label = "contentAlpha"
+    )
+
+    // Animate content scale when data changes
+    val animatedScale by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f),
+        label = "contentScale"
+    )
+
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .graphicsLayer {
+                alpha = animatedAlpha
+                scaleX = animatedScale
+                scaleY = animatedScale
+            }
+    ) {
         Text(
             text = sectionTitle,
             fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.animateContentSize()
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        when (highlightsResult) {
-            is Result.Loading -> {
-                // Show loading highlight cards
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        // Animate between states
+        Crossfade(
+            targetState = highlightsResult,
+            animationSpec = tween(durationMillis = 300),
+            label = "highlightsState"
+        ) { result ->
+            when (result) {
+                is Result.Loading -> {
+                    // Show loading highlight cards
+                    Column(
+                        modifier = Modifier.animateContentSize()
                     ) {
-                        LoadingHighlightCard(modifier = Modifier.weight(1f))
-                        LoadingHighlightCard(modifier = Modifier.weight(1f))
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        LoadingHighlightCard(modifier = Modifier.weight(1f))
-                        LoadingHighlightCard(modifier = Modifier.weight(1f))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            LoadingHighlightCard(modifier = Modifier.weight(1f))
+                            LoadingHighlightCard(modifier = Modifier.weight(1f))
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            LoadingHighlightCard(modifier = Modifier.weight(1f))
+                            LoadingHighlightCard(modifier = Modifier.weight(1f))
+                        }
                     }
                 }
-            }
 
-            is Result.Error -> {
-                ErrorHighlightCard(
-                    message = highlightsResult.exception.message ?: "Failed to load highlights",
-                    onRetry = loadHighlights
+                is Result.Error -> {
+                    ErrorHighlightCard(
+                        message = result.exception.message ?: "Failed to load highlights",
+                        onRetry = loadHighlights
+                    )
+                }
+
+                is Result.Success -> {
+                    val data = result.data
+                    SuccessContent(
+                        tabType = tabType,
+                        data = data,
+                        amountSuffix = amountSuffix,
+                        dailyLabel = dailyLabel
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SuccessContent(
+    tabType: TabType,
+    data: StatisticsSummary,
+    amountSuffix: String,
+    dailyLabel: String
+) {
+    val summaryHighlights = remember(tabType, data) {
+        when (tabType) {
+            is TabType.Income -> data.incomeHighlights
+            is TabType.Expense -> data.expenseHighlights
+        }
+    }
+
+    // Provide defaults if null
+    val month = summaryHighlights.highestMonth ?: Highlight("", "", 0.0)
+    val category = summaryHighlights.highestCategory ?: Highlight("", "", 0.0)
+    val day = summaryHighlights.highestDay ?: Highlight("", "", 0.0)
+    val average = summaryHighlights.averagePerDay
+
+    val firstRowAnimation = tween<IntOffset>(
+        durationMillis = 400,
+        delayMillis = 100,
+        easing = FastOutSlowInEasing
+    )
+
+    val secondRowAnimation = tween<IntOffset>(
+        durationMillis = 400,
+        delayMillis = 200,
+        easing = FastOutSlowInEasing
+    )
+
+    Column(
+        modifier = Modifier.animateContentSize()
+    ) {
+        // First row
+        AnimatedVisibility(
+            visible = true,
+            enter = fadeIn() + slideInHorizontally(
+                initialOffsetX = { -it },
+                animationSpec = firstRowAnimation
+            ),
+            exit = fadeOut() + slideOutHorizontally(
+                targetOffsetX = { -it },
+                animationSpec = firstRowAnimation
+            )
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                HighlightCard(
+                    modifier = Modifier
+                        .weight(1f)
+                        .animateEnterExit(
+                            enter = slideInHorizontally(
+                                initialOffsetX = { -it },
+                                animationSpec = firstRowAnimation
+                            ),
+                            exit = slideOutHorizontally(
+                                targetOffsetX = { -it },
+                                animationSpec = firstRowAnimation
+                            )
+                        ),
+                    title = "Highest Month",
+                    value = month.value.toMonthName(),
+                    description = "${formatCurrency(month.amount)} $amountSuffix",
+                    backgroundColor = SegmentColor3,
+                    titleColor = Color.White,
+                    valueColor = Color.White,
+                    contentSpacing = 8.dp
+                )
+                HighlightCard(
+                    modifier = Modifier
+                        .weight(1f)
+                        .animateEnterExit(
+                            enter = slideInHorizontally(
+                                initialOffsetX = { it },
+                                animationSpec = firstRowAnimation
+                            ),
+                            exit = slideOutHorizontally(
+                                targetOffsetX = { it },
+                                animationSpec = firstRowAnimation
+                            )
+                        ),
+                    title = "Top Category",
+                    value = category.value,
+                    description = "${formatCurrency(category.amount)} $amountSuffix",
+                    backgroundColor = SegmentColor4,
+                    titleColor = Color.White,
+                    valueColor = Color.White,
+                    contentSpacing = 8.dp
                 )
             }
+        }
 
-            is Result.Success -> {
-                val data = highlightsResult.data
-                val summaryHighlights = remember(tabType, data) {
-                    when (tabType) {
-                        is TabType.Income -> data.incomeHighlights
-                        is TabType.Expense -> data.expenseHighlights
-                    }
-                }
+        Spacer(modifier = Modifier.height(8.dp))
 
-                // Provide defaults if null
-                val month = summaryHighlights.highestMonth ?: Highlight("", "", 0.0)
-                val category = summaryHighlights.highestCategory ?: Highlight("", "", 0.0)
-                val day = summaryHighlights.highestDay ?: Highlight("", "", 0.0)
-                val average = summaryHighlights.averagePerDay
+        // Second row
+        AnimatedVisibility(
+            visible = true,
+            enter = fadeIn() + slideInHorizontally(
+                initialOffsetX = { it },
+                animationSpec = secondRowAnimation
+            ),
+            exit = fadeOut() + slideOutHorizontally(
+                targetOffsetX = { it },
+                animationSpec = secondRowAnimation
+            )
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                HighlightCard(
+                    modifier = Modifier
+                        .weight(1f)
+                        .animateEnterExit(
+                            enter = slideInHorizontally(
+                                initialOffsetX = { -it },
+                                animationSpec = secondRowAnimation
+                            ),
+                            exit = slideOutHorizontally(
+                                targetOffsetX = { -it },
+                                animationSpec = secondRowAnimation
+                            )
+                        ),
+                    title = "Highest Daily",
+                    value = day.value.toFormattedDate(),
+                    description = "${formatCurrency(day.amount)} $amountSuffix",
+                    backgroundColor = SegmentColor5,
+                    titleColor = Color.White,
+                    valueColor = Color.White,
+                    contentSpacing = 8.dp
+                )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    HighlightCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Highest Month",
-                        value = month.value.toMonthName(),
-                        description = "${formatCurrency(month.amount)} $amountSuffix",
-                        backgroundColor = SegmentColor3,
-                        titleColor = Color.White,
-                        valueColor = Color.White,
-                        contentSpacing = 8.dp
-                    )
-                    HighlightCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Top Category",
-                        value = category.value,
-                        description = "${formatCurrency(category.amount)} $amountSuffix",
-                        backgroundColor = SegmentColor4,
-                        titleColor = Color.White,
-                        valueColor = Color.White,
-                        contentSpacing = 8.dp
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    HighlightCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Highest Daily",
-                        value = day.value.toFormattedDate(),
-                        description = "${formatCurrency(day.amount)} $amountSuffix",
-                        backgroundColor = SegmentColor5,
-                        titleColor = Color.White,
-                        valueColor = Color.White,
-                        contentSpacing = 8.dp
-                    )
-
-                    HighlightCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Average Per Day",
-                        value = formatCurrency(average),
-                        description = dailyLabel,
-                        backgroundColor = SegmentColor2,
-                        titleColor = Color.White,
-                        valueColor = Color.White,
-                        contentSpacing = 8.dp
-                    )
-                }
+                HighlightCard(
+                    modifier = Modifier
+                        .weight(1f)
+                        .animateEnterExit(
+                            enter = slideInHorizontally(
+                                initialOffsetX = { it },
+                                animationSpec = secondRowAnimation
+                            ),
+                            exit = slideOutHorizontally(
+                                targetOffsetX = { it },
+                                animationSpec = secondRowAnimation
+                            )
+                        ),
+                    title = "Average Per Day",
+                    value = formatCurrency(average),
+                    description = dailyLabel,
+                    backgroundColor = SegmentColor2,
+                    titleColor = Color.White,
+                    valueColor = Color.White,
+                    contentSpacing = 8.dp
+                )
             }
         }
     }
@@ -297,17 +444,27 @@ fun HighlightCard(
 ) {
     val animatedBackground by animateColorAsState(
         targetValue = backgroundColor,
-        animationSpec = tween(durationMillis = 200)
+        animationSpec = tween(durationMillis = 300),
+        label = "cardBackground"
     )
 
     val descriptionColor = remember(titleColor) {
         titleColor.copy(alpha = 0.7f)
     }
 
+    val animatedElevation by animateDpAsState(
+        targetValue = 4.dp,
+        animationSpec = tween(durationMillis = 200),
+        label = "cardElevation"
+    )
+
     Card(
-        modifier = modifier.height(100.dp),
+        modifier = modifier
+            .height(100.dp)
+            .animateContentSize(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = animatedBackground)
+        colors = CardDefaults.cardColors(containerColor = animatedBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = animatedElevation)
     ) {
         Column(
             modifier = Modifier
@@ -321,25 +478,43 @@ fun HighlightCard(
                 fontSize = 14.sp,
                 color = titleColor,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.animateContentSize()
             )
             Spacer(modifier = Modifier.height(contentSpacing))
-            Text(
-                text = value,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = valueColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+
+            // Animate value changes
+            Crossfade(
+                targetState = value,
+                animationSpec = tween(durationMillis = 300),
+                label = "valueText"
+            ) { currentValue ->
+                Text(
+                    text = currentValue,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = valueColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
             Spacer(modifier = Modifier.height(contentSpacing))
-            Text(
-                text = description,
-                fontSize = 12.sp,
-                color = descriptionColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+
+            // Animate description changes
+            Crossfade(
+                targetState = description,
+                animationSpec = tween(durationMillis = 300),
+                label = "descriptionText"
+            ) { currentDescription ->
+                Text(
+                    text = currentDescription,
+                    fontSize = 12.sp,
+                    color = descriptionColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
