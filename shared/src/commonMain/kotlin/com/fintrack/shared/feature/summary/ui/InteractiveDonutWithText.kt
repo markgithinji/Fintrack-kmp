@@ -114,27 +114,34 @@ fun InteractiveDonutWithText(
             }
         }
 
-        // --- Center label with icon ---
-        val display =
-            if (selectedIndex >= 0) categorySums[selectedIndex] else "Total" to totalAmount
-        val category = Category.fromName(display.first, isExpense = true) // assume expense
-        val icon = category.toIcon()
+        // --- Center label with conditional icon ---
+        val isShowingOverallTotal = selectedIndex < 0
+        val displayText = if (isShowingOverallTotal) "Total" else categorySums[selectedIndex].first
+        val displayAmount = if (isShowingOverallTotal) totalAmount else categorySums[selectedIndex].second
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                imageVector = icon,
-                contentDescription = display.first,
-                modifier = Modifier.size(28.dp),
-                tint = Color.Gray
-            )
+            // Show icon for ALL categories (including "Total" if it's in the list)
+            // Only skip icon when showing overall summary (no slice selected)
+            if (!isShowingOverallTotal) {
+                val category = Category.fromName(displayText, isExpense = true)
+                val icon = category.toIcon()
+
+                Icon(
+                    imageVector = icon,
+                    contentDescription = displayText,
+                    modifier = Modifier.size(28.dp),
+                    tint = Color.Gray
+                )
+            }
+
             Text(
-                text = display.first,
+                text = displayText,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.Black
             )
             Text(
-                text = "ksh ${display.second.toInt()}",
+                text = "ksh ${displayAmount.toInt()}",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
@@ -142,7 +149,6 @@ fun InteractiveDonutWithText(
         }
     }
 }
-
 
 // --- Donut slice state ---
 private class DonutChartState(
