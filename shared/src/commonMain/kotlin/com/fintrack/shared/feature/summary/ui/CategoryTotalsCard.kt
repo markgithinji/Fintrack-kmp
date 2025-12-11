@@ -53,6 +53,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.example.compose.SegmentColor1
 import com.example.compose.SegmentColor3
@@ -94,82 +95,13 @@ fun CategoryTotalsCardWithTabs(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .animateContentSize(animationSpec = tween(durationMillis = 200))
-    ) {
-        Crossfade(
-            targetState = tabType to distributionResult,
-            animationSpec = tween(durationMillis = 300),
-            label = "CategoryContentFade"
-        ) { (currentTabType, result) ->
-            key(currentTabType, period) {
-                when (result) {
-                    is Result.Loading -> {
-                        LoadingCategoryContent()
-                    }
-
-                    is Result.Error -> {
-                        ErrorCategoryContent(
-                            message = result.exception.message ?: "Failed to load distribution",
-                            selectedPeriod = period,
-                            availableWeeks = availableWeeks,
-                            availableMonths = availableMonths,
-                            availableYears = availableYears,
-                            onWeekSelected = onWeekSelected,
-                            onMonthSelected = onMonthSelected,
-                            onYearSelected = onYearSelected,
-                            onPeriodSelected = onPeriodSelected,
-                            onRetry = { /* Add retry logic */ }
-                        )
-                    }
-
-                    is Result.Success -> {
-                        val categories = when (currentTabType) {
-                            is TabType.Income -> result.data.incomeCategories
-                            is TabType.Expense -> result.data.expenseCategories
-                        }
-
-                        // Create a map depending on the period type
-                        val weeklyMap =
-                            if (period is Period.Week) mapOf(period.code to categories) else emptyMap()
-                        val monthlyMap =
-                            if (period is Period.Month) mapOf(period.code to categories) else emptyMap()
-                        val yearlyMap =
-                            if (period is Period.Year) mapOf(period.code to categories) else emptyMap()
-
-                        CategoryContent(
-                            weeklySummary = weeklyMap,
-                            monthlySummary = monthlyMap,
-                            yearlySummary = yearlyMap,
-                            selectedPeriod = period,
-                            availableWeeks = availableWeeks,
-                            availableMonths = availableMonths,
-                            availableYears = availableYears,
-                            onWeekSelected = onWeekSelected,
-                            onMonthSelected = onMonthSelected,
-                            onYearSelected = onYearSelected,
-                            onPeriodSelected = onPeriodSelected,
-                            title = when (currentTabType) {
-                                is TabType.Income -> "Income Distribution"
-                                is TabType.Expense -> "Expense Distribution"
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun LoadingCategoryContent() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        // Header
         Text(
-            text = "Distribution",
+            text = when (tabType) {
+                is TabType.Income -> "Income Distribution"
+                is TabType.Expense -> "Expense Distribution"
+            },
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -177,13 +109,105 @@ fun LoadingCategoryContent() {
 
         Column {
             Spacer(modifier = Modifier.height(8.dp))
-            LoadingPeriodSelector()
+            PeriodSelector(
+                selectedPeriod = period,
+                availableWeeks = availableWeeks,
+                availableMonths = availableMonths,
+                availableYears = availableYears,
+                onWeekSelected = onWeekSelected,
+                onMonthSelected = onMonthSelected,
+                onYearSelected = onYearSelected,
+                onPeriodSelected = onPeriodSelected
+            )
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        LoadingDonutChartSection()
-        Spacer(Modifier.height(16.dp))
-        LoadingCategoryList()
+        Crossfade(
+            targetState = distributionResult,
+            animationSpec = tween(durationMillis = 300),
+            label = "ChartContentFade"
+        ) { result ->
+            key(period, tabType) {
+                when (result) {
+                    is Result.Loading -> {
+                        Column {
+                            LoadingDonutChartSection()
+                            Spacer(Modifier.height(16.dp))
+                            LoadingCategoryList()
+                        }
+                    }
+
+                    is Result.Error -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.PieChart,
+                                    contentDescription = "Error",
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = "Unable to Load Data",
+                                        color = Color.Black,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = result.exception.message ?: "Failed to load distribution",
+                                        color = Color.Gray,
+                                        fontSize = 14.sp,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                                Button(
+                                    onClick = { /* Add retry logic */ },
+                                    colors = ButtonDefaults.buttonColors(containerColor = GreenIncome),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.height(40.dp)
+                                ) {
+                                    Text(
+                                        text = "Try Again",
+                                        color = Color.White,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    is Result.Success -> {
+                        val categories = when (tabType) {
+                            is TabType.Income -> result.data.incomeCategories
+                            is TabType.Expense -> result.data.expenseCategories
+                        }
+
+                        val categorySums = categories.map { it.category to it.total.toFloat() }
+                        val totalAmount = categories.sumOf { it.total }.toFloat()
+
+                        Column {
+                            DonutChartSection(categorySums, totalAmount)
+                            Spacer(Modifier.height(16.dp))
+                            CategoryList(
+                                categories = categorySums,
+                                totalAmount = totalAmount,
+                                segmentColors = SegmentColors
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -357,188 +381,6 @@ fun LoadingPeriodSelector() {
 }
 
 @Composable
-fun ErrorCategoryContent(
-    message: String,
-    selectedPeriod: Period,
-    availableWeeks: List<String> = emptyList(),
-    availableMonths: List<String> = emptyList(),
-    availableYears: List<String> = emptyList(),
-    onWeekSelected: (String) -> Unit = {},
-    onMonthSelected: (String) -> Unit = {},
-    onYearSelected: (String) -> Unit = {},
-    onPeriodSelected: (Period) -> Unit = {},
-    onRetry: () -> Unit
-) {
-    val onWeekSelectedRemembered = remember(onWeekSelected) { onWeekSelected }
-    val onMonthSelectedRemembered = remember(onMonthSelected) { onMonthSelected }
-    val onYearSelectedRemembered = remember(onYearSelected) { onYearSelected }
-    val onPeriodSelectedRemembered = remember(onPeriodSelected) { onPeriodSelected }
-    val onRetryRemembered = remember(onRetry) { onRetry }
-
-    val headerColor = remember { errorHeaderText }
-    val messageColor = remember { errorMessageText }
-    val iconColor = remember { errorIconColor }
-    val retryButtonColor = remember { errorRetryButton }
-    val retryTextColor = remember { errorRetryButtonText }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        // Header
-        Text(
-            text = "Distribution",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = headerColor,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        Column {
-            Spacer(modifier = Modifier.height(8.dp))
-            PeriodSelector(
-                selectedPeriod = selectedPeriod,
-                availableWeeks = availableWeeks,
-                availableMonths = availableMonths,
-                availableYears = availableYears,
-                onWeekSelected = onWeekSelectedRemembered,
-                onMonthSelected = onMonthSelectedRemembered,
-                onYearSelected = onYearSelectedRemembered,
-                onPeriodSelected = onPeriodSelectedRemembered
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Icon(
-                    Icons.Default.PieChart,
-                    contentDescription = "Error",
-                    tint = iconColor,
-                    modifier = Modifier.size(48.dp)
-                )
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Unable to Load Data",
-                        color = headerColor,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = message,
-                        color = messageColor,
-                        fontSize = 14.sp,
-                        textAlign = TextAlign.Center
-                    )
-                }
-                Button(
-                    onClick = onRetryRemembered,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = retryButtonColor
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.height(40.dp)
-                ) {
-                    Text(
-                        text = "Try Again",
-                        color = retryTextColor,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CategoryContent(
-    weeklySummary: Map<String, List<CategorySummary>>,
-    monthlySummary: Map<String, List<CategorySummary>>,
-    yearlySummary: Map<String, List<CategorySummary>> = emptyMap(),
-    selectedPeriod: Period,
-    availableWeeks: List<String> = emptyList(),
-    availableMonths: List<String> = emptyList(),
-    availableYears: List<String> = emptyList(),
-    onWeekSelected: (String) -> Unit = {},
-    onMonthSelected: (String) -> Unit = {},
-    onYearSelected: (String) -> Unit = {},
-    onPeriodSelected: (Period) -> Unit = {},
-    title: String = "Spending Distribution"
-) {
-    val categories by remember(selectedPeriod, weeklySummary, monthlySummary, yearlySummary) {
-        derivedStateOf {
-            when (selectedPeriod) {
-                is Period.Week -> weeklySummary[selectedPeriod.code] ?: emptyList()
-                is Period.Month -> monthlySummary[selectedPeriod.code] ?: emptyList()
-                is Period.Year -> yearlySummary[selectedPeriod.code] ?: emptyList()
-            }
-        }
-    }
-
-    val totalAmount by remember(categories) {
-        derivedStateOf { categories.sumOf { it.total }.toFloat() }
-    }
-
-    val categorySums by remember(categories) {
-        derivedStateOf { categories.map { it.category to it.total.toFloat() } }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        CategoryHeader(title = title)
-
-        Column {
-            Spacer(modifier = Modifier.height(8.dp))
-            PeriodSelector(
-                selectedPeriod = selectedPeriod,
-                availableWeeks = availableWeeks,
-                availableMonths = availableMonths,
-                availableYears = availableYears,
-                onWeekSelected = onWeekSelected,
-                onMonthSelected = onMonthSelected,
-                onYearSelected = onYearSelected,
-                onPeriodSelected = onPeriodSelected
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        DonutChartSection(categorySums, totalAmount)
-        Spacer(Modifier.height(16.dp))
-        CategoryList(
-            categories = categorySums,
-            totalAmount = totalAmount,
-            segmentColors = SegmentColors
-        )
-    }
-}
-
-@Composable
-private fun CategoryHeader(title: String) {
-    Text(
-        text = title,
-        fontSize = 16.sp,
-        fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(bottom = 8.dp)
-    )
-}
-
-@Composable
 fun CategoryList(
     categories: List<Pair<String, Float>>,
     totalAmount: Float,
@@ -557,7 +399,6 @@ fun CategoryList(
         }
     }
 
-    // Remember colors from file
     val cardBackgroundColor = remember { categoryCardBg }
     val categoryNameColor = remember { categoryNameText }
     val amountColor = remember { categoryAmountText }

@@ -112,7 +112,7 @@ fun SpendingHighlightsSection(
     ) {
         Text(
             text = sectionTitle,
-            fontSize = 18.sp,
+            fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.animateContentSize()
         )
