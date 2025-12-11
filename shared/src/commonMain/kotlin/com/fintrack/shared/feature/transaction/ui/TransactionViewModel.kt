@@ -21,8 +21,8 @@ import kotlinx.datetime.LocalDateTime
 // TODO: add debouncing to validation logic
 class TransactionViewModel(
     private val repo: TransactionRepository,
-    private val validateTransactionUseCase: ValidateTransactionUseCase = ValidateTransactionUseCase(),
-    private val createTransactionUseCase: CreateTransactionUseCase = CreateTransactionUseCase()
+    private val validateTransactionUseCase: ValidateTransactionUseCase,
+    private val createTransactionUseCase: CreateTransactionUseCase
 ) : ViewModel() {
 
     private val _recentTransactions = MutableStateFlow<Result<List<Transaction>>>(Result.Loading)
