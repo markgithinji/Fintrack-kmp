@@ -63,11 +63,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.ui.common.AnimatedShimmerBox
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.Month
+import com.fintrack.shared.feature.core.util.formatAsShortDate
+import com.fintrack.shared.feature.core.util.formatToCurrency
+import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.math.pow
-import kotlin.math.round
+
 @Composable
 fun BudgetScreen(
     viewModel: BudgetViewModel = koinViewModel(),
@@ -106,7 +106,13 @@ fun BudgetScreen(
                         items(data) { budgetWithStatus ->
                             BudgetItem(
                                 budgetWithStatus = budgetWithStatus,
-                                onClick = remember(budgetWithStatus) { { onBudgetClick(budgetWithStatus) } }
+                                onClick = remember(budgetWithStatus) {
+                                    {
+                                        onBudgetClick(
+                                            budgetWithStatus
+                                        )
+                                    }
+                                }
                             )
                         }
                     } else {
@@ -596,7 +602,7 @@ fun BudgetItem(
         mutableStateOf(budget.categories.size - 3)
     }
     val dateText by remember(budget.startDate, budget.endDate) {
-        mutableStateOf("${formatBudgetDate(budget.startDate)} - ${formatBudgetDate(budget.endDate)}")
+        mutableStateOf("${budget.startDate.formatAsShortDate()} - ${budget.endDate.formatAsShortDate()}")
     }
     val chipLambda = remember { {} }
 
@@ -656,7 +662,7 @@ fun BudgetItem(
                 )
 
                 Text(
-                    text = "${status.percentageUsed.roundToDecimals(1)}% used",
+                    text = "${status.percentageUsed.formatToSinglePrecision()}% used",
                     style = MaterialTheme.typography.labelSmall,
                     color = if (status.isExceeded) MaterialTheme.colorScheme.error
                     else MaterialTheme.colorScheme.onSurfaceVariant
@@ -677,7 +683,7 @@ fun BudgetItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "${budget.limit}",
+                            text = budget.limit.formatToCurrency(),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -694,7 +700,7 @@ fun BudgetItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "${status.spent}",
+                            text = status.spent.formatToCurrency(),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -711,7 +717,7 @@ fun BudgetItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "${status.remaining}",
+                            text = status.remaining.formatToCurrency(),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
                             color = if (status.isExceeded) MaterialTheme.colorScheme.error
@@ -778,29 +784,4 @@ fun BudgetItem(
             )
         }
     }
-}
-
-fun formatBudgetDate(localDate: LocalDate): String {
-    val day = localDate.dayOfMonth
-    val monthName = when (localDate.month) {
-        Month.JANUARY -> "Jan"
-        Month.FEBRUARY -> "Feb"
-        Month.MARCH -> "Mar"
-        Month.APRIL -> "Apr"
-        Month.MAY -> "May"
-        Month.JUNE -> "Jun"
-        Month.JULY -> "Jul"
-        Month.AUGUST -> "Aug"
-        Month.SEPTEMBER -> "Sept"
-        Month.OCTOBER -> "Oct"
-        Month.NOVEMBER -> "Nov"
-        Month.DECEMBER -> "Dec"
-    }
-    val year = localDate.year.toString().takeLast(2)
-    return "$day $monthName $year"
-}
-
-fun Double.roundToDecimals(decimals: Int): String {
-    val factor = 10.0.pow(decimals)
-    return (round(this * factor) / factor).toString()
 }
