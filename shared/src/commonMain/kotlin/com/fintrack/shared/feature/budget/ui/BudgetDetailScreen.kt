@@ -64,6 +64,7 @@ import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.domain.model.Budget
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.ui.addtransaction.CategoryChip
 import com.fintrack.shared.feature.transaction.ui.addtransaction.ToggleChip
@@ -704,7 +705,7 @@ private fun DateField(
     onDateSelected: (LocalDate) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val formatted = date?.toFormattedString() ?: "Select"
+    val formatted = date?.formatAsShortDateWithYear() ?: "Select"
 
     Box {
         OutlinedCard(
@@ -778,15 +779,5 @@ private fun NumberSelector(
             }) { Text("+") }
         }
     }
-}
-
-fun LocalDate.toFormattedString(): String {
-    val month = when (this.monthNumber) {
-        1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
-        5 -> "May"; 6 -> "Jun"; 7 -> "Jul"; 8 -> "Aug"
-        9 -> "Sep"; 10 -> "Oct"; 11 -> "Nov"; 12 -> "Dec"
-        else -> ""
-    }
-    return "$month ${this.dayOfMonth}, ${this.year}"
 }
 
