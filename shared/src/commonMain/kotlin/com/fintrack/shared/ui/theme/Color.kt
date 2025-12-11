@@ -61,6 +61,12 @@ val PinkExpense = Color(0xFFE27C94)  // pinkish-red for expense
 val backgroundGray = Color(0xFFEFEFEF)
 val YellowWarning = Color(0xFFF59E0B)  // Warning yellow for budgets
 val PurpleBudget = Color(0xFF8B5CF6)   // Purple for budgets/categories
+// Chart segments
+val SegmentColor1 = Color(0xFFE63946) // Strong red
+val SegmentColor2 = Color(0xFF228B22) // Forest Green
+val SegmentColor3 = Color(0xFF457B9D) // Vibrant blue
+val SegmentColor4 = Color(0xFFF4A261) // Warm orange
+val SegmentColor5 = Color(0xFF2A9D8F) // Teal / turquoise
 
 
 

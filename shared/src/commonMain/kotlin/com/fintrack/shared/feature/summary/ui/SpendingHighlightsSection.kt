@@ -31,6 +31,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
+import com.example.compose.SegmentColor2
+import com.example.compose.SegmentColor3
+import com.example.compose.SegmentColor4
+import com.example.compose.SegmentColor5
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.Highlight
 import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary

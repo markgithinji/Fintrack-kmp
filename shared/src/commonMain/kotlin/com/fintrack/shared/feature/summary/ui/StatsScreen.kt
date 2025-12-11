@@ -25,18 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
 
-// Chart segments
-val SegmentColor1 = Color(0xFFE63946) // Strong red
-val SegmentColor2 = Color(0xFF228B22) // Forest Green
-val SegmentColor3 = Color(0xFF457B9D) // Vibrant blue
-val SegmentColor4 = Color(0xFFF4A261) // Warm orange
-val SegmentColor5 = Color(0xFF2A9D8F) // Teal / turquoise
-
 @Composable
 fun StatisticsScreen(
     viewModel: StatisticsViewModel = koinViewModel()
 ) {
-    // --- Collect UI state ---
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
     val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle()
     val availableWeeks by viewModel.availableWeeks.collectAsStateWithLifecycle()
@@ -45,7 +37,6 @@ fun StatisticsScreen(
     val highlights by viewModel.highlights.collectAsStateWithLifecycle()
     val distributionResult by viewModel.distribution.collectAsStateWithLifecycle()
 
-    // --- Load initial data ---
     LaunchedEffect(Unit) {
         viewModel.loadAvailablePeriods()
         viewModel.loadHighlights()
