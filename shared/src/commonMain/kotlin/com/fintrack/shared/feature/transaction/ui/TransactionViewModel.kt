@@ -4,17 +4,25 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
+import com.fintrack.shared.feature.transaction.domain.usecase.CreateTransactionUseCase
+import com.fintrack.shared.feature.transaction.domain.usecase.ValidateTransactionUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDateTime
 
+// TODO: add debouncing to validation logic
 class TransactionViewModel(
-    private val repo: TransactionRepository
+    private val repo: TransactionRepository,
+    private val validateTransactionUseCase: ValidateTransactionUseCase = ValidateTransactionUseCase(),
+    private val createTransactionUseCase: CreateTransactionUseCase = CreateTransactionUseCase()
 ) : ViewModel() {
 
     private val _recentTransactions = MutableStateFlow<Result<List<Transaction>>>(Result.Loading)
@@ -22,6 +30,88 @@ class TransactionViewModel(
 
     private val _saveState = MutableStateFlow<SaveState<Transaction>>(SaveState.Idle)
     val saveState: StateFlow<SaveState<Transaction>> = _saveState
+
+    private val _validationError = MutableStateFlow<String?>(null)
+    val validationError: StateFlow<String?> = _validationError
+
+    fun validateTransaction(
+        amount: String,
+        category: Category?,
+        selectedAccount: Account?
+    ): Boolean {
+        val result = validateTransactionUseCase(amount, category, selectedAccount)
+
+        when (result) {
+            is ValidateTransactionUseCase.TransactionValidationResult.Valid -> {
+                _validationError.value = null
+                return true
+            }
+
+            is ValidateTransactionUseCase.TransactionValidationResult.Invalid -> {
+                _validationError.value = result.errorMessage
+                return false
+            }
+        }
+    }
+
+    fun addTransaction(
+        amount: String,
+        isIncome: Boolean,
+        category: Category?,
+        description: String,
+        selectedAccount: Account?,
+        dateTime: LocalDateTime
+    ) {
+        // Validate first
+        if (!validateTransaction(amount, category, selectedAccount)) {
+            return
+        }
+
+        val transaction = createTransactionUseCase(
+            amount = amount,
+            isIncome = isIncome,
+            category = category,
+            description = description,
+            selectedAccount = selectedAccount,
+            dateTime = dateTime
+        ) ?: return
+
+        // Save transaction
+        viewModelScope.launch {
+            _saveState.value = SaveState.Idle
+            _saveState.value = SaveState.Loading
+
+            try {
+                val result = repo.addTransaction(transaction)
+                _saveState.value = when (result) {
+                    is Result.Success -> SaveState.Success(result.data)
+                    is Result.Error -> SaveState.Error(result.exception)
+                    is Result.Loading -> SaveState.Loading
+                }
+            } catch (e: Exception) {
+                _saveState.value = SaveState.Error(e)
+            }
+        }
+    }
+
+    // Keeping the old method for backward compatibility
+    fun addTransaction(transaction: Transaction) {
+        viewModelScope.launch {
+            _saveState.value = SaveState.Idle
+            _saveState.value = SaveState.Loading
+
+            try {
+                val result = repo.addTransaction(transaction)
+                _saveState.value = when (result) {
+                    is Result.Success -> SaveState.Success(result.data)
+                    is Result.Error -> SaveState.Error(result.exception)
+                    is Result.Loading -> SaveState.Loading
+                }
+            } catch (e: Exception) {
+                _saveState.value = SaveState.Error(e)
+            }
+        }
+    }
 
     fun loadRecentTransactions(accountId: String?) {
         if (accountId == null) {
@@ -44,26 +134,6 @@ class TransactionViewModel(
                 is Result.Loading -> Result.Loading
             }
         }
-    }
-
-    fun addTransaction(transaction: Transaction) {
-        viewModelScope.launch {
-            _saveState.value = SaveState.Loading
-            try {
-                val result = repo.addTransaction(transaction)
-                _saveState.value = when (result) {
-                    is Result.Success -> SaveState.Success(result.data)
-                    is Result.Error -> SaveState.Error(result.exception)
-                    is Result.Loading -> SaveState.Loading
-                }
-            } catch (e: Exception) {
-                _saveState.value = SaveState.Error(e)
-            }
-        }
-    }
-
-    fun resetSaveState() {
-        _saveState.value = SaveState.Idle
     }
 
     fun getTransactionsPagingData(

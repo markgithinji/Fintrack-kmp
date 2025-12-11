@@ -72,7 +72,6 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.ExperimentalTime
 
-//TODO: better organise states and move validation logic to viewmodel or usecases
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
 fun AddTransactionScreen(
@@ -82,6 +81,7 @@ fun AddTransactionScreen(
 ) {
     val saveState by transactionsViewModel.saveState.collectAsStateWithLifecycle()
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
+    val validationError by transactionsViewModel.validationError.collectAsStateWithLifecycle()
 
     var amount by remember { mutableStateOf("") }
     var isIncome by remember { mutableStateOf(false) }
@@ -97,68 +97,41 @@ fun AddTransactionScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
-    var showValidationToast by remember { mutableStateOf(false) }
-    var validationMessage by remember { mutableStateOf("") }
-
+    // ========== LAMBDA FUNCTIONS ==========
     val onAccountSelected = remember { { account: Account? -> selectedAccount = account } }
     val onRetry = remember(accountsViewModel) { { accountsViewModel.reloadAccounts() } }
 
     val onAmountChange = remember { { newAmount: String -> amount = newAmount } }
     val onIncomeChange = remember { { newIsIncome: Boolean -> isIncome = newIsIncome } }
     val onCategorySelected = remember { { newCategory: Category? -> category = newCategory } }
-    val onDescriptionChange = remember { { newDescription: String -> description = newDescription } }
+    val onDescriptionChange =
+        remember { { newDescription: String -> description = newDescription } }
 
     val onDateClicked = remember { { showDatePicker = true } }
     val onTimeClicked = remember { { showTimePicker = true } }
 
-    val validationResult = remember(amount, category, selectedAccount) {
-        validateTransactionForm(
-            amount = amount,
-            category = category,
-            selectedAccount = selectedAccount
-        )
-    }
-
-    val onSaveClick = remember(validationResult) {
+    val onSaveClick = remember {
         {
-            if (validationResult.isValid) {
-                val parsedAmount = amount.toDoubleOrNull()
-                if (parsedAmount != null) {
-                    transactionsViewModel.addTransaction(
-                        transaction = Transaction(
-                            id = null,
-                            accountId = selectedAccount!!.id,
-                            amount = parsedAmount,
-                            isIncome = isIncome,
-                            category = category!!.name,
-                            description = description.takeIf { it.isNotBlank() },
-                            dateTime = dateTime
-                        )
-                    )
-                }
-            } else {
-                validationMessage = validationResult.errorMessage
-                showValidationToast = true
-            }
+            transactionsViewModel.addTransaction(
+                amount = amount,
+                isIncome = isIncome,
+                category = category,
+                description = description,
+                selectedAccount = selectedAccount,
+                dateTime = dateTime
+            )
         }
     }
+    // ========== END LAMBDA FUNCTIONS ==========
 
     LaunchedEffect(saveState) {
         when (saveState) {
-            is SaveState.Success -> {
+            is SaveState.Success<*> -> {
                 delay(1000)
                 onBack()
             }
 
             else -> Unit
-        }
-    }
-
-    // Auto-hide validation toast
-    LaunchedEffect(showValidationToast) {
-        if (showValidationToast) {
-            delay(3000)
-            showValidationToast = false
         }
     }
 
@@ -236,9 +209,10 @@ fun AddTransactionScreen(
             )
         }
 
-        if (showValidationToast) {
+        // Show validation error from ViewModel
+        if (validationError != null) {
             MaterialToast(
-                message = validationMessage,
+                message = validationError!!,
                 isError = true,
                 modifier = Modifier.align(Alignment.TopCenter)
             )
@@ -574,46 +548,6 @@ fun SaveTransactionButton(
     }
 }
 
-data class ValidationResult(
-    val isValid: Boolean,
-    val errorMessage: String = ""
-)
-
-fun validateTransactionForm(
-    amount: String,
-    category: Category?,
-    selectedAccount: Account?
-): ValidationResult {
-    return when {
-        amount.isBlank() -> ValidationResult(
-            isValid = false,
-            errorMessage = "Please enter an amount"
-        )
-
-        amount.toDoubleOrNull() == null -> ValidationResult(
-            isValid = false,
-            errorMessage = "Please enter a valid amount"
-        )
-
-        amount.toDoubleOrNull()?.let { it <= 0 } == true -> ValidationResult(
-            isValid = false,
-            errorMessage = "Amount must be greater than zero"
-        )
-
-        category == null -> ValidationResult(
-            isValid = false,
-            errorMessage = "Please select a category"
-        )
-
-        selectedAccount == null -> ValidationResult(
-            isValid = false,
-            errorMessage = "Please select an account"
-        )
-
-        else -> ValidationResult(isValid = true)
-    }
-}
-
 @Composable
 fun ToggleChip(
     text: String,
@@ -639,8 +573,15 @@ fun ToggleChip(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
         ) {
-            Icon(icon, null, tint = if (selected) chipColor else MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(text, color = if (selected) chipColor else MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(
+                icon,
+                null,
+                tint = if (selected) chipColor else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text,
+                color = if (selected) chipColor else MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
