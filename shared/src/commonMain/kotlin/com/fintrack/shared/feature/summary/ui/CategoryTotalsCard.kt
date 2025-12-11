@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.summary.ui
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -90,63 +91,69 @@ fun CategoryTotalsCardWithTabs(
     onYearSelected: (String) -> Unit = {},
     onPeriodSelected: (Period) -> Unit = {}
 ) {
-    Crossfade(
-        targetState = tabType,
-        animationSpec = tween(durationMillis = 300),
-        label = "CategoryContentFade"
-    ) { currentTabType ->
-        key(currentTabType) {
-            when (distributionResult) {
-                is Result.Loading -> {
-                    LoadingCategoryContent()
-                }
-
-                is Result.Error -> {
-                    ErrorCategoryContent(
-                        message = distributionResult.exception.message ?: "Failed to load distribution",
-                        selectedPeriod = period,
-                        availableWeeks = availableWeeks,
-                        availableMonths = availableMonths,
-                        availableYears = availableYears,
-                        onWeekSelected = onWeekSelected,
-                        onMonthSelected = onMonthSelected,
-                        onYearSelected = onYearSelected,
-                        onPeriodSelected = onPeriodSelected,
-                        onRetry = { /* Add retry logic */ }
-                    )
-                }
-
-                is Result.Success -> {
-                    val categories = when (currentTabType) {
-                        is TabType.Income -> distributionResult.data.incomeCategories
-                        is TabType.Expense -> distributionResult.data.expenseCategories
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = tween(durationMillis = 200))
+    ) {
+        Crossfade(
+            targetState = tabType to distributionResult,
+            animationSpec = tween(durationMillis = 300),
+            label = "CategoryContentFade"
+        ) { (currentTabType, result) ->
+            key(currentTabType, period) {
+                when (result) {
+                    is Result.Loading -> {
+                        LoadingCategoryContent()
                     }
 
-                    // Create a map depending on the period type
-                    val weeklyMap =
-                        if (period is Period.Week) mapOf(period.code to categories) else emptyMap()
-                    val monthlyMap =
-                        if (period is Period.Month) mapOf(period.code to categories) else emptyMap()
-                    val yearlyMap =
-                        if (period is Period.Year) mapOf(period.code to categories) else emptyMap()
+                    is Result.Error -> {
+                        ErrorCategoryContent(
+                            message = result.exception.message ?: "Failed to load distribution",
+                            selectedPeriod = period,
+                            availableWeeks = availableWeeks,
+                            availableMonths = availableMonths,
+                            availableYears = availableYears,
+                            onWeekSelected = onWeekSelected,
+                            onMonthSelected = onMonthSelected,
+                            onYearSelected = onYearSelected,
+                            onPeriodSelected = onPeriodSelected,
+                            onRetry = { /* Add retry logic */ }
+                        )
+                    }
 
-                    CategoryContent(
-                        weeklySummary = weeklyMap,
-                        monthlySummary = monthlyMap,
-                        yearlySummary = yearlyMap,
-                        selectedPeriod = period,
-                        availableWeeks = availableWeeks,
-                        availableMonths = availableMonths,
-                        availableYears = availableYears,
-                        onWeekSelected = onWeekSelected,
-                        onMonthSelected = onMonthSelected,
-                        onYearSelected = onYearSelected,
-                        onPeriodSelected = onPeriodSelected,
-                        title = when (currentTabType) {
-                            is TabType.Income -> "Income Distribution"
-                            is TabType.Expense -> "Expense Distribution"
+                    is Result.Success -> {
+                        val categories = when (currentTabType) {
+                            is TabType.Income -> result.data.incomeCategories
+                            is TabType.Expense -> result.data.expenseCategories
                         }
-                    )
+
+                        // Create a map depending on the period type
+                        val weeklyMap =
+                            if (period is Period.Week) mapOf(period.code to categories) else emptyMap()
+                        val monthlyMap =
+                            if (period is Period.Month) mapOf(period.code to categories) else emptyMap()
+                        val yearlyMap =
+                            if (period is Period.Year) mapOf(period.code to categories) else emptyMap()
+
+                        CategoryContent(
+                            weeklySummary = weeklyMap,
+                            monthlySummary = monthlyMap,
+                            yearlySummary = yearlyMap,
+                            selectedPeriod = period,
+                            availableWeeks = availableWeeks,
+                            availableMonths = availableMonths,
+                            availableYears = availableYears,
+                            onWeekSelected = onWeekSelected,
+                            onMonthSelected = onMonthSelected,
+                            onYearSelected = onYearSelected,
+                            onPeriodSelected = onPeriodSelected,
+                            title = when (currentTabType) {
+                                is TabType.Income -> "Income Distribution"
+                                is TabType.Expense -> "Expense Distribution"
+                            }
+                        )
+                    }
                 }
             }
         }

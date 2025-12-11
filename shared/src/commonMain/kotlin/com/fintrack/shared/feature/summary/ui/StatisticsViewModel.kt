@@ -14,7 +14,10 @@ import com.fintrack.shared.feature.summary.domain.model.TransactionType
 import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
@@ -22,8 +25,9 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
     private val _highlights = MutableStateFlow<Result<StatisticsSummary>>(Result.Loading)
     val highlights: StateFlow<Result<StatisticsSummary>> = _highlights
 
-    private val _distribution = MutableStateFlow<Result<DistributionSummary>>(Result.Loading)
-    val distribution: StateFlow<Result<DistributionSummary>> = _distribution
+    // Store separate distribution results for Income and Expense
+    private val _incomeDistribution = MutableStateFlow<Result<DistributionSummary>>(Result.Loading)
+    private val _expenseDistribution = MutableStateFlow<Result<DistributionSummary>>(Result.Loading)
 
     private val _availableWeeks = MutableStateFlow<List<String>>(emptyList())
     val availableWeeks: StateFlow<List<String>> = _availableWeeks
@@ -51,6 +55,23 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
         MutableStateFlow<Result<TransactionCountSummary>>(Result.Loading)
     val transactionCounts: StateFlow<Result<TransactionCountSummary>> = _transactionCounts
 
+    // Simple distribution flow that switches between income and expense
+    val distribution: StateFlow<Result<DistributionSummary>> =
+        combine(
+            selectedTab,
+            _incomeDistribution,
+            _expenseDistribution
+        ) { tab, income, expense ->
+            when (tab) {
+                is TabType.Income -> income
+                is TabType.Expense -> expense
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = Result.Loading
+        )
+
     fun loadHighlights(accountId: String? = null) {
         viewModelScope.launch {
             _highlights.value = Result.Loading
@@ -66,8 +87,13 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
         accountId: String? = null
     ) {
         viewModelScope.launch {
-            _distribution.value = Result.Loading
-            _distribution.value = repo.getDistributionSummary(
+            val targetFlow = when (type) {
+                TransactionType.Income -> _incomeDistribution
+                TransactionType.Expense -> _expenseDistribution
+            }
+
+            targetFlow.value = Result.Loading
+            targetFlow.value = repo.getDistributionSummary(
                 weekOrMonthCode = weekOrMonthCode,
                 type = type.apiName,
                 start = start,
@@ -108,6 +134,7 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
                     else -> null
                 }
 
+                // Load BOTH income and expense data for the initial period
                 reloadDistributionForCurrentSelection(accountId)
 
             } catch (e: Exception) {
@@ -134,26 +161,26 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
 
     fun onTabChanged(tab: TabType, accountId: String? = null) {
         _selectedTab.value = tab
-        reloadDistributionForCurrentSelection(accountId)
     }
 
     fun onPeriodChanged(period: Period, accountId: String? = null) {
         _selectedPeriod.value = period
+        // Load BOTH income and expense data for the new period
         reloadDistributionForCurrentSelection(accountId)
     }
 
     fun reloadDistributionForCurrentSelection(accountId: String? = null) {
-        val type = when (_selectedTab.value) {
-            is TabType.Income -> TransactionType.Income
-            is TabType.Expense -> TransactionType.Expense
-        }
-
-        _selectedPeriod.value?.let { period ->
-            when (period) {
-                is Period.Week -> loadDistribution(period.code, type, accountId = accountId)
-                is Period.Month -> loadDistribution(period.code, type, accountId = accountId)
-                is Period.Year -> loadDistribution(period.code, type, accountId = accountId)
+        val currentPeriod = _selectedPeriod.value
+        if (currentPeriod != null) {
+            val periodCode = when (currentPeriod) {
+                is Period.Week -> currentPeriod.code
+                is Period.Month -> currentPeriod.code
+                is Period.Year -> currentPeriod.code
             }
+
+            // Load BOTH income and expense data for this period
+            loadDistribution(periodCode, TransactionType.Income, accountId = accountId)
+            loadDistribution(periodCode, TransactionType.Expense, accountId = accountId)
         }
     }
 
