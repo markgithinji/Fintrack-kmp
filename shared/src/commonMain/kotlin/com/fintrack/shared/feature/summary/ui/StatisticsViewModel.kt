@@ -12,6 +12,7 @@ import com.fintrack.shared.feature.summary.domain.model.TabType
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.domain.model.TransactionType
 import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -79,20 +80,25 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
     fun loadAvailablePeriods(accountId: String? = null) {
         viewModelScope.launch {
             try {
-                // --- Weeks ---
-                val weeksResult = repo.getAvailableWeeks(accountId)
-                _availableWeeks.value =
-                    if (weeksResult is Result.Success) weeksResult.data.weeks else emptyList()
+                val weeksDeferred = viewModelScope.async {
+                    val result = repo.getAvailableWeeks(accountId)
+                    if (result is Result.Success) result.data.weeks else emptyList()
+                }
 
-                // --- Months ---
-                val monthsResult = repo.getAvailableMonths(accountId)
-                _availableMonths.value =
-                    if (monthsResult is Result.Success) monthsResult.data.months else emptyList()
+                val monthsDeferred = viewModelScope.async {
+                    val result = repo.getAvailableMonths(accountId)
+                    if (result is Result.Success) result.data.months else emptyList()
+                }
 
-                // --- Years ---
-                val yearsResult = repo.getAvailableYears(accountId)
-                _availableYears.value =
-                    if (yearsResult is Result.Success) yearsResult.data.years else emptyList()
+                val yearsDeferred = viewModelScope.async {
+                    val result = repo.getAvailableYears(accountId)
+                    if (result is Result.Success) result.data.years else emptyList()
+                }
+
+                // Wait for all results
+                _availableWeeks.value = weeksDeferred.await()
+                _availableMonths.value = monthsDeferred.await()
+                _availableYears.value = yearsDeferred.await()
 
                 // --- Pick initial selection ---
                 _selectedPeriod.value = when {
