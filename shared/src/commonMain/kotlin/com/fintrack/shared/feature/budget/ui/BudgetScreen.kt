@@ -62,10 +62,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.transaction.ui.common.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.util.formatAsShortDate
 import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.core.util.formatToSinglePrecision
+import com.fintrack.shared.feature.transaction.ui.common.AnimatedShimmerBox
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -314,6 +314,7 @@ fun BudgetEmptyState(
     }
 }
 
+// TODO: FInd a way to get rid of the LaunchedEffect
 @Composable
 fun BudgetErrorRetryState(
     errorMessage: String,
@@ -327,7 +328,7 @@ fun BudgetErrorRetryState(
             onRetry()
         }
     }
-    val supportLambda = remember { {} }
+    val supportLambda = remember { {/* TODO: Implement support lambda */ } }
 
     LaunchedEffect(isRetryLoading) {
         if (isRetryLoading) {
@@ -342,7 +343,7 @@ fun BudgetErrorRetryState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        var isAnimating by remember { mutableStateOf(false) }
+        var isAnimating by remember { mutableStateOf(true) }
         val rotation by animateFloatAsState(
             targetValue = if (isAnimating) 10f else 0f,
             animationSpec = infiniteRepeatable(
@@ -351,10 +352,6 @@ fun BudgetErrorRetryState(
             ),
             label = "error_icon_rotation"
         )
-
-        LaunchedEffect(Unit) {
-            isAnimating = true
-        }
 
         Box(
             modifier = Modifier
