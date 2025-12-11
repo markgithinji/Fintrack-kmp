@@ -6,8 +6,11 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
+import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
+import com.fintrack.shared.feature.summary.domain.model.TabType
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
+import com.fintrack.shared.feature.summary.domain.model.TransactionType
 import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,31 +18,24 @@ import kotlinx.coroutines.launch
 
 class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
 
-    // --- Highlights state ---
     private val _highlights = MutableStateFlow<Result<StatisticsSummary>>(Result.Loading)
     val highlights: StateFlow<Result<StatisticsSummary>> = _highlights
 
-    // --- Distribution state ---
     private val _distribution = MutableStateFlow<Result<DistributionSummary>>(Result.Loading)
     val distribution: StateFlow<Result<DistributionSummary>> = _distribution
 
-    // --- Available weeks state ---
     private val _availableWeeks = MutableStateFlow<List<String>>(emptyList())
     val availableWeeks: StateFlow<List<String>> = _availableWeeks
 
-    // --- Available months state ---
     private val _availableMonths = MutableStateFlow<List<String>>(emptyList())
     val availableMonths: StateFlow<List<String>> = _availableMonths
 
-    // --- Available years state ---
     private val _availableYears = MutableStateFlow<List<String>>(emptyList())
     val availableYears: StateFlow<List<String>> = _availableYears
 
-    // --- Overview state ---
     private val _overview = MutableStateFlow<Result<OverviewSummary>>(Result.Loading)
     val overview: StateFlow<Result<OverviewSummary>> = _overview
 
-    // --- UI state for StatisticsScreen ---
     private val _selectedTab = MutableStateFlow<TabType>(TabType.Expense)
     val selectedTab: StateFlow<TabType> = _selectedTab
 
@@ -54,7 +50,6 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
         MutableStateFlow<Result<TransactionCountSummary>>(Result.Loading)
     val transactionCounts: StateFlow<Result<TransactionCountSummary>> = _transactionCounts
 
-    // --- Load highlights summary for optional account ---
     fun loadHighlights(accountId: String? = null) {
         viewModelScope.launch {
             _highlights.value = Result.Loading
@@ -62,7 +57,6 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
         }
     }
 
-    // --- Load distribution summary for optional account ---
     private fun loadDistribution(
         weekOrMonthCode: String,
         type: TransactionType,
@@ -118,7 +112,6 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
         }
     }
 
-    // --- Overview summary ---
     fun loadOverview(accountId: String? = null) {
         viewModelScope.launch {
             _overview.value = Result.Loading
@@ -126,7 +119,6 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
         }
     }
 
-    // --- Category comparisons ---
     fun loadCategoryComparisons(accountId: String? = null) {
         viewModelScope.launch {
             _categoryComparisons.value = Result.Loading
@@ -134,7 +126,6 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
         }
     }
 
-    // --- UI state helpers ---
     fun onTabChanged(tab: TabType, accountId: String? = null) {
         _selectedTab.value = tab
         reloadDistributionForCurrentSelection(accountId)
@@ -166,30 +157,4 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
             _transactionCounts.value = repo.getTransactionCounts(accountId, isIncome)
         }
     }
-
-    /** Call this when the selected account changes */
-    fun reloadAllForAccount(accountId: String?) {
-        loadHighlights(accountId)
-        loadOverview(accountId)
-        loadCategoryComparisons(accountId)
-        loadAvailablePeriods(accountId)
-        accountId?.let { loadTransactionCounts(it) }
-    }
-}
-
-/** Sealed class for tab selection */
-sealed class TabType(val displayName: String) {
-    data object Income : TabType("Income")
-    data object Expense : TabType("Expenses")
-}
-
-sealed class Period {
-    data class Week(val code: String) : Period()
-    data class Month(val code: String) : Period()
-    data class Year(val code: String) : Period()
-}
-
-sealed class TransactionType(val apiName: String) {
-    object Income : TransactionType("income")
-    object Expense : TransactionType("expense")
 }
