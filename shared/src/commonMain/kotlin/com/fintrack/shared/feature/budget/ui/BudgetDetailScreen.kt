@@ -251,35 +251,39 @@ private fun computeInitialFormState(
                 null
             }
         )
-    } else if (selectedBudgetResult is Result.Success) {
-        // Existing budget - load from result
-        val budgetWithStatus = selectedBudgetResult.data
-        val budget = budgetWithStatus.budget
-
-        BudgetFormState(
-            name = budget.name,
-            amount = budget.limit.toString(),
-            selectedCategories = budget.categories.toSet(),
-            isExpense = budget.isExpense,
-            startDate = budget.startDate,
-            endDate = budget.endDate,
-            selectedAccount = if (accountsResult is Result.Success) {
-                accountsResult.data.firstOrNull { it.id == budget.accountId }
-            } else {
-                null
-            }
-        )
     } else {
-        // Loading state - empty values
-        BudgetFormState(
-            name = "",
-            amount = "",
-            selectedCategories = emptySet(),
-            isExpense = true,
-            startDate = null,
-            endDate = null,
-            selectedAccount = null
-        )
+        // Existing budget - handle different loading states
+        when (selectedBudgetResult) {
+            is Result.Success -> {
+                val budgetWithStatus = selectedBudgetResult.data
+                val budget = budgetWithStatus.budget
+                BudgetFormState(
+                    name = budget.name,
+                    amount = budget.limit.toString(),
+                    selectedCategories = budget.categories.toSet(),
+                    isExpense = budget.isExpense,
+                    startDate = budget.startDate,
+                    endDate = budget.endDate,
+                    selectedAccount = if (accountsResult is Result.Success) {
+                        accountsResult.data.firstOrNull { it.id == budget.accountId }
+                    } else {
+                        null
+                    }
+                )
+            }
+            is Result.Error, is Result.Loading, null -> {
+                // Loading or error state - return empty form
+                BudgetFormState(
+                    name = "",
+                    amount = "",
+                    selectedCategories = emptySet(),
+                    isExpense = true,
+                    startDate = null,
+                    endDate = null,
+                    selectedAccount = null
+                )
+            }
+        }
     }
 }
 
