@@ -1,5 +1,7 @@
 package com.fintrack.shared.feature.summary.ui
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -87,57 +90,65 @@ fun CategoryTotalsCardWithTabs(
     onYearSelected: (String) -> Unit = {},
     onPeriodSelected: (Period) -> Unit = {}
 ) {
-    when (distributionResult) {
-        is Result.Loading -> {
-            LoadingCategoryContent()
-        }
-
-        is Result.Error -> {
-            ErrorCategoryContent(
-                message = distributionResult.exception.message ?: "Failed to load distribution",
-                selectedPeriod = period,
-                availableWeeks = availableWeeks,
-                availableMonths = availableMonths,
-                availableYears = availableYears,
-                onWeekSelected = onWeekSelected,
-                onMonthSelected = onMonthSelected,
-                onYearSelected = onYearSelected,
-                onPeriodSelected = onPeriodSelected,
-                onRetry = { /* Add retry logic */ }
-            )
-        }
-
-        is Result.Success -> {
-            val categories = when (tabType) {
-                is TabType.Income -> distributionResult.data.incomeCategories
-                is TabType.Expense -> distributionResult.data.expenseCategories
-            }
-
-            // Create a map depending on the period type
-            val weeklyMap =
-                if (period is Period.Week) mapOf(period.code to categories) else emptyMap()
-            val monthlyMap =
-                if (period is Period.Month) mapOf(period.code to categories) else emptyMap()
-            val yearlyMap =
-                if (period is Period.Year) mapOf(period.code to categories) else emptyMap()
-
-            CategoryContent(
-                weeklySummary = weeklyMap,
-                monthlySummary = monthlyMap,
-                yearlySummary = yearlyMap,
-                selectedPeriod = period,
-                availableWeeks = availableWeeks,
-                availableMonths = availableMonths,
-                availableYears = availableYears,
-                onWeekSelected = onWeekSelected,
-                onMonthSelected = onMonthSelected,
-                onYearSelected = onYearSelected,
-                onPeriodSelected = onPeriodSelected,
-                title = when (tabType) {
-                    is TabType.Income -> "Income Distribution"
-                    is TabType.Expense -> "Expense Distribution"
+    Crossfade(
+        targetState = tabType,
+        animationSpec = tween(durationMillis = 300),
+        label = "CategoryContentFade"
+    ) { currentTabType ->
+        key(currentTabType) {
+            when (distributionResult) {
+                is Result.Loading -> {
+                    LoadingCategoryContent()
                 }
-            )
+
+                is Result.Error -> {
+                    ErrorCategoryContent(
+                        message = distributionResult.exception.message ?: "Failed to load distribution",
+                        selectedPeriod = period,
+                        availableWeeks = availableWeeks,
+                        availableMonths = availableMonths,
+                        availableYears = availableYears,
+                        onWeekSelected = onWeekSelected,
+                        onMonthSelected = onMonthSelected,
+                        onYearSelected = onYearSelected,
+                        onPeriodSelected = onPeriodSelected,
+                        onRetry = { /* Add retry logic */ }
+                    )
+                }
+
+                is Result.Success -> {
+                    val categories = when (currentTabType) {
+                        is TabType.Income -> distributionResult.data.incomeCategories
+                        is TabType.Expense -> distributionResult.data.expenseCategories
+                    }
+
+                    // Create a map depending on the period type
+                    val weeklyMap =
+                        if (period is Period.Week) mapOf(period.code to categories) else emptyMap()
+                    val monthlyMap =
+                        if (period is Period.Month) mapOf(period.code to categories) else emptyMap()
+                    val yearlyMap =
+                        if (period is Period.Year) mapOf(period.code to categories) else emptyMap()
+
+                    CategoryContent(
+                        weeklySummary = weeklyMap,
+                        monthlySummary = monthlyMap,
+                        yearlySummary = yearlyMap,
+                        selectedPeriod = period,
+                        availableWeeks = availableWeeks,
+                        availableMonths = availableMonths,
+                        availableYears = availableYears,
+                        onWeekSelected = onWeekSelected,
+                        onMonthSelected = onMonthSelected,
+                        onYearSelected = onYearSelected,
+                        onPeriodSelected = onPeriodSelected,
+                        title = when (currentTabType) {
+                            is TabType.Income -> "Income Distribution"
+                            is TabType.Expense -> "Expense Distribution"
+                        }
+                    )
+                }
+            }
         }
     }
 }
