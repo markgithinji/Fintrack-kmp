@@ -10,7 +10,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val transactionModule = module {
-    factory { TransactionApi(get(), getProperty("baseUrl")) }
+    single { TransactionApi(get(), getProperty("baseUrl")) }
     single<TransactionRepository> { TransactionRepositoryImpl(get()) }
 
     single { ValidateTransactionUseCase() }

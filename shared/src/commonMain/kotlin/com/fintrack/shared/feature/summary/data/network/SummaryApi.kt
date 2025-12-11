@@ -14,12 +14,10 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 
-
 class SummaryApi(
     private val client: HttpClient,
     private val baseUrl: String
 ) {
-    // --- Highlights ---
     suspend fun getHighlightsSummary(accountId: String? = null): HighlightsSummaryDto {
         val response: ApiResponse<HighlightsSummaryDto> =
             client.get("$baseUrl/transactions/summary/highlights") {
@@ -28,7 +26,6 @@ class SummaryApi(
         return response.result
     }
 
-    // --- Distribution ---
     suspend fun getDistributionSummary(
         period: String,
         type: String? = null,
@@ -47,7 +44,6 @@ class SummaryApi(
         return response.result
     }
 
-    // --- Available ranges ---
     suspend fun getAvailableWeeks(accountId: String? = null): AvailableWeeksDto {
         val response: ApiResponse<AvailableWeeksDto> =
             client.get("$baseUrl/transactions/summary/available-weeks") {
@@ -72,7 +68,6 @@ class SummaryApi(
         return response.result
     }
 
-    // --- Overview ---
     suspend fun getOverviewSummary(accountId: String? = null): OverviewSummaryDto {
         val response: ApiResponse<OverviewSummaryDto> =
             client.get("$baseUrl/transactions/summary/overview") {
