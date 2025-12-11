@@ -563,7 +563,7 @@ fun CategoryList(
                         contentAlignment = Alignment.CenterStart
                     ) {
                         Text(
-                            text = formatCurrencyKmp(amount.toDouble()),
+                            text = formatCurrency(amount.toDouble()),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.Black

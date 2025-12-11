@@ -1,5 +1,7 @@
 package com.fintrack.shared.feature.summary.ui
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,12 +23,14 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,6 +42,8 @@ import com.example.compose.SegmentColor5
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.Highlight
 import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
+import com.fintrack.shared.feature.summary.ui.util.toFormattedDate
+import com.fintrack.shared.feature.summary.ui.util.toMonthName
 import com.fintrack.shared.feature.transaction.ui.common.AnimatedShimmerBox
 
 @Composable
@@ -46,16 +52,30 @@ fun SpendingHighlightsSection(
     highlightsResult: Result<StatisticsSummary>,
     loadHighlights: () -> Unit
 ) {
-    LaunchedEffect(Unit) {
-        loadHighlights()
+    val sectionTitle = remember(tabType) {
+        when (tabType) {
+            is TabType.Income -> "Income Highlights"
+            is TabType.Expense -> "Spending Highlights"
+        }
+    }
+
+    val amountSuffix = remember(tabType) {
+        when (tabType) {
+            is TabType.Income -> "received"
+            is TabType.Expense -> "spent"
+        }
+    }
+
+    val dailyLabel = remember(tabType) {
+        when (tabType) {
+            is TabType.Income -> "Daily Income"
+            is TabType.Expense -> "Daily Spending"
+        }
     }
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Text(
-            text = when (tabType) {
-                is TabType.Income -> "Income Highlights"
-                is TabType.Expense -> "Spending Highlights"
-            },
+            text = sectionTitle,
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold
         )
@@ -92,9 +112,11 @@ fun SpendingHighlightsSection(
 
             is Result.Success -> {
                 val data = highlightsResult.data
-                val summaryHighlights = when (tabType) {
-                    is TabType.Income -> data.incomeHighlights
-                    is TabType.Expense -> data.expenseHighlights
+                val summaryHighlights = remember(tabType, data) {
+                    when (tabType) {
+                        is TabType.Income -> data.incomeHighlights
+                        is TabType.Expense -> data.expenseHighlights
+                    }
                 }
 
                 // Provide defaults if null
@@ -102,15 +124,6 @@ fun SpendingHighlightsSection(
                 val category = summaryHighlights.highestCategory ?: Highlight("", "", 0.0)
                 val day = summaryHighlights.highestDay ?: Highlight("", "", 0.0)
                 val average = summaryHighlights.averagePerDay
-
-                val amountSuffix = when (tabType) {
-                    is TabType.Income -> "received"
-                    is TabType.Expense -> "spent"
-                }
-                val dailyLabel = when (tabType) {
-                    is TabType.Income -> "Daily Income"
-                    is TabType.Expense -> "Daily Spending"
-                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -120,7 +133,7 @@ fun SpendingHighlightsSection(
                         modifier = Modifier.weight(1f),
                         title = "Highest Month",
                         value = month.value.toMonthName(),
-                        description = "${formatCurrencyKmp(month.amount)} $amountSuffix",
+                        description = "${formatCurrency(month.amount)} $amountSuffix",
                         backgroundColor = SegmentColor3,
                         titleColor = Color.White,
                         valueColor = Color.White,
@@ -130,7 +143,7 @@ fun SpendingHighlightsSection(
                         modifier = Modifier.weight(1f),
                         title = "Top Category",
                         value = category.value,
-                        description = "${formatCurrencyKmp(category.amount)} $amountSuffix",
+                        description = "${formatCurrency(category.amount)} $amountSuffix",
                         backgroundColor = SegmentColor4,
                         titleColor = Color.White,
                         valueColor = Color.White,
@@ -147,7 +160,7 @@ fun SpendingHighlightsSection(
                         modifier = Modifier.weight(1f),
                         title = "Highest Daily",
                         value = day.value.toFormattedDate(),
-                        description = "${formatCurrencyKmp(day.amount)} $amountSuffix",
+                        description = "${formatCurrency(day.amount)} $amountSuffix",
                         backgroundColor = SegmentColor5,
                         titleColor = Color.White,
                         valueColor = Color.White,
@@ -157,7 +170,7 @@ fun SpendingHighlightsSection(
                     HighlightCard(
                         modifier = Modifier.weight(1f),
                         title = "Average Per Day",
-                        value = formatCurrencyKmp(average),
+                        value = formatCurrency(average),
                         description = dailyLabel,
                         backgroundColor = SegmentColor2,
                         titleColor = Color.White,
@@ -282,10 +295,19 @@ fun HighlightCard(
     valueColor: Color,
     contentSpacing: Dp = 4.dp
 ) {
+    val animatedBackground by animateColorAsState(
+        targetValue = backgroundColor,
+        animationSpec = tween(durationMillis = 200)
+    )
+
+    val descriptionColor = remember(titleColor) {
+        titleColor.copy(alpha = 0.7f)
+    }
+
     Card(
         modifier = modifier.height(100.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor)
+        colors = CardDefaults.cardColors(containerColor = animatedBackground)
     ) {
         Column(
             modifier = Modifier
@@ -294,45 +316,35 @@ fun HighlightCard(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.Start
         ) {
-            Text(text = title, fontSize = 14.sp, color = titleColor)
+            Text(
+                text = title,
+                fontSize = 14.sp,
+                color = titleColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
             Spacer(modifier = Modifier.height(contentSpacing))
-            Text(text = value, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = valueColor)
+            Text(
+                text = value,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = valueColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
             Spacer(modifier = Modifier.height(contentSpacing))
-            Text(text = description, fontSize = 12.sp, color = titleColor.copy(alpha = 0.7f))
+            Text(
+                text = description,
+                fontSize = 12.sp,
+                color = descriptionColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
 
-// month conversion: "yyyy-MM" -> "Jan 2025"
-fun String.toMonthName(): String {
-    val parts = this.split("-")
-    if (parts.size != 2) return this
-    val year = parts[0]
-    val monthIndex = (parts[1].toIntOrNull()?.minus(1)) ?: return this
-    val monthNames = listOf(
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    )
-    val monthName = monthNames.getOrElse(monthIndex) { parts[1] }
-    return "$monthName $year"
-}
-
-// date conversion: "yyyy-MM-dd" -> "15 Jan 2025"
-fun String.toFormattedDate(): String {
-    val parts = this.split("-")
-    if (parts.size != 3) return this
-    val day = parts[2].toIntOrNull() ?: return this
-    val monthIndex = (parts[1].toIntOrNull()?.minus(1)) ?: return this
-    val year = parts[0]
-    val monthNames = listOf(
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    )
-    val monthName = monthNames.getOrElse(monthIndex) { parts[1] }
-    return "$day $monthName $year"
-}
-
-fun formatCurrencyKmp(amount: Double): String {
+fun formatCurrency(amount: Double): String {
     val whole = amount.toLong()
     val fraction = ((amount - whole) * 100).toInt()
 
