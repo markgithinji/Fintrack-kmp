@@ -68,7 +68,6 @@ import kotlinx.datetime.Month
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.pow
 import kotlin.math.round
-
 @Composable
 fun BudgetScreen(
     viewModel: BudgetViewModel = koinViewModel(),
@@ -76,9 +75,10 @@ fun BudgetScreen(
     onBudgetClick: (BudgetWithStatus) -> Unit
 ) {
     val budgets by viewModel.budgets.collectAsStateWithLifecycle()
+    val reloadBudgets by remember { mutableStateOf(viewModel::reloadBudgets) }
 
     LaunchedEffect(Unit) {
-        viewModel.reloadBudgets()
+        reloadBudgets()
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -88,7 +88,7 @@ fun BudgetScreen(
             is Result.Error -> {
                 BudgetErrorRetryState(
                     errorMessage = "Unable to load your budgets",
-                    onRetry = { viewModel.reloadBudgets() }
+                    onRetry = { reloadBudgets() }
                 )
             }
 
@@ -98,7 +98,7 @@ fun BudgetScreen(
                     if (data.isNotEmpty()) {
                         item {
                             SexyAddBudgetButton(
-                                onClick = onAddBudget,
+                                onClick = remember(onAddBudget) { onAddBudget },
                                 modifier = Modifier.padding(16.dp)
                             )
                         }
@@ -106,13 +106,13 @@ fun BudgetScreen(
                         items(data) { budgetWithStatus ->
                             BudgetItem(
                                 budgetWithStatus = budgetWithStatus,
-                                onClick = { onBudgetClick(budgetWithStatus) }
+                                onClick = remember(budgetWithStatus) { { onBudgetClick(budgetWithStatus) } }
                             )
                         }
                     } else {
                         item {
                             BudgetEmptyState(
-                                onAddBudget = onAddBudget,
+                                onAddBudget = remember(onAddBudget) { onAddBudget },
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -169,7 +169,6 @@ fun SexyAddBudgetButton(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Animated icon container
                 Box(
                     modifier = Modifier
                         .size(44.dp)
@@ -222,7 +221,6 @@ fun SexyAddBudgetButton(
                 }
             }
 
-            // Chevron icon
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
@@ -243,7 +241,6 @@ fun BudgetEmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Illustration container
         Box(
             modifier = Modifier
                 .size(120.dp)
@@ -281,7 +278,6 @@ fun BudgetEmptyState(
 
         Spacer(Modifier.height(32.dp))
 
-        // Primary CTA button
         Button(
             onClick = onAddBudget,
             modifier = Modifier
@@ -319,6 +315,13 @@ fun BudgetErrorRetryState(
     modifier: Modifier = Modifier
 ) {
     var isRetryLoading by remember { mutableStateOf(false) }
+    val retryLambda = remember(onRetry) {
+        {
+            isRetryLoading = true
+            onRetry()
+        }
+    }
+    val supportLambda = remember { {} }
 
     LaunchedEffect(isRetryLoading) {
         if (isRetryLoading) {
@@ -397,12 +400,8 @@ fun BudgetErrorRetryState(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Retry button
         Button(
-            onClick = {
-                isRetryLoading = true
-                onRetry()
-            },
+            onClick = retryLambda,
             modifier = Modifier
                 .height(54.dp)
                 .fillMaxWidth(0.7f),
@@ -443,9 +442,8 @@ fun BudgetErrorRetryState(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Secondary action
         TextButton(
-            onClick = { /* Optional: Add support action */ },
+            onClick = supportLambda,
             modifier = Modifier.fillMaxWidth(0.6f)
         ) {
             Text(
@@ -462,7 +460,6 @@ fun BudgetScreenLoadingState() {
     LazyColumn(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Add Budget loading item
         item {
             Row(
                 modifier = Modifier
@@ -470,7 +467,6 @@ fun BudgetScreenLoadingState() {
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Icon placeholder
                 AnimatedShimmerBox(
                     modifier = Modifier
                         .size(24.dp)
@@ -479,7 +475,6 @@ fun BudgetScreenLoadingState() {
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                // Text placeholder
                 AnimatedShimmerBox(
                     modifier = Modifier
                         .width(100.dp)
@@ -488,7 +483,6 @@ fun BudgetScreenLoadingState() {
             }
         }
 
-        // Loading budget items
         items(5) {
             Card(
                 modifier = Modifier
@@ -502,20 +496,17 @@ fun BudgetScreenLoadingState() {
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Header row: Name + Type chip
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Budget name placeholder
                         AnimatedShimmerBox(
                             modifier = Modifier
                                 .width(120.dp)
                                 .height(24.dp)
                         )
 
-                        // Type chip placeholder
                         AnimatedShimmerBox(
                             modifier = Modifier
                                 .width(60.dp)
@@ -524,9 +515,7 @@ fun BudgetScreenLoadingState() {
                         )
                     }
 
-                    // Limit + Status section
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        // Progress bar
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -542,14 +531,12 @@ fun BudgetScreenLoadingState() {
                             )
                         }
 
-                        // Percentage placeholder
                         AnimatedShimmerBox(
                             modifier = Modifier
                                 .width(50.dp)
                                 .height(14.dp)
                         )
 
-                        // Stats row
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Start
@@ -565,7 +552,6 @@ fun BudgetScreenLoadingState() {
                         }
                     }
 
-                    // Categories section (limited to 3 + more)
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -577,7 +563,6 @@ fun BudgetScreenLoadingState() {
                                     .clip(RoundedCornerShape(50))
                             )
                         }
-                        // "+X more" placeholder
                         AnimatedShimmerBox(
                             modifier = Modifier
                                 .width(70.dp)
@@ -586,7 +571,6 @@ fun BudgetScreenLoadingState() {
                         )
                     }
 
-                    // Period placeholder
                     AnimatedShimmerBox(
                         modifier = Modifier
                             .width(180.dp)
@@ -605,8 +589,16 @@ fun BudgetItem(
 ) {
     val budget = budgetWithStatus.budget
     val status = budgetWithStatus.status
-    val visibleCategories = budget.categories.take(3)
-    val remainingCategoriesCount = budget.categories.size - 3
+    val visibleCategories by remember(budget.categories) {
+        mutableStateOf(budget.categories.take(3))
+    }
+    val remainingCategoriesCount by remember(budget.categories) {
+        mutableStateOf(budget.categories.size - 3)
+    }
+    val dateText by remember(budget.startDate, budget.endDate) {
+        mutableStateOf("${formatBudgetDate(budget.startDate)} - ${formatBudgetDate(budget.endDate)}")
+    }
+    val chipLambda = remember { {} }
 
     Card(
         modifier = Modifier
@@ -620,7 +612,6 @@ fun BudgetItem(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Header row: Name + Type chip
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -653,9 +644,7 @@ fun BudgetItem(
                 }
             }
 
-
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                // Progress bar first
                 LinearProgressIndicator(
                     progress = { ((status.percentageUsed / 100.0).coerceAtMost(1.0)).toFloat() },
                     modifier = Modifier
@@ -666,7 +655,6 @@ fun BudgetItem(
                     else MaterialTheme.colorScheme.primary
                 )
 
-                // Percentage text
                 Text(
                     text = "${status.percentageUsed.roundToDecimals(1)}% used",
                     style = MaterialTheme.typography.labelSmall,
@@ -679,7 +667,6 @@ fun BudgetItem(
                     horizontalArrangement = Arrangement.Start,
                     verticalAlignment = Alignment.Top
                 ) {
-                    // Limit
                     Column(
                         horizontalAlignment = Alignment.Start,
                         modifier = Modifier.width(80.dp)
@@ -697,7 +684,6 @@ fun BudgetItem(
                         )
                     }
 
-                    // Spent
                     Column(
                         horizontalAlignment = Alignment.Start,
                         modifier = Modifier.width(80.dp)
@@ -715,7 +701,6 @@ fun BudgetItem(
                         )
                     }
 
-                    // Remaining
                     Column(
                         horizontalAlignment = Alignment.Start,
                         modifier = Modifier.width(100.dp)
@@ -736,17 +721,15 @@ fun BudgetItem(
                 }
             }
 
-            // Categories with limit of 3
             if (budget.categories.isNotEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Start
                 ) {
-                    // Show first 3 categories
                     visibleCategories.forEach { category ->
                         AssistChip(
-                            onClick = {},
+                            onClick = chipLambda,
                             label = {
                                 Text(
                                     category.name,
@@ -766,7 +749,6 @@ fun BudgetItem(
                         )
                     }
 
-                    // Show "+X more" if there are more than 3 categories
                     if (remainingCategoriesCount > 0) {
                         Box(
                             modifier = Modifier
@@ -790,7 +772,7 @@ fun BudgetItem(
             }
 
             Text(
-                text = "${formatBudgetDate(budget.startDate)} - ${formatBudgetDate(budget.endDate)}",
+                text = dateText,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -813,7 +795,6 @@ fun formatBudgetDate(localDate: LocalDate): String {
         Month.OCTOBER -> "Oct"
         Month.NOVEMBER -> "Nov"
         Month.DECEMBER -> "Dec"
-        else -> {}
     }
     val year = localDate.year.toString().takeLast(2)
     return "$day $monthName $year"
