@@ -41,8 +41,8 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.ui.common.AnimatedShimmerBox
-import com.fintrack.shared.feature.transaction.ui.util.formatToCurrency
-import com.fintrack.shared.feature.transaction.ui.util.formatToSinglePrecision
+import com.fintrack.shared.feature.core.util.formatToCurrency
+import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 

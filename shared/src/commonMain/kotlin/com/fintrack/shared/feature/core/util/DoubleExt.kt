@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui.util
+package com.fintrack.shared.feature.core.util
 
 fun Double.formatToSinglePrecision(): String {
     val multiplied = (this * 10).toInt()

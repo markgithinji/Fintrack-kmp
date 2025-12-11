@@ -41,7 +41,7 @@ import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.DaySummary
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
-import com.fintrack.shared.feature.transaction.ui.util.shortDayName
+import com.fintrack.shared.feature.core.util.shortDayName
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toLocalDate

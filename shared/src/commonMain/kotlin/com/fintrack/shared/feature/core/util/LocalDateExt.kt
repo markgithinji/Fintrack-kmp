@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui.util
+package com.fintrack.shared.feature.core.util
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month

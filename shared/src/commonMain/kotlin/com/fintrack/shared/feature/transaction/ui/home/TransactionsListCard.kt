@@ -39,8 +39,8 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.transactionlist.TransactionLoadingItem
-import com.fintrack.shared.feature.transaction.ui.util.formatAsShortDate
-import com.fintrack.shared.feature.transaction.ui.util.formatToCurrency
+import com.fintrack.shared.feature.core.util.formatAsShortDate
+import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 
