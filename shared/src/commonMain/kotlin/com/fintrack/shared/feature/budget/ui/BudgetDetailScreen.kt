@@ -2,7 +2,6 @@ package com.fintrack.shared.feature.budget.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,9 +58,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.compose.PinkExpense
+import com.example.compose.accountChipBorder
+import com.example.compose.accountChipSelectedBg
+import com.example.compose.cardBackground
+import com.example.compose.currencyTextColor
+import com.example.compose.incomeButtonColor
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
-import com.fintrack.shared.feature.budget.domain.model.Budget
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
@@ -94,79 +98,22 @@ fun BudgetDetailScreen(
     val saveState by viewModel.saveState.collectAsStateWithLifecycle()
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
 
-    // Track if we've initialized the form with existing budget data
-    var isInitialized by remember { mutableStateOf(false) }
+    val formState = remember(budgetId, selectedBudgetResult, accountsResult) {
+        computeInitialFormState(budgetId, selectedBudgetResult, accountsResult)
+    }
 
     // For showing validation errors
     var showValidationError by remember { mutableStateOf(false) }
     var validationErrorMessage by remember { mutableStateOf("") }
 
-    // --- Form state ---
-    var name by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
-    var selectedCategories by remember { mutableStateOf<Set<Category>>(emptySet()) }
-    var isExpense by remember { mutableStateOf(true) }
-    var startDate by remember { mutableStateOf<LocalDate?>(null) }
-    var endDate by remember { mutableStateOf<LocalDate?>(null) }
-    var selectedAccount by remember { mutableStateOf<Account?>(null) }
-
     LaunchedEffect(budgetId) {
         budgetId?.let { viewModel.loadBudgetById(it) }
     }
 
-    // Initialize form
-    LaunchedEffect(selectedBudgetResult, accountsResult) {
-        if (!isInitialized) {
-            if (budgetId == null) {
-                // For new budget, set default values
-                val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-                startDate = today
-                endDate = today.plus(DatePeriod(months = 1))
-
-                // Add default category for new budgets
-                selectedCategories = if (Category.expenseCategories.isNotEmpty()) {
-                    setOf(Category.expenseCategories[0])
-                } else {
-                    emptySet()
-                }
-
-                // Try to auto-select first account if available
-                if (accountsResult is Result.Success && (accountsResult as Result.Success<List<Account>>).data.isNotEmpty()) {
-                    selectedAccount = (accountsResult as Result.Success<List<Account>>).data.first()
-                }
-
-                isInitialized = true
-            } else if (selectedBudgetResult is Result.Success) {
-                // For existing budget, load the data
-                val budgetWithStatus = (selectedBudgetResult as Result.Success<BudgetWithStatus>).data
-                val budget = budgetWithStatus.budget
-
-                name = budget.name
-                amount = budget.limit.toString()
-                selectedCategories = budget.categories.toSet()
-                isExpense = budget.isExpense
-                startDate = budget.startDate
-                endDate = budget.endDate
-
-                // Try to find and select the account from accounts list
-                if (accountsResult is Result.Success) {
-                    selectedAccount = (accountsResult as Result.Success<List<Account>>).data.firstOrNull { it.id == budget.accountId }
-                }
-
-                isInitialized = true
-            }
-        }
-    }
-
     // Handle save result
     LaunchedEffect(saveState) {
-        when (saveState) {
-            is SaveState.Success -> {
-                onSave()
-            }
-            else -> {
-                // Do nothing for other states
-            }
+        if (saveState is SaveState.Success) {
+            onSave()
         }
     }
 
@@ -195,9 +142,9 @@ fun BudgetDetailScreen(
                 else -> {
                     AccountSelectionSection(
                         accountsResult = accountsResult,
-                        selectedAccount = selectedAccount,
+                        selectedAccount = formState.selectedAccount,
                         onAccountSelected = { account ->
-                            selectedAccount = account
+                            formState.selectedAccount = account
                         },
                         onRetry = {
                             accountsViewModel.reloadAccounts()
@@ -205,17 +152,19 @@ fun BudgetDetailScreen(
                     )
 
                     BudgetForm(
-                        name = name,
-                        onNameChange = { name = it },
-                        amount = amount,
-                        onAmountChange = { amount = it },
-                        isExpense = isExpense,
-                        onExpenseChange = { isExpense = it },
-                        selectedCategories = selectedCategories,
-                        onCategoryChange = { selectedCategories = it },
-                        startDate = startDate,
-                        endDate = endDate,
-                        onPeriodChange = { startDate = it.first; endDate = it.second }
+                        name = formState.name,
+                        onNameChange = { formState.name = it },
+                        amount = formState.amount,
+                        onAmountChange = { formState.amount = it },
+                        isExpense = formState.isExpense,
+                        onExpenseChange = { formState.isExpense = it },
+                        selectedCategories = formState.selectedCategories,
+                        onCategoryChange = { formState.selectedCategories = it },
+                        startDate = formState.startDate,
+                        endDate = formState.endDate,
+                        onPeriodChange = {
+                            formState.startDate = it.first; formState.endDate = it.second
+                        }
                     )
                 }
             }
@@ -223,7 +172,8 @@ fun BudgetDetailScreen(
 
         if (saveState is SaveState.Error) {
             MaterialToast(
-                message = (saveState as SaveState.Error).exception.message ?: "Failed to save budget",
+                message = (saveState as SaveState.Error).exception.message
+                    ?: "Failed to save budget",
                 isError = true,
                 modifier = Modifier.align(Alignment.TopCenter)
             )
@@ -241,47 +191,20 @@ fun BudgetDetailScreen(
         BudgetDetailSaveButton(
             saveState = saveState,
             onSaveClick = {
-                val limit = amount.toDoubleOrNull() ?: 0.0
-                val valid = name.isNotBlank() &&
-                        selectedCategories.isNotEmpty() &&
-                        limit > 0 &&
-                        startDate != null &&
-                        endDate != null &&
-                        selectedAccount != null
-
-                if (valid) {
+                val validationResult = validateForm(formState)
+                if (validationResult.isValid) {
                     viewModel.saveBudget(
                         id = budgetId,
-                        name = name,
-                        categories = selectedCategories.toList(),
-                        limit = limit,
-                        isExpense = isExpense,
-                        startDate = startDate!!,
-                        endDate = endDate!!,
-                        accountId = selectedAccount!!.id
+                        name = formState.name,
+                        categories = formState.selectedCategories.toList(),
+                        limit = formState.amount.toDoubleOrNull() ?: 0.0,
+                        isExpense = formState.isExpense,
+                        startDate = formState.startDate!!,
+                        endDate = formState.endDate!!,
+                        accountId = formState.selectedAccount!!.id
                     )
                 } else {
-                    // Show validation error toast
-                    validationErrorMessage = buildString {
-                        if (!name.isNotBlank()) {
-                            append("Budget name is required\n")
-                        }
-                        if (selectedCategories.isEmpty()) {
-                            append("At least one category is required\n")
-                        }
-                        if (limit <= 0) {
-                            append("Valid amount is required\n")
-                        }
-                        if (startDate == null) {
-                            append("Start date is required\n")
-                        }
-                        if (endDate == null) {
-                            append("End date is required\n")
-                        }
-                        if (selectedAccount == null) {
-                            append("Please select an account for this budget\n")
-                        }
-                    }.trim()
+                    validationErrorMessage = validationResult.errorMessage
                     showValidationError = true
                 }
             },
@@ -291,6 +214,113 @@ fun BudgetDetailScreen(
         )
     }
 }
+
+data class BudgetFormState(
+    var name: String,
+    var amount: String,
+    var selectedCategories: Set<Category>,
+    var isExpense: Boolean,
+    var startDate: LocalDate?,
+    var endDate: LocalDate?,
+    var selectedAccount: Account?
+)
+
+@OptIn(ExperimentalTime::class)
+private fun computeInitialFormState(
+    budgetId: String?,
+    selectedBudgetResult: Result<BudgetWithStatus>?,
+    accountsResult: Result<List<Account>>
+): BudgetFormState {
+    return if (budgetId == null) {
+        // New budget - default values
+        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        BudgetFormState(
+            name = "",
+            amount = "",
+            selectedCategories = if (Category.expenseCategories.isNotEmpty()) {
+                setOf(Category.expenseCategories[0])
+            } else {
+                emptySet()
+            },
+            isExpense = true,
+            startDate = today,
+            endDate = today.plus(DatePeriod(months = 1)),
+            selectedAccount = if (accountsResult is Result.Success && accountsResult.data.isNotEmpty()) {
+                accountsResult.data.first()
+            } else {
+                null
+            }
+        )
+    } else if (selectedBudgetResult is Result.Success) {
+        // Existing budget - load from result
+        val budgetWithStatus = selectedBudgetResult.data
+        val budget = budgetWithStatus.budget
+
+        BudgetFormState(
+            name = budget.name,
+            amount = budget.limit.toString(),
+            selectedCategories = budget.categories.toSet(),
+            isExpense = budget.isExpense,
+            startDate = budget.startDate,
+            endDate = budget.endDate,
+            selectedAccount = if (accountsResult is Result.Success) {
+                accountsResult.data.firstOrNull { it.id == budget.accountId }
+            } else {
+                null
+            }
+        )
+    } else {
+        // Loading state - empty values
+        BudgetFormState(
+            name = "",
+            amount = "",
+            selectedCategories = emptySet(),
+            isExpense = true,
+            startDate = null,
+            endDate = null,
+            selectedAccount = null
+        )
+    }
+}
+
+data class ValidationResult(
+    val isValid: Boolean,
+    val errorMessage: String = ""
+)
+
+private fun validateForm(formState: BudgetFormState): ValidationResult {
+    val limit = formState.amount.toDoubleOrNull() ?: 0.0
+    val errors = mutableListOf<String>()
+
+    if (formState.name.isBlank()) {
+        errors.add("Budget name is required")
+    }
+    if (formState.selectedCategories.isEmpty()) {
+        errors.add("At least one category is required")
+    }
+    if (limit <= 0) {
+        errors.add("Valid amount is required")
+    }
+    if (formState.startDate == null) {
+        errors.add("Start date is required")
+    }
+    if (formState.endDate == null) {
+        errors.add("End date is required")
+    }
+    if (formState.selectedAccount == null) {
+        errors.add("Please select an account for this budget")
+    }
+
+    return if (errors.isEmpty()) {
+        ValidationResult(isValid = true)
+    } else {
+        ValidationResult(
+            isValid = false,
+            errorMessage = errors.joinToString("\n")
+        )
+    }
+}
+
 @Composable
 fun AccountSelectionSection(
     accountsResult: Result<List<Account>>,
@@ -313,7 +343,7 @@ fun AccountSelectionSection(
             is Result.Loading -> {
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+                    colors = CardDefaults.cardColors(containerColor = cardBackground),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Box(
@@ -330,7 +360,7 @@ fun AccountSelectionSection(
             is Result.Error -> {
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+                    colors = CardDefaults.cardColors(containerColor = cardBackground),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
@@ -347,7 +377,7 @@ fun AccountSelectionSection(
                         Button(
                             onClick = onRetry,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF2196F3)
+                                containerColor = accountChipBorder
                             )
                         ) {
                             Text("Retry")
@@ -360,7 +390,7 @@ fun AccountSelectionSection(
                 if (accountsResult.data.isEmpty()) {
                     Card(
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+                        colors = CardDefaults.cardColors(containerColor = cardBackground),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Box(
@@ -410,13 +440,13 @@ fun AccountChip(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) {
-                Color(0xFFE3F2FD)
+                accountChipSelectedBg
             } else {
-                Color(0xFFF5F5F5)
+                cardBackground
             }
         ),
         border = if (isSelected) {
-            BorderStroke(2.dp, Color(0xFF2196F3))
+            BorderStroke(2.dp, accountChipBorder)
         } else {
             null
         }
@@ -460,6 +490,7 @@ fun AccountChip(
         }
     }
 }
+
 @Composable
 fun BudgetDetailSaveButton(
     saveState: SaveState,
@@ -488,6 +519,7 @@ fun BudgetDetailSaveButton(
                     strokeWidth = 2.dp
                 )
             }
+
             is SaveState.Success -> {
                 Icon(
                     Icons.Default.CheckCircle,
@@ -495,6 +527,7 @@ fun BudgetDetailSaveButton(
                     modifier = Modifier.size(24.dp)
                 )
             }
+
             else -> {
                 Icon(Icons.Default.Check, contentDescription = "Save")
             }
@@ -521,7 +554,7 @@ fun BudgetForm(
         Text("Budget Name", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            colors = CardDefaults.cardColors(containerColor = cardBackground),
             modifier = Modifier.fillMaxWidth()
         ) {
             TextField(
@@ -532,9 +565,9 @@ fun BudgetForm(
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth(),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFFF5F5F5),
-                    unfocusedContainerColor = Color(0xFFF5F5F5),
-                    disabledContainerColor = Color(0xFFF5F5F5),
+                    focusedContainerColor = cardBackground,
+                    unfocusedContainerColor = cardBackground,
+                    disabledContainerColor = cardBackground,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent
@@ -546,7 +579,7 @@ fun BudgetForm(
         Text("Limit", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            colors = CardDefaults.cardColors(containerColor = cardBackground),
             modifier = Modifier.fillMaxWidth()
         ) {
             TextField(
@@ -557,13 +590,13 @@ fun BudgetForm(
                 shape = RoundedCornerShape(16.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 leadingIcon = {
-                    Text("Ksh", color = Color(0xFF4CAF50), fontWeight = FontWeight.SemiBold)
+                    Text("Ksh", color = currencyTextColor, fontWeight = FontWeight.SemiBold)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFFF5F5F5),
-                    unfocusedContainerColor = Color(0xFFF5F5F5),
-                    disabledContainerColor = Color(0xFFF5F5F5),
+                    focusedContainerColor = cardBackground,
+                    unfocusedContainerColor = cardBackground,
+                    disabledContainerColor = cardBackground,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent
@@ -575,7 +608,7 @@ fun BudgetForm(
         Text("Budget Type", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            colors = CardDefaults.cardColors(containerColor = cardBackground),
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -587,14 +620,14 @@ fun BudgetForm(
                     icon = Icons.Default.ArrowDownward,
                     selected = isExpense,
                     onClick = { onExpenseChange(true) },
-                    color = Color.Red
+                    color = PinkExpense
                 )
                 ToggleChip(
                     text = "Income",
                     icon = Icons.Default.ArrowUpward,
                     selected = !isExpense,
                     onClick = { onExpenseChange(false) },
-                    color = Color(0xFF2E7D32)
+                    color = incomeButtonColor
                 )
             }
         }
@@ -603,7 +636,7 @@ fun BudgetForm(
         Text("Categories", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            colors = CardDefaults.cardColors(containerColor = cardBackground),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp)
@@ -661,7 +694,7 @@ fun BudgetForm(
         Text("Period", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            colors = CardDefaults.cardColors(containerColor = cardBackground),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
@@ -780,4 +813,3 @@ private fun NumberSelector(
         }
     }
 }
-

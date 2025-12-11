@@ -61,12 +61,14 @@ val PinkExpense = Color(0xFFE27C94)  // pinkish-red for expense
 val backgroundGray = Color(0xFFEFEFEF)
 val YellowWarning = Color(0xFFF59E0B)  // Warning yellow for budgets
 val PurpleBudget = Color(0xFF8B5CF6)   // Purple for budgets/categories
+
 // Chart segments
 val SegmentColor1 = Color(0xFFE63946) // Strong red
 val SegmentColor2 = Color(0xFF228B22) // Forest Green
 val SegmentColor3 = Color(0xFF457B9D) // Vibrant blue
 val SegmentColor4 = Color(0xFFF4A261) // Warm orange
 val SegmentColor5 = Color(0xFF2A9D8F) // Teal / turquoise
+
 // Period Selector Colors
 val periodSelectedBg = Color(0xFF2D2D2D)
 val periodUnselectedBg = Color(0xFFE0E0E0)
@@ -85,5 +87,12 @@ val errorHeaderText = Color.Black
 val errorMessageText = Color.Gray
 val errorRetryButton = GreenIncome
 val errorRetryButtonText = Color.White
+
+// Budget Detail Screen Colors
+val cardBackground = Color(0xFFF5F5F5) // For cards/containers
+val currencyTextColor = GreenIncome // For Ksh text
+val accountChipSelectedBg = Color(0xFFE3F2FD) // Selected account chip
+val accountChipBorder = Color(0xFF2196F3) // Selected account chip border
+val incomeButtonColor = Color(0xFF2E7D32) // Income button color
 
 
