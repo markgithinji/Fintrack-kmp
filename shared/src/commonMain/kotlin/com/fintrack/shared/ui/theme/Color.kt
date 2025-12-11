@@ -67,6 +67,23 @@ val SegmentColor2 = Color(0xFF228B22) // Forest Green
 val SegmentColor3 = Color(0xFF457B9D) // Vibrant blue
 val SegmentColor4 = Color(0xFFF4A261) // Warm orange
 val SegmentColor5 = Color(0xFF2A9D8F) // Teal / turquoise
+// Period Selector Colors
+val periodSelectedBg = Color(0xFF2D2D2D)
+val periodUnselectedBg = Color(0xFFE0E0E0)
+val periodSelectedText = Color.White
+val periodUnselectedText = Color.Black
 
+// Category List Colors
+val categoryCardBg = Color(0xFFF4F4F4)
+val categoryNameText = Color.DarkGray
+val categoryAmountText = Color.Black
+val categoryPercentageText = Color.DarkGray.copy(alpha = 0.8f)
+
+// Error State Colors
+val errorIconColor = Color.Gray
+val errorHeaderText = Color.Black
+val errorMessageText = Color.Gray
+val errorRetryButton = GreenIncome
+val errorRetryButtonText = Color.White
 
 

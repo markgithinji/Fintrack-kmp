@@ -49,12 +49,24 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.example.compose.SegmentColor1
 import com.example.compose.SegmentColor3
 import com.example.compose.SegmentColor4
 import com.example.compose.SegmentColor5
+import com.example.compose.categoryAmountText
+import com.example.compose.categoryCardBg
+import com.example.compose.categoryNameText
+import com.example.compose.categoryPercentageText
+import com.example.compose.errorHeaderText
+import com.example.compose.errorIconColor
+import com.example.compose.errorMessageText
+import com.example.compose.errorRetryButton
+import com.example.compose.errorRetryButtonText
+import com.example.compose.periodSelectedBg
+import com.example.compose.periodSelectedText
+import com.example.compose.periodUnselectedBg
+import com.example.compose.periodUnselectedText
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.CategorySummary
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
@@ -343,11 +355,11 @@ fun ErrorCategoryContent(
     val onPeriodSelectedRemembered = remember(onPeriodSelected) { onPeriodSelected }
     val onRetryRemembered = remember(onRetry) { onRetry }
 
-    val headerColor = remember { Color.Black }
-    val messageColor = remember { Color.Gray }
-    val iconColor = remember { Color.Gray }
-    val retryButtonColor = remember { GreenIncome }
-    val retryTextColor = remember { Color.White }
+    val headerColor = remember { errorHeaderText }
+    val messageColor = remember { errorMessageText }
+    val iconColor = remember { errorIconColor }
+    val retryButtonColor = remember { errorRetryButton }
+    val retryTextColor = remember { errorRetryButtonText }
 
     Column(
         modifier = Modifier
@@ -525,10 +537,11 @@ fun CategoryList(
         }
     }
 
-    val cardBackgroundColor = remember { Color(0xFFF4F4F4) }
-    val categoryNameColor = remember { Color.DarkGray }
-    val amountColor = remember { Color.Black }
-    val percentageColor = remember { Color.DarkGray.copy(alpha = 0.8f) }
+    // Remember colors from file
+    val cardBackgroundColor = remember { categoryCardBg }
+    val categoryNameColor = remember { categoryNameText }
+    val amountColor = remember { categoryAmountText }
+    val percentageColor = remember { categoryPercentageText }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -545,7 +558,7 @@ fun CategoryList(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(
                         modifier = Modifier
@@ -606,10 +619,10 @@ fun PeriodSelector(
     val onYearSelectedRemembered = remember(onYearSelected) { onYearSelected }
     val onPeriodSelectedRemembered = remember(onPeriodSelected) { onPeriodSelected }
 
-    val selectedBackground = remember { Color(0xFF2D2D2D) }
-    val unselectedBackground = remember { Color(0xFFE0E0E0) }
-    val selectedTextColor = remember { Color.White }
-    val unselectedTextColor = remember { Color.Black }
+    val selectedBackground = remember { periodSelectedBg }
+    val unselectedBackground = remember { periodUnselectedBg }
+    val selectedTextColor = remember { periodSelectedText }
+    val unselectedTextColor = remember { periodUnselectedText }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
