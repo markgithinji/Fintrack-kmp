@@ -49,19 +49,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
+import com.example.compose.PinkExpense
+import com.example.compose.SegmentColor1
+import com.example.compose.SegmentColor3
+import com.example.compose.SegmentColor4
+import com.example.compose.SegmentColor5
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.CategorySummary
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.transaction.ui.common.AnimatedShimmerBox
-
-// --- Segment Colors ---
-val SegmentColors = listOf(
-    Color(0xFF4E79A7), // Blue
-    Color(0xFFF28E2B), // Orange
-    Color(0xFFE15759), // Red
-    Color(0xFF76B7B2), // Teal
-    Color(0xFFFF9DA7)  // Pink / Others
-)
 
 @Composable
 fun CategoryTotalsCardWithTabs(
@@ -78,7 +74,12 @@ fun CategoryTotalsCardWithTabs(
 ) {
     when (distributionResult) {
         is Result.Loading -> {
-            LoadingCategoryContent(
+            LoadingCategoryContent()
+        }
+
+        is Result.Error -> {
+            ErrorCategoryContent(
+                message = distributionResult.exception.message ?: "Failed to load distribution",
                 selectedPeriod = period,
                 availableWeeks = availableWeeks,
                 availableMonths = availableMonths,
@@ -86,55 +87,9 @@ fun CategoryTotalsCardWithTabs(
                 onWeekSelected = onWeekSelected,
                 onMonthSelected = onMonthSelected,
                 onYearSelected = onYearSelected,
-                onPeriodSelected = onPeriodSelected
+                onPeriodSelected = onPeriodSelected,
+                onRetry = { /* Add retry logic */ }
             )
-        }
-
-        is Result.Error -> {
-            val message = distributionResult.exception.message ?: "Failed to load distribution"
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PieChart,
-                        contentDescription = "Error",
-                        tint = Color.Gray,
-                        modifier = Modifier.size(48.dp)
-                    )
-                    Text(
-                        text = "Unable to Load Data",
-                        color = Color.Black,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = message,
-                        color = Color.Gray,
-                        fontSize = 14.sp,
-                        textAlign = TextAlign.Center
-                    )
-                    Button(
-                        onClick = { /* Add retry logic */ },
-                        colors = ButtonDefaults.buttonColors(containerColor = GreenIncome),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.height(40.dp)
-                    ) {
-                        Text(
-                            text = "Try Again",
-                            color = Color.White,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
         }
 
         is Result.Success -> {
@@ -173,16 +128,7 @@ fun CategoryTotalsCardWithTabs(
 }
 
 @Composable
-fun LoadingCategoryContent(
-    selectedPeriod: Period,
-    availableWeeks: List<String> = emptyList(),
-    availableMonths: List<String> = emptyList(),
-    availableYears: List<String> = emptyList(),
-    onWeekSelected: (String) -> Unit = {},
-    onMonthSelected: (String) -> Unit = {},
-    onYearSelected: (String) -> Unit = {},
-    onPeriodSelected: (Period) -> Unit = {}
-) {
+fun LoadingCategoryContent() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -390,18 +336,33 @@ fun ErrorCategoryContent(
     onPeriodSelected: (Period) -> Unit = {},
     onRetry: () -> Unit
 ) {
-    Column {
-        PeriodSelector(
-            selectedPeriod = selectedPeriod,
-            availableWeeks = availableWeeks,
-            availableMonths = availableMonths,
-            availableYears = availableYears,
-            onWeekSelected = onWeekSelected,
-            onMonthSelected = onMonthSelected,
-            onYearSelected = onYearSelected,
-            onPeriodSelected = onPeriodSelected
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        // Added header to match the structure
+        Text(
+            text = "Distribution",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(bottom = 8.dp)
         )
-        Spacer(modifier = Modifier.height(16.dp))
+
+        Column {
+            Spacer(modifier = Modifier.height(8.dp))
+            PeriodSelector(
+                selectedPeriod = selectedPeriod,
+                availableWeeks = availableWeeks,
+                availableMonths = availableMonths,
+                availableYears = availableYears,
+                onWeekSelected = onWeekSelected,
+                onMonthSelected = onMonthSelected,
+                onYearSelected = onYearSelected,
+                onPeriodSelected = onPeriodSelected
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         Box(
             modifier = Modifier.fillMaxWidth().height(200.dp),
@@ -733,9 +694,17 @@ fun SexyDropdown(
     }
 }
 
+// --- Segment Colors ---
+val SegmentColors = listOf(
+    SegmentColor3, // Blue
+    SegmentColor4, // Orange
+    SegmentColor1, // Red
+    SegmentColor5, // Teal
+    PinkExpense     // Pink / Others
+)
+
 // Helper data class
 private data class Quad<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
-
 
 enum class TimeSpan(val displayName: String) {
     WEEK("Week"),
