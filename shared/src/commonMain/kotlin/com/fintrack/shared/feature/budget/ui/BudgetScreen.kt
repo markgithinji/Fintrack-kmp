@@ -37,7 +37,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -75,10 +74,9 @@ fun BudgetScreen(
     onBudgetClick: (BudgetWithStatus) -> Unit
 ) {
     val budgets by viewModel.budgets.collectAsStateWithLifecycle()
-    val reloadBudgets by remember { mutableStateOf(viewModel::reloadBudgets) }
 
     LaunchedEffect(Unit) {
-        reloadBudgets()
+        viewModel.reloadBudgets()
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -88,7 +86,7 @@ fun BudgetScreen(
             is Result.Error -> {
                 BudgetErrorRetryState(
                     errorMessage = "Unable to load your budgets",
-                    onRetry = { reloadBudgets() }
+                    onRetry = { viewModel.reloadBudgets() }
                 )
             }
 
@@ -98,7 +96,7 @@ fun BudgetScreen(
                     if (data.isNotEmpty()) {
                         item {
                             SexyAddBudgetButton(
-                                onClick = remember(onAddBudget) { onAddBudget },
+                                onClick = onAddBudget,
                                 modifier = Modifier.padding(16.dp)
                             )
                         }
@@ -106,19 +104,13 @@ fun BudgetScreen(
                         items(data) { budgetWithStatus ->
                             BudgetItem(
                                 budgetWithStatus = budgetWithStatus,
-                                onClick = remember(budgetWithStatus) {
-                                    {
-                                        onBudgetClick(
-                                            budgetWithStatus
-                                        )
-                                    }
-                                }
+                                onClick = { onBudgetClick(budgetWithStatus) }
                             )
                         }
                     } else {
                         item {
                             BudgetEmptyState(
-                                onAddBudget = remember(onAddBudget) { onAddBudget },
+                                onAddBudget = onAddBudget,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -314,27 +306,21 @@ fun BudgetEmptyState(
     }
 }
 
-// TODO: FInd a way to get rid of the LaunchedEffect
 @Composable
 fun BudgetErrorRetryState(
     errorMessage: String,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var isRetryLoading by remember { mutableStateOf(false) }
-    val retryLambda = remember(onRetry) {
-        {
-            isRetryLoading = true
-            onRetry()
-        }
-    }
-    val supportLambda = remember { {/* TODO: Implement support lambda */ } }
-
-    LaunchedEffect(isRetryLoading) {
-        if (isRetryLoading) {
-            isRetryLoading = false
-        }
-    }
+    var isAnimating by remember { mutableStateOf(true) }
+    val rotation by animateFloatAsState(
+        targetValue = if (isAnimating) 10f else 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(500, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "error_icon_rotation"
+    )
 
     Column(
         modifier = modifier
@@ -343,16 +329,6 @@ fun BudgetErrorRetryState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        var isAnimating by remember { mutableStateOf(true) }
-        val rotation by animateFloatAsState(
-            targetValue = if (isAnimating) 10f else 0f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(500, easing = LinearEasing),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "error_icon_rotation"
-        )
-
         Box(
             modifier = Modifier
                 .size(120.dp)
@@ -404,7 +380,7 @@ fun BudgetErrorRetryState(
         Spacer(modifier = Modifier.height(40.dp))
 
         Button(
-            onClick = retryLambda,
+            onClick = onRetry,
             modifier = Modifier
                 .height(54.dp)
                 .fillMaxWidth(0.7f),
@@ -418,35 +394,27 @@ fun BudgetErrorRetryState(
                 pressedElevation = 4.dp
             )
         ) {
-            if (isRetryLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    strokeWidth = 2.dp
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Refresh,
+                    contentDescription = "Retry",
+                    modifier = Modifier.size(20.dp)
                 )
-            } else {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Refresh,
-                        contentDescription = "Retry",
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Try Again",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Try Again",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         TextButton(
-            onClick = supportLambda,
+            onClick = { /* Optional: Add support action */ },
             modifier = Modifier.fillMaxWidth(0.6f)
         ) {
             Text(
@@ -592,16 +560,8 @@ fun BudgetItem(
 ) {
     val budget = budgetWithStatus.budget
     val status = budgetWithStatus.status
-    val visibleCategories by remember(budget.categories) {
-        mutableStateOf(budget.categories.take(3))
-    }
-    val remainingCategoriesCount by remember(budget.categories) {
-        mutableStateOf(budget.categories.size - 3)
-    }
-    val dateText by remember(budget.startDate, budget.endDate) {
-        mutableStateOf("${budget.startDate.formatAsShortDate()} - ${budget.endDate.formatAsShortDate()}")
-    }
-    val chipLambda = remember { {} }
+    val visibleCategories = budget.categories.take(3)
+    val remainingCategoriesCount = budget.categories.size - 3
 
     Card(
         modifier = Modifier
@@ -732,7 +692,7 @@ fun BudgetItem(
                 ) {
                     visibleCategories.forEach { category ->
                         AssistChip(
-                            onClick = chipLambda,
+                            onClick = {},
                             label = {
                                 Text(
                                     category.name,
@@ -775,7 +735,7 @@ fun BudgetItem(
             }
 
             Text(
-                text = dateText,
+                text = "${budget.startDate.formatAsShortDate()} - ${budget.endDate.formatAsShortDate()}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
