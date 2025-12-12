@@ -89,7 +89,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-// TODO: Improve state handling in these composable; reduce the no of LaunchedEffects and move some states & validation logic to ViewModel
+// This screen handles creating and editing of budgets; that explains the multiple launched effect. Later we could break ti down to create and edit screens separately
 @OptIn(ExperimentalTime::class)
 @Composable
 fun BudgetDetailScreen(
@@ -241,6 +241,7 @@ private fun computeInitialFormState(
                     }
                 )
             }
+
             else -> {
                 // Loading or error state
                 BudgetFormState()
