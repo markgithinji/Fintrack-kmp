@@ -97,40 +97,12 @@ fun AddTransactionScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
-    // ========== LAMBDA FUNCTIONS ==========
-    val onAccountSelected = remember { { account: Account? -> selectedAccount = account } }
-    val onRetry = remember(accountsViewModel) { { accountsViewModel.reloadAccounts() } }
-
-    val onAmountChange = remember { { newAmount: String -> amount = newAmount } }
-    val onIncomeChange = remember { { newIsIncome: Boolean -> isIncome = newIsIncome } }
-    val onCategorySelected = remember { { newCategory: Category? -> category = newCategory } }
-    val onDescriptionChange =
-        remember { { newDescription: String -> description = newDescription } }
-
-    val onDateClicked = remember { { showDatePicker = true } }
-    val onTimeClicked = remember { { showTimePicker = true } }
-
-    val onSaveClick = remember {
-        {
-            transactionsViewModel.addTransaction(
-                amount = amount,
-                isIncome = isIncome,
-                category = category,
-                description = description,
-                selectedAccount = selectedAccount,
-                dateTime = dateTime
-            )
-        }
-    }
-    // ========== END LAMBDA FUNCTIONS ==========
-
     LaunchedEffect(saveState) {
         when (saveState) {
             is SaveState.Success<*> -> {
                 delay(1000)
                 onBack()
             }
-
             else -> Unit
         }
     }
@@ -147,35 +119,35 @@ fun AddTransactionScreen(
             AccountSelectionSection(
                 accountsResult = accountsResult,
                 selectedAccount = selectedAccount,
-                onAccountSelected = onAccountSelected,
-                onRetry = onRetry
+                onAccountSelected = { selectedAccount = it },
+                onRetry = { accountsViewModel.reloadAccounts() }
             )
 
             AmountInputSection(
                 amount = amount,
-                onAmountChange = onAmountChange
+                onAmountChange = { amount = it }
             )
 
             TransactionTypeSection(
                 isIncome = isIncome,
-                onIncomeChange = onIncomeChange
+                onIncomeChange = { isIncome = it }
             )
 
             CategorySelectionSection(
                 isIncome = isIncome,
                 selectedCategory = category,
-                onCategorySelected = onCategorySelected
+                onCategorySelected = { category = it }
             )
 
             DescriptionInputSection(
                 description = description,
-                onDescriptionChange = onDescriptionChange
+                onDescriptionChange = { description = it }
             )
 
             DateTimeSelectionSection(
                 dateTime = dateTime,
-                onDateClicked = onDateClicked,
-                onTimeClicked = onTimeClicked
+                onDateClicked = { showDatePicker = true },
+                onTimeClicked = { showTimePicker = true }
             )
 
             if (showDatePicker) {
@@ -205,7 +177,16 @@ fun AddTransactionScreen(
                 amount = amount,
                 category = category,
                 selectedAccount = selectedAccount,
-                onSaveClick = onSaveClick
+                onSaveClick = {
+                    transactionsViewModel.addTransaction(
+                        amount = amount,
+                        isIncome = isIncome,
+                        category = category,
+                        description = description,
+                        selectedAccount = selectedAccount,
+                        dateTime = dateTime
+                    )
+                }
             )
         }
 

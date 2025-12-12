@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -33,37 +32,7 @@ fun HomeScreen(
     val overviewResult by statsViewModel.overview.collectAsStateWithLifecycle()
     val categoryComparisonResult by statsViewModel.categoryComparisons.collectAsStateWithLifecycle()
 
-    val onAccountSelected = remember(accountsViewModel) {
-        { accountId: String ->
-            accountsViewModel.selectAccount(accountId)
-        }
-    }
-
-    val onRetry = remember(accountsViewModel) {
-        {
-            accountsViewModel.reloadAccounts()
-        }
-    }
-
-    val onIncomeExpenseCardClick = remember(onCardClick, selectedAccountResult) {
-        { isIncome: Boolean ->
-            val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-            if (accountId != null) {
-                onCardClick(accountId, isIncome)
-            }
-        }
-    }
-
-    val onViewAllTransactionsClick = remember(onCardClick, selectedAccountResult) {
-        {
-            val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-            if (accountId != null) {
-                onCardClick(accountId, null)
-            }
-        }
-    }
-
-    // Reload dependent data whenever the selected account changes
+    // Load data when selected account changes
     LaunchedEffect(selectedAccountResult) {
         val accountId = (selectedAccountResult as? Result.Success)?.data?.id
         accountId?.let { id ->
@@ -84,15 +53,18 @@ fun HomeScreen(
             CurrentBalanceCardWrapper(
                 accountsResult = accountsResult,
                 selectedAccountResult = selectedAccountResult,
-                onAccountSelected = onAccountSelected,
-                onRetry = onRetry
+                onAccountSelected = { accountId -> accountsViewModel.selectAccount(accountId) },
+                onRetry = { accountsViewModel.reloadAccounts() }
             )
         }
 
         item {
             IncomeExpenseCards(
                 accountResult = selectedAccountResult,
-                onCardClick = onIncomeExpenseCardClick
+                onCardClick = { isIncome ->
+                    val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                    accountId?.let { onCardClick(it, isIncome) }
+                }
             )
         }
 
@@ -106,7 +78,10 @@ fun HomeScreen(
         item {
             TransactionsListCard(
                 transactionsResult = transactionsResult,
-                onViewAllClick = onViewAllTransactionsClick
+                onViewAllClick = {
+                    val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                    accountId?.let { onCardClick(it, null) }
+                }
             )
         }
     }

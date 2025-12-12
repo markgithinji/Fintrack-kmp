@@ -28,7 +28,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,11 +37,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.formatToCurrency
+import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.ui.common.AnimatedShimmerBox
-import com.fintrack.shared.feature.core.util.formatToCurrency
-import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 
@@ -108,19 +107,15 @@ private fun CategoryComparisonItem(
     comparison: CategoryComparison,
     isLast: Boolean
 ) {
-    val category = remember(comparison) {
-        Category.fromName(
-            comparison.category,
-            comparison.currentTotal < 0 || comparison.previousTotal < 0
-        )
-    }
+    val category = Category.fromName(
+        comparison.category,
+        comparison.currentTotal < 0 || comparison.previousTotal < 0
+    )
     val icon = category.toIcon()
     val bgColor = category.toColor().copy(alpha = 0.15f)
     val iconTint = category.toColor()
 
-    val positive = remember(comparison) {
-        comparison.changePercentage >= 0
-    }
+    val positive = comparison.changePercentage >= 0
     val arrowIcon = if (positive)
         Icons.AutoMirrored.Outlined.TrendingUp
     else
@@ -131,21 +126,17 @@ private fun CategoryComparisonItem(
     else
         MaterialTheme.colorScheme.error
 
-    val periodLabel = remember(comparison) {
-        when (comparison.period.lowercase()) {
-            "weekly" -> "week"
-            "monthly" -> "month"
-            "yearly" -> "year"
-            else -> comparison.period
-        }
+    val periodLabel = when (comparison.period.lowercase()) {
+        "weekly" -> "week"
+        "monthly" -> "month"
+        "yearly" -> "year"
+        else -> comparison.period
     }
 
-    val changeText = remember(comparison, periodLabel, positive) {
-        if (positive) {
-            "${comparison.changePercentage.formatToSinglePrecision()}% more than last $periodLabel"
-        } else {
-            "${(comparison.changePercentage * -1).formatToSinglePrecision()}% less than last $periodLabel"
-        }
+    val changeText = if (positive) {
+        "${comparison.changePercentage.formatToSinglePrecision()}% more than last $periodLabel"
+    } else {
+        "${(comparison.changePercentage * -1).formatToSinglePrecision()}% less than last $periodLabel"
     }
 
     Column(

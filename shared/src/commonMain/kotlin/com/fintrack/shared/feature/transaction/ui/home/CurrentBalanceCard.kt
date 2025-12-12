@@ -464,22 +464,17 @@ private fun AccountSelectionListState(
     ) {
         items(accounts) { acc ->
             val isSelected = selectedAccountId == acc.id
-            val backgroundColor by animateColorAsState(
-                if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                else Color.Transparent
-            )
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp, horizontal = 4.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(backgroundColor)
-                    .clickable(
-                        onClick = { onAccountSelected(acc.id) },
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
+                    .background(
+                        if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                        else Color.Transparent
                     )
+                    .clickable { onAccountSelected(acc.id) }  // Simplified
                     .padding(vertical = 12.dp, horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -487,9 +482,7 @@ private fun AccountSelectionListState(
                     modifier = Modifier
                         .size(36.dp)
                         .background(
-                            color = if (isSelected) MaterialTheme.colorScheme.primary.copy(
-                                alpha = 0.1f
-                            )
+                            color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                             else MaterialTheme.colorScheme.surfaceVariant,
                             shape = CircleShape
                         ),
