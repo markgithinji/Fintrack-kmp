@@ -45,7 +45,7 @@ import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.model.TabType
 import com.fintrack.shared.feature.summary.ui.util.toFormattedDate
 import com.fintrack.shared.feature.summary.ui.util.toMonthName
-import com.fintrack.shared.feature.transaction.ui.common.AnimatedShimmerBox
+import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 
 @Composable
 fun SpendingHighlightsSection(

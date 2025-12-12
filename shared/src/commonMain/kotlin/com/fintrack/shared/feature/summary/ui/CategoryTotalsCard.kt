@@ -69,7 +69,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.TabType
-import com.fintrack.shared.feature.transaction.ui.common.AnimatedShimmerBox
+import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 
 @Composable
 fun CategoryTotalsCardWithTabs(

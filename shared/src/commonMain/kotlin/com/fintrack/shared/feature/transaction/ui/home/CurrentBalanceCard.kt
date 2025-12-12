@@ -1,9 +1,7 @@
 package com.fintrack.shared.feature.transaction.ui.home
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,7 +48,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.transaction.ui.common.AnimatedShimmerBox
+import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 
 @Composable
 fun CurrentBalanceCardWrapper(

@@ -34,7 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
-import com.fintrack.shared.feature.transaction.ui.common.AnimatedShimmerBox
+import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 
 @Composable
 fun TransactionListLoadingMoreState() {

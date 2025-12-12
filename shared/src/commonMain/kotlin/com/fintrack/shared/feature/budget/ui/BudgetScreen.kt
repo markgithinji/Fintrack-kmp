@@ -64,7 +64,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDate
 import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.core.util.formatToSinglePrecision
-import com.fintrack.shared.feature.transaction.ui.common.AnimatedShimmerBox
+import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
