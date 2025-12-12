@@ -17,7 +17,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,28 +24,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.compose.GreenIncome
+import com.example.compose.PinkExpense
+import com.fintrack.shared.feature.core.util.formatAsShortDate
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
-import com.fintrack.shared.feature.core.util.formatAsShortDate
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 
 @Composable
 fun TransactionItem(transaction: Transaction) {
-    val category = remember(transaction) {
-        Category.fromName(
-            transaction.category,
-            isExpense = !transaction.isIncome
-        )
-    }
-
-    val amountColor = remember(transaction) {
-        if (transaction.isIncome) Color(0xFF2E7D32) else Color(0xFFC62828)
-    }
-
-    val formattedDate = remember(transaction) {
-        transaction.dateTime.date.formatAsShortDate()
-    }
+    val category = Category.fromName(
+        transaction.category,
+        isExpense = !transaction.isIncome
+    )
+    val amountColor = if (transaction.isIncome) GreenIncome else PinkExpense
+    val formattedDate = transaction.dateTime.date.formatAsShortDate()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
