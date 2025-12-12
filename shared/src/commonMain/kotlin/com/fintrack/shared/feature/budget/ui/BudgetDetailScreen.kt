@@ -45,6 +45,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,6 +79,7 @@ import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
@@ -102,15 +104,17 @@ fun BudgetDetailScreen(
         computeInitialFormState(budgetId, selectedBudgetResult, accountsResult)
     }
 
-    // For showing validation errors
     var showValidationError by remember { mutableStateOf(false) }
     var validationErrorMessage by remember { mutableStateOf("") }
+
+    val validationResult by remember(formState) {
+        derivedStateOf { validateForm(formState) }
+    }
 
     LaunchedEffect(budgetId) {
         budgetId?.let { viewModel.loadBudgetById(it) }
     }
 
-    // Handle save result
     LaunchedEffect(saveState) {
         if (saveState is SaveState.Success) {
             onSave()
@@ -146,9 +150,7 @@ fun BudgetDetailScreen(
                         onAccountSelected = { account ->
                             formState.selectedAccount = account
                         },
-                        onRetry = {
-                            accountsViewModel.reloadAccounts()
-                        }
+                        onRetry = { accountsViewModel.reloadAccounts() }
                     )
 
                     BudgetForm(
@@ -163,7 +165,8 @@ fun BudgetDetailScreen(
                         startDate = formState.startDate,
                         endDate = formState.endDate,
                         onPeriodChange = {
-                            formState.startDate = it.first; formState.endDate = it.second
+                            formState.startDate = it.first
+                            formState.endDate = it.second
                         }
                     )
                 }
@@ -187,11 +190,9 @@ fun BudgetDetailScreen(
             )
         }
 
-        // --- Save FAB ---
         BudgetDetailSaveButton(
             saveState = saveState,
             onSaveClick = {
-                val validationResult = validateForm(formState)
                 if (validationResult.isValid) {
                     viewModel.saveBudget(
                         id = budgetId,
@@ -231,22 +232,27 @@ private fun computeInitialFormState(
     selectedBudgetResult: Result<BudgetWithStatus>?,
     accountsResult: Result<List<Account>>
 ): BudgetFormState {
+
+    val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    val isAccountsSuccess = accountsResult is Result.Success
+    val accountsData = if (isAccountsSuccess) (accountsResult as Result.Success<List<Account>>).data else emptyList()
+    val firstExpenseCategory = if (Category.expenseCategories.isNotEmpty()) Category.expenseCategories[0] else null
+
     return if (budgetId == null) {
         // New budget - default values
-        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
         BudgetFormState(
             name = "",
             amount = "",
-            selectedCategories = if (Category.expenseCategories.isNotEmpty()) {
-                setOf(Category.expenseCategories[0])
+            selectedCategories = if (firstExpenseCategory != null) {
+                setOf(firstExpenseCategory)
             } else {
                 emptySet()
             },
             isExpense = true,
             startDate = today,
             endDate = today.plus(DatePeriod(months = 1)),
-            selectedAccount = if (accountsResult is Result.Success && accountsResult.data.isNotEmpty()) {
-                accountsResult.data.first()
+            selectedAccount = if (accountsData.isNotEmpty()) {
+                accountsData.first()
             } else {
                 null
             }
@@ -264,8 +270,8 @@ private fun computeInitialFormState(
                     isExpense = budget.isExpense,
                     startDate = budget.startDate,
                     endDate = budget.endDate,
-                    selectedAccount = if (accountsResult is Result.Success) {
-                        accountsResult.data.firstOrNull { it.id == budget.accountId }
+                    selectedAccount = if (isAccountsSuccess) {
+                        accountsData.firstOrNull { it.id == budget.accountId }
                     } else {
                         null
                     }
@@ -333,6 +339,8 @@ fun AccountSelectionSection(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val selectedAccountId by remember(selectedAccount) { mutableStateOf(selectedAccount?.id) }
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -417,7 +425,7 @@ fun AccountSelectionSection(
                         items(accountsResult.data) { account ->
                             AccountChip(
                                 account = account,
-                                isSelected = selectedAccount?.id == account.id,
+                                isSelected = selectedAccountId == account.id,
                                 onClick = { onAccountSelected(account) }
                             )
                         }
@@ -476,18 +484,8 @@ fun AccountChip(
                 overflow = TextOverflow.Ellipsis
             )
 
-            val balanceText = when {
-                account.balance == null -> "Ksh --"
-                else -> {
-                    val balanceValue = account.balance
-                    val integerPart = balanceValue.toLong()
-                    val decimalPart = ((balanceValue - integerPart) * 100).toInt()
-                    "Ksh $integerPart.${decimalPart.toString().padStart(2, '0')}"
-                }
-            }
-
             Text(
-                text = balanceText,
+                text = if (account.balance == null) "Ksh --" else "Ksh ${account.balance}",
                 fontSize = 12.sp,
                 color = Color.Gray
             )
@@ -501,7 +499,7 @@ fun BudgetDetailSaveButton(
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isLoading = saveState is SaveState.Loading
+    val isLoading by remember(saveState) { mutableStateOf(saveState is SaveState.Loading) }
 
     FloatingActionButton(
         onClick = {
@@ -538,7 +536,6 @@ fun BudgetDetailSaveButton(
         }
     }
 }
-
 @Composable
 fun BudgetForm(
     name: String,
@@ -554,7 +551,6 @@ fun BudgetForm(
     onPeriodChange: (Pair<LocalDate?, LocalDate?>) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
-        // --- Name ---
         Text("Budget Name", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
@@ -579,7 +575,6 @@ fun BudgetForm(
             )
         }
 
-        // --- Amount ---
         Text("Limit", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
@@ -608,7 +603,6 @@ fun BudgetForm(
             )
         }
 
-        // --- Expense / Income ---
         Text("Budget Type", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
@@ -636,7 +630,6 @@ fun BudgetForm(
             }
         }
 
-        // --- Categories ---
         Text("Categories", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
@@ -653,10 +646,8 @@ fun BudgetForm(
                     .fillMaxSize()
                     .padding(8.dp)
             ) {
-                val categories =
-                    if (isExpense) Category.expenseCategories else Category.incomeCategories
+                val categories = if (isExpense) Category.expenseCategories else Category.incomeCategories
 
-                // --- Add "All" chip at the start ---
                 item {
                     val allSelected = selectedCategories.containsAll(categories)
                     CategoryChip(
@@ -675,7 +666,6 @@ fun BudgetForm(
                     )
                 }
 
-                // --- Category chips ---
                 items(categories.size) { index ->
                     val cat = categories[index]
                     val selected = selectedCategories.contains(cat)
@@ -694,7 +684,6 @@ fun BudgetForm(
             }
         }
 
-        // --- Period Picker ---
         Text("Period", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
@@ -742,7 +731,14 @@ private fun DateField(
     onDateSelected: (LocalDate) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val formatted = date?.formatAsShortDateWithYear() ?: "Select"
+    val formatted by remember(date) {
+        derivedStateOf { date?.formatAsShortDateWithYear() ?: "Select" }
+    }
+
+    val today = LocalDate(2025, 1, 1)
+    var year by remember { mutableStateOf(date?.year ?: today.year) }
+    var month by remember { mutableStateOf(date?.month?.number ?: today.month.number) }
+    var day by remember { mutableStateOf(date?.day ?: today.day) }
 
     Box {
         OutlinedCard(
@@ -750,8 +746,6 @@ private fun DateField(
                 .widthIn(min = 120.dp)
                 .height(64.dp)
                 .clickable { expanded = true },
-            shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.outlinedCardColors()
         ) {
             Column(
                 verticalArrangement = Arrangement.Center,
@@ -770,11 +764,6 @@ private fun DateField(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            val today = LocalDate(2025, 1, 1)
-            var year by remember { mutableStateOf(date?.year ?: today.year) }
-            var month by remember { mutableStateOf(date?.monthNumber ?: today.monthNumber) }
-            var day by remember { mutableStateOf(date?.dayOfMonth ?: today.dayOfMonth) }
-
             Column(Modifier.padding(12.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     NumberSelector("Year", year, 2000..2100) { year = it }
@@ -792,6 +781,7 @@ private fun DateField(
         }
     }
 }
+
 
 @Composable
 private fun NumberSelector(
