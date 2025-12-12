@@ -1,18 +1,8 @@
 package com.fintrack.shared.feature.summary.ui
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -35,16 +25,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
@@ -66,70 +53,37 @@ fun SpendingHighlightsSection(
     highlightsResult: Result<StatisticsSummary>,
     loadHighlights: () -> Unit
 ) {
-    val sectionTitle = remember(tabType) {
-        when (tabType) {
-            is TabType.Income -> "Income Highlights"
-            is TabType.Expense -> "Spending Highlights"
-        }
+    val sectionTitle = when (tabType) {
+        TabType.Income -> "Income Highlights"
+        TabType.Expense -> "Spending Highlights"
     }
 
-    val amountSuffix = remember(tabType) {
-        when (tabType) {
-            is TabType.Income -> "received"
-            is TabType.Expense -> "spent"
-        }
+    val amountSuffix = when (tabType) {
+        TabType.Income -> "received"
+        TabType.Expense -> "spent"
     }
 
-    val dailyLabel = remember(tabType) {
-        when (tabType) {
-            is TabType.Income -> "Daily Income"
-            is TabType.Expense -> "Daily Spending"
-        }
+    val dailyLabel = when (tabType) {
+        TabType.Income -> "Daily Income"
+        TabType.Expense -> "Daily Spending"
     }
 
-    // Animation for tab/content changes
-    val animatedAlpha by animateFloatAsState(
-        targetValue = 1f,
-        animationSpec = tween(durationMillis = 300),
-        label = "contentAlpha"
-    )
-
-    // Animate content scale when data changes
-    val animatedScale by animateFloatAsState(
-        targetValue = 1f,
-        animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f),
-        label = "contentScale"
-    )
-
-    Column(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .graphicsLayer {
-                alpha = animatedAlpha
-                scaleX = animatedScale
-                scaleY = animatedScale
-            }
-    ) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Text(
             text = sectionTitle,
             fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.animateContentSize()
+            fontWeight = FontWeight.SemiBold
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Animate between states
         Crossfade(
             targetState = highlightsResult,
-            animationSpec = tween(durationMillis = 300),
-            label = "highlightsState"
+            animationSpec = tween(durationMillis = 300)
         ) { result ->
             when (result) {
                 is Result.Loading -> {
                     // Show loading highlight cards
-                    Column(
-                        modifier = Modifier.animateContentSize()
-                    ) {
+                    Column {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -176,11 +130,9 @@ private fun SuccessContent(
     amountSuffix: String,
     dailyLabel: String
 ) {
-    val summaryHighlights = remember(tabType, data) {
-        when (tabType) {
-            is TabType.Income -> data.incomeHighlights
-            is TabType.Expense -> data.expenseHighlights
-        }
+    val summaryHighlights = when (tabType) {
+        TabType.Income -> data.incomeHighlights
+        TabType.Expense -> data.expenseHighlights
     }
 
     // Provide defaults if null
@@ -189,144 +141,57 @@ private fun SuccessContent(
     val day = summaryHighlights.highestDay ?: Highlight("", "", 0.0)
     val average = summaryHighlights.averagePerDay
 
-    val firstRowAnimation = tween<IntOffset>(
-        durationMillis = 400,
-        delayMillis = 100,
-        easing = FastOutSlowInEasing
-    )
-
-    val secondRowAnimation = tween<IntOffset>(
-        durationMillis = 400,
-        delayMillis = 200,
-        easing = FastOutSlowInEasing
-    )
-
-    Column(
-        modifier = Modifier.animateContentSize()
-    ) {
+    Column {
         // First row
-        AnimatedVisibility(
-            visible = true,
-            enter = fadeIn() + slideInHorizontally(
-                initialOffsetX = { -it },
-                animationSpec = firstRowAnimation
-            ),
-            exit = fadeOut() + slideOutHorizontally(
-                targetOffsetX = { -it },
-                animationSpec = firstRowAnimation
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                HighlightCard(
-                    modifier = Modifier
-                        .weight(1f)
-                        .animateEnterExit(
-                            enter = slideInHorizontally(
-                                initialOffsetX = { -it },
-                                animationSpec = firstRowAnimation
-                            ),
-                            exit = slideOutHorizontally(
-                                targetOffsetX = { -it },
-                                animationSpec = firstRowAnimation
-                            )
-                        ),
-                    title = "Highest Month",
-                    value = month.value.toMonthName(),
-                    description = "${formatCurrency(month.amount)} $amountSuffix",
-                    backgroundColor = SegmentColor3,
-                    titleColor = Color.White,
-                    valueColor = Color.White,
-                    contentSpacing = 8.dp
-                )
-                HighlightCard(
-                    modifier = Modifier
-                        .weight(1f)
-                        .animateEnterExit(
-                            enter = slideInHorizontally(
-                                initialOffsetX = { it },
-                                animationSpec = firstRowAnimation
-                            ),
-                            exit = slideOutHorizontally(
-                                targetOffsetX = { it },
-                                animationSpec = firstRowAnimation
-                            )
-                        ),
-                    title = "Top Category",
-                    value = category.value,
-                    description = "${formatCurrency(category.amount)} $amountSuffix",
-                    backgroundColor = SegmentColor4,
-                    titleColor = Color.White,
-                    valueColor = Color.White,
-                    contentSpacing = 8.dp
-                )
-            }
+            HighlightCard(
+                modifier = Modifier.weight(1f),
+                title = "Highest Month",
+                value = month.value.toMonthName(),
+                description = "${formatCurrency(month.amount)} $amountSuffix",
+                backgroundColor = SegmentColor3,
+                titleColor = Color.White,
+                valueColor = Color.White
+            )
+            HighlightCard(
+                modifier = Modifier.weight(1f),
+                title = "Top Category",
+                value = category.value,
+                description = "${formatCurrency(category.amount)} $amountSuffix",
+                backgroundColor = SegmentColor4,
+                titleColor = Color.White,
+                valueColor = Color.White
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         // Second row
-        AnimatedVisibility(
-            visible = true,
-            enter = fadeIn() + slideInHorizontally(
-                initialOffsetX = { it },
-                animationSpec = secondRowAnimation
-            ),
-            exit = fadeOut() + slideOutHorizontally(
-                targetOffsetX = { it },
-                animationSpec = secondRowAnimation
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                HighlightCard(
-                    modifier = Modifier
-                        .weight(1f)
-                        .animateEnterExit(
-                            enter = slideInHorizontally(
-                                initialOffsetX = { -it },
-                                animationSpec = secondRowAnimation
-                            ),
-                            exit = slideOutHorizontally(
-                                targetOffsetX = { -it },
-                                animationSpec = secondRowAnimation
-                            )
-                        ),
-                    title = "Highest Daily",
-                    value = day.value.toFormattedDate(),
-                    description = "${formatCurrency(day.amount)} $amountSuffix",
-                    backgroundColor = SegmentColor5,
-                    titleColor = Color.White,
-                    valueColor = Color.White,
-                    contentSpacing = 8.dp
-                )
-
-                HighlightCard(
-                    modifier = Modifier
-                        .weight(1f)
-                        .animateEnterExit(
-                            enter = slideInHorizontally(
-                                initialOffsetX = { it },
-                                animationSpec = secondRowAnimation
-                            ),
-                            exit = slideOutHorizontally(
-                                targetOffsetX = { it },
-                                animationSpec = secondRowAnimation
-                            )
-                        ),
-                    title = "Average Per Day",
-                    value = formatCurrency(average),
-                    description = dailyLabel,
-                    backgroundColor = SegmentColor2,
-                    titleColor = Color.White,
-                    valueColor = Color.White,
-                    contentSpacing = 8.dp
-                )
-            }
+            HighlightCard(
+                modifier = Modifier.weight(1f),
+                title = "Highest Daily",
+                value = day.value.toFormattedDate(),
+                description = "${formatCurrency(day.amount)} $amountSuffix",
+                backgroundColor = SegmentColor5,
+                titleColor = Color.White,
+                valueColor = Color.White
+            )
+            HighlightCard(
+                modifier = Modifier.weight(1f),
+                title = "Average Per Day",
+                value = formatCurrency(average),
+                description = dailyLabel,
+                backgroundColor = SegmentColor2,
+                titleColor = Color.White,
+                valueColor = Color.White
+            )
         }
     }
 }
@@ -445,27 +310,16 @@ fun HighlightCard(
 ) {
     val animatedBackground by animateColorAsState(
         targetValue = backgroundColor,
-        animationSpec = tween(durationMillis = 300),
-        label = "cardBackground"
+        animationSpec = tween(durationMillis = 300)
     )
 
-    val descriptionColor = remember(titleColor) {
-        titleColor.copy(alpha = 0.7f)
-    }
-
-    val animatedElevation by animateDpAsState(
-        targetValue = 4.dp,
-        animationSpec = tween(durationMillis = 200),
-        label = "cardElevation"
-    )
+    val descriptionColor = titleColor.copy(alpha = 0.7f)
 
     Card(
-        modifier = modifier
-            .height(100.dp)
-            .animateContentSize(),
+        modifier = modifier.height(100.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = animatedBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = animatedElevation)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier
@@ -479,43 +333,28 @@ fun HighlightCard(
                 fontSize = 14.sp,
                 color = titleColor,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.animateContentSize()
+                overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(contentSpacing))
 
-            // Animate value changes
-            Crossfade(
-                targetState = value,
-                animationSpec = tween(durationMillis = 300),
-                label = "valueText"
-            ) { currentValue ->
-                Text(
-                    text = currentValue,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = valueColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            Text(
+                text = value,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = valueColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
 
             Spacer(modifier = Modifier.height(contentSpacing))
 
-            // Animate description changes
-            Crossfade(
-                targetState = description,
-                animationSpec = tween(durationMillis = 300),
-                label = "descriptionText"
-            ) { currentDescription ->
-                Text(
-                    text = currentDescription,
-                    fontSize = 12.sp,
-                    color = descriptionColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            Text(
+                text = description,
+                fontSize = 12.sp,
+                color = descriptionColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }

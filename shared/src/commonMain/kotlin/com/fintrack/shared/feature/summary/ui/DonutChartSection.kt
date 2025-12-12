@@ -3,7 +3,6 @@ package com.fintrack.shared.feature.summary.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
@@ -12,32 +11,24 @@ import androidx.compose.ui.Modifier
 fun DonutChartSection(categorySums: List<Pair<String, Float>>, totalAmount: Float) {
     if (categorySums.isEmpty() || totalAmount <= 0f) return
 
-    val processedData = remember(categorySums) {
-        // Sort and prepare top categories + "Others"
-        val sortedForChart = categorySums.sortedByDescending { it.second }
-        val topForChart = sortedForChart.take(4).toMutableList()
-        val othersTotal = sortedForChart.drop(4).sumOf { it.second.toDouble() }.toFloat()
-        if (othersTotal > 0f) topForChart.add("Others" to othersTotal)
-        topForChart
+    val sortedForChart = categorySums.sortedByDescending { it.second }
+    val topForChart = sortedForChart.take(4).toMutableList()
+    val othersTotal = sortedForChart.drop(4).sumOf { it.second.toDouble() }.toFloat()
+
+    if (othersTotal > 0f) {
+        topForChart.add("Others" to othersTotal)
     }
 
-    val chartColors = remember(processedData) {
-        processedData.mapIndexed { index, _ ->
-            if (index < 4) SegmentColors[index] else SegmentColors.last()
-        }
+    val chartColors = topForChart.mapIndexed { index, _ ->
+        if (index < 4) SegmentColors[index] else SegmentColors.last()
     }
 
-    val processedDoubles = remember(processedData, totalAmount) {
-        Pair(
-            processedData.map { it.first to it.second.toDouble() },
-            totalAmount.toDouble()
-        )
-    }
+    val chartData = topForChart.map { it.first to it.second.toDouble() }
 
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         InteractiveDonutWithText(
-            categorySums = processedDoubles.first,
-            totalAmount = processedDoubles.second,
+            categorySums = chartData,
+            totalAmount = totalAmount.toDouble(),
             segmentColors = chartColors
         )
     }

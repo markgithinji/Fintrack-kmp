@@ -1,7 +1,6 @@
 package com.fintrack.shared.feature.summary.ui
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -32,7 +31,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -63,17 +61,11 @@ import com.example.compose.categoryAmountText
 import com.example.compose.categoryCardBg
 import com.example.compose.categoryNameText
 import com.example.compose.categoryPercentageText
-import com.example.compose.errorHeaderText
-import com.example.compose.errorIconColor
-import com.example.compose.errorMessageText
-import com.example.compose.errorRetryButton
-import com.example.compose.errorRetryButtonText
 import com.example.compose.periodSelectedBg
 import com.example.compose.periodSelectedText
 import com.example.compose.periodUnselectedBg
 import com.example.compose.periodUnselectedText
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.summary.domain.model.CategorySummary
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.TabType
@@ -163,7 +155,8 @@ fun CategoryTotalsCardWithTabs(
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = result.exception.message ?: "Failed to load distribution",
+                                        text = result.exception.message
+                                            ?: "Failed to load distribution",
                                         color = Color.Gray,
                                         fontSize = 14.sp,
                                         textAlign = TextAlign.Center
@@ -352,68 +345,26 @@ fun LoadingCategoryListItem(color: Color = Color.LightGray) {
 }
 
 @Composable
-fun LoadingPeriodSelector() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            repeat(3) {
-                AnimatedShimmerBox(
-                    modifier = Modifier
-                        .width(60.dp)
-                        .height(32.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                )
-            }
-        }
-        AnimatedShimmerBox(
-            modifier = Modifier
-                .width(120.dp)
-                .height(32.dp)
-                .clip(RoundedCornerShape(12.dp))
-        )
-    }
-}
-
-@Composable
 fun CategoryList(
     categories: List<Pair<String, Float>>,
     totalAmount: Float,
     segmentColors: List<Color>
 ) {
-    val sortedCategorySums by remember(categories) {
-        derivedStateOf { categories.sortedByDescending { it.second } }
-    }
+    val sortedCategorySums = categories.sortedByDescending { it.second }
 
-    val categoryColors by remember(categories, segmentColors) {
-        derivedStateOf {
-            sortedCategorySums.map { category ->
-                val chartIndex = categories.indexOfFirst { it.first == category.first }
-                if (chartIndex in 0..3) segmentColors[chartIndex] else segmentColors.last()
-            }
-        }
+    val categoryColors = sortedCategorySums.map { category ->
+        val chartIndex = categories.indexOfFirst { it.first == category.first }
+        if (chartIndex in 0..3) segmentColors[chartIndex] else segmentColors.last()
     }
-
-    val cardBackgroundColor = remember { categoryCardBg }
-    val categoryNameColor = remember { categoryNameText }
-    val amountColor = remember { categoryAmountText }
-    val percentageColor = remember { categoryPercentageText }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = cardBackgroundColor)
+        colors = CardDefaults.cardColors(containerColor = categoryCardBg)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             sortedCategorySums.forEachIndexed { index, (categoryName, amount) ->
-                val percent = remember(amount, totalAmount) {
-                    if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
-                }
+                val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
 
                 Row(
                     modifier = Modifier
@@ -434,7 +385,7 @@ fun CategoryList(
                     Text(
                         text = categoryName,
                         fontSize = 14.sp,
-                        color = categoryNameColor,
+                        color = categoryNameText,
                         modifier = Modifier.width(160.dp)
                     )
 
@@ -446,7 +397,7 @@ fun CategoryList(
                             text = formatCurrency(amount.toDouble()),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            color = amountColor
+                            color = categoryAmountText
                         )
                     }
 
@@ -456,7 +407,7 @@ fun CategoryList(
                         text = "($percent%)",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Normal,
-                        color = percentageColor
+                        color = categoryPercentageText
                     )
                 }
             }
@@ -475,16 +426,6 @@ fun PeriodSelector(
     onMonthSelected: (String) -> Unit = {},
     onYearSelected: (String) -> Unit = {}
 ) {
-    val onWeekSelectedRemembered = remember(onWeekSelected) { onWeekSelected }
-    val onMonthSelectedRemembered = remember(onMonthSelected) { onMonthSelected }
-    val onYearSelectedRemembered = remember(onYearSelected) { onYearSelected }
-    val onPeriodSelectedRemembered = remember(onPeriodSelected) { onPeriodSelected }
-
-    val selectedBackground = remember { periodSelectedBg }
-    val unselectedBackground = remember { periodUnselectedBg }
-    val selectedTextColor = remember { periodSelectedText }
-    val unselectedTextColor = remember { periodUnselectedText }
-
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -497,30 +438,28 @@ fun PeriodSelector(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 TimeSpan.entries.forEach { span ->
-                    val isSelected = remember(selectedPeriod, span) {
-                        when (span) {
-                            TimeSpan.WEEK -> selectedPeriod is Period.Week
-                            TimeSpan.MONTH -> selectedPeriod is Period.Month
-                            TimeSpan.YEAR -> selectedPeriod is Period.Year
-                        }
+                    val isSelected = when (span) {
+                        TimeSpan.WEEK -> selectedPeriod is Period.Week
+                        TimeSpan.MONTH -> selectedPeriod is Period.Month
+                        TimeSpan.YEAR -> selectedPeriod is Period.Year
                     }
 
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
                             .background(
-                                if (isSelected) selectedBackground else unselectedBackground
+                                if (isSelected) periodSelectedBg else periodUnselectedBg
                             )
                             .clickable {
                                 when (span) {
                                     TimeSpan.WEEK -> availableWeeks.firstOrNull()
-                                        ?.let { onPeriodSelectedRemembered(Period.Week(it)) }
+                                        ?.let { onPeriodSelected(Period.Week(it)) }
 
                                     TimeSpan.MONTH -> availableMonths.firstOrNull()
-                                        ?.let { onPeriodSelectedRemembered(Period.Month(it)) }
+                                        ?.let { onPeriodSelected(Period.Month(it)) }
 
                                     TimeSpan.YEAR -> availableYears.firstOrNull()
-                                        ?.let { onPeriodSelectedRemembered(Period.Year(it)) }
+                                        ?.let { onPeriodSelected(Period.Year(it)) }
                                 }
                             }
                             .padding(horizontal = 14.dp, vertical = 6.dp)
@@ -529,44 +468,34 @@ fun PeriodSelector(
                             text = span.displayName,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
-                            color = if (isSelected) selectedTextColor else unselectedTextColor
+                            color = if (isSelected) periodSelectedText else periodUnselectedText
                         )
                     }
                 }
             }
 
             // --- Custom Dropdown ---
-            val (options, selectedCode, onSelected, placeholder) = remember(
-                selectedPeriod,
-                availableWeeks,
-                availableMonths,
-                availableYears,
-                onWeekSelectedRemembered,
-                onMonthSelectedRemembered,
-                onYearSelectedRemembered
-            ) {
-                when (selectedPeriod) {
-                    is Period.Week -> Quad(
-                        availableWeeks,
-                        selectedPeriod.code,
-                        onWeekSelectedRemembered,
-                        "Select Week"
-                    )
+            val (options, selectedCode, onSelected, placeholder) = when (selectedPeriod) {
+                is Period.Week -> Quad(
+                    availableWeeks,
+                    selectedPeriod.code,
+                    onWeekSelected,
+                    "Select Week"
+                )
 
-                    is Period.Month -> Quad(
-                        availableMonths,
-                        selectedPeriod.code,
-                        onMonthSelectedRemembered,
-                        "Select Month"
-                    )
+                is Period.Month -> Quad(
+                    availableMonths,
+                    selectedPeriod.code,
+                    onMonthSelected,
+                    "Select Month"
+                )
 
-                    is Period.Year -> Quad(
-                        availableYears,
-                        selectedPeriod.code,
-                        onYearSelectedRemembered,
-                        "Select Year"
-                    )
-                }
+                is Period.Year -> Quad(
+                    availableYears,
+                    selectedPeriod.code,
+                    onYearSelected,
+                    "Select Year"
+                )
             }
 
             if (options.isNotEmpty()) {

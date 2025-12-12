@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -30,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.TabType
 import org.koin.compose.viewmodel.koinViewModel
+
 @Composable
 fun StatisticsScreen(
     viewModel: StatisticsViewModel = koinViewModel()
@@ -42,25 +42,8 @@ fun StatisticsScreen(
     val highlights by viewModel.highlights.collectAsStateWithLifecycle()
     val distributionResult by viewModel.distribution.collectAsStateWithLifecycle()
 
-    val onTabSelected = remember { { tab: TabType -> viewModel.onTabChanged(tab) } }
-    val loadHighlights = remember { { viewModel.loadHighlights() } }
-
-    val onPeriodSelected = remember { { period: Period -> viewModel.onPeriodChanged(period) } }
-
-    val safePeriod by remember(selectedPeriod, availableWeeks, availableMonths, availableYears) {
-        derivedStateOf {
-            selectedPeriod ?: getDefaultPeriod(availableWeeks, availableMonths, availableYears)
-        }
-    }
-
-    val onWeekSelected = remember(onPeriodSelected) {
-        { week: String -> onPeriodSelected(Period.Week(week)) }
-    }
-    val onMonthSelected = remember(onPeriodSelected) {
-        { month: String -> onPeriodSelected(Period.Month(month)) }
-    }
-    val onYearSelected = remember(onPeriodSelected) {
-        { year: String -> onPeriodSelected(Period.Year(year)) }
+    val safePeriod = selectedPeriod ?: remember(availableWeeks, availableMonths, availableYears) {
+        getDefaultPeriod(availableWeeks, availableMonths, availableYears)
     }
 
     // Load initial data
@@ -76,7 +59,7 @@ fun StatisticsScreen(
         item(key = "screenHeader") {
             ScreenHeader(
                 selectedTab = selectedTab,
-                onTabSelected = onTabSelected
+                onTabSelected = { viewModel.onTabChanged(it) }
             )
         }
 
@@ -86,7 +69,7 @@ fun StatisticsScreen(
             SpendingHighlightsSection(
                 tabType = selectedTab,
                 highlightsResult = highlights,
-                loadHighlights = loadHighlights
+                loadHighlights = { viewModel.loadHighlights() }
             )
         }
 
@@ -100,10 +83,10 @@ fun StatisticsScreen(
                 availableWeeks = availableWeeks,
                 availableMonths = availableMonths,
                 availableYears = availableYears,
-                onWeekSelected = onWeekSelected,
-                onMonthSelected = onMonthSelected,
-                onYearSelected = onYearSelected,
-                onPeriodSelected = onPeriodSelected
+                onWeekSelected = { week -> viewModel.onPeriodChanged(Period.Week(week)) },
+                onMonthSelected = { month -> viewModel.onPeriodChanged(Period.Month(month)) },
+                onYearSelected = { year -> viewModel.onPeriodChanged(Period.Year(year)) },
+                onPeriodSelected = { period -> viewModel.onPeriodChanged(period) }
             )
         }
     }
