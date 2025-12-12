@@ -36,11 +36,11 @@ import androidx.compose.ui.unit.dp
 import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.formatAsShortDate
+import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.transactionlist.TransactionLoadingItem
-import com.fintrack.shared.feature.core.util.formatAsShortDate
-import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 
@@ -235,7 +235,7 @@ fun TransactionRow(
     modifier: Modifier = Modifier
 ) {
     val category = Category.fromName(transaction.category, isExpense = !transaction.isIncome)
-    val isExpense = category.isExpense
+    val isExpense = !transaction.isIncome
     val amountColor = if (isExpense) PinkExpense else GreenIncome
 
     Row(
@@ -264,7 +264,6 @@ fun TransactionRow(
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        // Transaction Details
         Column(
             modifier = Modifier.weight(1f)
         ) {
@@ -290,7 +289,6 @@ fun TransactionRow(
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        // Amount and Date
         Column(
             horizontalAlignment = Alignment.End
         ) {
