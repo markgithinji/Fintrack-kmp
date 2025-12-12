@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.budget.ui
+package com.fintrack.shared.feature.core.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -26,8 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-
-
 @Composable
 fun MaterialToast(
     message: String,

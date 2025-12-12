@@ -58,7 +58,7 @@ import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.ui.AccountSelectionSection
-import com.fintrack.shared.feature.budget.ui.MaterialToast
+import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
