@@ -88,11 +88,10 @@ val errorMessageText = Color.Gray
 val errorRetryButton = GreenIncome
 val errorRetryButtonText = Color.White
 
-// Budget Detail Screen Colors
+
 val cardBackground = Color(0xFFF5F5F5) // For cards/containers
 val currencyTextColor = GreenIncome // For Ksh text
 val accountChipSelectedBg = Color(0xFFE3F2FD) // Selected account chip
 val accountChipBorder = Color(0xFF2196F3) // Selected account chip border
 val incomeButtonColor = Color(0xFF2E7D32) // Income button color
-
-
+val transactionBackground = Color(0xFFF5F5F5)

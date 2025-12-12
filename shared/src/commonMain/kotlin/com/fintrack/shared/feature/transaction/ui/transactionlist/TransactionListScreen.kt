@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.compose.transactionBackground
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
@@ -32,10 +33,9 @@ fun TransactionListScreen(
 ) {
     val transactionCounts by statisticsViewModel.transactionCounts.collectAsStateWithLifecycle()
 
-    val transactionsFlow = remember(accountId, isIncome) {
+    val transactions = remember(accountId, isIncome) {
         transactionsViewModel.getTransactionsPagingData(accountId, isIncome)
-    }
-    val transactions = transactionsFlow.collectAsLazyPagingItems()
+    }.collectAsLazyPagingItems()
 
     LaunchedEffect(accountId, isIncome) {
         statisticsViewModel.loadTransactionCounts(accountId, isIncome)
@@ -57,7 +57,7 @@ private fun TransactionListContent(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5F5)),
+            .background(transactionBackground),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -95,9 +95,7 @@ private fun TransactionListContent(
                     items(
                         count = transactions.itemCount,
                         key = { index ->
-                            val transaction = transactions.peek(index)
-                            // Combine ID + index for uniqueness
-                            transaction?.let { "${it.id}_$index" } ?: "loading_$index"
+                            transactions[index]?.id ?: "loading_$index"
                         }
                     ) { index ->
                         val transaction = transactions[index]
