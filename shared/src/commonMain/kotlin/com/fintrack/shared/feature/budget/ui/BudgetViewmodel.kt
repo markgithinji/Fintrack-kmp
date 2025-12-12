@@ -9,6 +9,7 @@ import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.budget.domain.model.ValidationResult
 import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.budget.domain.usecase.BudgetValidationUseCase
+import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,8 +31,8 @@ class BudgetViewModel(
     private val _budgets = MutableStateFlow<Result<List<BudgetWithStatus>>>(Result.Loading)
     val budgets: StateFlow<Result<List<BudgetWithStatus>>> = _budgets
 
-    private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
-    val saveState: StateFlow<SaveState> = _saveState
+    private val _saveState = MutableStateFlow<SaveState<Budget>>(SaveState.Idle)
+    val saveState: StateFlow<SaveState<Budget>> = _saveState
 
     private val _deleteResult = MutableStateFlow<Result<Unit>?>(null)
     val deleteResult: StateFlow<Result<Unit>?> = _deleteResult
@@ -148,6 +149,7 @@ class BudgetViewModel(
 
             val result = repo.addOrUpdateBudget(budget)
             _saveState.value = when (result) {
+                // Use generic SaveState.Success with Budget type
                 is Result.Success -> SaveState.Success(result.data)
                 is Result.Error -> SaveState.Error(result.exception)
                 is Result.Loading -> SaveState.Loading
@@ -173,11 +175,4 @@ class BudgetViewModel(
     fun resetSaveState() {
         _saveState.value = SaveState.Idle
     }
-}
-
-sealed class SaveState {
-    object Idle : SaveState()
-    object Loading : SaveState()
-    data class Success(val budget: Budget) : SaveState()
-    data class Error(val exception: Throwable) : SaveState()
 }

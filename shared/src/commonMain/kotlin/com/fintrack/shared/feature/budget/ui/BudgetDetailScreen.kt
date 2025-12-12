@@ -67,9 +67,11 @@ import com.example.compose.currencyTextColor
 import com.example.compose.incomeButtonColor
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
+import com.fintrack.shared.feature.budget.domain.model.Budget
 import com.fintrack.shared.feature.budget.domain.model.BudgetFormState
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.budget.domain.model.ValidationResult
+import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
@@ -414,12 +416,14 @@ fun AccountChip(
 
 @Composable
 fun BudgetDetailSaveButton(
-    saveState: SaveState,
+    saveState: SaveState<Budget>,
     validationState: ValidationResult,
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isLoading by remember(saveState) { mutableStateOf(saveState is SaveState.Loading) }
+    val isLoading by remember(saveState) {
+        mutableStateOf(saveState is SaveState.Loading)
+    }
     val isEnabled by remember(validationState, isLoading) {
         derivedStateOf { validationState.isValid && !isLoading }
     }
