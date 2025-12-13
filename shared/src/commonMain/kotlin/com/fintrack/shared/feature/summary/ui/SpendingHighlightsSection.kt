@@ -316,7 +316,7 @@ fun HighlightCard(
     val descriptionColor = titleColor.copy(alpha = 0.7f)
 
     Card(
-        modifier = modifier.height(100.dp),
+        modifier = modifier.height(110.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = animatedBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
