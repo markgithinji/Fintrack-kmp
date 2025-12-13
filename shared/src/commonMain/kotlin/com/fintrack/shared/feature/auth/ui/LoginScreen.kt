@@ -35,7 +35,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -84,14 +84,13 @@ fun LoginScreen(
     modifier: Modifier = Modifier
 ) {
     val loginState by viewModel.loginState.collectAsStateWithLifecycle()
+    val loginFormState by viewModel.loginFormState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
 
     // Track if error dialog should be shown
     var showErrorDialog by remember { mutableStateOf(false) }
     var currentError by remember { mutableStateOf<String?>(null) }
 
-    var email by remember { mutableStateOf("mark@example.com") }
-    var password by remember { mutableStateOf("securepassword123") }
     var rememberMe by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
 
@@ -109,26 +108,28 @@ fun LoginScreen(
             }
 
             else -> {
-                // Handle Idle, Loading states
+                // Handle Idle, Loading states - nothing to do here
             }
         }
     }
 
-    if (showErrorDialog && currentError != null) {
-        ErrorDialog(
-            errorMessage = currentError!!,
-            onDismiss = {
-                showErrorDialog = false
-                currentError = null
-                viewModel.resetLoginState()
-            },
-            onRetry = {
-                showErrorDialog = false
-                currentError = null
-                viewModel.login(email, password)
-            },
-            colorScheme = colorScheme
-        )
+    if (showErrorDialog) {
+        currentError?.let { errorMessage ->
+            ErrorDialog(
+                errorMessage = errorMessage,
+                onDismiss = {
+                    showErrorDialog = false
+                    currentError = null
+                    viewModel.resetLoginState()
+                },
+                onRetry = {
+                    showErrorDialog = false
+                    currentError = null
+                    viewModel.login()
+                },
+                colorScheme = colorScheme
+            )
+        }
     }
 
     Column(
@@ -180,28 +181,32 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // 2. Input Fields
+        // 2. Input Fields with validation
         FinanceTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = loginFormState.email,
+            onValueChange = { viewModel.updateLoginEmail(it) },
             label = "Enter your email",
             leadingIcon = Icons.Default.Email,
             keyboardType = KeyboardType.Email,
-            colorScheme = colorScheme
+            colorScheme = colorScheme,
+            isError = loginFormState.emailError != null,
+            errorMessage = loginFormState.emailError
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         FinanceTextField(
-            value = password,
-            onValueChange = { password = it },
+            value = loginFormState.password,
+            onValueChange = { viewModel.updateLoginPassword(it) },
             label = "Password",
             leadingIcon = Icons.Default.Lock,
             keyboardType = KeyboardType.Password,
             isPassword = true,
             passwordVisible = passwordVisible,
             onPasswordToggle = { passwordVisible = !passwordVisible },
-            colorScheme = colorScheme
+            colorScheme = colorScheme,
+            isError = loginFormState.passwordError != null,
+            errorMessage = loginFormState.passwordError
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -238,7 +243,7 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // 4. Login Button with state handling
+        // 4. Login Button with validation
         when (val state = loginState) {
             is AuthState.Loading -> {
                 Box(
@@ -258,7 +263,7 @@ fun LoginScreen(
                             color = colorScheme.onPrimaryContainer
                         )
                         Spacer(Modifier.width(12.dp))
-                        state.message?.ifEmpty { "Signing In..." }?.let {
+                        state.message.ifEmpty { "Signing In..." }.let {
                             Text(
                                 text = it,
                                 color = colorScheme.onPrimaryContainer,
@@ -300,7 +305,11 @@ fun LoginScreen(
             is AuthState.Error -> {
                 // Error is shown in dialog, show normal button
                 Button(
-                    onClick = { viewModel.login(email, password) },
+                    onClick = {
+                        if (loginFormState.isFormValid) {
+                            viewModel.login()
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
@@ -308,7 +317,8 @@ fun LoginScreen(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colorScheme.primary,
                         contentColor = colorScheme.onPrimary
-                    )
+                    ),
+                    enabled = loginFormState.isFormValid // Disable when invalid
                 ) {
                     Text("Sign In", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                 }
@@ -316,7 +326,11 @@ fun LoginScreen(
 
             is AuthState.Idle -> {
                 Button(
-                    onClick = { viewModel.login(email, password) },
+                    onClick = {
+                        if (loginFormState.isFormValid) {
+                            viewModel.login()
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
@@ -324,7 +338,8 @@ fun LoginScreen(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colorScheme.primary,
                         contentColor = colorScheme.onPrimary
-                    )
+                    ),
+                    enabled = loginFormState.isFormValid // Disable when invalid
                 ) {
                     Text("Sign In", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                 }
@@ -338,7 +353,7 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier.weight(1f),
                 color = colorScheme.outline.copy(alpha = 0.3f)
             )
@@ -348,7 +363,7 @@ fun LoginScreen(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 style = MaterialTheme.typography.bodyMedium
             )
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier.weight(1f),
                 color = colorScheme.outline.copy(alpha = 0.3f)
             )
@@ -506,6 +521,7 @@ fun ErrorDialog(
         }
     }
 }
+
 @Composable
 fun FinanceTextField(
     value: String,
@@ -567,7 +583,9 @@ fun FinanceTextField(
                 unfocusedTrailingIconColor = colorScheme.onSurfaceVariant,
                 cursorColor = colorScheme.primary,
                 focusedIndicatorColor = if (isError) colorScheme.error else colorScheme.primary,
-                unfocusedIndicatorColor = if (isError) colorScheme.error else colorScheme.outline.copy(alpha = 0.5f),
+                unfocusedIndicatorColor = if (isError) colorScheme.error else colorScheme.outline.copy(
+                    alpha = 0.5f
+                ),
                 errorIndicatorColor = colorScheme.error,
                 errorLabelColor = colorScheme.error,
                 errorLeadingIconColor = colorScheme.error,

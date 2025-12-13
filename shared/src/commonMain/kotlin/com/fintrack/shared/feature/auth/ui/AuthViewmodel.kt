@@ -5,9 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.auth.domain.datasource.TokenDataSource
 import com.fintrack.shared.feature.auth.domain.model.AuthResponse
 import com.fintrack.shared.feature.auth.domain.model.AuthState
+import com.fintrack.shared.feature.auth.domain.model.LoginFormState
 import com.fintrack.shared.feature.auth.domain.model.RegisterFormState
 import com.fintrack.shared.feature.auth.domain.model.ValidationResult
 import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
+import com.fintrack.shared.feature.auth.domain.usecase.LoginValidationUseCase
 import com.fintrack.shared.feature.auth.domain.usecase.RegisterValidationUseCase
 import com.fintrack.shared.feature.core.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +22,8 @@ import kotlinx.coroutines.launch
 class AuthViewModel(
     private val repository: AuthRepository,
     private val tokenDataSource: TokenDataSource,
-    private val registerValidationUseCase: RegisterValidationUseCase = RegisterValidationUseCase()
+    private val registerValidationUseCase: RegisterValidationUseCase,
+    private val loginValidationUseCase: LoginValidationUseCase
 ) : ViewModel() {
 
     private val _loginState = MutableStateFlow<AuthState<AuthResponse>>(AuthState.Idle)
@@ -36,6 +39,10 @@ class AuthViewModel(
     private val _registerFormState = MutableStateFlow(RegisterFormState())
     val registerFormState: StateFlow<RegisterFormState> = _registerFormState
 
+    // Add login form state
+    private val _loginFormState = MutableStateFlow(LoginFormState())
+    val loginFormState: StateFlow<LoginFormState> = _loginFormState
+
     val token: StateFlow<String?> = tokenDataSource.token
         .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
@@ -43,6 +50,78 @@ class AuthViewModel(
         checkAuthenticationStatus()
     }
 
+    // Login form update methods
+    fun updateLoginEmail(email: String) {
+        val currentState = _loginFormState.value
+        val emailError = when (val result = loginValidationUseCase.validateEmail(email)) {
+            is ValidationResult.Error -> result.message
+            is ValidationResult.Success -> null
+        }
+
+        _loginFormState.value = currentState.copy(
+            email = email,
+            emailError = emailError,
+            isFormValid = loginValidationUseCase.validateForm(email, currentState.password)
+        )
+    }
+
+    fun updateLoginPassword(password: String) {
+        val currentState = _loginFormState.value
+        val passwordError = when (val result = loginValidationUseCase.validatePassword(password)) {
+            is ValidationResult.Error -> result.message
+            is ValidationResult.Success -> null
+        }
+
+        _loginFormState.value = currentState.copy(
+            password = password,
+            passwordError = passwordError,
+            isFormValid = loginValidationUseCase.validateForm(currentState.email, password)
+        )
+    }
+
+    // Updated login method with validation
+    fun login() {
+        val formState = _loginFormState.value
+        if (!formState.isFormValid) return
+
+        _loginState.value = AuthState.Loading("Logging in...")
+        viewModelScope.launch {
+            when (val result = repository.login(formState.email, formState.password)) {
+                is Result.Success -> {
+                    tokenDataSource.saveToken(result.data.token)
+                    _loginState.value = AuthState.Success(result.data)
+                    _authStatus.value = AuthState.Success(true)
+                }
+
+                is Result.Error -> {
+                    _loginState.value = AuthState.Error(result.exception)
+                }
+
+                is Result.Loading -> {
+                    _loginState.value = AuthState.Loading("Connecting...")
+                }
+            }
+        }
+    }
+
+    // Original login method (for backward compatibility)
+    fun login(email: String, password: String) {
+        // Update form state first
+        updateLoginEmail(email)
+        updateLoginPassword(password)
+
+        // Then login if valid
+        if (_loginFormState.value.isFormValid) {
+            login()
+        }
+    }
+
+    // Reset login form
+    fun resetLoginForm() {
+        _loginFormState.value = LoginFormState()
+    }
+
+    // Register form methods (existing)
     fun updateName(name: String) {
         val currentState = _registerFormState.value
         val nameError = when (val result = registerValidationUseCase.validateName(name)) {
@@ -155,27 +234,6 @@ class AuthViewModel(
 
                 is Result.Loading -> {
                     _registerState.value = AuthState.Loading("Processing...")
-                }
-            }
-        }
-    }
-
-    fun login(email: String, password: String) {
-        _loginState.value = AuthState.Loading("Logging in...")
-        viewModelScope.launch {
-            when (val result = repository.login(email, password)) {
-                is Result.Success -> {
-                    tokenDataSource.saveToken(result.data.token)
-                    _loginState.value = AuthState.Success(result.data)
-                    _authStatus.value = AuthState.Success(true)
-                }
-
-                is Result.Error -> {
-                    _loginState.value = AuthState.Error(result.exception)
-                }
-
-                is Result.Loading -> {
-                    _loginState.value = AuthState.Loading("Connecting...")
                 }
             }
         }
