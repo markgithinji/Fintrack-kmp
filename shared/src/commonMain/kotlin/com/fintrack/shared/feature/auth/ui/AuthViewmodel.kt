@@ -5,7 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.auth.domain.datasource.TokenDataSource
 import com.fintrack.shared.feature.auth.domain.model.AuthResponse
 import com.fintrack.shared.feature.auth.domain.model.AuthState
+import com.fintrack.shared.feature.auth.domain.model.RegisterFormState
+import com.fintrack.shared.feature.auth.domain.model.ValidationResult
 import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
+import com.fintrack.shared.feature.auth.domain.usecase.RegisterValidationUseCase
 import com.fintrack.shared.feature.core.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,7 +19,8 @@ import kotlinx.coroutines.launch
 
 class AuthViewModel(
     private val repository: AuthRepository,
-    private val tokenDataSource: TokenDataSource
+    private val tokenDataSource: TokenDataSource,
+    private val registerValidationUseCase: RegisterValidationUseCase = RegisterValidationUseCase()
 ) : ViewModel() {
 
     private val _loginState = MutableStateFlow<AuthState<AuthResponse>>(AuthState.Idle)
@@ -29,11 +33,131 @@ class AuthViewModel(
         MutableStateFlow<AuthState<Boolean>>(AuthState.Loading("Checking authentication..."))
     val authStatus: StateFlow<AuthState<Boolean>> = _authStatus
 
+    private val _registerFormState = MutableStateFlow(RegisterFormState())
+    val registerFormState: StateFlow<RegisterFormState> = _registerFormState
+
     val token: StateFlow<String?> = tokenDataSource.token
         .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     init {
         checkAuthenticationStatus()
+    }
+
+    fun updateName(name: String) {
+        val currentState = _registerFormState.value
+        val nameError = when (val result = registerValidationUseCase.validateName(name)) {
+            is ValidationResult.Error -> result.message
+            is ValidationResult.Success -> null
+        }
+
+        _registerFormState.value = currentState.copy(
+            name = name,
+            nameError = nameError,
+            isFormValid = registerValidationUseCase.validateForm(
+                name = name,
+                email = currentState.email,
+                password = currentState.password,
+                confirmPassword = currentState.confirmPassword
+            )
+        )
+    }
+
+    fun updateEmail(email: String) {
+        val currentState = _registerFormState.value
+        val emailError = when (val result = registerValidationUseCase.validateEmail(email)) {
+            is ValidationResult.Error -> result.message
+            is ValidationResult.Success -> null
+        }
+
+        _registerFormState.value = currentState.copy(
+            email = email,
+            emailError = emailError,
+            isFormValid = registerValidationUseCase.validateForm(
+                name = currentState.name,
+                email = email,
+                password = currentState.password,
+                confirmPassword = currentState.confirmPassword
+            )
+        )
+    }
+
+    fun updatePassword(password: String) {
+        val currentState = _registerFormState.value
+        val passwordError =
+            when (val result = registerValidationUseCase.validatePassword(password)) {
+                is ValidationResult.Error -> result.message
+                is ValidationResult.Success -> null
+            }
+        val confirmPasswordError =
+            when (val result = registerValidationUseCase.validateConfirmPassword(
+                password,
+                currentState.confirmPassword
+            )) {
+                is ValidationResult.Error -> result.message
+                is ValidationResult.Success -> null
+            }
+        val passwordStrength = registerValidationUseCase.calculatePasswordStrength(password)
+
+        _registerFormState.value = currentState.copy(
+            password = password,
+            passwordError = passwordError,
+            confirmPasswordError = confirmPasswordError,
+            passwordStrength = passwordStrength,
+            isFormValid = registerValidationUseCase.validateForm(
+                name = currentState.name,
+                email = currentState.email,
+                password = password,
+                confirmPassword = currentState.confirmPassword
+            )
+        )
+    }
+
+    fun updateConfirmPassword(confirmPassword: String) {
+        val currentState = _registerFormState.value
+        val confirmPasswordError =
+            when (val result = registerValidationUseCase.validateConfirmPassword(
+                currentState.password,
+                confirmPassword
+            )) {
+                is ValidationResult.Error -> result.message
+                is ValidationResult.Success -> null
+            }
+
+        _registerFormState.value = currentState.copy(
+            confirmPassword = confirmPassword,
+            confirmPasswordError = confirmPasswordError,
+            isFormValid = registerValidationUseCase.validateForm(
+                name = currentState.name,
+                email = currentState.email,
+                password = currentState.password,
+                confirmPassword = confirmPassword
+            )
+        )
+    }
+
+    fun register() {
+        val formState = _registerFormState.value
+        if (!formState.isFormValid) return
+
+        _registerState.value = AuthState.Loading("Creating account...")
+        viewModelScope.launch {
+            when (val result =
+                repository.register(formState.name, formState.email, formState.password)) {
+                is Result.Success -> {
+                    tokenDataSource.saveToken(result.data.token)
+                    _registerState.value = AuthState.Success(result.data)
+                    _authStatus.value = AuthState.Success(true)
+                }
+
+                is Result.Error -> {
+                    _registerState.value = AuthState.Error(result.exception)
+                }
+
+                is Result.Loading -> {
+                    _registerState.value = AuthState.Loading("Processing...")
+                }
+            }
+        }
     }
 
     fun login(email: String, password: String) {
@@ -52,27 +176,6 @@ class AuthViewModel(
 
                 is Result.Loading -> {
                     _loginState.value = AuthState.Loading("Connecting...")
-                }
-            }
-        }
-    }
-
-    fun register(name: String, email: String, password: String) {
-        _registerState.value = AuthState.Loading("Creating account...")
-        viewModelScope.launch {
-            when (val result = repository.register(name, email, password)) {
-                is Result.Success -> {
-                    tokenDataSource.saveToken(result.data.token)
-                    _registerState.value = AuthState.Success(result.data)
-                    _authStatus.value = AuthState.Success(true)
-                }
-
-                is Result.Error -> {
-                    _registerState.value = AuthState.Error(result.exception)
-                }
-
-                is Result.Loading -> {
-                    _registerState.value = AuthState.Loading("Processing...")
                 }
             }
         }
@@ -129,4 +232,3 @@ class AuthViewModel(
         _registerState.value = AuthState.Idle
     }
 }
-
