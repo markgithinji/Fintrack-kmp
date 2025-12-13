@@ -25,7 +25,7 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalTime::class)
 class BudgetViewModel(
     private val repo: BudgetRepository,
-    private val validationUseCase: BudgetValidationUseCase = BudgetValidationUseCase()
+    private val validationUseCase: BudgetValidationUseCase
 ) : ViewModel() {
 
     private val _budgets = MutableStateFlow<Result<List<BudgetWithStatus>>>(Result.Loading)
