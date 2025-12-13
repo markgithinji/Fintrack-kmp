@@ -39,7 +39,6 @@ class AuthViewModel(
     private val _registerFormState = MutableStateFlow(RegisterFormState())
     val registerFormState: StateFlow<RegisterFormState> = _registerFormState
 
-    // Add login form state
     private val _loginFormState = MutableStateFlow(LoginFormState())
     val loginFormState: StateFlow<LoginFormState> = _loginFormState
 
@@ -50,7 +49,6 @@ class AuthViewModel(
         checkAuthenticationStatus()
     }
 
-    // Login form update methods
     fun updateLoginEmail(email: String) {
         val currentState = _loginFormState.value
         val emailError = when (val result = loginValidationUseCase.validateEmail(email)) {
@@ -79,7 +77,6 @@ class AuthViewModel(
         )
     }
 
-    // Updated login method with validation
     fun login() {
         val formState = _loginFormState.value
         if (!formState.isFormValid) return
@@ -104,24 +101,6 @@ class AuthViewModel(
         }
     }
 
-    // Original login method (for backward compatibility)
-    fun login(email: String, password: String) {
-        // Update form state first
-        updateLoginEmail(email)
-        updateLoginPassword(password)
-
-        // Then login if valid
-        if (_loginFormState.value.isFormValid) {
-            login()
-        }
-    }
-
-    // Reset login form
-    fun resetLoginForm() {
-        _loginFormState.value = LoginFormState()
-    }
-
-    // Register form methods (existing)
     fun updateName(name: String) {
         val currentState = _registerFormState.value
         val nameError = when (val result = registerValidationUseCase.validateName(name)) {
