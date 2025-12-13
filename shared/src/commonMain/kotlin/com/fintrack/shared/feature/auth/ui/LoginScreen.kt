@@ -27,8 +27,6 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Error
-import androidx.compose.material.icons.outlined.PhoneIphone
-import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -68,7 +66,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.GreenIncome
-import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.auth.domain.model.AuthState
 import fintrack.shared.generated.resources.Res
 import fintrack.shared.generated.resources.apple_signIn_icon
 import fintrack.shared.generated.resources.fintrack_app_icon
@@ -76,7 +74,6 @@ import fintrack.shared.generated.resources.google_signIn_icon
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
-
 
 @Composable
 fun LoginScreen(
@@ -101,30 +98,29 @@ fun LoginScreen(
     val colorScheme = MaterialTheme.colorScheme
 
     LaunchedEffect(loginState) {
-        when (loginState) {
-            is Result.Success -> {
+        when (val state = loginState) {
+            is AuthState.Success -> {
                 onLoginSuccess()
             }
 
-            is Result.Error -> {
-                val errorState = loginState as Result.Error
-                currentError = errorState.exception.message ?: "Login failed. Please try again."
+            is AuthState.Error -> {
+                currentError = state.exception.message ?: "Login failed. Please try again."
                 showErrorDialog = true
             }
 
             else -> {
-                // Handle other states (Loading, null, etc.)
+                // Handle Idle, Loading states
             }
         }
     }
 
-    // Custom Error Dialog
     if (showErrorDialog && currentError != null) {
         ErrorDialog(
             errorMessage = currentError!!,
             onDismiss = {
                 showErrorDialog = false
                 currentError = null
+                viewModel.resetLoginState()
             },
             onRetry = {
                 showErrorDialog = false
@@ -244,7 +240,7 @@ fun LoginScreen(
 
         // 4. Login Button with state handling
         when (val state = loginState) {
-            is Result.Loading -> {
+            is AuthState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -262,16 +258,18 @@ fun LoginScreen(
                             color = colorScheme.onPrimaryContainer
                         )
                         Spacer(Modifier.width(12.dp))
-                        Text(
-                            "Signing In...",
-                            color = colorScheme.onPrimaryContainer,
-                            fontWeight = FontWeight.Medium
-                        )
+                        state.message?.ifEmpty { "Signing In..." }?.let {
+                            Text(
+                                text = it,
+                                color = colorScheme.onPrimaryContainer,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }
 
-            is Result.Success -> {
+            is AuthState.Success -> {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -299,7 +297,24 @@ fun LoginScreen(
                 }
             }
 
-            else -> {
+            is AuthState.Error -> {
+                // Error is shown in dialog, show normal button
+                Button(
+                    onClick = { viewModel.login(email, password) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colorScheme.primary,
+                        contentColor = colorScheme.onPrimary
+                    )
+                ) {
+                    Text("Sign In", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                }
+            }
+
+            is AuthState.Idle -> {
                 Button(
                     onClick = { viewModel.login(email, password) },
                     modifier = Modifier

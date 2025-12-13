@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.GreenIncome
+import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.core.util.Result
 import fintrack.shared.generated.resources.Res
 import fintrack.shared.generated.resources.apple_signIn_icon
@@ -78,20 +79,18 @@ fun RegisterScreen(
     val colorScheme = MaterialTheme.colorScheme
 
     LaunchedEffect(registerState) {
-        when (registerState) {
-            is Result.Success -> {
+        when (val state = registerState) {
+            is AuthState.Success -> {
                 onRegisterSuccess()
             }
 
-            is Result.Error -> {
-                val errorState = registerState as Result.Error
-                currentError =
-                    errorState.exception.message ?: "Registration failed. Please try again."
+            is AuthState.Error -> {
+                currentError = state.exception.message ?: "Registration failed. Please try again."
                 showErrorDialog = true
             }
 
             else -> {
-                // TODO: Handle other states (Loading, null, etc.)
+                // Handle Idle, Loading states - nothing to do here
             }
         }
     }
@@ -103,6 +102,7 @@ fun RegisterScreen(
             onDismiss = {
                 showErrorDialog = false
                 currentError = null
+                viewModel.resetRegisterState()
             },
             onRetry = {
                 showErrorDialog = false
@@ -253,7 +253,7 @@ fun RegisterScreen(
                 password == confirmPassword
 
         when (val state = registerState) {
-            is Result.Loading -> {
+            is AuthState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -271,16 +271,18 @@ fun RegisterScreen(
                             color = colorScheme.onPrimaryContainer
                         )
                         Spacer(Modifier.width(12.dp))
-                        Text(
-                            "Creating Account...",
-                            color = colorScheme.onPrimaryContainer,
-                            fontWeight = FontWeight.Medium
-                        )
+                        state.message?.ifEmpty { "Creating Account..." }?.let {
+                            Text(
+                                text = it  ,
+                                color = colorScheme.onPrimaryContainer,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }
 
-            is Result.Success -> {
+            is AuthState.Success -> {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -308,7 +310,29 @@ fun RegisterScreen(
                 }
             }
 
-            else -> {
+            is AuthState.Error -> {
+                // Error is shown in dialog, show normal button
+                Button(
+                    onClick = {
+                        if (isFormValid) {
+                            viewModel.register(name, email, password)
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colorScheme.primary,
+                        contentColor = colorScheme.onPrimary
+                    ),
+                    enabled = isFormValid
+                ) {
+                    Text("Create Account", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                }
+            }
+
+            is AuthState.Idle -> {
                 Button(
                     onClick = {
                         if (isFormValid) {

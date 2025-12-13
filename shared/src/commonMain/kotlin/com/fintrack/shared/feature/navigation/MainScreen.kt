@@ -26,7 +26,8 @@ fun MainScreen() {
         AuthOrchestrator(
             authStatus = authStatus,
             currentRoute = currentRoute,
-            navController = navController
+            navController = navController,
+            authViewModel = authViewModel
         )
     }
 }
