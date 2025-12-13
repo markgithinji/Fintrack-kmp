@@ -7,7 +7,7 @@ import com.fintrack.shared.feature.auth.domain.model.AuthResponse
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.auth.domain.model.LoginFormState
 import com.fintrack.shared.feature.auth.domain.model.RegisterFormState
-import com.fintrack.shared.feature.auth.domain.model.ValidationResult
+import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
 import com.fintrack.shared.feature.auth.domain.usecase.LoginValidationUseCase
 import com.fintrack.shared.feature.auth.domain.usecase.RegisterValidationUseCase

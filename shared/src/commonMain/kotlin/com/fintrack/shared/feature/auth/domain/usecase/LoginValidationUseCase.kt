@@ -1,6 +1,6 @@
 package com.fintrack.shared.feature.auth.domain.usecase
 
-import com.fintrack.shared.feature.auth.domain.model.ValidationResult
+import com.fintrack.shared.feature.core.domain.ValidationResult
 
 class LoginValidationUseCase {
 

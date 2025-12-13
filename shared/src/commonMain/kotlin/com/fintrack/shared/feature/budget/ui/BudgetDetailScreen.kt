@@ -67,10 +67,10 @@ import com.example.compose.currencyTextColor
 import com.example.compose.incomeButtonColor
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
+import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.budget.domain.model.Budget
 import com.fintrack.shared.feature.budget.domain.model.BudgetFormState
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
-import com.fintrack.shared.feature.budget.domain.model.ValidationResult
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.util.Result
@@ -425,7 +425,9 @@ fun BudgetDetailSaveButton(
         mutableStateOf(saveState is SaveState.Loading)
     }
     val isEnabled by remember(validationState, isLoading) {
-        derivedStateOf { validationState.isValid && !isLoading }
+        derivedStateOf {
+            validationState is ValidationResult.Success && !isLoading
+        }
     }
 
     FloatingActionButton(

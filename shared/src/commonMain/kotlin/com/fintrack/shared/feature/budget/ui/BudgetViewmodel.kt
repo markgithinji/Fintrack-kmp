@@ -3,10 +3,10 @@ package com.fintrack.shared.feature.budget.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.account.domain.model.Account
+import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.budget.domain.model.Budget
 import com.fintrack.shared.feature.budget.domain.model.BudgetFormState
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
-import com.fintrack.shared.feature.budget.domain.model.ValidationResult
 import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.budget.domain.usecase.BudgetValidationUseCase
 import com.fintrack.shared.feature.core.domain.SaveState
@@ -57,7 +57,7 @@ class BudgetViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = ValidationResult(isValid = false)
+            initialValue = ValidationResult.Error("") // Initial error state
         )
 
     init {
@@ -129,30 +129,35 @@ class BudgetViewModel(
             selectedAccount = currentForm.selectedAccount
         )
 
-        if (!validation.isValid) {
-            _saveState.value = SaveState.Error(IllegalArgumentException(validation.errorMessage))
-            return
-        }
+        // Handle validation result with when statement
+        when (validation) {
+            is ValidationResult.Error -> {
+                _saveState.value = SaveState.Error(IllegalArgumentException(validation.message))
+                return
+            }
 
-        viewModelScope.launch {
-            _saveState.value = SaveState.Loading
-            val budget = Budget(
-                id = null,
-                accountId = currentForm.selectedAccount!!.id,
-                name = currentForm.name,
-                categories = currentForm.selectedCategories.toList(),
-                limit = currentForm.amount.toDoubleOrNull() ?: 0.0,
-                isExpense = currentForm.isExpense,
-                startDate = currentForm.startDate!!,
-                endDate = currentForm.endDate!!
-            )
+            is ValidationResult.Success -> {
+                // Continue with saving
+                viewModelScope.launch {
+                    _saveState.value = SaveState.Loading
+                    val budget = Budget(
+                        id = null,
+                        accountId = currentForm.selectedAccount!!.id,
+                        name = currentForm.name,
+                        categories = currentForm.selectedCategories.toList(),
+                        limit = currentForm.amount.toDoubleOrNull() ?: 0.0,
+                        isExpense = currentForm.isExpense,
+                        startDate = currentForm.startDate!!,
+                        endDate = currentForm.endDate!!
+                    )
 
-            val result = repo.addOrUpdateBudget(budget)
-            _saveState.value = when (result) {
-                // Use generic SaveState.Success with Budget type
-                is Result.Success -> SaveState.Success(result.data)
-                is Result.Error -> SaveState.Error(result.exception)
-                is Result.Loading -> SaveState.Loading
+                    val result = repo.addOrUpdateBudget(budget)
+                    _saveState.value = when (result) {
+                        is Result.Success -> SaveState.Success(result.data)
+                        is Result.Error -> SaveState.Error(result.exception)
+                        is Result.Loading -> SaveState.Loading
+                    }
+                }
             }
         }
     }

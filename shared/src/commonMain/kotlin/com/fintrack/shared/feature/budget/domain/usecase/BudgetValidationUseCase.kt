@@ -1,7 +1,7 @@
 package com.fintrack.shared.feature.budget.domain.usecase
 
 import com.fintrack.shared.feature.account.domain.model.Account
-import com.fintrack.shared.feature.budget.domain.model.ValidationResult
+import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import kotlinx.datetime.LocalDate
 
@@ -37,12 +37,9 @@ class BudgetValidationUseCase {
         }
 
         return if (errors.isEmpty()) {
-            ValidationResult(isValid = true)
+            ValidationResult.Success
         } else {
-            ValidationResult(
-                isValid = false,
-                errorMessage = errors.joinToString("\n")
-            )
+            ValidationResult.Error(errors.joinToString("\n"))
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.auth.domain.model
+package com.fintrack.shared.feature.core.domain
 
 sealed class ValidationResult {
     object Success : ValidationResult()
