@@ -47,7 +47,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.GreenIncome
 import com.fintrack.shared.feature.auth.domain.model.AuthState
-import com.fintrack.shared.feature.core.util.Result
 import fintrack.shared.generated.resources.Res
 import fintrack.shared.generated.resources.apple_signIn_icon
 import fintrack.shared.generated.resources.fintrack_app_icon
@@ -63,16 +62,13 @@ fun RegisterScreen(
     modifier: Modifier = Modifier
 ) {
     val registerState by viewModel.registerState.collectAsStateWithLifecycle()
+    val registerFormState by viewModel.registerFormState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
 
     // Track if error dialog should be shown
     var showErrorDialog by remember { mutableStateOf(false) }
     var currentError by remember { mutableStateOf<String?>(null) }
 
-    var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
@@ -96,21 +92,23 @@ fun RegisterScreen(
     }
 
     // Custom Error Dialog
-    if (showErrorDialog && currentError != null) {
-        ErrorDialog(
-            errorMessage = currentError!!,
-            onDismiss = {
-                showErrorDialog = false
-                currentError = null
-                viewModel.resetRegisterState()
-            },
-            onRetry = {
-                showErrorDialog = false
-                currentError = null
-                viewModel.register(name, email, password)
-            },
-            colorScheme = colorScheme
-        )
+    if (showErrorDialog) {
+        currentError?.let { errorMessage ->
+            ErrorDialog(
+                errorMessage = errorMessage,
+                onDismiss = {
+                    showErrorDialog = false
+                    currentError = null
+                    viewModel.resetRegisterState()
+                },
+                onRetry = {
+                    showErrorDialog = false
+                    currentError = null
+                    viewModel.register()
+                },
+                colorScheme = colorScheme
+            )
+        }
     }
 
     Column(
@@ -162,96 +160,66 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // 2. Input Fields
+        // 2. Input Fields with validation
         FinanceTextField(
-            value = name,
-            onValueChange = { name = it },
+            value = registerFormState.name,
+            onValueChange = { viewModel.updateName(it) },
             label = "Full Name",
             leadingIcon = Icons.Default.Person,
             keyboardType = KeyboardType.Text,
-            colorScheme = colorScheme
+            colorScheme = colorScheme,
+            isError = registerFormState.nameError != null,
+            errorMessage = registerFormState.nameError
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         FinanceTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = registerFormState.email,
+            onValueChange = { viewModel.updateEmail(it) },
             label = "Email Address",
             leadingIcon = Icons.Default.Email,
             keyboardType = KeyboardType.Email,
-            colorScheme = colorScheme
+            colorScheme = colorScheme,
+            isError = registerFormState.emailError != null,
+            errorMessage = registerFormState.emailError
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         FinanceTextField(
-            value = password,
-            onValueChange = { password = it },
+            value = registerFormState.password,
+            onValueChange = { viewModel.updatePassword(it) },
             label = "Password",
             leadingIcon = Icons.Default.Lock,
             keyboardType = KeyboardType.Password,
             isPassword = true,
             passwordVisible = passwordVisible,
             onPasswordToggle = { passwordVisible = !passwordVisible },
-            colorScheme = colorScheme
+            colorScheme = colorScheme,
+            isError = registerFormState.passwordError != null,
+            errorMessage = registerFormState.passwordError
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         FinanceTextField(
-            value = confirmPassword,
-            onValueChange = { confirmPassword = it },
+            value = registerFormState.confirmPassword,
+            onValueChange = { viewModel.updateConfirmPassword(it) },
             label = "Confirm Password",
             leadingIcon = Icons.Default.Lock,
             keyboardType = KeyboardType.Password,
             isPassword = true,
             passwordVisible = confirmPasswordVisible,
             onPasswordToggle = { confirmPasswordVisible = !confirmPasswordVisible },
-            colorScheme = colorScheme
+            colorScheme = colorScheme,
+            isError = registerFormState.confirmPasswordError != null,
+            errorMessage = registerFormState.confirmPasswordError
         )
-
-        // Password validation feedback
-        if (password.isNotEmpty() && confirmPassword.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            val passwordsMatch = password == confirmPassword
-            val passwordStrength = getPasswordStrength(password)
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.Start
-            ) {
-                if (!passwordsMatch) {
-                    Text(
-                        text = "Passwords do not match",
-                        color = colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                if (password.isNotEmpty()) {
-                    Text(
-                        text = "Password strength: $passwordStrength",
-                        color = when (passwordStrength) {
-                            "Weak" -> colorScheme.error
-                            "Medium" -> colorScheme.secondary
-                            "Strong" -> GreenIncome
-                            else -> colorScheme.onSurfaceVariant
-                        },
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
         // 3. Register Button with state handling
-        val isFormValid = name.isNotBlank() &&
-                email.isNotBlank() &&
-                password.isNotBlank() &&
-                confirmPassword.isNotBlank() &&
-                password == confirmPassword
-
         when (val state = registerState) {
             is AuthState.Loading -> {
                 Box(
@@ -271,9 +239,9 @@ fun RegisterScreen(
                             color = colorScheme.onPrimaryContainer
                         )
                         Spacer(Modifier.width(12.dp))
-                        state.message?.ifEmpty { "Creating Account..." }?.let {
+                        state.message.ifEmpty { "Creating Account..." }.let {
                             Text(
-                                text = it  ,
+                                text = it,
                                 color = colorScheme.onPrimaryContainer,
                                 fontWeight = FontWeight.Medium
                             )
@@ -311,11 +279,11 @@ fun RegisterScreen(
             }
 
             is AuthState.Error -> {
-                // Error is shown in dialog, show normal button
+                // Error is shown in dialog, so just show normal button
                 Button(
                     onClick = {
-                        if (isFormValid) {
-                            viewModel.register(name, email, password)
+                        if (registerFormState.isFormValid) {
+                            viewModel.register()
                         }
                     },
                     modifier = Modifier
@@ -326,7 +294,7 @@ fun RegisterScreen(
                         containerColor = colorScheme.primary,
                         contentColor = colorScheme.onPrimary
                     ),
-                    enabled = isFormValid
+                    enabled = registerFormState.isFormValid
                 ) {
                     Text("Create Account", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                 }
@@ -335,8 +303,8 @@ fun RegisterScreen(
             is AuthState.Idle -> {
                 Button(
                     onClick = {
-                        if (isFormValid) {
-                            viewModel.register(name, email, password)
+                        if (registerFormState.isFormValid) {
+                            viewModel.register()
                         }
                     },
                     modifier = Modifier
@@ -347,7 +315,7 @@ fun RegisterScreen(
                         containerColor = colorScheme.primary,
                         contentColor = colorScheme.onPrimary
                     ),
-                    enabled = isFormValid
+                    enabled = registerFormState.isFormValid
                 ) {
                     Text("Create Account", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                 }
@@ -419,16 +387,5 @@ fun RegisterScreen(
                 modifier = Modifier.clickable { onLogin() }
             )
         }
-    }
-}
-
-// Helper function for password strength
-private fun getPasswordStrength(password: String): String {
-    return when {
-        password.length < 6 -> "Weak"
-        password.length < 8 -> "Medium"
-        password.any { it.isDigit() } && password.any { it.isLetter() } && password.any { !it.isLetterOrDigit() } -> "Strong"
-        password.any { it.isDigit() } && password.any { it.isLetter() } -> "Medium"
-        else -> "Weak"
     }
 }

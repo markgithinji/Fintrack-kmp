@@ -506,7 +506,6 @@ fun ErrorDialog(
         }
     }
 }
-
 @Composable
 fun FinanceTextField(
     value: String,
@@ -517,57 +516,76 @@ fun FinanceTextField(
     isPassword: Boolean = false,
     passwordVisible: Boolean = false,
     onPasswordToggle: () -> Unit = {},
-    colorScheme: ColorScheme
+    colorScheme: ColorScheme,
+    isError: Boolean = false,
+    errorMessage: String? = null
 ) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = {
-            Text(
-                label,
-                color = colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        },
-        leadingIcon = {
-            Icon(
-                leadingIcon,
-                contentDescription = null,
-                tint = colorScheme.onSurfaceVariant
-            )
-        },
-        trailingIcon = if (isPassword) {
-            {
-                IconButton(onClick = onPasswordToggle) {
-                    Icon(
-                        imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                        contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                        tint = colorScheme.onSurfaceVariant
+    Column {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = {
+                Text(
+                    label,
+                    color = colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    leadingIcon,
+                    contentDescription = null,
+                    tint = colorScheme.onSurfaceVariant
+                )
+            },
+            trailingIcon = if (isPassword) {
+                {
+                    IconButton(onClick = onPasswordToggle) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                            tint = colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else null,
+            visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = colorScheme.onSurface,
+                unfocusedTextColor = colorScheme.onSurface,
+                focusedContainerColor = colorScheme.surface,
+                unfocusedContainerColor = colorScheme.surface,
+                focusedLabelColor = colorScheme.primary,
+                unfocusedLabelColor = colorScheme.onSurfaceVariant,
+                focusedLeadingIconColor = colorScheme.primary,
+                unfocusedLeadingIconColor = colorScheme.onSurfaceVariant,
+                focusedTrailingIconColor = colorScheme.primary,
+                unfocusedTrailingIconColor = colorScheme.onSurfaceVariant,
+                cursorColor = colorScheme.primary,
+                focusedIndicatorColor = if (isError) colorScheme.error else colorScheme.primary,
+                unfocusedIndicatorColor = if (isError) colorScheme.error else colorScheme.outline.copy(alpha = 0.5f),
+                errorIndicatorColor = colorScheme.error,
+                errorLabelColor = colorScheme.error,
+                errorLeadingIconColor = colorScheme.error,
+                errorTrailingIconColor = colorScheme.error
+            ),
+            isError = isError,
+            supportingText = {
+                if (isError && errorMessage != null) {
+                    Text(
+                        text = errorMessage,
+                        color = colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
-        } else null,
-        visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = TextFieldDefaults.colors(
-            focusedTextColor = colorScheme.onSurface,
-            unfocusedTextColor = colorScheme.onSurface,
-            focusedContainerColor = colorScheme.surface,
-            unfocusedContainerColor = colorScheme.surface,
-            focusedLabelColor = colorScheme.primary,
-            unfocusedLabelColor = colorScheme.onSurfaceVariant,
-            focusedLeadingIconColor = colorScheme.primary,
-            unfocusedLeadingIconColor = colorScheme.onSurfaceVariant,
-            focusedTrailingIconColor = colorScheme.primary,
-            unfocusedTrailingIconColor = colorScheme.onSurfaceVariant,
-            cursorColor = colorScheme.primary,
-            focusedIndicatorColor = colorScheme.primary,
-            unfocusedIndicatorColor = colorScheme.outline.copy(alpha = 0.5f),
         )
-    )
+    }
 }
 
 @Composable
