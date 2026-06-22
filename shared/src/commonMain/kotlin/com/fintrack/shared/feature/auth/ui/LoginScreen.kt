@@ -1,5 +1,9 @@
 package com.fintrack.shared.feature.auth.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,9 +20,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
@@ -27,7 +31,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,18 +42,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.compose.GreenIncome
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.core.data.domain.ApiException
 import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
-import com.fintrack.shared.feature.auth.ui.common.ErrorDialog
 import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
 import com.fintrack.shared.feature.auth.ui.common.SocialLoginButton
 import fintrack.shared.generated.resources.Res
@@ -66,18 +70,17 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onSignUp: () -> Unit = {},
     onForgotPassword: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val loginState by viewModel.loginState.collectAsStateWithLifecycle()
     val loginFormState by viewModel.loginFormState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
+    val focusManager = LocalFocusManager.current
 
-    // Track if error dialog should be shown
-    var showErrorDialog by remember { mutableStateOf(false) }
-    var currentError by remember { mutableStateOf<String?>(null) }
-
-    var rememberMe by remember { mutableStateOf(false) }
-    var passwordVisible by remember { mutableStateOf(false) }
+    // Inline error visibility
+    var inlineErrorMessage by remember { mutableStateOf<String?>(null) }
+    var rememberMe by remember { mutableStateOf(value = false) }
+    var passwordVisible by remember { mutableStateOf(value = false) }
 
     val colorScheme = MaterialTheme.colorScheme
 
@@ -89,36 +92,13 @@ fun LoginScreen(
 
             is AuthState.Error -> {
                 val exception = state.exception
-                currentError = if (exception is ApiException) {
-                    exception.getUserFriendlyMessage()
-                } else {
-                    exception.message ?: "Login failed. Please try again."
-                }
-                showErrorDialog = true
+                inlineErrorMessage = (exception as? ApiException)?.getUserFriendlyMessage()
+                    ?: exception.message ?: "Login failed. Please try again."
             }
 
             else -> {
-                // Handle Idle, Loading states - nothing to do here
+                inlineErrorMessage = null
             }
-        }
-    }
-
-    if (showErrorDialog) {
-        currentError?.let { errorMessage ->
-            ErrorDialog(
-                errorMessage = errorMessage,
-                onDismiss = {
-                    showErrorDialog = false
-                    currentError = null
-                    viewModel.resetLoginState()
-                },
-                onRetry = {
-                    showErrorDialog = false
-                    currentError = null
-                    viewModel.login()
-                },
-                colorScheme = colorScheme
-            )
         }
     }
 
@@ -127,63 +107,66 @@ fun LoginScreen(
             .fillMaxSize()
             .verticalScroll(scrollState)
             .background(colorScheme.background)
-            .padding(horizontal = 32.dp),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(64.dp))
 
         // 1. Logo and Title Area
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
                 modifier = Modifier
-                    .size(90.dp)
-                    .clip(RoundedCornerShape(18.dp))
+                    .size(100.dp)
+                    .shadow(12.dp, RoundedCornerShape(24.dp))
+                    .clip(RoundedCornerShape(24.dp))
                     .background(colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
                     painter = painterResource(Res.drawable.fintrack_app_icon),
                     contentDescription = "FinTrack App",
-                    modifier = Modifier.fillMaxSize()
-                        .padding(12.dp),
+                    modifier = Modifier
+                        .size(64.dp)
+                        .padding(4.dp),
                     contentScale = ContentScale.Fit
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = "Welcome Back",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = colorScheme.primary
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Track your expenses and manage your finances effortlessly.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = colorScheme.onSurfaceVariant,
+                text = "Securely access your financial insights",
+                style = MaterialTheme.typography.bodyLarge,
+                color = colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                 textAlign = TextAlign.Center
             )
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(48.dp))
 
-        // 2. Input Fields with validation
+        // 2. Input Fields
         FinanceTextField(
             value = loginFormState.email,
             onValueChange = { viewModel.updateLoginEmail(it) },
-            label = "Enter your email",
+            label = "Email Address",
             leadingIcon = Icons.Default.Email,
             keyboardType = KeyboardType.Email,
+            imeAction = ImeAction.Next,
             colorScheme = colorScheme,
             isError = loginFormState.emailError != null,
             errorMessage = loginFormState.emailError
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         FinanceTextField(
             value = loginFormState.password,
@@ -191,6 +174,13 @@ fun LoginScreen(
             label = "Password",
             leadingIcon = Icons.Default.Lock,
             keyboardType = KeyboardType.Password,
+            imeAction = ImeAction.Done,
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                    if (loginFormState.isFormValid) viewModel.login()
+                }
+            ),
             isPassword = true,
             passwordVisible = passwordVisible,
             onPasswordToggle = { passwordVisible = !passwordVisible },
@@ -199,26 +189,47 @@ fun LoginScreen(
             errorMessage = loginFormState.passwordError
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        // 3. Inline Error Message
+        AnimatedVisibility(
+            visible = inlineErrorMessage != null,
+            enter = fadeIn() + slideInVertically(),
+            exit = fadeOut()
+        ) {
+            Text(
+                text = inlineErrorMessage ?: "",
+                color = colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                textAlign = TextAlign.Start
+            )
+        }
 
-        // 3. Remember Me and Forget Password
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 4. Remember Me and Forget Password
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { rememberMe = !rememberMe }
+            ) {
                 Checkbox(
                     checked = rememberMe,
                     onCheckedChange = { rememberMe = it },
                     colors = CheckboxDefaults.colors(
                         checkedColor = colorScheme.primary,
-                        uncheckedColor = colorScheme.outline
+                        uncheckedColor = colorScheme.outline.copy(alpha = 0.5f)
                     )
                 )
                 Text(
-                    text = "Remember me",
-                    color = colorScheme.onSurface,
+                    text = "Keep me logged in",
+                    color = colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -226,178 +237,115 @@ fun LoginScreen(
                 text = "Forgot Password?",
                 color = colorScheme.primary,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier.clickable { onForgotPassword() }
             )
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // 4. Login Button with validation
-        when (val state = loginState) {
-            is AuthState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                        .background(
-                            color = colorScheme.primaryContainer,
-                            shape = RoundedCornerShape(12.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = colorScheme.onPrimaryContainer
-                        )
-                        Spacer(Modifier.width(12.dp))
-                        state.message.ifEmpty { "Signing In..." }.let {
-                            Text(
-                                text = it,
-                                color = colorScheme.onPrimaryContainer,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                }
-            }
-
-            is AuthState.Success -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                        .background(
-                            color = GreenIncome.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(12.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.CheckCircle,
-                            contentDescription = "Success",
-                            tint = GreenIncome,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "Login successful!",
-                            color = GreenIncome,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
-
-            is AuthState.Error -> {
-                // Error is shown in dialog, show normal button
-                Button(
-                    onClick = {
-                        if (loginFormState.isFormValid) {
-                            viewModel.login()
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colorScheme.primary,
-                        contentColor = colorScheme.onPrimary
-                    ),
-                    enabled = loginFormState.isFormValid // Disable when invalid
-                ) {
-                    Text("Sign In", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                }
-            }
-
-            is AuthState.Idle -> {
-                Button(
-                    onClick = {
-                        if (loginFormState.isFormValid) {
-                            viewModel.login()
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colorScheme.primary,
-                        contentColor = colorScheme.onPrimary
-                    ),
-                    enabled = loginFormState.isFormValid // Disable when invalid
-                ) {
-                    Text("Sign In", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                }
+        // 5. Login Button
+        val isLoggingIn = loginState is AuthState.Loading
+        Button(
+            onClick = {
+                focusManager.clearFocus()
+                viewModel.login()
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .shadow(if (loginFormState.isFormValid) 8.dp else 0.dp, RoundedCornerShape(16.dp)),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colorScheme.primary,
+                contentColor = colorScheme.onPrimary,
+                disabledContainerColor = colorScheme.primary.copy(alpha = 0.5f)
+            ),
+            enabled = loginFormState.isFormValid && !isLoggingIn
+        ) {
+            if (isLoggingIn) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 3.dp,
+                    color = colorScheme.onPrimary
+                )
+            } else {
+                Text(
+                    "Sign In",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    letterSpacing = 0.5.sp
+                )
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
-        // 5. 'or' Separator
+        // 6. 'or' Separator
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             HorizontalDivider(
                 modifier = Modifier.weight(1f),
-                color = colorScheme.outline.copy(alpha = 0.3f)
+                color = colorScheme.outlineVariant
             )
             Text(
-                text = "or continue with",
-                color = colorScheme.onSurfaceVariant,
+                text = "Secure Connect",
+                color = colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 modifier = Modifier.padding(horizontal = 16.dp),
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.labelMedium
             )
             HorizontalDivider(
                 modifier = Modifier.weight(1f),
-                color = colorScheme.outline.copy(alpha = 0.3f)
+                color = colorScheme.outlineVariant
             )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 6. Social Login Buttons
-        SocialLoginButton(
-            text = "Continue with Google",
-            iconResource = Res.drawable.google_signIn_icon,
-            onClick = { /* Google Login */ },
-            colorScheme = colorScheme
-        )
+        // 7. Social Login Buttons
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            SocialLoginButton(
+                text = "Google",
+                iconResource = Res.drawable.google_signIn_icon,
+                onClick = { /* Google Login */ },
+                colorScheme = colorScheme,
+                modifier = Modifier.weight(1f)
+            )
+            SocialLoginButton(
+                text = "Apple",
+                iconResource = Res.drawable.apple_signIn_icon,
+                onClick = { /* Apple Login */ },
+                colorScheme = colorScheme,
+                modifier = Modifier.weight(1f)
+            )
+        }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(48.dp))
 
-        SocialLoginButton(
-            text = "Continue with Apple",
-            iconResource = Res.drawable.apple_signIn_icon,
-            onClick = { /* Apple Login */ },
-            colorScheme = colorScheme
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // 7. Sign Up Link
+        // 8. Sign Up Link
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 40.dp),
-            horizontalArrangement = Arrangement.Center
+                .padding(bottom = 32.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Don't have an account?",
+                text = "New to FinTrack?",
                 color = colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium
             )
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = "Sign up",
+                text = "Create Account",
                 color = colorScheme.primary,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.clickable { onSignUp() }
             )
         }

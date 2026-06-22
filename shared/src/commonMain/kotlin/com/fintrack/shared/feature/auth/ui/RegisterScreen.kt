@@ -1,5 +1,9 @@
 package com.fintrack.shared.feature.auth.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,17 +20,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
-import androidx.compose.material3.Icon
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,18 +41,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.compose.GreenIncome
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.core.data.domain.ApiException
 import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
-import com.fintrack.shared.feature.auth.ui.common.ErrorDialog
 import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
 import com.fintrack.shared.feature.auth.ui.common.SocialLoginButton
 import fintrack.shared.generated.resources.Res
@@ -64,18 +68,18 @@ fun RegisterScreen(
     viewModel: AuthViewModel = koinViewModel(),
     onRegisterSuccess: () -> Unit,
     onLogin: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val registerState by viewModel.registerState.collectAsStateWithLifecycle()
     val registerFormState by viewModel.registerFormState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
+    val focusManager = LocalFocusManager.current
 
-    // Track if error dialog should be shown
-    var showErrorDialog by remember { mutableStateOf(false) }
-    var currentError by remember { mutableStateOf<String?>(null) }
+    // Inline error visibility
+    var inlineErrorMessage by remember { mutableStateOf<String?>(null) }
 
-    var passwordVisible by remember { mutableStateOf(false) }
-    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var passwordVisible by remember { mutableStateOf(value = false) }
+    var confirmPasswordVisible by remember { mutableStateOf(value = false) }
 
     val colorScheme = MaterialTheme.colorScheme
 
@@ -87,37 +91,13 @@ fun RegisterScreen(
 
             is AuthState.Error -> {
                 val exception = state.exception
-                currentError = if (exception is ApiException) {
-                    exception.getUserFriendlyMessage()
-                } else {
-                    exception.message ?: "Registration failed. Please try again."
-                }
-                showErrorDialog = true
+                inlineErrorMessage = (exception as? ApiException)?.getUserFriendlyMessage()
+                    ?: exception.message ?: "Registration failed. Please try again."
             }
 
             else -> {
-                // Handle Idle, Loading states - nothing to do here
+                inlineErrorMessage = null
             }
-        }
-    }
-
-    // Custom Error Dialog
-    if (showErrorDialog) {
-        currentError?.let { errorMessage ->
-            ErrorDialog(
-                errorMessage = errorMessage,
-                onDismiss = {
-                    showErrorDialog = false
-                    currentError = null
-                    viewModel.resetRegisterState()
-                },
-                onRetry = {
-                    showErrorDialog = false
-                    currentError = null
-                    viewModel.register()
-                },
-                colorScheme = colorScheme
-            )
         }
     }
 
@@ -126,57 +106,60 @@ fun RegisterScreen(
             .fillMaxSize()
             .verticalScroll(scrollState)
             .background(colorScheme.background)
-            .padding(horizontal = 32.dp),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(64.dp))
 
         // 1. Logo and Title Area
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
                 modifier = Modifier
-                    .size(90.dp)
-                    .clip(RoundedCornerShape(18.dp))
+                    .size(100.dp)
+                    .shadow(12.dp, RoundedCornerShape(24.dp))
+                    .clip(RoundedCornerShape(24.dp))
                     .background(colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
                     painter = painterResource(Res.drawable.fintrack_app_icon),
                     contentDescription = "FinTrack App",
-                    modifier = Modifier.fillMaxSize()
-                        .padding(12.dp),
+                    modifier = Modifier
+                        .size(64.dp)
+                        .padding(4.dp),
                     contentScale = ContentScale.Fit
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = "Create Account",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = colorScheme.primary
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "Join FinTrack to start managing your finances smarter.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyLarge,
+                color = colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                 textAlign = TextAlign.Center
             )
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(48.dp))
 
-        // 2. Input Fields with validation
+        // 2. Input Fields
         FinanceTextField(
             value = registerFormState.name,
             onValueChange = { viewModel.updateName(it) },
             label = "Full Name",
             leadingIcon = Icons.Default.Person,
             keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.Next,
             colorScheme = colorScheme,
             isError = registerFormState.nameError != null,
             errorMessage = registerFormState.nameError
@@ -190,6 +173,7 @@ fun RegisterScreen(
             label = "Email Address",
             leadingIcon = Icons.Default.Email,
             keyboardType = KeyboardType.Email,
+            imeAction = ImeAction.Next,
             colorScheme = colorScheme,
             isError = registerFormState.emailError != null,
             errorMessage = registerFormState.emailError
@@ -203,6 +187,7 @@ fun RegisterScreen(
             label = "Password",
             leadingIcon = Icons.Default.Lock,
             keyboardType = KeyboardType.Password,
+            imeAction = ImeAction.Next,
             isPassword = true,
             passwordVisible = passwordVisible,
             onPasswordToggle = { passwordVisible = !passwordVisible },
@@ -219,6 +204,13 @@ fun RegisterScreen(
             label = "Confirm Password",
             leadingIcon = Icons.Default.Lock,
             keyboardType = KeyboardType.Password,
+            imeAction = ImeAction.Done,
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                    if (registerFormState.isFormValid) viewModel.register()
+                }
+            ),
             isPassword = true,
             passwordVisible = confirmPasswordVisible,
             onPasswordToggle = { confirmPasswordVisible = !confirmPasswordVisible },
@@ -227,173 +219,128 @@ fun RegisterScreen(
             errorMessage = registerFormState.confirmPasswordError
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // 3. Register Button with state handling
-        when (val state = registerState) {
-            is AuthState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                        .background(
-                            color = colorScheme.primaryContainer,
-                            shape = RoundedCornerShape(12.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = colorScheme.onPrimaryContainer
-                        )
-                        Spacer(Modifier.width(12.dp))
-                        state.message.ifEmpty { "Creating Account..." }.let {
-                            Text(
-                                text = it,
-                                color = colorScheme.onPrimaryContainer,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                }
-            }
-
-            is AuthState.Success -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                        .background(
-                            color = GreenIncome.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(12.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.CheckCircle,
-                            contentDescription = "Success",
-                            tint = GreenIncome,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "Account created successfully!",
-                            color = GreenIncome,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
-
-            is AuthState.Error -> {
-                // Error is shown in dialog, so just show normal button
-                Button(
-                    onClick = {
-                        if (registerFormState.isFormValid) {
-                            viewModel.register()
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colorScheme.primary,
-                        contentColor = colorScheme.onPrimary
-                    ),
-                    enabled = registerFormState.isFormValid
-                ) {
-                    Text("Create Account", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                }
-            }
-
-            is AuthState.Idle -> {
-                Button(
-                    onClick = {
-                        if (registerFormState.isFormValid) {
-                            viewModel.register()
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colorScheme.primary,
-                        contentColor = colorScheme.onPrimary
-                    ),
-                    enabled = registerFormState.isFormValid
-                ) {
-                    Text("Create Account", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                }
-            }
+        // 3. Inline Error Message
+        AnimatedVisibility(
+            visible = inlineErrorMessage != null,
+            enter = fadeIn() + slideInVertically(),
+            exit = fadeOut()
+        ) {
+            Text(
+                text = inlineErrorMessage ?: "",
+                color = colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                textAlign = TextAlign.Start
+            )
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // 4. 'or' Separator
+        // 4. Register Button
+        val isRegistering = registerState is AuthState.Loading
+        Button(
+            onClick = {
+                focusManager.clearFocus()
+                viewModel.register()
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .shadow(if (registerFormState.isFormValid) 8.dp else 0.dp, RoundedCornerShape(16.dp)),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colorScheme.primary,
+                contentColor = colorScheme.onPrimary,
+                disabledContainerColor = colorScheme.primary.copy(alpha = 0.5f)
+            ),
+            enabled = registerFormState.isFormValid && !isRegistering
+        ) {
+            if (isRegistering) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 3.dp,
+                    color = colorScheme.onPrimary
+                )
+            } else {
+                Text(
+                    "Create Account",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    letterSpacing = 0.5.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(40.dp))
+
+        // 5. 'or' Separator
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier.weight(1f),
-                color = colorScheme.outline.copy(alpha = 0.3f)
+                color = colorScheme.outlineVariant
             )
             Text(
-                text = "or",
-                color = colorScheme.onSurfaceVariant,
+                text = "Join with Social",
+                color = colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 modifier = Modifier.padding(horizontal = 16.dp),
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.labelMedium
             )
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier.weight(1f),
-                color = colorScheme.outline.copy(alpha = 0.3f)
+                color = colorScheme.outlineVariant
             )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 5. Social Login Buttons
-        SocialLoginButton(
-            text = "Sign up with Google",
-            iconResource = Res.drawable.google_signIn_icon,
-            onClick = { /* Google Sign Up */ },
-            colorScheme = colorScheme
-        )
+        // 6. Social Login Buttons
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            SocialLoginButton(
+                text = "Google",
+                iconResource = Res.drawable.google_signIn_icon,
+                onClick = { /* Google Sign Up */ },
+                colorScheme = colorScheme,
+                modifier = Modifier.weight(1f)
+            )
+            SocialLoginButton(
+                text = "Apple",
+                iconResource = Res.drawable.apple_signIn_icon,
+                onClick = { /* Apple Sign Up */ },
+                colorScheme = colorScheme,
+                modifier = Modifier.weight(1f)
+            )
+        }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(48.dp))
 
-        SocialLoginButton(
-            text = "Sign up with Apple",
-            iconResource = Res.drawable.apple_signIn_icon,
-            onClick = { /* Apple Sign Up */ },
-            colorScheme = colorScheme
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // 6. Login Link
+        // 7. Login Link
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 40.dp),
-            horizontalArrangement = Arrangement.Center
+                .padding(bottom = 32.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "Already have an account?",
                 color = colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium
             )
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = "Sign in",
                 color = colorScheme.primary,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.clickable { onLogin() }
             )
         }

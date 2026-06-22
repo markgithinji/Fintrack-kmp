@@ -14,6 +14,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -26,34 +27,34 @@ fun SocialLoginButton(
     text: String,
     iconResource: DrawableResource,
     onClick: () -> Unit,
-    colorScheme: ColorScheme
+    colorScheme: ColorScheme,
+    modifier: Modifier = Modifier
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(52.dp),
-        shape = RoundedCornerShape(12.dp),
+        modifier = modifier
+            .height(56.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = colorScheme.surface,
+            containerColor = Color.Transparent,
             contentColor = colorScheme.onSurface
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = colorScheme.outline.copy(alpha = 0.3f)
+            color = colorScheme.outline.copy(alpha = 0.2f)
         )
     ) {
         Image(
             painter = painterResource(iconResource),
             contentDescription = null,
-            modifier = Modifier.size(40.dp),
+            modifier = Modifier.size(24.dp),
             contentScale = ContentScale.Fit
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = text,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Medium
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
