@@ -27,8 +27,6 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -79,7 +77,6 @@ fun LoginScreen(
 
     // Inline error visibility
     var inlineErrorMessage by remember { mutableStateOf<String?>(null) }
-    var rememberMe by remember { mutableStateOf(value = false) }
     var passwordVisible by remember { mutableStateOf(value = false) }
 
     val colorScheme = MaterialTheme.colorScheme
@@ -209,30 +206,11 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 4. Remember Me and Forget Password
-        Row(
+        // 4. Forgot Password
+        Box(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            contentAlignment = Alignment.CenterEnd
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable { rememberMe = !rememberMe }
-            ) {
-                Checkbox(
-                    checked = rememberMe,
-                    onCheckedChange = { rememberMe = it },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = colorScheme.primary,
-                        uncheckedColor = colorScheme.outline.copy(alpha = 0.5f)
-                    )
-                )
-                Text(
-                    text = "Keep me logged in",
-                    color = colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
             Text(
                 text = "Forgot Password?",
                 color = colorScheme.primary,
@@ -253,9 +231,13 @@ fun LoginScreen(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp)
-                .shadow(if (loginFormState.isFormValid) 8.dp else 0.dp, RoundedCornerShape(16.dp)),
+                .height(56.dp),
             shape = RoundedCornerShape(16.dp),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = if (loginFormState.isFormValid) 2.dp else 0.dp,
+                pressedElevation = 8.dp,
+                disabledElevation = 0.dp
+            ),
             colors = ButtonDefaults.buttonColors(
                 containerColor = colorScheme.primary,
                 contentColor = colorScheme.onPrimary,

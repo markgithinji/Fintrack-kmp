@@ -248,9 +248,13 @@ fun RegisterScreen(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp)
-                .shadow(if (registerFormState.isFormValid) 8.dp else 0.dp, RoundedCornerShape(16.dp)),
+                .height(56.dp),
             shape = RoundedCornerShape(16.dp),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = if (registerFormState.isFormValid) 2.dp else 0.dp,
+                pressedElevation = 8.dp,
+                disabledElevation = 0.dp
+            ),
             colors = ButtonDefaults.buttonColors(
                 containerColor = colorScheme.primary,
                 contentColor = colorScheme.onPrimary,
