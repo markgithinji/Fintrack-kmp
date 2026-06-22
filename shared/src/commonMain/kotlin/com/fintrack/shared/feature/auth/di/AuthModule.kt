@@ -22,7 +22,8 @@ val authModule = module {
             repository = get(),
             tokenDataSource = get(),
             registerValidationUseCase = get(),
-            loginValidationUseCase = get()
+            loginValidationUseCase = get(),
+            logger = get()
         )
     }
 }

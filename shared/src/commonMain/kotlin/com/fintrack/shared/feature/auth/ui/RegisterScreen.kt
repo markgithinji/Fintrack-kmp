@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.GreenIncome
 import com.fintrack.shared.feature.auth.domain.model.AuthState
+import com.fintrack.shared.feature.core.data.domain.ApiException
+import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
 import com.fintrack.shared.feature.auth.ui.common.ErrorDialog
 import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
 import com.fintrack.shared.feature.auth.ui.common.SocialLoginButton
@@ -84,7 +86,12 @@ fun RegisterScreen(
             }
 
             is AuthState.Error -> {
-                currentError = state.exception.message ?: "Registration failed. Please try again."
+                val exception = state.exception
+                currentError = if (exception is ApiException) {
+                    exception.getUserFriendlyMessage()
+                } else {
+                    exception.message ?: "Registration failed. Please try again."
+                }
                 showErrorDialog = true
             }
 

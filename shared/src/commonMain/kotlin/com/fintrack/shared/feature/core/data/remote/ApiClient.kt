@@ -8,6 +8,9 @@ import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.plugin
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -27,6 +30,15 @@ class ApiClient(
                     ignoreUnknownKeys = true
                     explicitNulls = false
                 })
+            }
+
+            install(Logging) {
+                logger = object : Logger {
+                    override fun log(message: String) {
+                        this@ApiClient.logger.debug(LogTags.NETWORK, message)
+                    }
+                }
+                level = LogLevel.ALL
             }
 
             install(HttpTimeout) {

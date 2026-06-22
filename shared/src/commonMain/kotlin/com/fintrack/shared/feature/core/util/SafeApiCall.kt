@@ -1,8 +1,11 @@
 package com.fintrack.shared.feature.core.util
 
 import com.fintrack.shared.feature.core.data.domain.ApiException
+import com.fintrack.shared.feature.core.data.domain.AuthErrorType
+import com.fintrack.shared.feature.core.data.remote.model.ErrorResponse
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.logger.LogTags
+import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.RedirectResponseException
@@ -10,6 +13,7 @@ import io.ktor.client.plugins.ServerResponseException
 import kotlinx.coroutines.CancellationException
 import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
+
 private val logger = KMPLogger()
 
 suspend fun <T> safeApiCall(apiCall: suspend () -> T): Result<T> {
@@ -24,34 +28,41 @@ suspend fun <T> safeApiCall(apiCall: suspend () -> T): Result<T> {
     }
 }
 
-private fun convertToDomainException(e: Exception): ApiException = when (e) {
+private suspend fun convertToDomainException(e: Exception): ApiException = when (e) {
     is ApiException -> {
         logger.debug(LogTags.ERROR, "Already domain exception: ${e::class.simpleName}")
         e
     }
+
+    is RedirectResponseException -> handleRedirectException(e)
+    is ClientRequestException -> handleClientException(e)
+    is ServerResponseException -> handleServerException(e)
+
     is SerializationException -> {
         logger.error(LogTags.ERROR, "Serialization failure", e)
         ApiException.SerializationFailure("Failed to parse response: ${e.message}")
     }
+
     is IOException -> {
         logger.warning(LogTags.NETWORK, "Network connection failed")
         ApiException.Network("Network connection failed: ${e.message}")
     }
-    is IllegalStateException -> {
-        logger.error(LogTags.ERROR, "Invalid app state", e)
-        ApiException.InvalidState("Invalid app state: ${e.message}")
-    }
-    is CancellationException -> {
-        logger.debug(LogTags.ERROR, "Request cancelled")
-        throw e
-    }
+
     is HttpRequestTimeoutException -> {
         logger.warning(LogTags.NETWORK, "Request timeout")
         ApiException.Network("Request timeout: ${e.message}")
     }
-    is RedirectResponseException -> handleRedirectException(e)
-    is ClientRequestException -> handleClientException(e)
-    is ServerResponseException -> handleServerException(e)
+
+    is IllegalStateException -> {
+        logger.error(LogTags.ERROR, "Invalid app state", e)
+        ApiException.InvalidState("Invalid app state: ${e.message}")
+    }
+
+    is CancellationException -> {
+        logger.debug(LogTags.ERROR, "Request cancelled")
+        throw e
+    }
+
     else -> {
         logger.error(LogTags.ERROR, "Unknown exception type: ${e::class.simpleName}", e)
         handleUnknownException(e)
@@ -68,20 +79,65 @@ private fun handleRedirectException(e: RedirectResponseException): ApiException 
     }
 }
 
-private fun handleClientException(e: ClientRequestException): ApiException {
+private suspend fun handleClientException(e: ClientRequestException): ApiException {
     val statusCode = e.response.status.value
-    logger.warning(LogTags.ERROR, "Client error: $statusCode - ${e.message}")
+    val errorResponse = try {
+        e.response.body<ErrorResponse>()
+    } catch (parseException: Exception) {
+        null
+    }
+
+    val message = errorResponse?.message ?: "Client error occurred"
+    val errorCode = errorResponse?.errorCode
+
+    if (errorResponse == null) {
+        val rawBody = try { e.response.body<String>() } catch (ex: Exception) { "unavailable" }
+        logger.warning(LogTags.ERROR, "Client error $statusCode: Failed to parse ErrorResponse. Raw body: $rawBody")
+    } else {
+        logger.warning(LogTags.ERROR, "Client error: $statusCode - $message (Code: $errorCode)")
+    }
 
     return when (statusCode) {
-        400 -> ApiException.ClientError("Bad request: ${e.message}", statusCode)
-        401 -> ApiException.Unauthorized("Authentication required: ${e.message}")
-        403 -> ApiException.Forbidden("Access denied: ${e.message}")
-        404 -> ApiException.NotFound("Resource not found: ${e.message}")
-        409 -> ApiException.ClientError("Conflict: ${e.message}", statusCode)
-        422 -> ApiException.ClientError("Validation error: ${e.message}", statusCode)
-        in 400..499 -> ApiException.ClientError("Client error $statusCode: ${e.message}", statusCode)
-        else -> ApiException.Unknown("Unexpected client error: ${e.message}")
+        400 -> {
+            if (errorCode != null) {
+                mapToAuthException(message, errorCode) ?: ApiException.Validation(message)
+            } else {
+                ApiException.Validation(message)
+            }
+        }
+        401 -> {
+            if (errorCode != null) {
+                mapToAuthException(message, errorCode) ?: ApiException.Auth(message, AuthErrorType.UNAUTHORIZED)
+            } else {
+                // If no specific error code, default to a generic auth error or credentials error
+                ApiException.Auth(message, AuthErrorType.INVALID_CREDENTIALS)
+            }
+        }
+        403 -> ApiException.Forbidden("Access denied: $message")
+        404 -> ApiException.NotFound("Resource not found: $message")
+        409 -> {
+             if (errorCode != null) {
+                mapToAuthException(message, errorCode) ?: ApiException.ClientError(message, statusCode)
+            } else {
+                ApiException.ClientError(message, statusCode)
+            }
+        }
+        422 -> ApiException.Validation(message)
+        in 400..499 -> ApiException.ClientError(message, statusCode)
+        else -> ApiException.Unknown("Unexpected client error: $message")
     }
+}
+
+private fun mapToAuthException(message: String, errorCode: String): ApiException.Auth? {
+    val type = when (errorCode) {
+        "INVALID_CREDENTIALS" -> AuthErrorType.INVALID_CREDENTIALS
+        "USER_ALREADY_EXISTS" -> AuthErrorType.USER_ALREADY_EXISTS
+        "WEAK_PASSWORD" -> AuthErrorType.WEAK_PASSWORD
+        "SESSION_EXPIRED" -> AuthErrorType.SESSION_EXPIRED
+        "UNAUTHORIZED" -> AuthErrorType.UNAUTHORIZED
+        else -> return null
+    }
+    return ApiException.Auth(message, type)
 }
 
 private fun handleServerException(e: ServerResponseException): ApiException {
@@ -89,28 +145,13 @@ private fun handleServerException(e: ServerResponseException): ApiException {
     logger.error(LogTags.ERROR, "Server error: $statusCode - ${e.message}")
 
     return when (statusCode) {
-        500 -> ApiException.ServerError("Internal server error: ${e.message}", statusCode)
-        502 -> ApiException.ServerError("Bad gateway: ${e.message}", statusCode)
-        503 -> ApiException.ServerError("Service unavailable: ${e.message}", statusCode)
-        504 -> ApiException.ServerError("Gateway timeout: ${e.message}", statusCode)
-        in 500..599 -> ApiException.ServerError("Server error $statusCode: ${e.message}", statusCode)
-        else -> ApiException.Unknown("Unexpected server error: ${e.message}")
+        500 -> ApiException.ServerError("Internal server error", statusCode)
+        503 -> ApiException.ServerError("Service unavailable", statusCode)
+        else -> ApiException.ServerError("Server error $statusCode", statusCode)
     }
 }
 
 private fun handleUnknownException(e: Exception): ApiException {
     val message = e.message ?: "Unknown error occurred"
-    logger.error(LogTags.ERROR, "Unhandled exception: $message", e)
-
-    return when {
-        message.contains("401", ignoreCase = true) -> ApiException.Unauthorized("Authentication required")
-        message.contains("403", ignoreCase = true) -> ApiException.Forbidden("Access denied")
-        message.contains("404", ignoreCase = true) -> ApiException.NotFound("Resource not found")
-        message.contains("40", ignoreCase = true) -> ApiException.ClientError("Client error: $message", 400)
-        message.contains("50", ignoreCase = true) -> ApiException.ServerError("Server error: $message", 500)
-        message.contains("timeout", ignoreCase = true) -> ApiException.Network("Request timeout: $message")
-        message.contains("network", ignoreCase = true) -> ApiException.Network("Network error: $message")
-        message.contains("connect", ignoreCase = true) -> ApiException.Network("Connection failed: $message")
-        else -> ApiException.Unknown("Unexpected error: $message")
-    }
+    return ApiException.Unknown(message)
 }

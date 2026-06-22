@@ -11,6 +11,8 @@ import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
 import com.fintrack.shared.feature.auth.domain.usecase.LoginValidationUseCase
 import com.fintrack.shared.feature.auth.domain.usecase.RegisterValidationUseCase
+import com.fintrack.shared.feature.core.logger.KMPLogger
+import com.fintrack.shared.feature.core.logger.LogTags
 import com.fintrack.shared.feature.core.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,7 +25,8 @@ class AuthViewModel(
     private val repository: AuthRepository,
     private val tokenDataSource: TokenDataSource,
     private val registerValidationUseCase: RegisterValidationUseCase,
-    private val loginValidationUseCase: LoginValidationUseCase
+    private val loginValidationUseCase: LoginValidationUseCase,
+    private val logger: KMPLogger
 ) : ViewModel() {
 
     private val _loginState = MutableStateFlow<AuthState<AuthResponse>>(AuthState.Idle)
@@ -83,14 +86,17 @@ class AuthViewModel(
 
         _loginState.value = AuthState.Loading("Logging in...")
         viewModelScope.launch {
+            logger.debug(LogTags.AUTH, "Attempting login for email: ${formState.email}")
             when (val result = repository.login(formState.email, formState.password)) {
                 is Result.Success -> {
+                    logger.info(LogTags.AUTH, "Login successful for: ${formState.email}")
                     tokenDataSource.saveToken(result.data.token)
                     _loginState.value = AuthState.Success(result.data)
                     _authStatus.value = AuthState.Success(true)
                 }
 
                 is Result.Error -> {
+                    logger.error(LogTags.AUTH, "Login failed for ${formState.email}: ${result.exception.message}", result.exception)
                     _loginState.value = AuthState.Error(result.exception)
                 }
 
@@ -199,15 +205,18 @@ class AuthViewModel(
 
         _registerState.value = AuthState.Loading("Creating account...")
         viewModelScope.launch {
+            logger.debug(LogTags.AUTH, "Attempting registration for email: ${formState.email}")
             when (val result =
                 repository.register(formState.name, formState.email, formState.password)) {
                 is Result.Success -> {
+                    logger.info(LogTags.AUTH, "Registration successful for: ${formState.email}")
                     tokenDataSource.saveToken(result.data.token)
                     _registerState.value = AuthState.Success(result.data)
                     _authStatus.value = AuthState.Success(true)
                 }
 
                 is Result.Error -> {
+                    logger.error(LogTags.AUTH, "Registration failed for ${formState.email}: ${result.exception.message}", result.exception)
                     _registerState.value = AuthState.Error(result.exception)
                 }
 
