@@ -31,7 +31,6 @@ import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import kotlin.math.PI
 import kotlin.math.atan2
-import kotlin.math.pow
 import kotlin.math.sqrt
 
 @Composable
@@ -166,8 +165,13 @@ private class DonutChartState(
 // --- Helper: calculate arcs ---
 private data class DrawingAngles(val start: Float, val sweep: Float) {
     fun isInsideAngle(angle: Float): Boolean {
-        val end = (start + sweep) % 360
-        return if (start < end) angle in start..end else angle >= start || angle <= end
+        val normalizedStart = (start % 360 + 360) % 360
+        val end = (normalizedStart + sweep) % 360
+        return if (normalizedStart < end) {
+            angle in normalizedStart..end
+        } else {
+            angle >= normalizedStart || angle <= end
+        }
     }
 }
 
@@ -177,7 +181,7 @@ private fun calculateAnglesList(
     gapPercentage: Float
 ): List<DrawingAngles> {
     val gapAngle = 360f * gapPercentage
-    var startAngle = -90f
+    var startAngle = 270f // Start at 12 o'clock
     return data.map { (_, amount) ->
         val sweep = ((amount / totalAmount * 360.0).toFloat()) - gapAngle
         val angle = DrawingAngles(startAngle, sweep)
@@ -198,16 +202,17 @@ private fun handleCanvasTap(
     onItemDeselected: (Int) -> Unit = {},
     onNoItemSelected: () -> Unit = {}
 ) {
-    val normalized = tapOffset.findNormalizedPointFromTouch(center)
-    val touchAngle = calculateTouchAngleAccordingToCanvas(center, normalized)
-    val distance = findTouchDistanceFromCenter(center, normalized)
+    val dx = tapOffset.x - center.x
+    val dy = tapOffset.y - center.y
+    val distance = sqrt(dx * dx + dy * dy)
+    val tapAngle = (atan2(dy, dx) * 180f / PI.toFloat() + 360f) % 360f
 
     var selectedIndex = -1
     var newDataTapped = false
 
     anglesList.forEachIndexed { index, angle ->
         val stroke = currentStrokeValues[index]
-        if (angle.isInsideAngle(touchAngle)) {
+        if (angle.isInsideAngle(tapAngle)) {
             if (distance > (center.x - stroke) && distance < center.x) {
                 selectedIndex = index
                 newDataTapped = true
@@ -220,23 +225,4 @@ private fun handleCanvasTap(
         onItemDeselected(currentSelectedIndex)
         if (currentSelectedIndex == selectedIndex || !newDataTapped) onNoItemSelected()
     }
-}
-
-private fun findTouchDistanceFromCenter(center: Offset, touch: Offset) =
-    sqrt((touch.x - center.x).pow(2) + (touch.y - center.y).pow(2))
-
-private fun Offset.findNormalizedPointFromTouch(canvasCenter: Offset) =
-    Offset(this.x, canvasCenter.y + (canvasCenter.y - this.y))
-
-private fun calculateTouchAngleAccordingToCanvas(
-    canvasCenter: Offset,
-    normalizedPoint: Offset
-): Float {
-    val angle = calculateTouchAngleInDegrees(canvasCenter, normalizedPoint)
-    return ((angle + 360) % 360).toFloat()
-}
-
-private fun calculateTouchAngleInDegrees(canvasCenter: Offset, normalizedPoint: Offset): Double {
-    val rad = atan2(normalizedPoint.y - canvasCenter.y, normalizedPoint.x - canvasCenter.x)
-    return rad * -180 / PI
 }
