@@ -22,6 +22,7 @@ ktorClientCore = "3.3.1"
 ktorClientContentNegotiation = "3.3.1"
 ktorClientDarwin = "3.3.1"
 ktorClientLogging = "3.3.1"
+ktorClientAuth = "3.3.1"
 ktorClientOkhttp = "3.3.1"
 ktorSerializationKotlinxJsonVersion = "3.3.1"
 materialIconsExtended = "1.7.3"
@@ -68,6 +69,7 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorClientContentNegotiation" }
+ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktorClientAuth" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClientCore" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktorClientDarwin" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktorClientLogging" }
