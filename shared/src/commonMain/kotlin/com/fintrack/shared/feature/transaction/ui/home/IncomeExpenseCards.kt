@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.account.domain.model.Account
+import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 
@@ -76,7 +77,7 @@ fun IncomeExpenseCards(
 
                 InfoCard(
                     title = "Total Income",
-                    amount = "KSh ${formatAmount(totalIncome)}",
+                    amount = totalIncome.formatToCurrency(),
                     isIncomeCard = true,
                     onClick = { onCardClick(true) },
                     modifier = Modifier.weight(1f)
@@ -84,7 +85,7 @@ fun IncomeExpenseCards(
 
                 InfoCard(
                     title = "Total Expense",
-                    amount = "KSh ${formatAmount(totalExpense)}",
+                    amount = totalExpense.formatToCurrency(),
                     isIncomeCard = false,
                     onClick = { onCardClick(false) },
                     modifier = Modifier.weight(1f)
@@ -187,11 +188,3 @@ fun InfoCard(
     }
 }
 
-fun formatAmount(value: Double): String {
-    return value.toLong()
-        .toString()
-        .reversed()
-        .chunked(3)
-        .joinToString(",")
-        .reversed()
-}

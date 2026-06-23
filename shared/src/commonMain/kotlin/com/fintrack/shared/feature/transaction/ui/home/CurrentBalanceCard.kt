@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.fintrack.shared.feature.account.domain.model.Account
+import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 
@@ -269,7 +270,6 @@ private fun CurrentBalanceSuccessState(
         Spacer(modifier = Modifier.weight(1f))
 
         Column {
-            val formattedBalance = remember(balance) { formatAmount(balance) }
             Text(
                 text = "Current Balance",
                 style = MaterialTheme.typography.bodyMedium,
@@ -277,7 +277,7 @@ private fun CurrentBalanceSuccessState(
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = "KSh $formattedBalance",
+                text = balance.formatToCurrency(),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onPrimary
             )
@@ -504,7 +504,7 @@ private fun AccountSelectionListState(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        "KSh ${formatAmount(acc.balance ?: 0.0)}",
+                        (acc.balance ?: 0.0).formatToCurrency(),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

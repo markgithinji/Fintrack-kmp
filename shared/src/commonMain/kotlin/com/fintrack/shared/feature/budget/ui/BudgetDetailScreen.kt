@@ -75,6 +75,7 @@ import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
+import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.ui.addtransaction.CategoryChip
 import com.fintrack.shared.feature.transaction.ui.addtransaction.ToggleChip
@@ -406,7 +407,7 @@ fun AccountChip(
             )
 
             Text(
-                text = if (account.balance == null) "Ksh --" else "Ksh ${account.balance}",
+                text = account.balance?.formatToCurrency() ?: "KSh --",
                 fontSize = 12.sp,
                 color = Color.Gray
             )

@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import kotlin.math.PI
@@ -140,7 +141,7 @@ fun InteractiveDonutWithText(
                 color = Color.Black
             )
             Text(
-                text = "ksh ${displayAmount.toInt()}",
+                text = displayAmount.formatToCurrency(),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black

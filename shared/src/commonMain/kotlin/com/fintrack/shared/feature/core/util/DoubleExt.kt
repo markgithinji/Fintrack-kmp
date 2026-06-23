@@ -14,12 +14,25 @@ fun Double.formatToCurrency(): String {
     return "KSh ${this.formatToAmount()}"
 }
 
-private fun Double.formatToAmount(): String {
-    return if (this % 1.0 == 0.0) {
-        this.toInt().toString()
+fun Double.formatToAmount(showDecimals: Boolean = true): String {
+    val isNegative = this < 0
+    val absValue = kotlin.math.abs(this)
+    val totalCents = (absValue * 100 + 0.5).toLong()
+    val integerPart = totalCents / 100
+    val decimalPart = totalCents % 100
+    
+    val integerString = integerPart.toString()
+        .reversed()
+        .chunked(3)
+        .joinToString(",")
+        .reversed()
+    
+    val result = if (showDecimals) {
+        val decimalString = decimalPart.toString().padStart(2, '0')
+        "$integerString.$decimalString"
     } else {
-        val multiplied = (this * 100).toInt()
-        val result = multiplied.toDouble() / 100
-        result.toString()
+        integerString
     }
+    
+    return if (isNegative) "-$result" else result
 }

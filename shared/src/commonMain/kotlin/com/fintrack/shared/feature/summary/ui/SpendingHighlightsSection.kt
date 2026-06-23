@@ -40,6 +40,7 @@ import com.example.compose.SegmentColor3
 import com.example.compose.SegmentColor4
 import com.example.compose.SegmentColor5
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.summary.domain.model.Highlight
 import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.model.TabType
@@ -151,7 +152,7 @@ private fun SuccessContent(
                 modifier = Modifier.weight(1f),
                 title = "Highest Month",
                 value = month.value.toMonthName(),
-                description = "${formatCurrency(month.amount)} $amountSuffix",
+                description = "${month.amount.formatToCurrency()} $amountSuffix",
                 backgroundColor = SegmentColor3,
                 titleColor = Color.White,
                 valueColor = Color.White
@@ -160,7 +161,7 @@ private fun SuccessContent(
                 modifier = Modifier.weight(1f),
                 title = "Top Category",
                 value = category.value,
-                description = "${formatCurrency(category.amount)} $amountSuffix",
+                description = "${category.amount.formatToCurrency()} $amountSuffix",
                 backgroundColor = SegmentColor4,
                 titleColor = Color.White,
                 valueColor = Color.White
@@ -178,7 +179,7 @@ private fun SuccessContent(
                 modifier = Modifier.weight(1f),
                 title = "Highest Daily",
                 value = day.value.toFormattedDate(),
-                description = "${formatCurrency(day.amount)} $amountSuffix",
+                description = "${day.amount.formatToCurrency()} $amountSuffix",
                 backgroundColor = SegmentColor5,
                 titleColor = Color.White,
                 valueColor = Color.White
@@ -186,7 +187,7 @@ private fun SuccessContent(
             HighlightCard(
                 modifier = Modifier.weight(1f),
                 title = "Average Per Day",
-                value = formatCurrency(average),
+                value = average.formatToCurrency(),
                 description = dailyLabel,
                 backgroundColor = SegmentColor2,
                 titleColor = Color.White,
@@ -357,24 +358,4 @@ fun HighlightCard(
             )
         }
     }
-}
-
-fun formatCurrency(amount: Double): String {
-    val whole = amount.toLong()
-    val fraction = ((amount - whole) * 100).toInt()
-
-    // Format the whole part with commas
-    val wholeStr = whole.toString()
-    val sb = StringBuilder()
-    var count = 0
-    for (i in wholeStr.length - 1 downTo 0) {
-        sb.append(wholeStr[i])
-        count++
-        if (count % 3 == 0 && i != 0) {
-            sb.append(',')
-        }
-    }
-    val formattedWhole = sb.reverse().toString()
-
-    return "Ksh $formattedWhole.${fraction.toString().padStart(2, '0')}"
 }

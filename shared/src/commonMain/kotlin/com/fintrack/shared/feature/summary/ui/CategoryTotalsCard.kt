@@ -4,7 +4,6 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -68,11 +67,12 @@ import com.example.compose.periodSelectedBg
 import com.example.compose.periodSelectedText
 import com.example.compose.periodUnselectedBg
 import com.example.compose.periodUnselectedText
+import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.TabType
-import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 
 @Composable
 fun CategoryTotalsCardWithTabs(
@@ -397,7 +397,7 @@ fun CategoryList(
                         contentAlignment = Alignment.CenterStart
                     ) {
                         Text(
-                            text = formatCurrency(amount.toDouble()),
+                            text = amount.toDouble().formatToCurrency(),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = categoryAmountText

@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.formatAsShortDate
+import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.util.toColor
@@ -94,7 +95,7 @@ fun TransactionItem(transaction: Transaction) {
             }
 
             Text(
-                text = "${if (transaction.isIncome) "+ " else "- "}KSh ${transaction.amount}",
+                text = "${if (transaction.isIncome) "+" else "-"}${transaction.amount.formatToCurrency()}",
                 color = amountColor,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp
