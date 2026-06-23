@@ -219,7 +219,8 @@ fun AmountInputSection(
         Text("Amount", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             TextField(
@@ -253,9 +254,9 @@ fun AmountInputSection(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFFF5F5F5),
-                    unfocusedContainerColor = Color(0xFFF5F5F5),
-                    disabledContainerColor = Color(0xFFF5F5F5),
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent,
@@ -275,7 +276,8 @@ fun TransactionTypeSection(
         Text("Transaction Type", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -313,7 +315,8 @@ fun CategorySelectionSection(
         Text("Category", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp)
@@ -353,7 +356,8 @@ fun DescriptionInputSection(
         Text("Description", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             TextField(
@@ -371,9 +375,9 @@ fun DescriptionInputSection(
                     )
                 },
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFFF5F5F5),
-                    unfocusedContainerColor = Color(0xFFF5F5F5),
-                    disabledContainerColor = Color(0xFFF5F5F5),
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent,
@@ -394,7 +398,8 @@ fun DateTimeSelectionSection(
         Text("Date & Time", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -578,7 +583,11 @@ fun CategoryChip(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(14.dp),
-        color = if (selected) color else Color(0xFFF5F5F5),
+        color = if (selected) color else MaterialTheme.colorScheme.surface,
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (selected) color else Color.LightGray.copy(alpha = 0.5f)
+        ),
         shadowElevation = if (selected) 4.dp else 0.dp
     ) {
         Row(

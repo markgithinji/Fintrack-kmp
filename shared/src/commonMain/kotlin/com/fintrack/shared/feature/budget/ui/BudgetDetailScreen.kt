@@ -62,7 +62,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.PinkExpense
 import com.example.compose.accountChipBorder
 import com.example.compose.accountChipSelectedBg
-import com.example.compose.cardBackground
 import com.example.compose.currencyTextColor
 import com.example.compose.incomeButtonColor
 import com.fintrack.shared.feature.account.domain.model.Account
@@ -158,7 +157,8 @@ fun BudgetDetailScreen(
                         accountsResult = accountsResult,
                         selectedAccount = formState.selectedAccount,
                         onAccountSelected = { viewModel.setAccount(it) },
-                        onRetry = { accountsViewModel.reloadAccounts() }
+                        onRetry = { accountsViewModel.reloadAccounts() },
+                        modifier = Modifier.padding(bottom = 8.dp)
                     )
 
                     BudgetForm(
@@ -275,26 +275,28 @@ fun AccountSelectionSection(
 
         when (accountsResult) {
             is Result.Loading -> {
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = cardBackground),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(80.dp)
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+            ) {
+                CircularProgressIndicator()
+            }
+        }
             }
 
             is Result.Error -> {
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = cardBackground),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
@@ -324,7 +326,8 @@ fun AccountSelectionSection(
                 if (accountsResult.data.isEmpty()) {
                     Card(
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = cardBackground),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Box(
@@ -367,24 +370,23 @@ fun AccountChip(
 ) {
     val accountIcon = AccountIcon.fromAccountName(account.name)
 
-    Card(
-        modifier = modifier
-            .clickable { onClick() }
-            .widthIn(min = 120.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) {
-                accountChipSelectedBg
-            } else {
-                cardBackground
-            }
-        ),
-        border = if (isSelected) {
-            BorderStroke(2.dp, accountChipBorder)
-        } else {
-            null
-        }
-    ) {
+        Card(
+            modifier = modifier
+                .clickable { onClick() }
+                .widthIn(min = 120.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if (isSelected) {
+                    accountChipSelectedBg
+                } else {
+                    MaterialTheme.colorScheme.surface
+                }
+            ),
+            border = BorderStroke(
+                width = 2.dp,
+                color = if (isSelected) accountChipBorder else Color.LightGray.copy(alpha = 0.3f)
+            )
+        ) {
         Column(
             modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -494,7 +496,8 @@ fun BudgetForm(
         Text("Budget Name", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = cardBackground),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             TextField(
@@ -505,9 +508,9 @@ fun BudgetForm(
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth(),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = cardBackground,
-                    unfocusedContainerColor = cardBackground,
-                    disabledContainerColor = cardBackground,
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent
@@ -518,7 +521,8 @@ fun BudgetForm(
         Text("Limit", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = cardBackground),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             TextField(
@@ -533,9 +537,9 @@ fun BudgetForm(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = cardBackground,
-                    unfocusedContainerColor = cardBackground,
-                    disabledContainerColor = cardBackground,
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent
@@ -546,7 +550,8 @@ fun BudgetForm(
         Text("Budget Type", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = cardBackground),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -573,7 +578,8 @@ fun BudgetForm(
         Text("Categories", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = cardBackground),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp)
@@ -628,7 +634,8 @@ fun BudgetForm(
         Text("Period", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = cardBackground),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
