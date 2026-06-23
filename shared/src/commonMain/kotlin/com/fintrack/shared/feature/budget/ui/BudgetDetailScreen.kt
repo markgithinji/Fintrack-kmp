@@ -85,6 +85,7 @@ import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.domain.model.Budget
 import com.fintrack.shared.feature.budget.domain.model.BudgetFormState
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
+import com.fintrack.shared.feature.core.ui.ThousandsSeparatorTransformation
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.core.ui.MaterialToast
@@ -302,14 +303,8 @@ fun BudgetAmountHeader(
                 BasicTextField(
                     value = amount,
                     onValueChange = { newAmount ->
-                        val filtered = newAmount.filter { it.isDigit() || it == '.' }
-                        val dotCount = filtered.count { it == '.' }
-                        if (dotCount <= 1) {
-                            if (dotCount == 1) {
-                                val parts = filtered.split('.')
-                                if (parts[1].length <= 2) onAmountChange(filtered)
-                            } else onAmountChange(filtered)
-                        }
+                        val filtered = newAmount.filter { it.isDigit() }
+                        onAmountChange(filtered)
                     },
                     textStyle = TextStyle(
                         color = Color.White,
@@ -318,6 +313,7 @@ fun BudgetAmountHeader(
                         textAlign = TextAlign.Start
                     ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    visualTransformation = ThousandsSeparatorTransformation(),
                     cursorBrush = SolidColor(Color.White),
                     singleLine = true,
                     modifier = Modifier
@@ -376,7 +372,7 @@ private fun computeInitialFormState(
                 val budget = budgetWithStatus.budget
                 BudgetFormState(
                     name = budget.name,
-                    amount = budget.limit.toString(),
+                    amount = budget.limit.toLong().toString().let { if (it == "0") "" else it },
                     selectedCategories = budget.categories.toSet(),
                     isExpense = budget.isExpense,
                     startDate = budget.startDate,

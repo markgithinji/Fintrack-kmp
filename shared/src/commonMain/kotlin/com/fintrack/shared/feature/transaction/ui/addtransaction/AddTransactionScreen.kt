@@ -74,6 +74,7 @@ import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.ui.AccountSelectionSection
+import com.fintrack.shared.feature.core.ui.ThousandsSeparatorTransformation
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
 import com.fintrack.shared.feature.core.ui.MaterialToast
@@ -301,14 +302,8 @@ fun AmountHeader(
                     BasicTextField(
                         value = amount,
                         onValueChange = { newAmount ->
-                            val filtered = newAmount.filter { it.isDigit() || it == '.' }
-                            val dotCount = filtered.count { it == '.' }
-                            if (dotCount <= 1) {
-                                if (dotCount == 1) {
-                                    val parts = filtered.split('.')
-                                    if (parts[1].length <= 2) onAmountChange(filtered)
-                                } else onAmountChange(filtered)
-                            }
+                            val filtered = newAmount.filter { it.isDigit() }
+                            onAmountChange(filtered)
                         },
                         textStyle = TextStyle(
                             color = Color.White,
@@ -317,6 +312,7 @@ fun AmountHeader(
                             textAlign = TextAlign.Start
                         ),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        visualTransformation = ThousandsSeparatorTransformation(),
                         cursorBrush = SolidColor(Color.White),
                         singleLine = true,
                         modifier = Modifier
