@@ -55,7 +55,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.GreenIncome
-import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.core.data.domain.ApiException
 import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
@@ -85,6 +84,10 @@ fun LoginScreen(
     // Inline error visibility
     var inlineErrorMessage by remember { mutableStateOf<String?>(null) }
     var passwordVisible by remember { mutableStateOf(value = false) }
+    
+    // Track if fields have been touched to avoid showing errors on initial load
+    var emailTouched by remember { mutableStateOf(false) }
+    var passwordTouched by remember { mutableStateOf(false) }
 
     val colorScheme = MaterialTheme.colorScheme
 
@@ -127,7 +130,7 @@ fun LoginScreen(
             Box(
                 modifier = Modifier
                     .size(100.dp)
-                    .shadow(12.dp, RoundedCornerShape(24.dp))
+                    .shadow(4.dp, RoundedCornerShape(24.dp))
                     .clip(RoundedCornerShape(24.dp))
                     .background(colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center,
@@ -138,7 +141,7 @@ fun LoginScreen(
                     modifier = Modifier
                         .size(64.dp)
                         .padding(4.dp),
-                    contentScale = ContentScale.Fit
+                    contentScale = ContentScale.Fit,
                 )
             }
 
@@ -155,7 +158,7 @@ fun LoginScreen(
 
             Text(
                 text = "Securely access your financial insights",
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 color = colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                 textAlign = TextAlign.Center
             )
@@ -173,7 +176,11 @@ fun LoginScreen(
             imeAction = ImeAction.Next,
             colorScheme = colorScheme,
             isError = loginFormState.emailError != null,
-            errorMessage = null // Consolidated in the error box
+            errorMessage = null, // Consolidated in the error box
+            onFocusChanged = { isFocused ->
+                if (isFocused) emailTouched = true
+                if (!isFocused && emailTouched) viewModel.validateLoginEmail()
+            }
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -196,7 +203,11 @@ fun LoginScreen(
             onPasswordToggle = { passwordVisible = !passwordVisible },
             colorScheme = colorScheme,
             isError = loginFormState.passwordError != null,
-            errorMessage = null // Consolidated in the error box
+            errorMessage = null, // Consolidated in the error box
+            onFocusChanged = { isFocused ->
+                if (isFocused) passwordTouched = true
+                if (!isFocused && passwordTouched) viewModel.validateLoginPassword()
+            }
         )
 
         // 3. Inline Error Message
@@ -235,7 +246,7 @@ fun LoginScreen(
         ) {
             Text(
                 text = "Forgot Password?",
-                color = colorScheme.primary,
+                color = colorScheme.tertiary,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.clickable { onForgotPassword() }
@@ -372,7 +383,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = "Create Account",
-                color = colorScheme.primary,
+                color = colorScheme.tertiary,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.clickable { onSignUp() }

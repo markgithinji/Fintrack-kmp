@@ -460,7 +460,8 @@ fun DescriptionInputSection(
                     Icon(
                         Icons.AutoMirrored.Filled.Notes,
                         null,
-                        tint = Color.Gray
+                        tint = Color.Gray,
+                        modifier = Modifier.size(20.dp)
                     )
                 },
                 colors = TextFieldDefaults.colors(

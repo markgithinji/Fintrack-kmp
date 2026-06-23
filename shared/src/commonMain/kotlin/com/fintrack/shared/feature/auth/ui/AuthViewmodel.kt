@@ -54,30 +54,38 @@ class AuthViewModel(
 
     fun updateLoginEmail(email: String) {
         val currentState = _loginFormState.value
-        val emailError = when (val result = loginValidationUseCase.validateEmail(email)) {
-            is ValidationResult.Error -> result.message
-            is ValidationResult.Success -> null
-        }
-
         _loginFormState.value = currentState.copy(
             email = email,
-            emailError = emailError,
+            emailError = null, // Clear error when typing
             isFormValid = loginValidationUseCase.validateForm(email, currentState.password)
         )
     }
 
-    fun updateLoginPassword(password: String) {
+    fun validateLoginEmail() {
         val currentState = _loginFormState.value
-        val passwordError = when (val result = loginValidationUseCase.validatePassword(password)) {
+        val emailError = when (val result = loginValidationUseCase.validateEmail(currentState.email)) {
             is ValidationResult.Error -> result.message
             is ValidationResult.Success -> null
         }
+        _loginFormState.value = currentState.copy(emailError = emailError)
+    }
 
+    fun updateLoginPassword(password: String) {
+        val currentState = _loginFormState.value
         _loginFormState.value = currentState.copy(
             password = password,
-            passwordError = passwordError,
+            passwordError = null, // Clear error when typing
             isFormValid = loginValidationUseCase.validateForm(currentState.email, password)
         )
+    }
+
+    fun validateLoginPassword() {
+        val currentState = _loginFormState.value
+        val passwordError = when (val result = loginValidationUseCase.validatePassword(currentState.password)) {
+            is ValidationResult.Error -> result.message
+            is ValidationResult.Success -> null
+        }
+        _loginFormState.value = currentState.copy(passwordError = passwordError)
     }
 
     fun login() {
@@ -111,14 +119,9 @@ class AuthViewModel(
 
     fun updateName(name: String) {
         val currentState = _registerFormState.value
-        val nameError = when (val result = registerValidationUseCase.validateName(name)) {
-            is ValidationResult.Error -> result.message
-            is ValidationResult.Success -> null
-        }
-
         _registerFormState.value = currentState.copy(
             name = name,
-            nameError = nameError,
+            nameError = null, // Clear error when typing
             isFormValid = registerValidationUseCase.validateForm(
                 name = name,
                 email = currentState.email,
@@ -128,16 +131,20 @@ class AuthViewModel(
         )
     }
 
-    fun updateEmail(email: String) {
+    fun validateName() {
         val currentState = _registerFormState.value
-        val emailError = when (val result = registerValidationUseCase.validateEmail(email)) {
+        val nameError = when (val result = registerValidationUseCase.validateName(currentState.name)) {
             is ValidationResult.Error -> result.message
             is ValidationResult.Success -> null
         }
+        _registerFormState.value = currentState.copy(nameError = nameError)
+    }
 
+    fun updateEmail(email: String) {
+        val currentState = _registerFormState.value
         _registerFormState.value = currentState.copy(
             email = email,
-            emailError = emailError,
+            emailError = null, // Clear error when typing
             isFormValid = registerValidationUseCase.validateForm(
                 name = currentState.name,
                 email = email,
@@ -147,27 +154,22 @@ class AuthViewModel(
         )
     }
 
+    fun validateEmail() {
+        val currentState = _registerFormState.value
+        val emailError = when (val result = registerValidationUseCase.validateEmail(currentState.email)) {
+            is ValidationResult.Error -> result.message
+            is ValidationResult.Success -> null
+        }
+        _registerFormState.value = currentState.copy(emailError = emailError)
+    }
+
     fun updatePassword(password: String) {
         val currentState = _registerFormState.value
-        val passwordError =
-            when (val result = registerValidationUseCase.validatePassword(password)) {
-                is ValidationResult.Error -> result.message
-                is ValidationResult.Success -> null
-            }
-        val confirmPasswordError =
-            when (val result = registerValidationUseCase.validateConfirmPassword(
-                password,
-                currentState.confirmPassword
-            )) {
-                is ValidationResult.Error -> result.message
-                is ValidationResult.Success -> null
-            }
         val passwordStrength = registerValidationUseCase.calculatePasswordStrength(password)
 
         _registerFormState.value = currentState.copy(
             password = password,
-            passwordError = passwordError,
-            confirmPasswordError = confirmPasswordError,
+            passwordError = null, // Clear error when typing
             passwordStrength = passwordStrength,
             isFormValid = registerValidationUseCase.validateForm(
                 name = currentState.name,
@@ -178,20 +180,20 @@ class AuthViewModel(
         )
     }
 
+    fun validatePassword() {
+        val currentState = _registerFormState.value
+        val passwordError = when (val result = registerValidationUseCase.validatePassword(currentState.password)) {
+            is ValidationResult.Error -> result.message
+            is ValidationResult.Success -> null
+        }
+        _registerFormState.value = currentState.copy(passwordError = passwordError)
+    }
+
     fun updateConfirmPassword(confirmPassword: String) {
         val currentState = _registerFormState.value
-        val confirmPasswordError =
-            when (val result = registerValidationUseCase.validateConfirmPassword(
-                currentState.password,
-                confirmPassword
-            )) {
-                is ValidationResult.Error -> result.message
-                is ValidationResult.Success -> null
-            }
-
         _registerFormState.value = currentState.copy(
             confirmPassword = confirmPassword,
-            confirmPasswordError = confirmPasswordError,
+            confirmPasswordError = null, // Clear error when typing
             isFormValid = registerValidationUseCase.validateForm(
                 name = currentState.name,
                 email = currentState.email,
@@ -199,6 +201,18 @@ class AuthViewModel(
                 confirmPassword = confirmPassword
             )
         )
+    }
+
+    fun validateConfirmPassword() {
+        val currentState = _registerFormState.value
+        val confirmPasswordError = when (val result = registerValidationUseCase.validateConfirmPassword(
+            currentState.password,
+            currentState.confirmPassword
+        )) {
+            is ValidationResult.Error -> result.message
+            is ValidationResult.Success -> null
+        }
+        _registerFormState.value = currentState.copy(confirmPasswordError = confirmPasswordError)
     }
 
     fun register() {

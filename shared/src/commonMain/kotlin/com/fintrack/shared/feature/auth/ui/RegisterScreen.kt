@@ -48,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -80,6 +81,12 @@ fun RegisterScreen(
 
     var passwordVisible by remember { mutableStateOf(value = false) }
     var confirmPasswordVisible by remember { mutableStateOf(value = false) }
+
+    // Track if fields have been touched to avoid showing errors on initial load
+    var nameTouched by remember { mutableStateOf(false) }
+    var emailTouched by remember { mutableStateOf(false) }
+    var passwordTouched by remember { mutableStateOf(false) }
+    var confirmPasswordTouched by remember { mutableStateOf(false) }
 
     val colorScheme = MaterialTheme.colorScheme
 
@@ -116,7 +123,7 @@ fun RegisterScreen(
             Box(
                 modifier = Modifier
                     .size(100.dp)
-                    .shadow(12.dp, RoundedCornerShape(24.dp))
+                    .shadow(4.dp, RoundedCornerShape(24.dp))
                     .clip(RoundedCornerShape(24.dp))
                     .background(colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
@@ -144,7 +151,7 @@ fun RegisterScreen(
 
             Text(
                 text = "Join FinTrack to start managing your finances smarter.",
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 color = colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                 textAlign = TextAlign.Center
             )
@@ -162,7 +169,11 @@ fun RegisterScreen(
             imeAction = ImeAction.Next,
             colorScheme = colorScheme,
             isError = registerFormState.nameError != null,
-            errorMessage = registerFormState.nameError
+            errorMessage = registerFormState.nameError,
+            onFocusChanged = { isFocused ->
+                if (isFocused) nameTouched = true
+                if (!isFocused && nameTouched) viewModel.validateName()
+            }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -176,7 +187,11 @@ fun RegisterScreen(
             imeAction = ImeAction.Next,
             colorScheme = colorScheme,
             isError = registerFormState.emailError != null,
-            errorMessage = registerFormState.emailError
+            errorMessage = registerFormState.emailError,
+            onFocusChanged = { isFocused ->
+                if (isFocused) emailTouched = true
+                if (!isFocused && emailTouched) viewModel.validateEmail()
+            }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -193,7 +208,11 @@ fun RegisterScreen(
             onPasswordToggle = { passwordVisible = !passwordVisible },
             colorScheme = colorScheme,
             isError = registerFormState.passwordError != null,
-            errorMessage = registerFormState.passwordError
+            errorMessage = registerFormState.passwordError,
+            onFocusChanged = { isFocused ->
+                if (isFocused) passwordTouched = true
+                if (!isFocused && passwordTouched) viewModel.validatePassword()
+            }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -216,25 +235,38 @@ fun RegisterScreen(
             onPasswordToggle = { confirmPasswordVisible = !confirmPasswordVisible },
             colorScheme = colorScheme,
             isError = registerFormState.confirmPasswordError != null,
-            errorMessage = registerFormState.confirmPasswordError
+            errorMessage = registerFormState.confirmPasswordError,
+            onFocusChanged = { isFocused ->
+                if (isFocused) confirmPasswordTouched = true
+                if (!isFocused && confirmPasswordTouched) viewModel.validateConfirmPassword()
+            }
         )
 
         // 3. Inline Error Message
-        AnimatedVisibility(
-            visible = inlineErrorMessage != null,
-            enter = fadeIn() + slideInVertically(),
-            exit = fadeOut()
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(24.dp), // Fixed height to prevent layout shift
+            contentAlignment = Alignment.CenterStart
         ) {
-            Text(
-                text = inlineErrorMessage ?: "",
-                color = colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                textAlign = TextAlign.Start
-            )
+            Column {
+                AnimatedVisibility(
+                    visible = inlineErrorMessage != null,
+                    enter = fadeIn() + slideInVertically { it / 2 },
+                    exit = fadeOut()
+                ) {
+                    Text(
+                        text = inlineErrorMessage ?: "",
+                        color = colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Start,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -342,7 +374,7 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = "Sign in",
-                color = colorScheme.primary,
+                color = colorScheme.tertiary,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.clickable { onLogin() }

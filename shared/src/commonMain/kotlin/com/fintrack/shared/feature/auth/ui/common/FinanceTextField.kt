@@ -2,6 +2,7 @@ package com.fintrack.shared.feature.auth.ui.common
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -17,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.ImeAction
@@ -40,12 +42,18 @@ fun FinanceTextField(
     colorScheme: ColorScheme,
     isError: Boolean = false,
     errorMessage: String? = null,
+    onFocusChanged: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { focusState ->
+                    onFocusChanged(focusState.isFocused)
+                },
             label = {
                 Text(
                     label,
@@ -55,7 +63,8 @@ fun FinanceTextField(
             leadingIcon = {
                 Icon(
                     leadingIcon,
-                    contentDescription = null
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
                 )
             },
             trailingIcon = if (isPassword) {
@@ -63,7 +72,8 @@ fun FinanceTextField(
                     IconButton(onClick = onPasswordToggle) {
                         Icon(
                             imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
@@ -75,7 +85,6 @@ fun FinanceTextField(
             ),
             keyboardActions = keyboardActions,
             singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             colors = TextFieldDefaults.colors(
                 focusedTextColor = colorScheme.onSurface,

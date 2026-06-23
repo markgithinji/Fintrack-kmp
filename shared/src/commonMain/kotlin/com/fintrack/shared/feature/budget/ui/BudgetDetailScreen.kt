@@ -667,7 +667,8 @@ fun BudgetNameSection(
                     Icon(
                         Icons.Default.Edit,
                         null,
-                        tint = Color.Gray
+                        tint = Color.Gray,
+                        modifier = Modifier.size(20.dp)
                     )
                 },
                 colors = TextFieldDefaults.colors(
