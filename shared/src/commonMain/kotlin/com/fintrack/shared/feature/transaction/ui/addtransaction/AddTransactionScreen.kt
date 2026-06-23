@@ -456,7 +456,7 @@ fun DescriptionInputSection(
             TextField(
                 value = description,
                 onValueChange = onDescriptionChange,
-                placeholder = { Text("Optional description") },
+                placeholder = { Text("Enter description") },
                 singleLine = false,
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth(),

@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.core.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -25,7 +27,13 @@ fun FintrackTimePickerDialog(
     onDismiss: () -> Unit
 ) {
     val baseTime = initialTime ?: LocalTime(12, 0)
-    var hour by remember { mutableStateOf(baseTime.hour) }
+    
+    // Convert 24h to 12h format
+    var hour12 by remember { 
+        val h = baseTime.hour
+        mutableStateOf(if (h == 0 || h == 12) 12 else h % 12) 
+    }
+    var isAm by remember { mutableStateOf(baseTime.hour < 12) }
     var minute by remember { mutableStateOf(baseTime.minute) }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -57,15 +65,15 @@ fun FintrackTimePickerDialog(
                 ) {
                     TimeUnitPicker(
                         label = "Hour",
-                        value = hour,
-                        range = 0..23,
-                        onValueChange = { hour = it }
+                        value = hour12,
+                        range = 1..12,
+                        onValueChange = { hour12 = it }
                     )
                     
                     Text(
                         text = ":",
                         style = MaterialTheme.typography.displaySmall,
-                        modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 24.dp)
+                        modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 24.dp)
                     )
 
                     TimeUnitPicker(
@@ -74,6 +82,26 @@ fun FintrackTimePickerDialog(
                         range = 0..59,
                         onValueChange = { minute = it }
                     )
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    // AM/PM Selector
+                    Column(
+                        modifier = Modifier.padding(top = 24.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        AmPmButton(
+                            text = "AM",
+                            isSelected = isAm,
+                            onClick = { isAm = true }
+                        )
+                        AmPmButton(
+                            text = "PM",
+                            isSelected = !isAm,
+                            onClick = { isAm = false }
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -89,7 +117,14 @@ fun FintrackTimePickerDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            onTimeSelected(LocalTime(hour, minute))
+                            // Convert back to 24h format
+                            val finalHour = when {
+                                isAm && hour12 == 12 -> 0
+                                !isAm && hour12 == 12 -> 12
+                                !isAm -> hour12 + 12
+                                else -> hour12
+                            }
+                            onTimeSelected(LocalTime(finalHour, minute))
                         },
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -98,6 +133,33 @@ fun FintrackTimePickerDialog(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AmPmButton(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(width = 50.dp, height = 36.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(
+                if (isSelected) MaterialTheme.colorScheme.primary 
+                else MaterialTheme.colorScheme.surfaceVariant
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (isSelected) MaterialTheme.colorScheme.onPrimary 
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+        )
     }
 }
 
@@ -136,15 +198,16 @@ private fun TimeUnitPicker(
 
         Box(
             modifier = Modifier
-                .width(70.dp)
-                .height(60.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp)),
+                .width(64.dp)
+                .height(56.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = value.toString().padStart(2, '0'),
                 style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp
             )
         }
 
