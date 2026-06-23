@@ -92,8 +92,8 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.transaction.ui.addtransaction.CategoryChip
-import com.fintrack.shared.feature.transaction.ui.addtransaction.PickDate
 import com.fintrack.shared.feature.transaction.ui.addtransaction.TypeToggleButton
 import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
 import com.fintrack.shared.feature.transaction.ui.util.toColor
@@ -514,23 +514,23 @@ fun AccountChip(
 ) {
     val accountIcon = AccountIcon.fromAccountName(account.name)
 
-        Card(
-            modifier = modifier
-                .clickable { onClick() }
-                .widthIn(min = 120.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isSelected) {
-                    accountChipSelectedBg
-                } else {
-                    MaterialTheme.colorScheme.surface
-                }
-            ),
-            border = BorderStroke(
-                width = 2.dp,
-                color = if (isSelected) accountChipBorder else Color.LightGray.copy(alpha = 0.3f)
-            )
-        ) {
+    Card(
+        modifier = modifier
+            .clickable { onClick() }
+            .widthIn(min = 120.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) {
+                accountChipSelectedBg
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        ),
+        border = BorderStroke(
+            width = 2.dp,
+            color = if (isSelected) accountChipBorder else Color.LightGray.copy(alpha = 0.3f)
+        )
+    ) {
         Column(
             modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -832,7 +832,7 @@ fun PeriodSelectionSection(
     }
 
     if (showStartPicker) {
-        PickDate(
+        FintrackDatePickerDialog(
             initialDate = startDate ?: Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
             onDateSelected = {
                 onPeriodChange(it, endDate)
@@ -843,7 +843,7 @@ fun PeriodSelectionSection(
     }
 
     if (showEndPicker) {
-        PickDate(
+        FintrackDatePickerDialog(
             initialDate = endDate ?: Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.plus(DatePeriod(months = 1)),
             onDateSelected = {
                 onPeriodChange(startDate, it)

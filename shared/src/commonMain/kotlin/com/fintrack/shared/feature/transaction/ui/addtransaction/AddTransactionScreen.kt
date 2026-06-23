@@ -74,6 +74,8 @@ import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.ui.AccountSelectionSection
+import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
+import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.transaction.domain.model.Category
@@ -209,7 +211,7 @@ fun AddTransactionScreen(
         }
 
         if (showDatePicker) {
-            PickDate(
+            FintrackDatePickerDialog(
                 initialDate = dateTime.date,
                 onDateSelected = { selectedDate ->
                     dateTime = LocalDateTime(date = selectedDate, time = dateTime.time)
@@ -220,7 +222,7 @@ fun AddTransactionScreen(
         }
 
         if (showTimePicker) {
-            PickTime(
+            FintrackTimePickerDialog(
                 initialTime = dateTime.time,
                 onTimeSelected = { selectedTime ->
                     dateTime = LocalDateTime(date = dateTime.date, time = selectedTime)
