@@ -90,6 +90,9 @@ class AuthViewModel(
             when (val result = repository.login(formState.email, formState.password)) {
                 is Result.Success -> {
                     logger.info(LogTags.AUTH, "Login successful for: ${formState.email}")
+                    // Add a small delay to ensure tokens are persisted and flows are updated
+                    // before the UI navigates and triggers follow-up requests.
+                    kotlinx.coroutines.delay(100)
                     _loginState.value = AuthState.Success(result.data)
                     _authStatus.value = AuthState.Success(true)
                 }
@@ -209,6 +212,8 @@ class AuthViewModel(
                 repository.register(formState.name, formState.email, formState.password)) {
                 is Result.Success -> {
                     logger.info(LogTags.AUTH, "Registration successful for: ${formState.email}")
+                    // Add a small delay for token persistence propagation
+                    kotlinx.coroutines.delay(100)
                     _registerState.value = AuthState.Success(result.data)
                     _authStatus.value = AuthState.Success(true)
                 }

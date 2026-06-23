@@ -36,21 +36,21 @@ class AndroidTokenDataSource(
     override val refreshToken: Flow<String?> = _refreshTokenFlow
 
     override suspend fun saveTokens(accessToken: String, refreshToken: String) {
-        encryptedPrefs.edit { 
+        encryptedPrefs.edit(commit = true) { 
             putString("access_token", accessToken)
             putString("refresh_token", refreshToken)
         }
-        _accessTokenFlow.update { accessToken }
-        _refreshTokenFlow.update { refreshToken }
+        _accessTokenFlow.value = accessToken
+        _refreshTokenFlow.value = refreshToken
     }
 
     override suspend fun clearTokens() {
-        encryptedPrefs.edit { 
+        encryptedPrefs.edit(commit = true) { 
             remove("access_token") 
             remove("refresh_token")
         }
-        _accessTokenFlow.update { null }
-        _refreshTokenFlow.update { null }
+        _accessTokenFlow.value = null
+        _refreshTokenFlow.value = null
     }
 
     private fun loadTokensFromEncryptedPrefs() {

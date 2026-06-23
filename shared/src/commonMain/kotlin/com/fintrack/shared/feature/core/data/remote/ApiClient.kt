@@ -6,7 +6,6 @@ import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.logger.LogTags
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
@@ -28,15 +27,17 @@ import kotlinx.serialization.json.Json
 class ApiClient(
     private val tokenDataSource: TokenDataSource,
     private val logger: KMPLogger,
-    private val baseUrl: String
+    private val baseUrl: String,
 ) {
     val httpClient: HttpClient by lazy {
         HttpClient {
             install(ContentNegotiation) {
-                json(Json {
-                    ignoreUnknownKeys = true
-                    explicitNulls = false
-                })
+                json(
+                    Json {
+                        ignoreUnknownKeys = true
+                        explicitNulls = false
+                    }
+                )
             }
 
             install(Logging) {
@@ -59,40 +60,53 @@ class ApiClient(
                     loadTokens {
                         val accessToken = tokenDataSource.accessToken.firstOrNull()
                         val refreshToken = tokenDataSource.refreshToken.firstOrNull()
-                        if (accessToken != null && refreshToken != null) {
+                        
+                        if (!accessToken.isNullOrBlank() && !refreshToken.isNullOrBlank()) {
+                            logger.debug(LogTags.AUTH, "Loading tokens for request: ${accessToken.take(10)}...")
                             BearerTokens(accessToken, refreshToken)
                         } else {
+                            logger.debug(LogTags.AUTH, "No tokens available for request")
                             null
                         }
                     }
 
                     refreshTokens {
                         val refreshToken = tokenDataSource.refreshToken.firstOrNull()
-                        if (refreshToken == null) return@refreshTokens null
+                        if (refreshToken == null) {
+                            logger.warning(LogTags.AUTH, "Refresh triggered but no refresh token found in storage")
+                            return@refreshTokens null
+                        }
 
                         try {
-                            // We use a separate client or a request that bypasses Auth to avoid recursion
+                            logger.info(LogTags.AUTH, "Attempting to refresh token...")
+                            // Note: Ktor's bearer auth automatically excludes the refresh request 
+                            // from further auth interceptors to avoid infinite loops.
                             val response = client.post("$baseUrl/auth/refresh") {
                                 contentType(ContentType.Application.Json)
                                 setBody(mapOf("refreshToken" to refreshToken))
-                                // Mark this request to bypass Auth plugin if possible, 
-                                // but Ktor Auth bearer usually handles this by not adding headers if loadTokens returns null or if it's the refresh call.
                             }.body<AuthResponseDto>()
 
+                            logger.info(LogTags.AUTH, "Token refreshed successfully")
                             tokenDataSource.saveTokens(response.accessToken, response.refreshToken)
                             BearerTokens(response.accessToken, response.refreshToken)
                         } catch (e: Exception) {
                             logger.error(LogTags.AUTH, "Failed to refresh token: ${e.message}")
-                            tokenDataSource.clearTokens()
+                            // We only clear tokens if the refresh token itself is invalid (401)
+                            // If it's a network error, we should keep the tokens and let the user retry.
+                            if ((e.message?.contains("401") == true) || (e.message?.contains("403") == true)) {
+                                logger.warning(LogTags.AUTH, "Refresh token invalid or expired. Clearing session.")
+                                tokenDataSource.clearTokens()
+                            }
                             null
                         }
                     }
                     
                     sendWithoutRequest { request ->
                         val path = request.url.build().encodedPath
-                        path.contains("/auth/login") || 
-                        path.contains("/auth/register") || 
-                        path.contains("/auth/refresh")
+                        // Send credentials for everything EXCEPT public auth endpoints
+                        !(path.contains("/auth/login") || 
+                          path.contains("/auth/register") || 
+                          path.contains("/auth/refresh"))
                     }
                 }
             }
