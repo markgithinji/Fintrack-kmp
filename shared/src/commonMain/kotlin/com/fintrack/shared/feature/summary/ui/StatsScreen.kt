@@ -3,6 +3,7 @@ package com.fintrack.shared.feature.summary.ui
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -151,6 +152,15 @@ fun TabItem(
     Box(
         modifier = Modifier
             .clip(shape)
+            .then(
+                if (!isSelected) {
+                    Modifier.border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                        shape = shape
+                    )
+                } else Modifier
+            )
             .background(backgroundColor)
             .clickable(onClick = onClick)
             .padding(horizontal = 24.dp, vertical = 10.dp)

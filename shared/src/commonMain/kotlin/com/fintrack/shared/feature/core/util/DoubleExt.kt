@@ -11,10 +11,10 @@ fun Double.formatToSinglePrecision(): String {
 }
 
 fun Double.formatToCurrency(): String {
-    return "KSh ${this.formatToAmount()}"
+    return "KSh ${this.formatToAmount(showDecimals = false)}"
 }
 
-fun Double.formatToAmount(showDecimals: Boolean = true): String {
+fun Double.formatToAmount(showDecimals: Boolean = false): String {
     val isNegative = this < 0
     val absValue = kotlin.math.abs(this)
     val totalCents = (absValue * 100 + 0.5).toLong()

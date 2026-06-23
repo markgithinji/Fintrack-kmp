@@ -2,8 +2,10 @@ package com.fintrack.shared.feature.summary.ui
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -363,7 +365,8 @@ fun CategoryList(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = categoryCardBg)
+        colors = CardDefaults.cardColors(containerColor = categoryCardBg),
+        border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             sortedCategorySums.forEachIndexed { index, (categoryName, amount) ->
@@ -529,6 +532,11 @@ fun SexyDropdown(
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
+                .border(
+                    width = 1.dp,
+                    color = Color.LightGray.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(12.dp)
+                )
                 .background(menuBackground)
                 .clickable { expanded = !expanded }
                 .padding(horizontal = 10.dp, vertical = 6.dp),
