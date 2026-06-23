@@ -113,7 +113,9 @@ class BudgetViewModel(
 
     fun reloadBudgets() {
         viewModelScope.launch {
-            _budgets.value = Result.Loading
+            if (_budgets.value !is Result.Success) {
+                _budgets.value = Result.Loading
+            }
             _budgets.value = repo.getBudgets()
         }
     }

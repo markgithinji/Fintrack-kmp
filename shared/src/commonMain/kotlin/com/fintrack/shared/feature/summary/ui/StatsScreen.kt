@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -43,6 +44,7 @@ fun StatisticsScreen(
     val availableYears by viewModel.availableYears.collectAsStateWithLifecycle()
     val highlights by viewModel.highlights.collectAsStateWithLifecycle()
     val distributionResult by viewModel.distribution.collectAsStateWithLifecycle()
+    val listState = rememberLazyListState()
 
     val safePeriod = selectedPeriod ?: remember(availableWeeks, availableMonths, availableYears) {
         getDefaultPeriod(availableWeeks, availableMonths, availableYears)
@@ -56,7 +58,8 @@ fun StatisticsScreen(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 16.dp)
+        contentPadding = PaddingValues(vertical = 16.dp),
+        state = listState
     ) {
         item(key = "screenHeader") {
             ScreenHeader(

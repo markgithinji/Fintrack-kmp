@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -76,14 +77,17 @@ fun BudgetScreen(
     onBudgetClick: (BudgetWithStatus) -> Unit
 ) {
     val budgets by viewModel.budgets.collectAsStateWithLifecycle()
+    val listState = rememberLazyListState()
 
     LaunchedEffect(Unit) {
         viewModel.reloadBudgets()
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        when (budgets) {
-            is Result.Loading -> BudgetScreenLoadingState()
+        when (val currentBudgets = budgets) {
+            is Result.Loading -> {
+                BudgetScreenLoadingState()
+            }
 
             is Result.Error -> {
                 BudgetErrorRetryState(
@@ -93,8 +97,8 @@ fun BudgetScreen(
             }
 
             is Result.Success -> {
-                val data = (budgets as Result.Success<List<BudgetWithStatus>>).data
-                LazyColumn {
+                val data = currentBudgets.data
+                LazyColumn(state = listState) {
                     if (data.isNotEmpty()) {
                         item {
                             SexyAddBudgetButton(
@@ -103,7 +107,7 @@ fun BudgetScreen(
                             )
                         }
 
-                        items(data) { budgetWithStatus ->
+                        items(data, key = { it.budget.id ?: it.budget.name }) { budgetWithStatus ->
                             BudgetItem(
                                 budgetWithStatus = budgetWithStatus,
                                 onClick = { onBudgetClick(budgetWithStatus) }

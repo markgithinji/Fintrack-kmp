@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,6 +33,7 @@ fun TransactionListScreen(
     statisticsViewModel: StatisticsViewModel = koinViewModel()
 ) {
     val transactionCounts by statisticsViewModel.transactionCounts.collectAsStateWithLifecycle()
+    val listState = rememberLazyListState()
 
     val transactions = remember(accountId, isIncome) {
         transactionsViewModel.getTransactionsPagingData(accountId, isIncome)
@@ -44,7 +46,8 @@ fun TransactionListScreen(
     TransactionListContent(
         transactionCounts = transactionCounts,
         transactions = transactions,
-        isIncome = isIncome
+        isIncome = isIncome,
+        listState = listState
     )
 }
 
@@ -52,14 +55,16 @@ fun TransactionListScreen(
 private fun TransactionListContent(
     transactionCounts: Result<TransactionCountSummary>,
     transactions: LazyPagingItems<Transaction>,
-    isIncome: Boolean?
+    isIncome: Boolean?,
+    listState: androidx.compose.foundation.lazy.LazyListState
 ) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(transactionBackground),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        state = listState
     ) {
         item {
             TransactionCountHeaderCard(

@@ -132,28 +132,28 @@ fun BudgetDetailScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
-                .padding(top = 56.dp, bottom = 80.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            when {
-                budgetId != null && selectedBudgetResult is Result.Loading -> {
-                    CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
-                }
+        when {
+            budgetId != null && selectedBudgetResult is Result.Loading -> {
+                CircularProgressIndicator(Modifier.align(Alignment.Center))
+            }
 
-                budgetId != null && selectedBudgetResult is Result.Error -> {
-                    Text(
-                        text = "Failed to load budget",
-                        color = Color.Red,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
-                }
+            budgetId != null && selectedBudgetResult is Result.Error -> {
+                Text(
+                    text = "Failed to load budget",
+                    color = Color.Red,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
 
-                else -> {
+            else -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 56.dp, bottom = 80.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                     AccountSelectionSection(
                         accountsResult = accountsResult,
                         selectedAccount = formState.selectedAccount,
