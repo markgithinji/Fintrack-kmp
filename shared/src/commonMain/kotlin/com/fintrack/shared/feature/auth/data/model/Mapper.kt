@@ -4,6 +4,7 @@ import com.fintrack.shared.feature.auth.domain.model.AuthResponse
 
 fun AuthResponseDto.toDomain(): AuthResponse {
     return AuthResponse(
-        token = token
+        accessToken = accessToken,
+        refreshToken = refreshToken
     )
 }

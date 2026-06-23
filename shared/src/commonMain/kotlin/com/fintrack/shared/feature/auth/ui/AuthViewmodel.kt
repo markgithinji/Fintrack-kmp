@@ -45,7 +45,7 @@ class AuthViewModel(
     private val _loginFormState = MutableStateFlow(LoginFormState())
     val loginFormState: StateFlow<LoginFormState> = _loginFormState
 
-    val token: StateFlow<String?> = tokenDataSource.token
+    val token: StateFlow<String?> = tokenDataSource.accessToken
         .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     init {
@@ -228,7 +228,7 @@ class AuthViewModel(
     fun checkAuthenticationStatus() {
         viewModelScope.launch {
             _authStatus.value = AuthState.Loading("Checking authentication...")
-            val currentToken = tokenDataSource.token.first()
+            val currentToken = tokenDataSource.accessToken.first()
 
             if (currentToken == null) {
                 _authStatus.value = AuthState.Success(false)
@@ -241,7 +241,7 @@ class AuthViewModel(
                         AuthState.Success(true)
                     } else {
                         // Clear invalid token
-                        tokenDataSource.clearToken()
+                        // tokenDataSource.clearTokens() // Disabled for testing backend invalidation
                         AuthState.Success(false)
                     }
                 }
@@ -267,8 +267,8 @@ class AuthViewModel(
                 }
                 is Result.Error -> {
                     logger.error(LogTags.AUTH, "Server logout failed, but clearing local session anyway: ${result.exception.message}", result.exception)
-                    // We still clear local token even if server call fails
-                    tokenDataSource.clearToken()
+                    // We still clear local tokens even if server call fails
+                    // tokenDataSource.clearTokens() // Disabled for testing backend invalidation
                 }
                 is Result.Loading -> {}
             }

@@ -8,11 +8,12 @@ import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
 import com.fintrack.shared.feature.auth.domain.usecase.LoginValidationUseCase
 import com.fintrack.shared.feature.auth.domain.usecase.RegisterValidationUseCase
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
+import com.fintrack.shared.feature.core.data.remote.ApiConfig
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val authModule = module {
-    single { AuthApi(get(), getProperty("baseUrl")) }
+    single { AuthApi(get(), ApiConfig.BASE_URL) }
     single<TokenDataSource> { createTokenDataSource() }
     single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
     single { RegisterValidationUseCase() }

@@ -9,6 +9,7 @@ import com.fintrack.shared.feature.auth.domain.model.AuthResponse
 import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.safeApiCall
+import kotlinx.coroutines.flow.firstOrNull
 
 class AuthRepositoryImpl(
     private val api: AuthApi,
@@ -19,7 +20,7 @@ class AuthRepositoryImpl(
         safeApiCall {
             val authResponse = api.login(LoginRequest(email, password))
             val domainResponse = authResponse.toDomain()
-            tokenDataSource.saveToken(domainResponse.token)
+            tokenDataSource.saveTokens(domainResponse.accessToken, domainResponse.refreshToken)
             domainResponse
         }
 
@@ -31,7 +32,7 @@ class AuthRepositoryImpl(
         safeApiCall {
             val authResponse = api.register(RegisterRequest(name, email, password))
             val domainResponse = authResponse.toDomain()
-            tokenDataSource.saveToken(domainResponse.token)
+            tokenDataSource.saveTokens(domainResponse.accessToken, domainResponse.refreshToken)
             domainResponse
         }
 
@@ -49,7 +50,16 @@ class AuthRepositoryImpl(
 
     override suspend fun logout(): Result<Unit> =
         safeApiCall {
-            api.logout()
-            tokenDataSource.clearToken()
+            val refreshToken = tokenDataSource.refreshToken.firstOrNull()
+            api.logout(refreshToken)
+            tokenDataSource.clearTokens()
+        }
+
+    override suspend fun refreshToken(refreshToken: String): Result<AuthResponse> =
+        safeApiCall {
+            val authResponse = api.refresh(refreshToken)
+            val domainResponse = authResponse.toDomain()
+            tokenDataSource.saveTokens(domainResponse.accessToken, domainResponse.refreshToken)
+            domainResponse
         }
 }

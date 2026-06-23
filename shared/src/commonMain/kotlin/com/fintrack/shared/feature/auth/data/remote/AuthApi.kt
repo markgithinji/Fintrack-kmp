@@ -44,7 +44,17 @@ class AuthApi(
         }.body()
     }
 
-    suspend fun logout() {
-        client.post("$baseUrl/auth/logout")
+    suspend fun refresh(refreshToken: String): AuthResponseDto {
+        return client.post("$baseUrl/auth/refresh") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("refreshToken" to refreshToken))
+        }.body()
+    }
+
+    suspend fun logout(refreshToken: String?) {
+        client.post("$baseUrl/auth/logout") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("refreshToken" to refreshToken))
+        }
     }
 }
