@@ -90,7 +90,6 @@ class AuthViewModel(
             when (val result = repository.login(formState.email, formState.password)) {
                 is Result.Success -> {
                     logger.info(LogTags.AUTH, "Login successful for: ${formState.email}")
-                    tokenDataSource.saveToken(result.data.token)
                     _loginState.value = AuthState.Success(result.data)
                     _authStatus.value = AuthState.Success(true)
                 }
@@ -210,7 +209,6 @@ class AuthViewModel(
                 repository.register(formState.name, formState.email, formState.password)) {
                 is Result.Success -> {
                     logger.info(LogTags.AUTH, "Registration successful for: ${formState.email}")
-                    tokenDataSource.saveToken(result.data.token)
                     _registerState.value = AuthState.Success(result.data)
                     _authStatus.value = AuthState.Success(true)
                 }
@@ -262,11 +260,24 @@ class AuthViewModel(
 
     fun logout() {
         viewModelScope.launch {
-            tokenDataSource.clearToken()
+            logger.info(LogTags.AUTH, "Logging out...")
+            when (val result = repository.logout()) {
+                is Result.Success -> {
+                    logger.info(LogTags.AUTH, "Logout successful")
+                }
+                is Result.Error -> {
+                    logger.error(LogTags.AUTH, "Server logout failed, but clearing local session anyway: ${result.exception.message}", result.exception)
+                    // We still clear local token even if server call fails
+                    tokenDataSource.clearToken()
+                }
+                is Result.Loading -> {}
+            }
             _authStatus.value = AuthState.Success(false)
-            // Reset to Idle
+            // Reset states
             _loginState.value = AuthState.Idle
             _registerState.value = AuthState.Idle
+            _loginFormState.value = LoginFormState()
+            _registerFormState.value = RegisterFormState()
         }
     }
 

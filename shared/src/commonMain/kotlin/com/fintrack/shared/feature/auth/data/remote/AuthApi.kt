@@ -43,4 +43,8 @@ class AuthApi(
         return client.get("$baseUrl/auth/validate") {
         }.body()
     }
+
+    suspend fun logout() {
+        client.post("$baseUrl/auth/logout")
+    }
 }

@@ -38,6 +38,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.auth.ui.AuthViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun ProfileScreen(
@@ -45,6 +47,7 @@ fun ProfileScreen(
     onNavigateToCategories: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToBudgets: () -> Unit,
+    onLogout: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -123,7 +126,7 @@ fun ProfileScreen(
 
                 // Logout Button
                 Button(
-                    onClick = {  },
+                    onClick = onLogout,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),

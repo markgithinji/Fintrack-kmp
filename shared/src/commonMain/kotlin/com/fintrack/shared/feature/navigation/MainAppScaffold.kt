@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.navigation
 
 import androidx.compose.material3.FabPosition
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -13,7 +14,8 @@ import androidx.navigation.NavHostController
 fun MainAppScaffold(
     isAuthenticated: Boolean,
     currentRoute: String?,
-    navController: NavHostController
+    navController: NavHostController,
+    onLogout: () -> Unit = {}
 ) {
     // State to update AppBar per screen
     var appBarState by remember { mutableStateOf(AppBarState(title = "Home")) }
@@ -49,6 +51,7 @@ fun MainAppScaffold(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             if (showTopBar) {
                 AppTopBar(
@@ -75,7 +78,8 @@ fun MainAppScaffold(
             isAuthenticated = isAuthenticated,
             navController = navController,
             paddingValues = paddingValues,
-            onUpdateAppBarState = { newState -> appBarState = newState }
+            onUpdateAppBarState = { newState -> appBarState = newState },
+            onLogout = onLogout
         )
     }
 }

@@ -28,7 +28,8 @@ fun AppNavigation(
     isAuthenticated: Boolean,
     navController: NavHostController,
     paddingValues: PaddingValues,
-    onUpdateAppBarState: (AppBarState) -> Unit
+    onUpdateAppBarState: (AppBarState) -> Unit,
+    onLogout: () -> Unit = {}
 ) {
     NavHost(
         navController = navController,
@@ -104,7 +105,8 @@ fun AppNavigation(
                 onNavigateToAccounts = { navController.navigate(Screen.Accounts.route) },
                 onNavigateToCategories = { navController.navigate(Screen.Categories.route) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateToBudgets = { navController.navigate(Screen.Budget.route) }
+                onNavigateToBudgets = { navController.navigate(Screen.Budget.route) },
+                onLogout = onLogout
             )
         }
 

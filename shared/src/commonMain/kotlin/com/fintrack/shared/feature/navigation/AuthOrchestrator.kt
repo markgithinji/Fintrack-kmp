@@ -42,7 +42,8 @@ fun AuthOrchestrator(
             MainAppScaffold(
                 isAuthenticated = isAuthenticated,
                 currentRoute = currentRoute,
-                navController = navController
+                navController = navController,
+                onLogout = { authViewModel.logout() }
             )
         }
 
