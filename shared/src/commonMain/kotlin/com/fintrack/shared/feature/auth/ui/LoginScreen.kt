@@ -23,12 +23,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,15 +43,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.compose.GreenIncome
+import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.core.data.domain.ApiException
 import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
@@ -59,6 +65,7 @@ import fintrack.shared.generated.resources.Res
 import fintrack.shared.generated.resources.apple_signIn_icon
 import fintrack.shared.generated.resources.fintrack_app_icon
 import fintrack.shared.generated.resources.google_signIn_icon
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -84,6 +91,7 @@ fun LoginScreen(
     LaunchedEffect(loginState) {
         when (val state = loginState) {
             is AuthState.Success -> {
+                delay(1000) // Delay to show the success state on the button
                 onLoginSuccess()
             }
 
@@ -99,13 +107,18 @@ fun LoginScreen(
         }
     }
 
+    // Consolidate validation and API errors
+    val combinedErrorMessage = remember(loginFormState, inlineErrorMessage) {
+        loginFormState.emailError ?: loginFormState.passwordError ?: inlineErrorMessage
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
             .background(colorScheme.background)
             .padding(horizontal = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(64.dp))
 
@@ -117,7 +130,7 @@ fun LoginScreen(
                     .shadow(12.dp, RoundedCornerShape(24.dp))
                     .clip(RoundedCornerShape(24.dp))
                     .background(colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Image(
                     painter = painterResource(Res.drawable.fintrack_app_icon),
@@ -160,7 +173,7 @@ fun LoginScreen(
             imeAction = ImeAction.Next,
             colorScheme = colorScheme,
             isError = loginFormState.emailError != null,
-            errorMessage = loginFormState.emailError
+            errorMessage = null // Consolidated in the error box
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -183,25 +196,34 @@ fun LoginScreen(
             onPasswordToggle = { passwordVisible = !passwordVisible },
             colorScheme = colorScheme,
             isError = loginFormState.passwordError != null,
-            errorMessage = loginFormState.passwordError
+            errorMessage = null // Consolidated in the error box
         )
 
         // 3. Inline Error Message
-        AnimatedVisibility(
-            visible = inlineErrorMessage != null,
-            enter = fadeIn() + slideInVertically(),
-            exit = fadeOut()
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(24.dp), // Fixed height to prevent layout shift
+            contentAlignment = Alignment.CenterStart
         ) {
-            Text(
-                text = inlineErrorMessage ?: "",
-                color = colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                textAlign = TextAlign.Start
-            )
+            Column {
+                AnimatedVisibility(
+                    visible = combinedErrorMessage != null,
+                    enter = fadeIn() + slideInVertically { it / 2 },
+                    exit = fadeOut()
+                ) {
+                    Text(
+                        text = combinedErrorMessage ?: "",
+                        color = colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Start,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -224,6 +246,8 @@ fun LoginScreen(
 
         // 5. Login Button
         val isLoggingIn = loginState is AuthState.Loading
+        val isSuccess = loginState is AuthState.Success<*>
+
         Button(
             onClick = {
                 focusManager.clearFocus()
@@ -241,23 +265,46 @@ fun LoginScreen(
             colors = ButtonDefaults.buttonColors(
                 containerColor = colorScheme.primary,
                 contentColor = colorScheme.onPrimary,
-                disabledContainerColor = colorScheme.primary.copy(alpha = 0.5f)
+                disabledContainerColor = if (isSuccess) GreenIncome else colorScheme.primary.copy(alpha = 0.5f),
+                disabledContentColor = if (isSuccess) Color.White else colorScheme.onPrimary.copy(alpha = 0.7f)
             ),
-            enabled = loginFormState.isFormValid && !isLoggingIn
+            enabled = loginFormState.isFormValid && !isLoggingIn && !isSuccess
         ) {
-            if (isLoggingIn) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    strokeWidth = 3.dp,
-                    color = colorScheme.onPrimary
-                )
-            } else {
-                Text(
-                    "Sign In",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    letterSpacing = 0.5.sp
-                )
+            when (loginState) {
+                is AuthState.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 3.dp,
+                        color = colorScheme.onPrimary.copy(alpha = 0.7f)
+                    )
+                }
+
+                is AuthState.Success -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.CheckCircle,
+                            contentDescription = "Success",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            "Success",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
+
+                else -> {
+                    Text(
+                        "Sign In",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        letterSpacing = 0.5.sp
+                    )
+                }
             }
         }
 
