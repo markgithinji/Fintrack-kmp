@@ -9,7 +9,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -30,6 +29,12 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
+import androidx.compose.material3.NavigationBarDefaults
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar(
@@ -42,23 +47,27 @@ fun TopBar(
         title = {
             Text(
                 title,
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         },
         navigationIcon = if (showBackButton && onBack != null) {
             {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         } else {
-            {
-                IconButton(onClick = { /* TODO: Open menu */ }) {
-                    Icon(Icons.Filled.Menu, contentDescription = "Menu")
-                }
-            }
+            {}
         },
-        actions = actions
+        actions = actions,
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     )
 }
 
@@ -83,11 +92,10 @@ fun BottomBar(navController: NavHostController) {
 
     NavigationBar(
         containerColor = Color.White,
-        tonalElevation = 4.dp,
+        tonalElevation = 0.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
         items.forEachIndexed { index, item ->
-            // Leave space in the middle for FAB
             if (index == 2) {
                 Spacer(modifier = Modifier.width(72.dp))
             }
@@ -108,8 +116,7 @@ fun BottomBar(navController: NavHostController) {
                 icon = {
                     Icon(
                         imageVector = item.icon,
-                        contentDescription = item.title,
-                        tint = if (isSelected) Color.Black else Color.Gray
+                        contentDescription = item.title
                     )
                 },
                 label = {
@@ -120,7 +127,14 @@ fun BottomBar(navController: NavHostController) {
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                }
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color.Black,
+                    selectedTextColor = Color.Black,
+                    unselectedIconColor = Color.Gray,
+                    unselectedTextColor = Color.Gray,
+                    indicatorColor = Color(0xFFFFD600)
+                )
             )
         }
     }

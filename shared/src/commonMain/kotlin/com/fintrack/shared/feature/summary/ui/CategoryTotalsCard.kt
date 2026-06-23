@@ -4,10 +4,12 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -520,12 +523,13 @@ fun SexyDropdown(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val menuBackground = Color(0xFFF0F0F0)
 
     Box(modifier = modifier) {
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFF0F0F0))
+                .background(menuBackground)
                 .clickable { expanded = !expanded }
                 .padding(horizontal = 10.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -549,17 +553,26 @@ fun SexyDropdown(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             modifier = Modifier
-                .background(Color.White)
+                .background(menuBackground)
+                .width(120.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .shadow(4.dp)
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(option, fontSize = 12.sp) },
+                    text = {
+                        Text(
+                            text = option,
+                            fontSize = 14.sp,
+                            color = if (option == selected) GreenIncome else Color.Black,
+                            fontWeight = if (option == selected) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
                     onClick = {
                         onSelected(option)
                         expanded = false
-                    }
+                    },
+                    modifier = Modifier.background(menuBackground),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
         }

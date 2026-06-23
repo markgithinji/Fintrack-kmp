@@ -9,8 +9,9 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+
+import androidx.compose.material3.MaterialTheme
 
 @Composable
 fun AppTopBar(
@@ -31,8 +32,8 @@ fun AddTransactionFAB(
     FloatingActionButton(
         onClick = onClick,
         modifier = Modifier.size(60.dp).offset(y = 60.dp),
-        containerColor = Color.Black,
-        contentColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
         shape = CircleShape
     ) {
         Icon(Icons.Default.Add, contentDescription = "Add Transaction")
