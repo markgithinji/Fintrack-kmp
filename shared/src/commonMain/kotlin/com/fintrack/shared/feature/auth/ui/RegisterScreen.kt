@@ -42,6 +42,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -61,6 +63,7 @@ import fintrack.shared.generated.resources.Res
 import fintrack.shared.generated.resources.apple_signIn_icon
 import fintrack.shared.generated.resources.fintrack_app_icon
 import fintrack.shared.generated.resources.google_signIn_icon
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -75,6 +78,7 @@ fun RegisterScreen(
     val registerFormState by viewModel.registerFormState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
+    val nameFocusRequester = remember { FocusRequester() }
 
     // Inline error visibility
     var inlineErrorMessage by remember { mutableStateOf<String?>(null) }
@@ -82,13 +86,17 @@ fun RegisterScreen(
     var passwordVisible by remember { mutableStateOf(value = false) }
     var confirmPasswordVisible by remember { mutableStateOf(value = false) }
 
-    // Track if fields have been touched to avoid showing errors on initial load
-    var nameTouched by remember { mutableStateOf(false) }
-    var emailTouched by remember { mutableStateOf(false) }
-    var passwordTouched by remember { mutableStateOf(false) }
-    var confirmPasswordTouched by remember { mutableStateOf(false) }
-
     val colorScheme = MaterialTheme.colorScheme
+
+    // Automatically request focus on the name field when the screen opens
+    LaunchedEffect(Unit) {
+        delay(300)
+        try {
+            nameFocusRequester.requestFocus()
+        } catch (e: Exception) {
+            println("LOGIN_DEBUG: Failed to request focus in Register: ${e.message}")
+        }
+    }
 
     LaunchedEffect(registerState) {
         when (val state = registerState) {
@@ -170,10 +178,7 @@ fun RegisterScreen(
             colorScheme = colorScheme,
             isError = registerFormState.nameError != null,
             errorMessage = registerFormState.nameError,
-            onFocusChanged = { isFocused ->
-                if (isFocused) nameTouched = true
-                if (!isFocused && nameTouched) viewModel.validateName()
-            }
+            modifier = Modifier.focusRequester(nameFocusRequester)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -187,11 +192,7 @@ fun RegisterScreen(
             imeAction = ImeAction.Next,
             colorScheme = colorScheme,
             isError = registerFormState.emailError != null,
-            errorMessage = registerFormState.emailError,
-            onFocusChanged = { isFocused ->
-                if (isFocused) emailTouched = true
-                if (!isFocused && emailTouched) viewModel.validateEmail()
-            }
+            errorMessage = registerFormState.emailError
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -208,11 +209,7 @@ fun RegisterScreen(
             onPasswordToggle = { passwordVisible = !passwordVisible },
             colorScheme = colorScheme,
             isError = registerFormState.passwordError != null,
-            errorMessage = registerFormState.passwordError,
-            onFocusChanged = { isFocused ->
-                if (isFocused) passwordTouched = true
-                if (!isFocused && passwordTouched) viewModel.validatePassword()
-            }
+            errorMessage = registerFormState.passwordError
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -235,11 +232,7 @@ fun RegisterScreen(
             onPasswordToggle = { confirmPasswordVisible = !confirmPasswordVisible },
             colorScheme = colorScheme,
             isError = registerFormState.confirmPasswordError != null,
-            errorMessage = registerFormState.confirmPasswordError,
-            onFocusChanged = { isFocused ->
-                if (isFocused) confirmPasswordTouched = true
-                if (!isFocused && confirmPasswordTouched) viewModel.validateConfirmPassword()
-            }
+            errorMessage = registerFormState.confirmPasswordError
         )
 
         // 3. Inline Error Message

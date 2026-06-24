@@ -28,10 +28,18 @@ fun MainScreen() {
             println("LOGOUT_DEBUG: [5] MainScreen state change: $authStatus (isAuthenticated: $isAuthenticated)")
         }
 
-        // RE-FIX: Use key(isAuthenticated) to recreate NavController.
-        // This is the most reliable way to clear the backstack and force a full UI reset on auth changes.
-        val navController = androidx.compose.runtime.key(isAuthenticated) {
-            androidx.navigation.compose.rememberNavController()
+        // Use a stable NavController that persists across auth changes.
+        // We'll handle backstack clearing via navigation logic instead of recreating the controller.
+        val navController = androidx.navigation.compose.rememberNavController()
+
+        // Explicitly handle logout navigation to ensure it's clean and doesn't flicker
+        androidx.compose.runtime.LaunchedEffect(isAuthenticated) {
+            if (!isAuthenticated) {
+                // If we are logged out, force navigation to Login and clear backstack
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
         }
 
         // Track current route

@@ -9,12 +9,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
+import com.fintrack.shared.feature.auth.ui.AuthViewModel
 
 @Composable
 fun MainAppScaffold(
     isAuthenticated: Boolean,
     currentRoute: String?,
     navController: NavHostController,
+    authViewModel: AuthViewModel,
     onLogout: () -> Unit = {}
 ) {
     // State to update AppBar per screen
@@ -93,6 +95,7 @@ fun MainAppScaffold(
             navController = navController,
             paddingValues = paddingValues,
             onUpdateAppBarState = { newState -> appBarState = newState },
+            authViewModel = authViewModel,
             onLogout = onLogout
         )
     }

@@ -43,6 +43,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
@@ -76,20 +78,28 @@ fun LoginScreen(
     onForgotPassword: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    println("LOGIN_DEBUG: LoginScreen recomposing. ViewModel: ${viewModel.hashCode()}")
     val loginState by viewModel.loginState.collectAsStateWithLifecycle()
     val loginFormState by viewModel.loginFormState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
+    val emailFocusRequester = remember { FocusRequester() }
 
     // Inline error visibility
     var inlineErrorMessage by remember { mutableStateOf<String?>(null) }
     var passwordVisible by remember { mutableStateOf(value = false) }
-    
-    // Track if fields have been touched to avoid showing errors on initial load
-    var emailTouched by remember { mutableStateOf(false) }
-    var passwordTouched by remember { mutableStateOf(false) }
 
     val colorScheme = MaterialTheme.colorScheme
+
+    // Automatically request focus on the email field when the screen opens
+    LaunchedEffect(Unit) {
+        delay(300) // Small delay to ensure UI is ready
+        try {
+            emailFocusRequester.requestFocus()
+        } catch (e: Exception) {
+            println("LOGIN_DEBUG: Failed to request focus: ${e.message}")
+        }
+    }
 
     LaunchedEffect(loginState) {
         when (val state = loginState) {
@@ -171,7 +181,10 @@ fun LoginScreen(
         // 2. Input Fields
         FinanceTextField(
             value = loginFormState.email,
-            onValueChange = { viewModel.updateLoginEmail(it) },
+            onValueChange = { 
+                println("LOGIN_DEBUG: UI Email change to: '$it'")
+                viewModel.updateLoginEmail(it) 
+            },
             label = "Email Address",
             leadingIcon = Icons.Default.Email,
             keyboardType = KeyboardType.Email,
@@ -179,10 +192,7 @@ fun LoginScreen(
             colorScheme = colorScheme,
             isError = loginFormState.emailError != null,
             errorMessage = null, // Consolidated in the error box
-            onFocusChanged = { isFocused ->
-                if (isFocused) emailTouched = true
-                if (!isFocused && emailTouched) viewModel.validateLoginEmail()
-            }
+            modifier = Modifier.focusRequester(emailFocusRequester)
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -205,11 +215,7 @@ fun LoginScreen(
             onPasswordToggle = { passwordVisible = !passwordVisible },
             colorScheme = colorScheme,
             isError = loginFormState.passwordError != null,
-            errorMessage = null, // Consolidated in the error box
-            onFocusChanged = { isFocused ->
-                if (isFocused) passwordTouched = true
-                if (!isFocused && passwordTouched) viewModel.validateLoginPassword()
-            }
+            errorMessage = null // Consolidated in the error box
         )
 
         // 3. Inline Error Message

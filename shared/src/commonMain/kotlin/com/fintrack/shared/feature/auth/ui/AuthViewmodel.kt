@@ -36,7 +36,7 @@ class AuthViewModel(
     val registerState: StateFlow<AuthState<AuthResponse>> = _registerState
 
     private val _authStatus =
-        MutableStateFlow<AuthState<Boolean>>(AuthState.Loading("Checking authentication..."))
+        MutableStateFlow<AuthState<Boolean>>(AuthState.Idle)
     val authStatus: StateFlow<AuthState<Boolean>> = _authStatus
 
     private val _registerFormState = MutableStateFlow(RegisterFormState())
@@ -56,13 +56,17 @@ class AuthViewModel(
     private fun observeTokenChanges() {
         viewModelScope.launch {
             tokenDataSource.accessToken.collect { token ->
-                logger.debug(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel: Token changed, new token present: ${token != null}")
+                logger.debug(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel(${hashCode()}): Token changed, new token present: ${token != null}")
                 if (token == null) {
-                    _authStatus.value = AuthState.Success(false)
+                    val currentStatus = _authStatus.value
+                    if (currentStatus != AuthState.Success(false)) {
+                        logger.info(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel(${hashCode()}): Token is null, setting status to Success(false)")
+                        _authStatus.value = AuthState.Success(false)
+                    }
                 } else {
                     val currentStatus = _authStatus.value
-                    if (currentStatus is AuthState.Success && !currentStatus.data) {
-                        logger.info(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel: Token detected, updating status to Success(true)")
+                    if (currentStatus !is AuthState.Success || !currentStatus.data) {
+                        logger.info(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel(${hashCode()}): Token detected, updating status to Success(true)")
                         _authStatus.value = AuthState.Success(true)
                     }
                 }
@@ -71,6 +75,7 @@ class AuthViewModel(
     }
 
     fun updateLoginEmail(email: String) {
+        println("LOGIN_DEBUG: AuthViewModel(${hashCode()}): updateLoginEmail called with: '$email'")
         val currentState = _loginFormState.value
         _loginFormState.value = currentState.copy(
             email = email,
@@ -89,6 +94,7 @@ class AuthViewModel(
     }
 
     fun updateLoginPassword(password: String) {
+        logger.debug(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel(${hashCode()}): updateLoginPassword")
         val currentState = _loginFormState.value
         _loginFormState.value = currentState.copy(
             password = password,
@@ -265,7 +271,10 @@ class AuthViewModel(
 
     fun checkAuthenticationStatus() {
         viewModelScope.launch {
-            _authStatus.value = AuthState.Loading("Checking authentication...")
+            // Only set loading if we are currently Idle or Error
+            if (_authStatus.value is AuthState.Idle || _authStatus.value is AuthState.Error) {
+                _authStatus.value = AuthState.Loading("Checking authentication...")
+            }
             val currentToken = tokenDataSource.accessToken.first()
 
             if (currentToken == null) {

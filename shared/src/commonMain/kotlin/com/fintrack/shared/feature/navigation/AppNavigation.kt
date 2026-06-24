@@ -10,6 +10,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import com.fintrack.shared.feature.auth.ui.LoginScreen
 import com.fintrack.shared.feature.auth.ui.RegisterScreen
 import com.fintrack.shared.feature.budget.ui.BudgetDetailScreen
@@ -29,6 +30,7 @@ fun AppNavigation(
     navController: NavHostController,
     paddingValues: PaddingValues,
     onUpdateAppBarState: (AppBarState) -> Unit,
+    authViewModel: AuthViewModel,
     onLogout: () -> Unit = {}
 ) {
     println("LOGIN_DEBUG: AppNavigation recomposing. isAuthenticated: $isAuthenticated")
@@ -188,6 +190,7 @@ fun AppNavigation(
                 onUpdateAppBarState(AppBarState(title = "Login"))
             }
             LoginScreen(
+                viewModel = authViewModel,
                 onLoginSuccess = {
                     navController.navigate(Screen.Home.route) {
                         // Clear the entire back stack including login
@@ -223,6 +226,7 @@ fun AppNavigation(
                 )
             }
             RegisterScreen(
+                viewModel = authViewModel,
                 onRegisterSuccess = {
                     navController.navigate(Screen.Home.route) {
                         // Clear the entire back stack
