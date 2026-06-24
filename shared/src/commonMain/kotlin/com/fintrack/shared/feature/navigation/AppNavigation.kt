@@ -10,6 +10,8 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -61,8 +63,38 @@ fun AppNavigation(
         navController = navController,
         startDestination = startDestination,
         modifier = Modifier.padding(paddingValues),
-                enterTransition = { EnterTransition.None },
-                exitTransition = { ExitTransition.None },
+                enterTransition = {
+                    val isToAuth = targetState.destination.route == Screen.Login.route || 
+                                 targetState.destination.route == Screen.Register.route
+                    val isFromAuth = initialState.destination.route == Screen.Login.route || 
+                                   initialState.destination.route == Screen.Register.route
+
+                    if (isFromAuth && !isToAuth) { // Login success
+                        scaleIn(initialScale = 0.9f, animationSpec = tween(600)) + fadeIn(animationSpec = tween(600))
+                    } else if (isToAuth && !isFromAuth) { // Logout
+                        fadeIn(animationSpec = tween(600))
+                    } else if (isToAuth && isFromAuth) { // Between Login/Register
+                        fadeIn(animationSpec = tween(400))
+                    } else {
+                        EnterTransition.None
+                    }
+                },
+                exitTransition = {
+                    val isToAuth = targetState.destination.route == Screen.Login.route || 
+                                 targetState.destination.route == Screen.Register.route
+                    val isFromAuth = initialState.destination.route == Screen.Login.route || 
+                                   initialState.destination.route == Screen.Register.route
+
+                    if (isFromAuth && !isToAuth) { // Login success
+                        scaleOut(targetScale = 1.1f, animationSpec = tween(600)) + fadeOut(animationSpec = tween(600))
+                    } else if (isToAuth && !isFromAuth) { // Logout
+                        scaleOut(targetScale = 0.9f, animationSpec = tween(600)) + fadeOut(animationSpec = tween(600))
+                    } else if (isToAuth && isFromAuth) { // Between Login/Register
+                        fadeOut(animationSpec = tween(400))
+                    } else {
+                        ExitTransition.None
+                    }
+                },
                 popEnterTransition = { EnterTransition.None },
                 popExitTransition = { ExitTransition.None }
             ) {
