@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.auth.ui.common
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,15 +12,21 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.border
+import androidx.compose.material3.TextField
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -43,79 +48,97 @@ fun FinanceTextField(
     isError: Boolean = false,
     errorMessage: String? = null,
     onFocusChanged: (Boolean) -> Unit = {},
+    contentType: ContentType? = null,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged { focusState ->
-                    onFocusChanged(focusState.isFocused)
-                },
-            label = {
-                Text(
-                    label,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            },
-            leadingIcon = {
-                Icon(
-                    leadingIcon,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-            },
-            trailingIcon = if (isPassword) {
-                {
-                    IconButton(onClick = onPasswordToggle) {
-                        Icon(
-                            imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            } else null,
-            visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = keyboardType,
-                imeAction = imeAction
+    val shape = RoundedCornerShape(16.dp)
+
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(shape) // Clip the background/autofill highlight
+            .border(
+                width = 1.dp,
+                color = if (isError) colorScheme.error else colorScheme.outline.copy(alpha = 0.2f),
+                shape = shape
+            )
+            .onFocusChanged { focusState ->
+                onFocusChanged(focusState.isFocused)
+            }
+            .then(
+                if (contentType != null) {
+                    Modifier.semantics { this.contentType = contentType }
+                } else Modifier
             ),
-            keyboardActions = keyboardActions,
-            singleLine = true,
-            shape = RoundedCornerShape(16.dp),
-            colors = TextFieldDefaults.colors(
-                focusedTextColor = colorScheme.onSurface,
-                unfocusedTextColor = colorScheme.onSurface,
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                focusedLabelColor = colorScheme.primary,
-                unfocusedLabelColor = colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                focusedLeadingIconColor = colorScheme.primary,
-                unfocusedLeadingIconColor = colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                focusedTrailingIconColor = colorScheme.onSurfaceVariant,
-                unfocusedTrailingIconColor = colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                cursorColor = colorScheme.primary,
-                focusedIndicatorColor = colorScheme.primary,
-                unfocusedIndicatorColor = colorScheme.outline.copy(alpha = 0.2f),
-                errorIndicatorColor = colorScheme.error,
-                errorLabelColor = colorScheme.error,
-                errorLeadingIconColor = colorScheme.error,
-                errorTrailingIconColor = colorScheme.error,
-                errorContainerColor = Color.Transparent
-            ),
-            isError = isError,
-            supportingText = {
-                if (isError && (errorMessage != null)) {
-                    Text(
-                        text = errorMessage,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colorScheme.error
+        label = {
+            Text(
+                label,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        leadingIcon = {
+            Icon(
+                leadingIcon,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+        },
+        trailingIcon = if (isPassword) {
+            {
+                IconButton(onClick = onPasswordToggle) {
+                    Icon(
+                        imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                        contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
-        )
-    }
+        } else null,
+        visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType,
+            imeAction = imeAction,
+            autoCorrectEnabled = !isPassword && keyboardType != KeyboardType.Email,
+            capitalization = when (keyboardType) {
+                KeyboardType.Text -> KeyboardCapitalization.Words
+                else -> KeyboardCapitalization.None
+            }
+        ),
+        keyboardActions = keyboardActions,
+        singleLine = true,
+        shape = shape,
+        colors = TextFieldDefaults.colors(
+            focusedTextColor = colorScheme.onSurface,
+            unfocusedTextColor = colorScheme.onSurface,
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            disabledContainerColor = Color.Transparent,
+            focusedLabelColor = colorScheme.primary,
+            unfocusedLabelColor = colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            focusedLeadingIconColor = colorScheme.primary,
+            unfocusedLeadingIconColor = colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            focusedTrailingIconColor = colorScheme.onSurfaceVariant,
+            unfocusedTrailingIconColor = colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            cursorColor = colorScheme.primary,
+            focusedIndicatorColor = Color.Transparent, // Hide default bottom line
+            unfocusedIndicatorColor = Color.Transparent,
+            errorIndicatorColor = Color.Transparent,
+            errorLabelColor = colorScheme.error,
+            errorLeadingIconColor = colorScheme.error,
+            errorTrailingIconColor = colorScheme.error,
+            errorContainerColor = Color.Transparent
+        ),
+        isError = isError,
+        supportingText = if (isError && errorMessage != null) {
+            {
+                Text(
+                    text = errorMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colorScheme.error
+                )
+            }
+        } else null
+    )
 }

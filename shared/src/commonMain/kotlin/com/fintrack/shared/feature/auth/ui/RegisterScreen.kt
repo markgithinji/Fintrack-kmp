@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
@@ -178,6 +179,7 @@ fun RegisterScreen(
             colorScheme = colorScheme,
             isError = registerFormState.nameError != null,
             errorMessage = registerFormState.nameError,
+            contentType = ContentType.PersonFullName,
             modifier = Modifier.focusRequester(nameFocusRequester)
         )
 
@@ -192,7 +194,8 @@ fun RegisterScreen(
             imeAction = ImeAction.Next,
             colorScheme = colorScheme,
             isError = registerFormState.emailError != null,
-            errorMessage = registerFormState.emailError
+            errorMessage = registerFormState.emailError,
+            contentType = ContentType.EmailAddress
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -209,7 +212,8 @@ fun RegisterScreen(
             onPasswordToggle = { passwordVisible = !passwordVisible },
             colorScheme = colorScheme,
             isError = registerFormState.passwordError != null,
-            errorMessage = registerFormState.passwordError
+            errorMessage = registerFormState.passwordError,
+            contentType = ContentType.NewPassword
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -232,7 +236,8 @@ fun RegisterScreen(
             onPasswordToggle = { confirmPasswordVisible = !confirmPasswordVisible },
             colorScheme = colorScheme,
             isError = registerFormState.confirmPasswordError != null,
-            errorMessage = registerFormState.confirmPasswordError
+            errorMessage = registerFormState.confirmPasswordError,
+            contentType = ContentType.NewPassword
         )
 
         // 3. Inline Error Message
