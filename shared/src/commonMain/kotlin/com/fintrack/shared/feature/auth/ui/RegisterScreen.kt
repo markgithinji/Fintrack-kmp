@@ -55,6 +55,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.compose.AuthGold
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.core.data.domain.ApiException
 import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
@@ -372,7 +373,7 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = "Sign in",
-                color = colorScheme.tertiary,
+                color = AuthGold,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.clickable { onLogin() }
