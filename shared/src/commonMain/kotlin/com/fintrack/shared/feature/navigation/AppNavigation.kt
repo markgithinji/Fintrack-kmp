@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -34,9 +36,18 @@ fun AppNavigation(
     onLogout: () -> Unit = {}
 ) {
     println("LOGIN_DEBUG: AppNavigation recomposing. isAuthenticated: $isAuthenticated")
+    
+    // We remember the start destination when the NavHost is first created or when authStatus changes 
+    // significantly (e.g. from Loading to Success). This prevents the NavHost from resetting its 
+    // backstack when isAuthenticated changes during a login/logout transition, 
+    // allowing the UI to handle the transition (e.g. success animation) before navigating.
+    val startDestination = remember { 
+        if (isAuthenticated) Screen.Home.route else Screen.Login.route 
+    }
+
     NavHost(
         navController = navController,
-        startDestination = if (isAuthenticated) Screen.Home.route else Screen.Login.route,
+        startDestination = startDestination,
         modifier = Modifier.padding(paddingValues)
     ) {
         // Home Screen

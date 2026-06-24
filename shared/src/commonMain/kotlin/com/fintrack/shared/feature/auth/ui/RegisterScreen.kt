@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -30,6 +31,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -103,6 +105,8 @@ fun RegisterScreen(
     LaunchedEffect(registerState) {
         when (val state = registerState) {
             is AuthState.Success -> {
+                println("REGISTER_DEBUG: Registration successful, delaying 1s then navigating")
+                delay(1000)
                 onRegisterSuccess()
             }
 
@@ -272,6 +276,8 @@ fun RegisterScreen(
 
         // 4. Register Button
         val isRegistering = registerState is AuthState.Loading
+        val isSuccess = registerState is AuthState.Success<*>
+
         Button(
             onClick = {
                 focusManager.clearFocus()
@@ -289,23 +295,46 @@ fun RegisterScreen(
             colors = ButtonDefaults.buttonColors(
                 containerColor = colorScheme.primary,
                 contentColor = colorScheme.onPrimary,
-                disabledContainerColor = colorScheme.primary.copy(alpha = 0.5f)
+                disabledContainerColor = if (isSuccess) AuthGold else colorScheme.primary.copy(alpha = 0.5f),
+                disabledContentColor = if (isSuccess) colorScheme.onPrimary else colorScheme.onPrimary.copy(alpha = 0.7f)
             ),
-            enabled = registerFormState.isFormValid && !isRegistering
+            enabled = registerFormState.isFormValid && !isRegistering && !isSuccess
         ) {
-            if (isRegistering) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    strokeWidth = 3.dp,
-                    color = colorScheme.onPrimary
-                )
-            } else {
-                Text(
-                    "Create Account",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    letterSpacing = 0.5.sp
-                )
+            when (registerState) {
+                is AuthState.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 3.dp,
+                        color = colorScheme.onPrimary
+                    )
+                }
+
+                is AuthState.Success -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.CheckCircle,
+                            contentDescription = "Success",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            "Success",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
+
+                else -> {
+                    Text(
+                        "Create Account",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        letterSpacing = 0.5.sp
+                    )
+                }
             }
         }
 
