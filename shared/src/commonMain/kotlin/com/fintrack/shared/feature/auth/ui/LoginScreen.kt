@@ -94,7 +94,9 @@ fun LoginScreen(
     LaunchedEffect(loginState) {
         when (val state = loginState) {
             is AuthState.Success -> {
+                println("LOGIN_DEBUG: [4] Login successful in UI, delaying 1s then calling onLoginSuccess")
                 delay(1000) // Delay to show the success state on the button
+                println("LOGIN_DEBUG: [5] Calling onLoginSuccess()")
                 onLoginSuccess()
             }
 
@@ -261,6 +263,7 @@ fun LoginScreen(
 
         Button(
             onClick = {
+                println("LOGIN_DEBUG: [0] Login button clicked for email: ${loginFormState.email}")
                 focusManager.clearFocus()
                 viewModel.login()
             },

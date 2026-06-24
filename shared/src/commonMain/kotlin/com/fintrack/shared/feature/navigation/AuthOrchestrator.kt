@@ -32,25 +32,33 @@ fun AuthOrchestrator(
     navController: NavHostController,
     authViewModel: AuthViewModel
 ) {
+    // LOGIN_DEBUG: Log orchestration decision
+    androidx.compose.runtime.SideEffect {
+        println("LOGIN_DEBUG: AuthOrchestrator recomposing. authStatus: $authStatus, currentRoute: $currentRoute")
+    }
+
     when (authStatus) {
         is AuthState.Loading -> {
             AuthLoadingScreen(message = authStatus.message)
         }
 
         is AuthState.Success -> {
-            val isAuthenticated = authStatus.data
             MainAppScaffold(
-                isAuthenticated = isAuthenticated,
+                isAuthenticated = authStatus.data,
                 currentRoute = currentRoute,
                 navController = navController,
-                onLogout = { authViewModel.logout() }
+                onLogout = { 
+                    authViewModel.logout() 
+                }
             )
         }
 
-        is AuthState.Error -> AuthErrorScreen(
-            error = authStatus.exception,
-            onRetry = { authViewModel.checkAuthenticationStatus() }
-        )
+        is AuthState.Error -> {
+            AuthErrorScreen(
+                error = authStatus.exception,
+                onRetry = { authViewModel.checkAuthenticationStatus() }
+            )
+        }
 
         is AuthState.Idle -> {
             AuthLoadingScreen(message = "Initializing...")

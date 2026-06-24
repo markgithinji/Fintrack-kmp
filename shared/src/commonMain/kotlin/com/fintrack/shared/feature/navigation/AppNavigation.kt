@@ -31,6 +31,7 @@ fun AppNavigation(
     onUpdateAppBarState: (AppBarState) -> Unit,
     onLogout: () -> Unit = {}
 ) {
+    println("LOGIN_DEBUG: AppNavigation recomposing. isAuthenticated: $isAuthenticated")
     NavHost(
         navController = navController,
         startDestination = if (isAuthenticated) Screen.Home.route else Screen.Login.route,

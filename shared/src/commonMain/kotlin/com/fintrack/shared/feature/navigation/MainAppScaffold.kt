@@ -20,33 +20,47 @@ fun MainAppScaffold(
     // State to update AppBar per screen
     var appBarState by remember { mutableStateOf(AppBarState(title = "Home")) }
 
-    val showTopBar = remember(currentRoute) {
+    // LOGIN_DEBUG: Log scaffold state
+    androidx.compose.runtime.SideEffect {
+        println("LOGIN_DEBUG: MainAppScaffold recomposing. authenticated: $isAuthenticated, route: $currentRoute")
+    }
+
+    // Show bars only if authenticated and not on login/register screens
+    val showTopBar = remember(currentRoute, isAuthenticated) {
+        if (!isAuthenticated) return@remember false
+        // If route is null, we are just starting up or transitioning, show it by default
+        if (currentRoute == null) return@remember true
+
         when (currentRoute) {
             Screen.Login.route -> false
             Screen.Register.route -> false
-            else -> true  // Show top bar on all other screens
+            else -> true
         }
     }
 
-    val showBottomBar = remember(currentRoute) {
+    val showBottomBar = remember(currentRoute, isAuthenticated) {
+        if (!isAuthenticated) return@remember false
+        if (currentRoute == null) return@remember true
+
         when (currentRoute) {
             Screen.Home.route -> true
             Screen.Statistics.route -> true
             Screen.Budget.route -> true
             Screen.Profile.route -> true
-            Screen.Login.route -> false
-            Screen.Register.route -> false
-            else -> false  // Hide bottom bar on all other screens
+            else -> false
         }
     }
 
-    val showFAB = remember(currentRoute) {
+    val showFAB = remember(currentRoute, isAuthenticated) {
+        if (!isAuthenticated) return@remember false
+        if (currentRoute == null) return@remember true
+
         when (currentRoute) {
             Screen.Home.route -> true
             Screen.Statistics.route -> true
             Screen.Budget.route -> true
             Screen.Profile.route -> true
-            else -> false  // Hide FAB on all other screens
+            else -> false
         }
     }
 

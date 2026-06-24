@@ -50,6 +50,24 @@ class AuthViewModel(
 
     init {
         checkAuthenticationStatus()
+        observeTokenChanges()
+    }
+
+    private fun observeTokenChanges() {
+        viewModelScope.launch {
+            tokenDataSource.accessToken.collect { token ->
+                logger.debug(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel: Token changed, new token present: ${token != null}")
+                if (token == null) {
+                    _authStatus.value = AuthState.Success(false)
+                } else {
+                    val currentStatus = _authStatus.value
+                    if (currentStatus is AuthState.Success && !currentStatus.data) {
+                        logger.info(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel: Token detected, updating status to Success(true)")
+                        _authStatus.value = AuthState.Success(true)
+                    }
+                }
+            }
+        }
     }
 
     fun updateLoginEmail(email: String) {
@@ -94,19 +112,20 @@ class AuthViewModel(
 
         _loginState.value = AuthState.Loading("Logging in...")
         viewModelScope.launch {
-            logger.debug(LogTags.AUTH, "Attempting login for email: ${formState.email}")
+            logger.debug(LogTags.AUTH, "LOGIN_DEBUG: [1] AuthViewModel: Attempting login for email: ${formState.email}")
             when (val result = repository.login(formState.email, formState.password)) {
                 is Result.Success -> {
-                    logger.info(LogTags.AUTH, "Login successful for: ${formState.email}")
+                    logger.info(LogTags.AUTH, "LOGIN_DEBUG: [2] AuthViewModel: Login successful for: ${formState.email}")
                     // Add a small delay to ensure tokens are persisted and flows are updated
                     // before the UI navigates and triggers follow-up requests.
                     kotlinx.coroutines.delay(100)
                     _loginState.value = AuthState.Success(result.data)
+                    logger.info(LogTags.AUTH, "LOGIN_DEBUG: [3] AuthViewModel: Setting _authStatus to Success(true)")
                     _authStatus.value = AuthState.Success(true)
                 }
 
                 is Result.Error -> {
-                    logger.error(LogTags.AUTH, "Login failed for ${formState.email}: ${result.exception.message}", result.exception)
+                    logger.error(LogTags.AUTH, "LOGIN_DEBUG: [2] Login failed for ${formState.email}: ${result.exception.message}", result.exception)
                     _loginState.value = AuthState.Error(result.exception)
                 }
 
@@ -256,12 +275,13 @@ class AuthViewModel(
 
             when (val result = repository.validateToken(currentToken)) {
                 is Result.Success -> {
-                    _authStatus.value = if (result.data) {
-                        AuthState.Success(true)
+                    if (result.data) {
+                        logger.info(LogTags.AUTH, "Token validation successful")
+                        _authStatus.value = AuthState.Success(true)
                     } else {
-                        // Clear invalid token
-                        // tokenDataSource.clearTokens() // Disabled for testing backend invalidation
-                        AuthState.Success(false)
+                        logger.warning(LogTags.AUTH, "Token validation failed (invalid token). Clearing session.")
+                        tokenDataSource.clearTokens()
+                        _authStatus.value = AuthState.Success(false)
                     }
                 }
 
@@ -279,24 +299,31 @@ class AuthViewModel(
 
     fun logout() {
         viewModelScope.launch {
-            logger.info(LogTags.AUTH, "Logging out...")
-            when (val result = repository.logout()) {
-                is Result.Success -> {
-                    logger.info(LogTags.AUTH, "Logout successful")
+            logger.info(LogTags.AUTH, "LOGOUT_DEBUG: [1] AuthViewModel.logout() called")
+            try {
+                when (val result = repository.logout()) {
+                    is Result.Success -> {
+                        logger.info(LogTags.AUTH, "LOGOUT_DEBUG: [2] Repository logout SUCCESS")
+                    }
+                    is Result.Error -> {
+                        logger.error(LogTags.AUTH, "LOGOUT_DEBUG: [2] Repository logout ERROR: ${result.exception.message}", result.exception)
+                    }
+                    is Result.Loading -> {}
                 }
-                is Result.Error -> {
-                    logger.error(LogTags.AUTH, "Server logout failed, but clearing local session anyway: ${result.exception.message}", result.exception)
-                    // We still clear local tokens even if server call fails
-                    // tokenDataSource.clearTokens() // Disabled for testing backend invalidation
-                }
-                is Result.Loading -> {}
+            } catch (e: Exception) {
+                logger.error(LogTags.AUTH, "LOGOUT_DEBUG: [2] Repository logout EXCEPTION: ${e.message}", e)
+            } finally {
+                logger.info(LogTags.AUTH, "LOGOUT_DEBUG: [3] Clearing local tokens and setting _authStatus to Success(false)")
+                tokenDataSource.clearTokens()
+                _authStatus.value = AuthState.Success(false)
+                
+                // Reset states
+                _loginState.value = AuthState.Idle
+                _registerState.value = AuthState.Idle
+                _loginFormState.value = LoginFormState()
+                _registerFormState.value = RegisterFormState()
+                logger.info(LogTags.AUTH, "LOGOUT_DEBUG: [4] AuthViewModel.logout() finished. Auth status is now: ${_authStatus.value}")
             }
-            _authStatus.value = AuthState.Success(false)
-            // Reset states
-            _loginState.value = AuthState.Idle
-            _registerState.value = AuthState.Idle
-            _loginFormState.value = LoginFormState()
-            _registerFormState.value = RegisterFormState()
         }
     }
 

@@ -51,7 +51,9 @@ class AuthRepositoryImpl(
     override suspend fun logout(): Result<Unit> =
         safeApiCall {
             val refreshToken = tokenDataSource.refreshToken.firstOrNull()
-            api.logout(refreshToken)
+            if (refreshToken != null) {
+                api.logout(refreshToken)
+            }
             tokenDataSource.clearTokens()
         }
 
