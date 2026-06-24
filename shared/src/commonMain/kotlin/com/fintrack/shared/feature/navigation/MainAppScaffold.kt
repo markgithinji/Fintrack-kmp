@@ -27,9 +27,9 @@ fun MainAppScaffold(
         println("LOGIN_DEBUG: MainAppScaffold recomposing. authenticated: $isAuthenticated, route: $currentRoute")
     }
 
-    // Show bars only if authenticated and not on login/register screens
-    val showTopBar = remember(currentRoute, isAuthenticated) {
-        if (!isAuthenticated) return@remember false
+    // Show bars only if not on login/register screens
+    // We remove isAuthenticated as a key here to prevent layout jumps during logout transition
+    val showTopBar = remember(currentRoute) {
         // If route is null, we are just starting up or transitioning, show it by default
         if (currentRoute == null) return@remember true
 
@@ -40,8 +40,7 @@ fun MainAppScaffold(
         }
     }
 
-    val showBottomBar = remember(currentRoute, isAuthenticated) {
-        if (!isAuthenticated) return@remember false
+    val showBottomBar = remember(currentRoute) {
         if (currentRoute == null) return@remember true
 
         when (currentRoute) {
@@ -53,8 +52,7 @@ fun MainAppScaffold(
         }
     }
 
-    val showFAB = remember(currentRoute, isAuthenticated) {
-        if (!isAuthenticated) return@remember false
+    val showFAB = remember(currentRoute) {
         if (currentRoute == null) return@remember true
 
         when (currentRoute) {
