@@ -1,5 +1,7 @@
 package com.fintrack.shared.feature.transaction.ui.home
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,24 +19,29 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.backgroundGray
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun HomeScreen(
     accountsViewModel: AccountsViewModel = koinViewModel(),
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     statsViewModel: StatisticsViewModel = koinViewModel(),
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onCardClick: (accountId: String, isIncome: Boolean?) -> Unit
 ) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+        ?: throw IllegalStateException("No SharedTransitionScope found")
+
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
     val selectedAccountResult by accountsViewModel.selectedAccount.collectAsStateWithLifecycle()
     val transactionsResult by transactionsViewModel.recentTransactions.collectAsStateWithLifecycle()
     val overviewResult by statsViewModel.overview.collectAsStateWithLifecycle()
     val categoryComparisonResult by statsViewModel.categoryComparisons.collectAsStateWithLifecycle()
 
-    // Load data when selected account changes
     LaunchedEffect(selectedAccountResult) {
         val accountId = (selectedAccountResult as? Result.Success)?.data?.id
         accountId?.let { id ->
@@ -61,13 +68,19 @@ fun HomeScreen(
         }
 
         item {
-            IncomeExpenseCards(
-                accountResult = selectedAccountResult,
-                onCardClick = { isIncome ->
-                    val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-                    accountId?.let { onCardClick(it, isIncome) }
-                }
-            )
+            with(sharedTransitionScope) {
+                IncomeExpenseCards(
+                    accountResult = selectedAccountResult,
+                    onCardClick = { isIncome ->
+                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                        accountId?.let { onCardClick(it, isIncome) }
+                    },
+                    modifier = Modifier.sharedBounds(
+                        rememberSharedContentState(key = "transaction_list_header"),
+                        animatedVisibilityScope = animatedVisibilityScope
+                    )
+                )
+            }
         }
 
         item { IncomeExpensesOverview(overviewResult) }

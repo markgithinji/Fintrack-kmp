@@ -1,5 +1,8 @@
 package com.fintrack.shared.feature.budget.ui
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloatAsState
@@ -70,12 +73,17 @@ import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun BudgetScreen(
     viewModel: BudgetViewModel = koinViewModel(),
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onAddBudget: () -> Unit = {},
     onBudgetClick: (BudgetWithStatus) -> Unit
 ) {
+    val sharedTransitionScope = com.fintrack.shared.feature.navigation.LocalSharedTransitionScope.current
+        ?: throw IllegalStateException("No SharedTransitionScope found")
+
     val budgets by viewModel.budgets.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
 
@@ -101,17 +109,30 @@ fun BudgetScreen(
                 LazyColumn(state = listState) {
                     if (data.isNotEmpty()) {
                         item {
-                            SexyAddBudgetButton(
-                                onClick = onAddBudget,
-                                modifier = Modifier.padding(16.dp)
-                            )
+                            with(sharedTransitionScope) {
+                                SexyAddBudgetButton(
+                                    onClick = onAddBudget,
+                                    modifier = Modifier
+                                        .padding(16.dp)
+                                        .sharedBounds(
+                                            rememberSharedContentState(key = "budget_header_new"),
+                                            animatedVisibilityScope = animatedVisibilityScope
+                                        )
+                                )
+                            }
                         }
 
                         items(data, key = { it.budget.id ?: it.budget.name }) { budgetWithStatus ->
-                            BudgetItem(
-                                budgetWithStatus = budgetWithStatus,
-                                onClick = { onBudgetClick(budgetWithStatus) }
-                            )
+                            with(sharedTransitionScope) {
+                                BudgetItem(
+                                    budgetWithStatus = budgetWithStatus,
+                                    onClick = { onBudgetClick(budgetWithStatus) },
+                                    modifier = Modifier.sharedBounds(
+                                        rememberSharedContentState(key = "budget_header_${budgetWithStatus.budget.id}"),
+                                        animatedVisibilityScope = animatedVisibilityScope
+                                    )
+                                )
+                            }
                         }
                     } else {
                         item {
@@ -562,7 +583,8 @@ fun BudgetScreenLoadingState() {
 @Composable
 fun BudgetItem(
     budgetWithStatus: BudgetWithStatus,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val budget = budgetWithStatus.budget
     val status = budgetWithStatus.status
@@ -570,7 +592,7 @@ fun BudgetItem(
     val remainingCategoriesCount = budget.categories.size - 3
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp)
             .clickable { onClick() },

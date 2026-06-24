@@ -1,5 +1,7 @@
 package com.fintrack.shared.feature.transaction.ui.transactionlist
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,19 +21,25 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.compose.transactionBackground
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun TransactionListScreen(
     accountId: String,
     isIncome: Boolean? = null,
     transactionsViewModel: TransactionViewModel = koinViewModel(),
-    statisticsViewModel: StatisticsViewModel = koinViewModel()
+    statisticsViewModel: StatisticsViewModel = koinViewModel(),
+    animatedVisibilityScope: AnimatedVisibilityScope
 ) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+        ?: throw IllegalStateException("No SharedTransitionScope found")
+
     val transactionCounts by statisticsViewModel.transactionCounts.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
 
@@ -43,12 +51,18 @@ fun TransactionListScreen(
         statisticsViewModel.loadTransactionCounts(accountId, isIncome)
     }
 
-    TransactionListContent(
-        transactionCounts = transactionCounts,
-        transactions = transactions,
-        isIncome = isIncome,
-        listState = listState
-    )
+    with(sharedTransitionScope) {
+        TransactionListContent(
+            transactionCounts = transactionCounts,
+            transactions = transactions,
+            isIncome = isIncome,
+            listState = listState,
+            modifier = Modifier.sharedBounds(
+                rememberSharedContentState(key = "transaction_list_header"),
+                animatedVisibilityScope = animatedVisibilityScope
+            )
+        )
+    }
 }
 
 @Composable
@@ -56,10 +70,11 @@ private fun TransactionListContent(
     transactionCounts: Result<TransactionCountSummary>,
     transactions: LazyPagingItems<Transaction>,
     isIncome: Boolean?,
-    listState: androidx.compose.foundation.lazy.LazyListState
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    modifier: Modifier = Modifier
 ) {
     LazyColumn(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(transactionBackground),
         contentPadding = PaddingValues(16.dp),

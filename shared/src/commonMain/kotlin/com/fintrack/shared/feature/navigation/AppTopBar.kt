@@ -27,11 +27,15 @@ fun AppTopBar(
 
 @Composable
 fun AddTransactionFAB(
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     FloatingActionButton(
         onClick = onClick,
-        modifier = Modifier.size(60.dp).offset(y = 60.dp),
+        modifier = Modifier
+            .size(60.dp)
+            .offset(y = 60.dp) // Maintain your specific layout offset
+            .then(modifier),
         containerColor = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,
         shape = CircleShape

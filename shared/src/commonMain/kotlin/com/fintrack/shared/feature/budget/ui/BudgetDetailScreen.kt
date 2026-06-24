@@ -1,7 +1,20 @@
 package com.fintrack.shared.feature.budget.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -66,6 +79,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -94,6 +108,7 @@ import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
+import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.transaction.ui.addtransaction.CategoryChip
 import com.fintrack.shared.feature.transaction.ui.addtransaction.TypeToggleButton
 import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
@@ -110,38 +125,37 @@ import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-// This screen handles creating and editing of budgets; that explains the multiple launched effect. Later we could break ti down to create and edit screens separately
-@OptIn(ExperimentalTime::class)
+@OptIn(ExperimentalTime::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun BudgetDetailScreen(
     budgetId: String?,
     viewModel: BudgetViewModel = koinViewModel(),
     accountsViewModel: AccountsViewModel = koinViewModel(),
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onSave: () -> Unit,
     onBack: () -> Unit
 ) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+        ?: throw IllegalStateException("No SharedTransitionScope found")
+
     val selectedBudgetResult by viewModel.selectedBudget.collectAsStateWithLifecycle()
     val saveState by viewModel.saveState.collectAsStateWithLifecycle()
     val formState by viewModel.formState.collectAsStateWithLifecycle()
     val validationState by viewModel.validationState.collectAsStateWithLifecycle()
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
 
-    // Compute initial form state
     val initialFormState = remember(budgetId, selectedBudgetResult, accountsResult) {
         computeInitialFormState(budgetId, selectedBudgetResult, accountsResult)
     }
 
-    // Set initial form state once
     LaunchedEffect(initialFormState) {
         viewModel.setFormState(initialFormState)
     }
 
-    // Load budget if needed
     LaunchedEffect(budgetId) {
         budgetId?.let { viewModel.loadBudgetById(it) }
     }
 
-    // Handle save state
     LaunchedEffect(saveState) {
         if (saveState is SaveState.Success) {
             delay(1000)
@@ -178,13 +192,18 @@ fun BudgetDetailScreen(
 
             else -> {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    // Header with Amount
-                    BudgetAmountHeader(
-                        amount = formState.amount,
-                        onAmountChange = { viewModel.setAmount(it) },
-                        isExpense = formState.isExpense,
-                        themeColor = themeColor
-                    )
+                    with(sharedTransitionScope) {
+                        BudgetAmountHeader(
+                            amount = formState.amount,
+                            onAmountChange = { viewModel.setAmount(it) },
+                            isExpense = formState.isExpense,
+                            themeColor = themeColor,
+                            modifier = Modifier.sharedBounds(
+                                rememberSharedContentState(key = "budget_header_${budgetId ?: "new"}"),
+                                animatedVisibilityScope = animatedVisibilityScope
+                            )
+                        )
+                    }
 
                     Column(
                         modifier = Modifier
@@ -229,7 +248,6 @@ fun BudgetDetailScreen(
             }
         }
 
-        // Prominent Save Button at bottom
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -243,7 +261,6 @@ fun BudgetDetailScreen(
             )
         }
 
-        // Show validation error from save state if any
         if (saveState is SaveState.Error) {
             MaterialToast(
                 message = (saveState as SaveState.Error).exception.message
@@ -260,11 +277,12 @@ fun BudgetAmountHeader(
     amount: String,
     onAmountChange: (String) -> Unit,
     isExpense: Boolean,
-    themeColor: Color
+    themeColor: Color,
+    modifier: Modifier = Modifier
 ) {
     Surface(
         color = themeColor,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(200.dp),
         shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
@@ -276,12 +294,25 @@ fun BudgetAmountHeader(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = if (isExpense) "Expense Budget Limit" else "Income Target Limit",
-                color = Color.White.copy(alpha = 0.8f),
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Medium
-            )
+            AnimatedContent(
+                targetState = isExpense,
+                transitionSpec = {
+                    if (targetState) {
+                        (slideInVertically { height -> height } + fadeIn()).togetherWith(
+                            slideOutVertically { height -> -height } + fadeOut())
+                    } else {
+                        (slideInVertically { height -> -height } + fadeIn()).togetherWith(
+                            slideOutVertically { height -> height } + fadeOut())
+                    }
+                }
+            ) { targetIsExpense ->
+                Text(
+                    text = if (targetIsExpense) "Expense Budget Limit" else "Income Target Limit",
+                    color = Color.White.copy(alpha = 0.8f),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -350,7 +381,6 @@ private fun computeInitialFormState(
     val firstExpenseCategory = Category.expenseCategories.firstOrNull()
 
     return if (budgetId == null) {
-        // New budget - default values
         BudgetFormState(
             name = "",
             amount = "",
@@ -365,7 +395,6 @@ private fun computeInitialFormState(
             selectedAccount = accountsData.firstOrNull()
         )
     } else {
-        // Existing budget
         when (selectedBudgetResult) {
             is Result.Success -> {
                 val budgetWithStatus = selectedBudgetResult.data
@@ -384,11 +413,7 @@ private fun computeInitialFormState(
                     }
                 )
             }
-
-            else -> {
-                // Loading or error state
-                BudgetFormState()
-            }
+            else -> BudgetFormState()
         }
     }
 }
@@ -415,21 +440,21 @@ fun AccountSelectionSection(
 
         when (accountsResult) {
             is Result.Loading -> {
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-            ) {
-                CircularProgressIndicator()
-            }
-        }
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(80.dp)
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
             }
 
             is Result.Error -> {
@@ -510,22 +535,40 @@ fun AccountChip(
 ) {
     val accountIcon = AccountIcon.fromAccountName(account.name)
 
+    val scale by animateFloatAsState(
+        targetValue = if (isSelected) 1.02f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+    )
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isSelected) accountChipSelectedBg else MaterialTheme.colorScheme.surface,
+        animationSpec = tween(300)
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (isSelected) accountChipBorder else Color.LightGray.copy(alpha = 0.3f),
+        animationSpec = tween(300)
+    )
+    val elevation by animateDpAsState(
+        targetValue = if (isSelected) 4.dp else 1.dp,
+        animationSpec = tween(300)
+    )
+
     Card(
         modifier = modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clickable { onClick() }
             .widthIn(min = 120.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) {
-                accountChipSelectedBg
-            } else {
-                MaterialTheme.colorScheme.surface
-            }
+            containerColor = backgroundColor
         ),
         border = BorderStroke(
             width = 2.dp,
-            color = if (isSelected) accountChipBorder else Color.LightGray.copy(alpha = 0.3f)
-        )
+            color = borderColor
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
     ) {
         Column(
             modifier = Modifier.padding(12.dp),

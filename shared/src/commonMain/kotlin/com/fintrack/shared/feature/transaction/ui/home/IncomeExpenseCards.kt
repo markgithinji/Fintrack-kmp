@@ -41,10 +41,11 @@ import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 @Composable
 fun IncomeExpenseCards(
     accountResult: Result<Account>,
-    onCardClick: (isIncome: Boolean) -> Unit
+    onCardClick: (isIncome: Boolean) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         when (accountResult) {

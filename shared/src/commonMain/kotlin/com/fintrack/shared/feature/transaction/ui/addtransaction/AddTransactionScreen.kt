@@ -1,7 +1,20 @@
 package com.fintrack.shared.feature.transaction.ui.addtransaction
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -61,6 +74,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -79,6 +93,7 @@ import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.domain.SaveState
+import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
@@ -91,13 +106,17 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun AddTransactionScreen(
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     accountsViewModel: AccountsViewModel = koinViewModel(),
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onBack: () -> Unit = {}
 ) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+        ?: throw IllegalStateException("No SharedTransitionScope found")
+
     val saveState by transactionsViewModel.saveState.collectAsStateWithLifecycle()
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
     val validationError by transactionsViewModel.validationError.collectAsStateWithLifecycle()
@@ -258,11 +277,12 @@ fun AmountHeader(
     amount: String,
     onAmountChange: (String) -> Unit,
     isIncome: Boolean,
-    themeColor: Color
+    themeColor: Color,
+    modifier: Modifier = Modifier
 ) {
     Surface(
         color = themeColor,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(200.dp),
         shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
@@ -275,12 +295,25 @@ fun AmountHeader(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = if (isIncome) "Income Amount" else "Expense Amount",
-                    color = Color.White.copy(alpha = 0.8f),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium
-                )
+                AnimatedContent(
+                    targetState = isIncome,
+                    transitionSpec = {
+                        if (targetState) {
+                            (slideInVertically { height -> height } + fadeIn()).togetherWith(
+                                slideOutVertically { height -> -height } + fadeOut())
+                        } else {
+                            (slideInVertically { height -> -height } + fadeIn()).togetherWith(
+                                slideOutVertically { height -> height } + fadeOut())
+                        }
+                    }
+                ) { targetIsIncome ->
+                    Text(
+                        text = if (targetIsIncome) "Income Amount" else "Expense Amount",
+                        color = Color.White.copy(alpha = 0.8f),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -377,17 +410,34 @@ fun TypeToggleButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val scale by animateFloatAsState(
+        targetValue = if (isSelected) 1f else 0.95f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy)
+    )
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isSelected) selectedColor else Color.Transparent,
+        animationSpec = tween(300)
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = tween(300)
+    )
+
     Box(
         modifier = modifier
             .height(48.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(RoundedCornerShape(16.dp))
-            .background(if (isSelected) selectedColor else Color.Transparent)
+            .background(backgroundColor)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
-            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+            color = contentColor,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
             fontSize = 15.sp
         )
@@ -655,24 +705,55 @@ fun CategoryChip(
     selected: Boolean,
     onClick: () -> Unit
 ) {
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.05f else 1.0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    )
+    val animatedBgColor by animateColorAsState(
+        targetValue = if (selected) color else MaterialTheme.colorScheme.surface,
+        animationSpec = tween(durationMillis = 300)
+    )
+    val animatedContentColor by animateColorAsState(
+        targetValue = if (selected) Color.White else color,
+        animationSpec = tween(durationMillis = 300)
+    )
+    val animatedTextColor by animateColorAsState(
+        targetValue = if (selected) Color.White else Color.Black,
+        animationSpec = tween(durationMillis = 300)
+    )
+    val animatedBorderColor by animateColorAsState(
+        targetValue = if (selected) color else Color.LightGray.copy(alpha = 0.5f),
+        animationSpec = tween(durationMillis = 300)
+    )
+    val animatedElevation by animateDpAsState(
+        targetValue = if (selected) 6.dp else 0.dp,
+        animationSpec = tween(durationMillis = 300)
+    )
+
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(14.dp),
-        color = if (selected) color else MaterialTheme.colorScheme.surface,
+        color = animatedBgColor,
         border = BorderStroke(
             width = 1.dp,
-            color = if (selected) color else Color.LightGray.copy(alpha = 0.5f)
+            color = animatedBorderColor
         ),
-        shadowElevation = if (selected) 4.dp else 0.dp
+        shadowElevation = animatedElevation,
+        modifier = Modifier.graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        }
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Icon(icon, null, tint = if (selected) Color.White else color)
-            Text(text, color = if (selected) Color.White else Color.Black)
+            Icon(icon, null, tint = animatedContentColor)
+            Text(text, color = animatedTextColor)
         }
     }
 }
-
