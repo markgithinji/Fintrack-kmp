@@ -59,15 +59,19 @@ fun AppNavigation(
         if (isAuthenticated) Screen.Home.route else Screen.Login.route 
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = startDestination,
-        modifier = Modifier.padding(paddingValues),
+    SharedTransitionLayout {
+        CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+            NavHost(
+                navController = navController,
+                startDestination = startDestination,
+                modifier = Modifier.padding(paddingValues),
                 enterTransition = {
                     val isToAuth = targetState.destination.route == Screen.Login.route || 
                                  targetState.destination.route == Screen.Register.route
                     val isFromAuth = initialState.destination.route == Screen.Login.route || 
                                    initialState.destination.route == Screen.Register.route
+                    
+                    val isToMorphScreen = targetState.destination.route == Screen.BudgetDetail.route
 
                     if (isFromAuth && !isToAuth) { // Login success
                         scaleIn(initialScale = 0.9f, animationSpec = tween(600)) + fadeIn(animationSpec = tween(600))
@@ -75,6 +79,8 @@ fun AppNavigation(
                         fadeIn(animationSpec = tween(600))
                     } else if (isToAuth && isFromAuth) { // Between Login/Register
                         fadeIn(animationSpec = tween(400))
+                    } else if (isToMorphScreen) {
+                        fadeIn(animationSpec = tween(500))
                     } else {
                         EnterTransition.None
                     }
@@ -84,6 +90,8 @@ fun AppNavigation(
                                  targetState.destination.route == Screen.Register.route
                     val isFromAuth = initialState.destination.route == Screen.Login.route || 
                                    initialState.destination.route == Screen.Register.route
+                    
+                    val isFromMorphScreen = initialState.destination.route == Screen.BudgetDetail.route
 
                     if (isFromAuth && !isToAuth) { // Login success
                         scaleOut(targetScale = 1.1f, animationSpec = tween(600)) + fadeOut(animationSpec = tween(600))
@@ -91,19 +99,27 @@ fun AppNavigation(
                         scaleOut(targetScale = 0.9f, animationSpec = tween(600)) + fadeOut(animationSpec = tween(600))
                     } else if (isToAuth && isFromAuth) { // Between Login/Register
                         fadeOut(animationSpec = tween(400))
+                    } else if (isFromMorphScreen) {
+                        fadeOut(animationSpec = tween(150))
                     } else {
                         ExitTransition.None
                     }
                 },
                 popEnterTransition = { EnterTransition.None },
-                popExitTransition = { ExitTransition.None }
+                popExitTransition = {
+                    val isFromMorphScreen = initialState.destination.route == Screen.BudgetDetail.route
+                    if (isFromMorphScreen) {
+                        fadeOut(animationSpec = tween(150))
+                    } else {
+                        ExitTransition.None
+                    }
+                }
             ) {
                 composable(Screen.Home.route) {
                     LaunchedEffect(Unit) {
                         onUpdateAppBarState(AppBarState(title = "Home"))
                     }
                     HomeScreen(
-                        animatedVisibilityScope = this,
                         onCardClick = { accountId, isIncome ->
                             navController.navigate(
                                 Screen.TransactionList.createRoute(
@@ -319,9 +335,10 @@ fun AppNavigation(
 
                     TransactionListScreen(
                         accountId = accountId, 
-                        isIncome = isIncome,
-                        animatedVisibilityScope = this
+                        isIncome = isIncome
                     )
                 }
             }
+        }
+    }
 }

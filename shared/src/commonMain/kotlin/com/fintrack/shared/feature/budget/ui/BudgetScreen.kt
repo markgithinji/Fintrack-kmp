@@ -3,6 +3,8 @@ package com.fintrack.shared.feature.budget.ui
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloatAsState
@@ -116,7 +118,14 @@ fun BudgetScreen(
                                         .padding(16.dp)
                                         .sharedBounds(
                                             rememberSharedContentState(key = "budget_header_new"),
-                                            animatedVisibilityScope = animatedVisibilityScope
+                                            animatedVisibilityScope = animatedVisibilityScope,
+                                            boundsTransform = { _, _ ->
+                                                spring(
+                                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                                    stiffness = Spring.StiffnessLow
+                                                )
+                                            },
+                                            clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(20.dp))
                                         )
                                 )
                             }
@@ -127,10 +136,19 @@ fun BudgetScreen(
                                 BudgetItem(
                                     budgetWithStatus = budgetWithStatus,
                                     onClick = { onBudgetClick(budgetWithStatus) },
-                                    modifier = Modifier.sharedBounds(
-                                        rememberSharedContentState(key = "budget_header_${budgetWithStatus.budget.id}"),
-                                        animatedVisibilityScope = animatedVisibilityScope
-                                    )
+                                    modifier = Modifier
+                                        .animateItem()
+                                        .sharedBounds(
+                                            rememberSharedContentState(key = "budget_header_${budgetWithStatus.budget.id}"),
+                                            animatedVisibilityScope = animatedVisibilityScope,
+                                            boundsTransform = { _, _ ->
+                                                spring(
+                                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                                    stiffness = Spring.StiffnessLow
+                                                )
+                                            },
+                                            clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(16.dp))
+                                        )
                                 )
                             }
                         }

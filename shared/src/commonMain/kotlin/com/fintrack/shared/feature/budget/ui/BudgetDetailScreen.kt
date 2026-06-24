@@ -200,7 +200,14 @@ fun BudgetDetailScreen(
                             themeColor = themeColor,
                             modifier = Modifier.sharedBounds(
                                 rememberSharedContentState(key = "budget_header_${budgetId ?: "new"}"),
-                                animatedVisibilityScope = animatedVisibilityScope
+                                animatedVisibilityScope = animatedVisibilityScope,
+                                boundsTransform = { _, _ ->
+                                    spring(
+                                        dampingRatio = Spring.DampingRatioLowBouncy,
+                                        stiffness = Spring.StiffnessLow
+                                    )
+                                },
+                                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
                             )
                         )
                     }

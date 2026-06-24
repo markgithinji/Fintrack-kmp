@@ -34,12 +34,8 @@ fun TransactionListScreen(
     accountId: String,
     isIncome: Boolean? = null,
     transactionsViewModel: TransactionViewModel = koinViewModel(),
-    statisticsViewModel: StatisticsViewModel = koinViewModel(),
-    animatedVisibilityScope: AnimatedVisibilityScope
+    statisticsViewModel: StatisticsViewModel = koinViewModel()
 ) {
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-        ?: throw IllegalStateException("No SharedTransitionScope found")
-
     val transactionCounts by statisticsViewModel.transactionCounts.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
 
@@ -51,18 +47,12 @@ fun TransactionListScreen(
         statisticsViewModel.loadTransactionCounts(accountId, isIncome)
     }
 
-    with(sharedTransitionScope) {
-        TransactionListContent(
-            transactionCounts = transactionCounts,
-            transactions = transactions,
-            isIncome = isIncome,
-            listState = listState,
-            modifier = Modifier.sharedBounds(
-                rememberSharedContentState(key = "transaction_list_header"),
-                animatedVisibilityScope = animatedVisibilityScope
-            )
-        )
-    }
+    TransactionListContent(
+        transactionCounts = transactionCounts,
+        transactions = transactions,
+        isIncome = isIncome,
+        listState = listState
+    )
 }
 
 @Composable

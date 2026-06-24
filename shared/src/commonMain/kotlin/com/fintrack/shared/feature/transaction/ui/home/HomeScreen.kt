@@ -30,12 +30,8 @@ fun HomeScreen(
     accountsViewModel: AccountsViewModel = koinViewModel(),
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     statsViewModel: StatisticsViewModel = koinViewModel(),
-    animatedVisibilityScope: AnimatedVisibilityScope,
     onCardClick: (accountId: String, isIncome: Boolean?) -> Unit
 ) {
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-        ?: throw IllegalStateException("No SharedTransitionScope found")
-
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
     val selectedAccountResult by accountsViewModel.selectedAccount.collectAsStateWithLifecycle()
     val transactionsResult by transactionsViewModel.recentTransactions.collectAsStateWithLifecycle()
@@ -68,19 +64,13 @@ fun HomeScreen(
         }
 
         item {
-            with(sharedTransitionScope) {
-                IncomeExpenseCards(
-                    accountResult = selectedAccountResult,
-                    onCardClick = { isIncome ->
-                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-                        accountId?.let { onCardClick(it, isIncome) }
-                    },
-                    modifier = Modifier.sharedBounds(
-                        rememberSharedContentState(key = "transaction_list_header"),
-                        animatedVisibilityScope = animatedVisibilityScope
-                    )
-                )
-            }
+            IncomeExpenseCards(
+                accountResult = selectedAccountResult,
+                onCardClick = { isIncome ->
+                    val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                    accountId?.let { onCardClick(it, isIncome) }
+                }
+            )
         }
 
         item { IncomeExpensesOverview(overviewResult) }
