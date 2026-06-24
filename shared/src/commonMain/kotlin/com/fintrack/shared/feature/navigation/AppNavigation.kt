@@ -1,5 +1,13 @@
 package com.fintrack.shared.feature.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -48,7 +56,50 @@ fun AppNavigation(
     NavHost(
         navController = navController,
         startDestination = startDestination,
-        modifier = Modifier.padding(paddingValues)
+        modifier = Modifier.padding(paddingValues),
+        enterTransition = {
+            val isFromAuth = initialState.destination.route == Screen.Login.route || 
+                           initialState.destination.route == Screen.Register.route
+            val isToHome = targetState.destination.route == Screen.Home.route
+            val isToLogin = targetState.destination.route == Screen.Login.route
+
+            if (isFromAuth && isToHome) {
+                // Fancy scale + fade when entering app
+                scaleIn(initialScale = 0.9f, animationSpec = tween(600)) + 
+                fadeIn(animationSpec = tween(600))
+            } else if (isToLogin) {
+                // Smooth fade when logging out
+                fadeIn(animationSpec = tween(600))
+            } else {
+                // Default slide for internal navigation
+                slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(400))
+            }
+        },
+        exitTransition = {
+            val isFromAuth = initialState.destination.route == Screen.Login.route || 
+                           initialState.destination.route == Screen.Register.route
+            val isToHome = targetState.destination.route == Screen.Home.route
+            val isToLogin = targetState.destination.route == Screen.Login.route
+
+            if (isFromAuth && isToHome) {
+                // Login screen fades and scales out slightly
+                scaleOut(targetScale = 1.1f, animationSpec = tween(600)) + 
+                fadeOut(animationSpec = tween(600))
+            } else if (isToLogin) {
+                // Current screen scales down and fades out during logout
+                scaleOut(targetScale = 0.9f, animationSpec = tween(600)) + 
+                fadeOut(animationSpec = tween(600))
+            } else {
+                // Default slide out
+                slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(400))
+            }
+        },
+        popEnterTransition = {
+            slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(400))
+        },
+        popExitTransition = {
+            slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(400))
+        }
     ) {
         // Home Screen
         composable(Screen.Home.route) {
