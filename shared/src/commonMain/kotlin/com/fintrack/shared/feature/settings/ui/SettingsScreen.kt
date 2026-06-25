@@ -1,15 +1,23 @@
 package com.fintrack.shared.feature.settings.ui
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.settings.domain.model.Currency
@@ -23,60 +31,164 @@ fun SettingsScreen(
     val currentCurrency by viewModel.currency.collectAsStateWithLifecycle()
     var showCurrencyDialog by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Preferences",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Settings", fontWeight = FontWeight.Bold) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 16.dp)
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "Preferences",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
 
-        SettingsItem(
-            title = "Currency",
-            subtitle = "${currentCurrency.name} (${currentCurrency.symbol})",
-            onClick = { showCurrencyDialog = true }
-        )
+            SettingsItem(
+                title = "Currency",
+                subtitle = "${currentCurrency.name} (${currentCurrency.symbol})",
+                icon = Icons.Default.Payments,
+                onClick = { showCurrencyDialog = true }
+            )
+        }
     }
 
     if (showCurrencyDialog) {
-        AlertDialog(
-            onDismissRequest = { showCurrencyDialog = false },
-            title = { Text("Select Currency") },
-            text = {
-                LazyColumn {
+        CurrencySelectionDialog(
+            currentCurrency = currentCurrency,
+            onCurrencySelected = {
+                viewModel.setCurrency(it)
+                showCurrencyDialog = false
+            },
+            onDismiss = { showCurrencyDialog = false }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CurrencySelectionDialog(
+    currentCurrency: Currency,
+    onCurrencySelected: (Currency) -> Unit,
+    onDismiss: () -> Unit
+) {
+    BasicAlertDialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier
+            .padding(28.dp)
+            .widthIn(max = 400.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Text(
+                    text = "Select Currency",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     items(Currency.entries) { currency ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    viewModel.setCurrency(currency)
-                                    showCurrencyDialog = false
-                                }
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        val isSelected = currency == currentCurrency
+                        
+                        Surface(
+                            onClick = { onCurrencySelected(currency) },
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected) 
+                                MaterialTheme.colorScheme.primaryContainer 
+                            else 
+                                Color.Transparent,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(text = "${currency.name} (${currency.symbol})")
-                            if (currency == currentCurrency) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "Selected",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                            .background(
+                                                if (isSelected)
+                                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                                else
+                                                    MaterialTheme.colorScheme.surfaceVariant
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = currency.symbol,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isSelected)
+                                                MaterialTheme.colorScheme.primary
+                                            else
+                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    
+                                    Column {
+                                        Text(
+                                            text = currency.name,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                        )
+                                        Text(
+                                            text = currency.code,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = { showCurrencyDialog = false }) {
-                    Text("Close")
+
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Cancel")
                 }
             }
-        )
+        }
     }
 }
 
@@ -84,20 +196,55 @@ fun SettingsScreen(
 fun SettingsItem(
     title: String,
     subtitle: String,
+    icon: ImageVector,
     onClick: () -> Unit
 ) {
     Surface(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp)),
+        color = Color.Transparent
     ) {
-        Column(
-            modifier = Modifier.padding(vertical = 12.dp)
+        Row(
+            modifier = Modifier
+                .padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
         }
     }
