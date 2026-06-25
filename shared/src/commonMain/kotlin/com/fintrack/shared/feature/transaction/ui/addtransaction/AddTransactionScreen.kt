@@ -616,7 +616,9 @@ fun SaveTransactionButton(
         shape = RoundedCornerShape(24.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = themeColor,
-            disabledContainerColor = themeColor.copy(alpha = 0.5f)
+            contentColor = Color.White,
+            disabledContainerColor = if (isSuccess) themeColor else themeColor.copy(alpha = 0.5f),
+            disabledContentColor = if (isSuccess) Color.White else Color.White.copy(alpha = 0.5f)
         ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),
         enabled = !isInProgress && !isSuccess && isFormValid
@@ -640,7 +642,7 @@ fun SaveTransactionButton(
                         tint = Color.White,
                         modifier = Modifier.size(20.dp)
                     )
-                    Text("Saved ✓", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Text("Saved", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                 }
             }
 

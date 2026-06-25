@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -407,6 +408,7 @@ private fun computeInitialFormState(
                 val budgetWithStatus = selectedBudgetResult.data
                 val budget = budgetWithStatus.budget
                 BudgetFormState(
+                    id = budget.id,
                     name = budget.name,
                     amount = budget.limit.toLong().toString().let { if (it == "0") "" else it },
                     selectedCategories = budget.categories.toSet(),
@@ -517,6 +519,7 @@ fun AccountSelectionSection(
                 } else {
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(horizontal = 4.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         items(accountsResult.data) { account ->
@@ -627,7 +630,9 @@ fun SaveBudgetButton(
         shape = RoundedCornerShape(24.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = themeColor,
-            disabledContainerColor = themeColor.copy(alpha = 0.5f)
+            contentColor = Color.White,
+            disabledContainerColor = if (isSuccess) themeColor else themeColor.copy(alpha = 0.5f),
+            disabledContentColor = if (isSuccess) Color.White else Color.White.copy(alpha = 0.5f)
         ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),
         enabled = !isInProgress && !isSuccess && isFormValid
@@ -651,7 +656,7 @@ fun SaveBudgetButton(
                         tint = Color.White,
                         modifier = Modifier.size(20.dp)
                     )
-                    Text("Saved ✓", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Text("Saved", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                 }
             }
 
