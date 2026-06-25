@@ -53,6 +53,7 @@ It allows users to **track income, expenses, and balances**, visualize **financi
 - **Interactive Charts**: Beautiful visualizations for spending patterns, income trends, and budget compliance
 - **Transaction History**: Comprehensive ledger with search, filter, and export capabilities
 - **Financial Highlights**: Key insights showing top expenses, savings rate, and financial health metrics
+- **Global Currency Preferences**: Seamlessly switch between multiple currencies (USD, KES, EUR, etc.) with real-time UI updates across the entire application.
 - **Secure Authentication**: Encrypted token storage
 
 ---
@@ -64,6 +65,7 @@ Fintrack KMP prioritizes a fluid user experience with high-quality animations an
 - **Shared Element Transitions**: Seamlessly morph UI elements (like transaction cards and headers) across screens using the latest Compose Shared Transition API for a continuous visual flow.
 - **Interactive Visualizations**: Animated donut charts and progress indicators that respond to user selection with smooth, interpolated transitions.
 - **Dynamic Theming**: Real-time UI color shifts between Income (Green) and Expense (Pink) modes, providing immediate visual context during data entry.
+- **Reactive Currency Switching**: Instantly update all financial data displays across the app using Compose `CompositionLocal` and reactive flows when preferences change.
 - **Intelligent Loading States**: Custom shimmer effects and staggered item animations that prevent layout shifts and provide a premium feel during data fetching.
 - **Micro-interactions**: Subtle scale animations on chips, bouncy button presses, and `AnimatedContent` for text changes that make the app feel alive and responsive.
 
