@@ -57,6 +57,18 @@ It allows users to **track income, expenses, and balances**, visualize **financi
 
 ---
 
+## ✨ Polished UI & Animations
+
+Fintrack KMP prioritizes a fluid user experience with high-quality animations and transitions:
+
+- **Shared Element Transitions**: Seamlessly morph UI elements (like transaction cards and headers) across screens using the latest Compose Shared Transition API for a continuous visual flow.
+- **Interactive Visualizations**: Animated donut charts and progress indicators that respond to user selection with smooth, interpolated transitions.
+- **Dynamic Theming**: Real-time UI color shifts between Income (Green) and Expense (Pink) modes, providing immediate visual context during data entry.
+- **Intelligent Loading States**: Custom shimmer effects and staggered item animations that prevent layout shifts and provide a premium feel during data fetching.
+- **Micro-interactions**: Subtle scale animations on chips, bouncy button presses, and `AnimatedContent` for text changes that make the app feel alive and responsive.
+
+---
+
 ## 🚧 In Progress
 
 - 🚧 iOS SwiftUI integration
