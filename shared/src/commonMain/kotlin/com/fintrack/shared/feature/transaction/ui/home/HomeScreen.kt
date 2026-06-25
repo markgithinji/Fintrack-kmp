@@ -30,6 +30,7 @@ fun HomeScreen(
     accountsViewModel: AccountsViewModel = koinViewModel(),
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     statsViewModel: StatisticsViewModel = koinViewModel(),
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onCardClick: (accountId: String, isIncome: Boolean?) -> Unit
 ) {
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
@@ -66,6 +67,7 @@ fun HomeScreen(
         item {
             IncomeExpenseCards(
                 accountResult = selectedAccountResult,
+                animatedVisibilityScope = animatedVisibilityScope,
                 onCardClick = { isIncome ->
                     val accountId = (selectedAccountResult as? Result.Success)?.data?.id
                     accountId?.let { onCardClick(it, isIncome) }

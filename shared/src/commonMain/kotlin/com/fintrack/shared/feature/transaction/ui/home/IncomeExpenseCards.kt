@@ -1,5 +1,7 @@
 package com.fintrack.shared.feature.transaction.ui.home
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,10 +39,13 @@ import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
+import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun IncomeExpenseCards(
     accountResult: Result<Account>,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onCardClick: (isIncome: Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -59,6 +64,7 @@ fun IncomeExpenseCards(
                     title = "Total Income",
                     amount = "Error",
                     isIncomeCard = true,
+                    animatedVisibilityScope = animatedVisibilityScope,
                     onClick = null,
                     modifier = Modifier.weight(1f)
                 )
@@ -66,6 +72,7 @@ fun IncomeExpenseCards(
                     title = "Total Expense",
                     amount = "Error",
                     isIncomeCard = false,
+                    animatedVisibilityScope = animatedVisibilityScope,
                     onClick = null,
                     modifier = Modifier.weight(1f)
                 )
@@ -80,6 +87,7 @@ fun IncomeExpenseCards(
                     title = "Total Income",
                     amount = totalIncome.formatToCurrency(),
                     isIncomeCard = true,
+                    animatedVisibilityScope = animatedVisibilityScope,
                     onClick = { onCardClick(true) },
                     modifier = Modifier.weight(1f)
                 )
@@ -88,6 +96,7 @@ fun IncomeExpenseCards(
                     title = "Total Expense",
                     amount = totalExpense.formatToCurrency(),
                     isIncomeCard = false,
+                    animatedVisibilityScope = animatedVisibilityScope,
                     onClick = { onCardClick(false) },
                     modifier = Modifier.weight(1f)
                 )
@@ -134,17 +143,31 @@ fun LoadingInfoCard(modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun InfoCard(
     title: String,
     amount: String,
     isIncomeCard: Boolean,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onClick: ((isIncome: Boolean) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+
     Card(
         modifier = modifier
             .height(70.dp)
+            .then(
+                if (sharedTransitionScope != null) {
+                    with(sharedTransitionScope) {
+                        Modifier.sharedElement(
+                            sharedContentState = rememberSharedContentState(key = if (isIncomeCard) "income_card" else "expense_card"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                    }
+                } else Modifier
+            )
             .clickable(enabled = onClick != null) { onClick?.invoke(isIncomeCard) },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)

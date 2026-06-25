@@ -2,6 +2,7 @@ package com.fintrack.shared.feature.transaction.ui.transactionlist
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,11 +34,13 @@ import org.koin.compose.viewmodel.koinViewModel
 fun TransactionListScreen(
     accountId: String,
     isIncome: Boolean? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     statisticsViewModel: StatisticsViewModel = koinViewModel()
 ) {
     val transactionCounts by statisticsViewModel.transactionCounts.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
+    val sharedTransitionScope = LocalSharedTransitionScope.current
 
     val transactions = remember(accountId, isIncome) {
         transactionsViewModel.getTransactionsPagingData(accountId, isIncome)
@@ -51,21 +54,38 @@ fun TransactionListScreen(
         transactionCounts = transactionCounts,
         transactions = transactions,
         isIncome = isIncome,
-        listState = listState
+        listState = listState,
+        animatedVisibilityScope = animatedVisibilityScope,
+        sharedTransitionScope = sharedTransitionScope
     )
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun TransactionListContent(
     transactionCounts: Result<TransactionCountSummary>,
     transactions: LazyPagingItems<Transaction>,
     isIncome: Boolean?,
     listState: androidx.compose.foundation.lazy.LazyListState,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedTransitionScope: SharedTransitionScope?,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
+            .then(
+                if (sharedTransitionScope != null && isIncome != null) {
+                    with(sharedTransitionScope) {
+                        Modifier.sharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = if (isIncome) "income_card" else "expense_card"
+                            ),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                    }
+                } else Modifier
+            )
             .background(transactionBackground),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
