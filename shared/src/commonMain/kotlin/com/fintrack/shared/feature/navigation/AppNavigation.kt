@@ -100,7 +100,7 @@ fun AppNavigation(
                     } else if (isToAuth && isFromAuth) { // Between Login/Register
                         fadeOut(animationSpec = tween(400))
                     } else if (isFromMorphScreen) {
-                        fadeOut(animationSpec = tween(150))
+                        fadeOut(animationSpec = tween(400))
                     } else {
                         ExitTransition.None
                     }
@@ -109,7 +109,7 @@ fun AppNavigation(
                 popExitTransition = {
                     val isFromMorphScreen = initialState.destination.route == Screen.BudgetDetail.route
                     if (isFromMorphScreen) {
-                        fadeOut(animationSpec = tween(150))
+                        fadeOut(animationSpec = tween(400))
                     } else {
                         ExitTransition.None
                     }
