@@ -200,12 +200,25 @@ class TransactionViewModel(
         }
     }
 
+    private var lastPagingAccountId: String? = null
+    private var lastPagingIsIncome: Boolean? = null
+    private var cachedPagingFlow: Flow<PagingData<Transaction>>? = null
+
     fun getTransactionsPagingData(
         accountId: String?,
         isIncome: Boolean? = null
     ): Flow<PagingData<Transaction>> {
-        return repo.getTransactionsPagingFlow(accountId, isIncome)
+        val currentFlow = cachedPagingFlow
+        if (currentFlow != null && lastPagingAccountId == accountId && lastPagingIsIncome == isIncome) {
+            return currentFlow
+        }
+
+        lastPagingAccountId = accountId
+        lastPagingIsIncome = isIncome
+        val newFlow = repo.getTransactionsPagingFlow(accountId, isIncome)
             .cachedIn(viewModelScope)
+        cachedPagingFlow = newFlow
+        return newFlow
     }
 
     fun resetSaveState() {
