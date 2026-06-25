@@ -35,6 +35,7 @@ fun TransactionListScreen(
     accountId: String,
     isIncome: Boolean? = null,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    onEditTransaction: (String) -> Unit,
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     statisticsViewModel: StatisticsViewModel = koinViewModel()
 ) {
@@ -56,7 +57,8 @@ fun TransactionListScreen(
         isIncome = isIncome,
         listState = listState,
         animatedVisibilityScope = animatedVisibilityScope,
-        sharedTransitionScope = sharedTransitionScope
+        sharedTransitionScope = sharedTransitionScope,
+        onTransactionClick = onEditTransaction
     )
 }
 
@@ -69,6 +71,7 @@ private fun TransactionListContent(
     listState: androidx.compose.foundation.lazy.LazyListState,
     animatedVisibilityScope: AnimatedVisibilityScope,
     sharedTransitionScope: SharedTransitionScope?,
+    onTransactionClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -134,7 +137,10 @@ private fun TransactionListContent(
                     ) { index ->
                         val transaction = transactions[index]
                         if (transaction != null) {
-                            TransactionItem(transaction = transaction)
+                            TransactionItem(
+                                transaction = transaction,
+                                onClick = { transaction.id?.let { id -> onTransactionClick(id) } }
+                            )
                         }
                     }
                 }

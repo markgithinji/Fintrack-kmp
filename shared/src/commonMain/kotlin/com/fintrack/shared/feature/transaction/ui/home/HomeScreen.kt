@@ -31,6 +31,7 @@ fun HomeScreen(
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     statsViewModel: StatisticsViewModel = koinViewModel(),
     animatedVisibilityScope: AnimatedVisibilityScope,
+    onEditTransaction: (String) -> Unit,
     onCardClick: (accountId: String, isIncome: Boolean?) -> Unit
 ) {
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
@@ -89,6 +90,9 @@ fun HomeScreen(
                 onViewAllClick = {
                     val accountId = (selectedAccountResult as? Result.Success)?.data?.id
                     accountId?.let { onCardClick(it, null) }
+                },
+                onTransactionClick = { transaction ->
+                    transaction.id?.let { id -> onEditTransaction(id) }
                 }
             )
         }

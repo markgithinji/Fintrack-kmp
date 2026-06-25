@@ -34,6 +34,9 @@ class TransactionViewModel(
     private val _validationError = MutableStateFlow<String?>(null)
     val validationError: StateFlow<String?> = _validationError
 
+    private val _selectedTransaction = MutableStateFlow<Result<Transaction>>(Result.Loading)
+    val selectedTransaction: StateFlow<Result<Transaction>> = _selectedTransaction
+
     fun validateTransaction(
         amount: String,
         category: Category?,
@@ -92,6 +95,57 @@ class TransactionViewModel(
                 _saveState.value = SaveState.Error(e)
             }
         }
+    }
+
+    fun updateTransaction(
+        id: String,
+        amount: String,
+        isIncome: Boolean,
+        category: Category?,
+        description: String,
+        selectedAccount: Account?,
+        dateTime: LocalDateTime
+    ) {
+        // Validate first
+        if (!validateTransaction(amount, category, selectedAccount)) {
+            return
+        }
+
+        val transaction = createTransactionUseCase(
+            amount = amount,
+            isIncome = isIncome,
+            category = category,
+            description = description,
+            selectedAccount = selectedAccount,
+            dateTime = dateTime
+        )?.copy(id = id) ?: return
+
+        viewModelScope.launch {
+            _saveState.value = SaveState.Idle
+            _saveState.value = SaveState.Loading
+
+            try {
+                val result = repo.updateTransaction(id, transaction)
+                _saveState.value = when (result) {
+                    is Result.Success -> SaveState.Success(result.data)
+                    is Result.Error -> SaveState.Error(result.exception)
+                    is Result.Loading -> SaveState.Loading
+                }
+            } catch (e: Exception) {
+                _saveState.value = SaveState.Error(e)
+            }
+        }
+    }
+
+    fun loadTransactionById(id: String) {
+        viewModelScope.launch {
+            _selectedTransaction.value = Result.Loading
+            _selectedTransaction.value = repo.getTransaction(id)
+        }
+    }
+
+    fun resetSelectedTransaction() {
+        _selectedTransaction.value = Result.Loading
     }
 
     // Keeping the old method for backward compatibility

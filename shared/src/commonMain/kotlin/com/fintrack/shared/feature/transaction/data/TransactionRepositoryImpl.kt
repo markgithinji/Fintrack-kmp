@@ -53,6 +53,16 @@ class TransactionRepositoryImpl(
             dto.toDomain()
         }
 
+    override suspend fun getTransaction(id: String): Result<Transaction> =
+        safeApiCall {
+            api.getTransaction(id).toDomain()
+        }
+
+    override suspend fun updateTransaction(id: String, transaction: Transaction): Result<Transaction> =
+        safeApiCall {
+            api.updateTransaction(id, transaction.toCreateRequest()).toDomain()
+        }
+
     override fun getTransactionsPagingFlow(
         accountId: String?,
         isIncome: Boolean?

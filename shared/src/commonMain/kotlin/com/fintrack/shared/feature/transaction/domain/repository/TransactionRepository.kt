@@ -19,6 +19,10 @@ interface TransactionRepository {
 
     suspend fun addTransaction(transaction: Transaction): Result<Transaction>
 
+    suspend fun getTransaction(id: String): Result<Transaction>
+
+    suspend fun updateTransaction(id: String, transaction: Transaction): Result<Transaction>
+
     fun getTransactionsPagingFlow(
         accountId: String?,
         isIncome: Boolean? = null

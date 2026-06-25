@@ -3,7 +3,11 @@ package com.fintrack.shared.feature.navigation
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
-    object AddTransaction : Screen("add_transaction")
+    object AddTransaction : Screen("add_transaction?transactionId={transactionId}") {
+        fun createRoute(transactionId: String? = null): String {
+            return if (transactionId == null) "add_transaction" else "add_transaction?transactionId=$transactionId"
+        }
+    }
     object Statistics : Screen("statistics")
     object Budget : Screen("budget")
     object Profile : Screen("profile")

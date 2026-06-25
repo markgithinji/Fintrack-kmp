@@ -90,6 +90,7 @@ import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.domain.SaveState
+import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
@@ -105,6 +106,7 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
 fun AddTransactionScreen(
+    transactionId: String? = null,
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     accountsViewModel: AccountsViewModel = koinViewModel(),
     onBack: () -> Unit = {}
@@ -112,6 +114,7 @@ fun AddTransactionScreen(
     val saveState by transactionsViewModel.saveState.collectAsStateWithLifecycle()
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
     val validationError by transactionsViewModel.validationError.collectAsStateWithLifecycle()
+    val selectedTransactionResult by transactionsViewModel.selectedTransaction.collectAsStateWithLifecycle()
 
     var amount by remember { mutableStateOf("") }
     var isIncome by remember { mutableStateOf(false) }
@@ -126,6 +129,43 @@ fun AddTransactionScreen(
 
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
+
+    LaunchedEffect(transactionId) {
+        if (transactionId != null) {
+            transactionsViewModel.loadTransactionById(transactionId)
+        } else {
+            transactionsViewModel.resetSelectedTransaction()
+        }
+    }
+
+    LaunchedEffect(selectedTransactionResult) {
+        if (transactionId != null && selectedTransactionResult is Result.Success) {
+            val transaction = (selectedTransactionResult as Result.Success<Transaction>).data
+            amount = transaction.amount.toLong().toString()
+            isIncome = transaction.isIncome
+            category = Category.fromName(transaction.category, !transaction.isIncome)
+            description = transaction.description ?: ""
+            dateTime = transaction.dateTime
+            
+            // Try to match account from accounts list
+            if (accountsResult is Result.Success) {
+                val accounts = (accountsResult as Result.Success<List<Account>>).data
+                selectedAccount = accounts.find { it.id == transaction.accountId }
+            }
+        }
+    }
+
+    // Also update selectedAccount when accountsResult loads if we have a pending transaction
+    LaunchedEffect(accountsResult) {
+        if (transactionId != null && 
+            selectedTransactionResult is Result.Success && 
+            accountsResult is Result.Success && 
+            selectedAccount == null) {
+            val transaction = (selectedTransactionResult as Result.Success<Transaction>).data
+            val accounts = (accountsResult as Result.Success<List<Account>>).data
+            selectedAccount = accounts.find { it.id == transaction.accountId }
+        }
+    }
 
     val themeColor by animateColorAsState(
         targetValue = if (isIncome) GreenIncome else PinkExpense,
@@ -209,15 +249,28 @@ fun AddTransactionScreen(
                 category = category,
                 selectedAccount = selectedAccount,
                 themeColor = themeColor,
+                isEditing = transactionId != null,
                 onSaveClick = {
-                    transactionsViewModel.addTransaction(
-                        amount = amount,
-                        isIncome = isIncome,
-                        category = category,
-                        description = description,
-                        selectedAccount = selectedAccount,
-                        dateTime = dateTime
-                    )
+                    if (transactionId != null) {
+                        transactionsViewModel.updateTransaction(
+                            id = transactionId,
+                            amount = amount,
+                            isIncome = isIncome,
+                            category = category,
+                            description = description,
+                            selectedAccount = selectedAccount,
+                            dateTime = dateTime
+                        )
+                    } else {
+                        transactionsViewModel.addTransaction(
+                            amount = amount,
+                            isIncome = isIncome,
+                            category = category,
+                            description = description,
+                            selectedAccount = selectedAccount,
+                            dateTime = dateTime
+                        )
+                    }
                 }
             )
         }
@@ -602,6 +655,7 @@ fun SaveTransactionButton(
     category: Category?,
     selectedAccount: Account?,
     themeColor: Color,
+    isEditing: Boolean = false,
     onSaveClick: () -> Unit
 ) {
     val isFormValid = amount.isNotBlank() && category != null && selectedAccount != null
@@ -642,12 +696,12 @@ fun SaveTransactionButton(
                         tint = Color.White,
                         modifier = Modifier.size(20.dp)
                     )
-                    Text("Saved", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Text(if (isEditing) "Updated" else "Saved", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                 }
             }
 
             else -> {
-                Text("Save Transaction", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                Text(if (isEditing) "Update Transaction" else "Save Transaction", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
             }
         }
     }

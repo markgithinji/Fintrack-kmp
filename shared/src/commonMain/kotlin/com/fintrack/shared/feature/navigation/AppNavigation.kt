@@ -124,6 +124,9 @@ fun AppNavigation(
                     }
                     HomeScreen(
                         animatedVisibilityScope = this,
+                        onEditTransaction = { transactionId ->
+                            navController.navigate(Screen.AddTransaction.createRoute(transactionId))
+                        },
                         onCardClick = { accountId, isIncome ->
                             navController.navigate(
                                 Screen.TransactionList.createRoute(
@@ -137,6 +140,13 @@ fun AppNavigation(
 
                 composable(
                     Screen.AddTransaction.route,
+                    arguments = listOf(
+                        navArgument("transactionId") {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        }
+                    ),
                     enterTransition = {
                         slideIntoContainer(
                             AnimatedContentTransitionScope.SlideDirection.Up,
@@ -158,17 +168,20 @@ fun AppNavigation(
                             animationSpec = tween(400, easing = FastOutSlowInEasing)
                         ) + fadeOut(animationSpec = tween(400))
                     }
-                ) {
-                    LaunchedEffect(Unit) {
+                ) { backStackEntry ->
+                    val transactionId = backStackEntry.arguments?.getString("transactionId")
+
+                    LaunchedEffect(transactionId) {
                         onUpdateAppBarState(
                             AppBarState(
-                                title = "Add Transaction",
+                                title = if (transactionId == null) "Add Transaction" else "Edit Transaction",
                                 showBackButton = true,
                                 onBack = { navController.popBackStack() }
                             )
                         )
                     }
                     AddTransactionScreen(
+                        transactionId = transactionId,
                         onBack = { navController.popBackStack() }
                     )
                 }
@@ -362,7 +375,10 @@ fun AppNavigation(
                     TransactionListScreen(
                         accountId = accountId, 
                         isIncome = isIncome,
-                        animatedVisibilityScope = this
+                        animatedVisibilityScope = this,
+                        onEditTransaction = { transactionId ->
+                            navController.navigate(Screen.AddTransaction.createRoute(transactionId))
+                        }
                     )
                 }
             }

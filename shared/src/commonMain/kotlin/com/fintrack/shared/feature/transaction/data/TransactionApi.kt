@@ -9,6 +9,7 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -40,6 +41,19 @@ class TransactionApi(
 
     suspend fun addTransaction(request: CreateTransactionRequest): TransactionDto {
         val response: ApiResponse<TransactionDto> = client.post("$baseUrl/transactions") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
+        return response.result
+    }
+
+    suspend fun getTransaction(id: String): TransactionDto {
+        val response: ApiResponse<TransactionDto> = client.get("$baseUrl/transactions/$id").body()
+        return response.result
+    }
+
+    suspend fun updateTransaction(id: String, request: CreateTransactionRequest): TransactionDto {
+        val response: ApiResponse<TransactionDto> = client.put("$baseUrl/transactions/$id") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
