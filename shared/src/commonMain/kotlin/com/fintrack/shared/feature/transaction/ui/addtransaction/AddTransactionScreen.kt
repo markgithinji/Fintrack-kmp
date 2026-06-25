@@ -1,9 +1,6 @@
 package com.fintrack.shared.feature.transaction.ui.addtransaction
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -93,7 +90,6 @@ import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.domain.SaveState
-import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
@@ -106,17 +102,13 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class, ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
 fun AddTransactionScreen(
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     accountsViewModel: AccountsViewModel = koinViewModel(),
-    animatedVisibilityScope: AnimatedVisibilityScope,
     onBack: () -> Unit = {}
 ) {
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-        ?: throw IllegalStateException("No SharedTransitionScope found")
-
     val saveState by transactionsViewModel.saveState.collectAsStateWithLifecycle()
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
     val validationError by transactionsViewModel.validationError.collectAsStateWithLifecycle()

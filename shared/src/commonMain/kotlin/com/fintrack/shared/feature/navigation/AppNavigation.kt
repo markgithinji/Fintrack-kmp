@@ -131,7 +131,30 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Screen.AddTransaction.route) {
+                composable(
+                    Screen.AddTransaction.route,
+                    enterTransition = {
+                        slideIntoContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Up,
+                            animationSpec = tween(400, easing = FastOutSlowInEasing)
+                        ) + fadeIn(animationSpec = tween(400))
+                    },
+                    exitTransition = {
+                        slideOutOfContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Down,
+                            animationSpec = tween(400, easing = FastOutSlowInEasing)
+                        ) + fadeOut(animationSpec = tween(400))
+                    },
+                    popEnterTransition = {
+                        EnterTransition.None
+                    },
+                    popExitTransition = {
+                        slideOutOfContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Down,
+                            animationSpec = tween(400, easing = FastOutSlowInEasing)
+                        ) + fadeOut(animationSpec = tween(400))
+                    }
+                ) {
                     LaunchedEffect(Unit) {
                         onUpdateAppBarState(
                             AppBarState(
@@ -142,7 +165,6 @@ fun AppNavigation(
                         )
                     }
                     AddTransactionScreen(
-                        animatedVisibilityScope = this,
                         onBack = { navController.popBackStack() }
                     )
                 }
