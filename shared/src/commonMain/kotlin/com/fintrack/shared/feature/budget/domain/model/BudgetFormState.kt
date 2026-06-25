@@ -5,6 +5,7 @@ import com.fintrack.shared.feature.transaction.domain.model.Category
 import kotlinx.datetime.LocalDate
 
 data class BudgetFormState(
+    val id: String? = null,
     val name: String = "",
     val amount: String = "",
     val selectedCategories: Set<Category> = emptySet(),

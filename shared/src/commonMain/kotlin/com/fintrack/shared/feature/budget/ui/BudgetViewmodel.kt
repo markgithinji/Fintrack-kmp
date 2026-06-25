@@ -143,7 +143,7 @@ class BudgetViewModel(
                 viewModelScope.launch {
                     _saveState.value = SaveState.Loading
                     val budget = Budget(
-                        id = null,
+                        id = currentForm.id,
                         accountId = currentForm.selectedAccount!!.id,
                         name = currentForm.name,
                         categories = currentForm.selectedCategories.toList(),
