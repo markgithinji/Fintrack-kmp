@@ -18,10 +18,12 @@ import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.background
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -41,11 +43,11 @@ fun TransactionListLoadingMoreState() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
+            .padding(vertical = 24.dp),
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator(
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(24.dp),
             strokeWidth = 2.dp,
             color = GreenIncome
         )
@@ -59,36 +61,44 @@ fun TransactionListErrorState(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.ErrorOutline,
-                contentDescription = "Error",
-                tint = Color.Red,
-                modifier = Modifier.size(48.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.errorContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ErrorOutline,
+                    contentDescription = "Error",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "Unable to Load Transactions",
-                    color = Color.Black,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = message,
-                    color = Color.Gray,
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
             }
@@ -96,14 +106,13 @@ fun TransactionListErrorState(
             Button(
                 onClick = onRetry,
                 colors = ButtonDefaults.buttonColors(containerColor = GreenIncome),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.height(40.dp)
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.height(48.dp).fillMaxWidth(0.6f)
             ) {
                 Text(
                     text = "Try Again",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
@@ -114,53 +123,63 @@ fun TransactionListErrorState(
 fun TransactionListEmptyState(isIncome: Boolean?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(32.dp),
+                .padding(40.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
-                contentDescription = "No transactions",
-                tint = Color.Gray,
-                modifier = Modifier.size(48.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
+                    contentDescription = "No transactions",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
 
             val title = remember(isIncome) {
                 when (isIncome) {
-                    true -> "No Income Transactions"
-                    false -> "No Expense Transactions"
-                    else -> "No Transactions Found"
+                    true -> "No Income Yet"
+                    false -> "No Expenses Yet"
+                    else -> "No Transactions"
                 }
             }
 
             val description = remember(isIncome) {
                 when (isIncome) {
-                    true -> "Income transactions will appear here"
-                    false -> "Expense transactions will appear here"
-                    else -> "Transactions will appear here once you add them"
+                    true -> "Your income transactions will show up here."
+                    false -> "Your expense transactions will show up here."
+                    else -> "Start adding transactions to see them here."
                 }
             }
 
-            Text(
-                text = title,
-                color = Color.Black,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text = description,
-                color = Color.Gray,
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
@@ -168,13 +187,13 @@ fun TransactionListEmptyState(isIncome: Boolean?) {
 @Composable
 fun TransactionLoadingItem(
     modifier: Modifier = Modifier,
-    padding: PaddingValues = PaddingValues(14.dp)
+    padding: PaddingValues = PaddingValues(16.dp)
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
@@ -184,44 +203,36 @@ fun TransactionLoadingItem(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Loading icon
                 AnimatedShimmerBox(
                     modifier = Modifier
-                        .size(42.dp)
-                        .clip(CircleShape)
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(14.dp))
                 )
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(16.dp))
 
                 Column {
-                    // Loading category name
                     AnimatedShimmerBox(
                         modifier = Modifier
-                            .width(120.dp)
-                            .height(16.dp)
+                            .width(100.dp)
+                            .height(18.dp)
+                            .clip(RoundedCornerShape(4.dp))
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    // Loading description
-                    AnimatedShimmerBox(
-                        modifier = Modifier
-                            .width(80.dp)
-                            .height(12.dp)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    // Loading date
+                    Spacer(modifier = Modifier.height(8.dp))
                     AnimatedShimmerBox(
                         modifier = Modifier
                             .width(60.dp)
-                            .height(10.dp)
+                            .height(14.dp)
+                            .clip(RoundedCornerShape(4.dp))
                     )
                 }
             }
 
-            // Loading amount
             AnimatedShimmerBox(
                 modifier = Modifier
-                    .width(70.dp)
-                    .height(16.dp)
+                    .width(80.dp)
+                    .height(20.dp)
+                    .clip(RoundedCornerShape(4.dp))
             )
         }
     }

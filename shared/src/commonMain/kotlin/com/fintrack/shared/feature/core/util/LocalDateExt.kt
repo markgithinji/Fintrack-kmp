@@ -47,3 +47,22 @@ fun LocalDate.formatAsShortDateWithYear(): String {
     }
     return "$month ${this.dayOfMonth}, ${this.year}"
 }
+
+fun LocalDate.formatAsHeaderDate(): String {
+    val dayName = this.shortDayName()
+    val monthName = when (this.month) {
+        Month.JANUARY -> "January"
+        Month.FEBRUARY -> "February"
+        Month.MARCH -> "March"
+        Month.APRIL -> "April"
+        Month.MAY -> "May"
+        Month.JUNE -> "June"
+        Month.JULY -> "July"
+        Month.AUGUST -> "August"
+        Month.SEPTEMBER -> "September"
+        Month.OCTOBER -> "October"
+        Month.NOVEMBER -> "November"
+        Month.DECEMBER -> "December"
+    }
+    return "$dayName, $monthName ${this.dayOfMonth}"
+}

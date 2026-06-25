@@ -1,29 +1,38 @@
 package com.fintrack.shared.feature.transaction.ui.transactionlist
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
+import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 
@@ -35,9 +44,11 @@ fun TransactionCountHeaderCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         when (transactionCounts) {
             is Result.Loading -> TransactionCountLoadingState()
@@ -52,56 +63,48 @@ fun TransactionCountHeaderCard(
 
 @Composable
 private fun TransactionCountLoadingState() {
-    Box(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(60.dp)
-            .padding(16.dp),
-        contentAlignment = Alignment.CenterStart
+            .padding(20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(18.dp),
-                strokeWidth = 2.dp,
-                color = GreenIncome
-            )
-            Text(
-                text = "Loading transaction count...",
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
-        }
+        CircularProgressIndicator(
+            modifier = Modifier.size(20.dp),
+            strokeWidth = 2.dp,
+            color = GreenIncome
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = "Loading summary...",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
 @Composable
 private fun TransactionCountErrorState() {
-    Box(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(60.dp)
-            .padding(16.dp),
-        contentAlignment = Alignment.CenterStart
+            .padding(20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = "Error",
-                tint = Color.Red,
-                modifier = Modifier.size(18.dp)
-            )
-            Text(
-                text = "Failed to load count",
-                color = Color.Red,
-                fontSize = 14.sp
-            )
-        }
+        Icon(
+            imageVector = Icons.Default.Warning,
+            contentDescription = "Error",
+            tint = MaterialTheme.colorScheme.error,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "Failed to load counts",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error
+        )
     }
 }
 
@@ -110,25 +113,59 @@ private fun TransactionCountSuccessState(
     counts: TransactionCountSummary,
     isIncome: Boolean?
 ) {
-    Box(
+    val themeColor = when (isIncome) {
+        true -> GreenIncome
+        false -> PinkExpense
+        null -> MaterialTheme.colorScheme.primary
+    }
+
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        contentAlignment = Alignment.CenterStart
+            .padding(20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        val text = remember(counts, isIncome) {
-            when (isIncome) {
-                true -> "${counts.totalIncomeTransactions} Transactions"
-                false -> "${counts.totalExpenseTransactions} Transactions"
-                null -> "${counts.totalTransactions} Transactions"
-            }
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(themeColor.copy(alpha = 0.1f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
+                contentDescription = null,
+                tint = themeColor,
+                modifier = Modifier.size(24.dp)
+            )
         }
 
-        Text(
-            text = text,
-            fontWeight = FontWeight.Medium,
-            fontSize = 14.sp,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
+        Column {
+            Text(
+                text = when (isIncome) {
+                    true -> "Income Overview"
+                    false -> "Expense Overview"
+                    null -> "All Transactions"
+                },
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            val countText = remember(counts, isIncome) {
+                when (isIncome) {
+                    true -> "${counts.totalIncomeTransactions} total items"
+                    false -> "${counts.totalExpenseTransactions} total items"
+                    null -> "${counts.totalTransactions} total items"
+                }
+            }
+
+            Text(
+                text = countText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }

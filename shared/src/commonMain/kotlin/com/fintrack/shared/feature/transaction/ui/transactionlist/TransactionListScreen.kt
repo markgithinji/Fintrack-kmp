@@ -6,22 +6,31 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.compose.transactionBackground
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.formatAsHeaderDate
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
@@ -98,18 +107,20 @@ private fun TransactionListContent(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         state = listState
     ) {
-        item {
+        item(key = "header_card") {
             TransactionCountHeaderCard(
                 transactionCounts = transactionCounts,
                 isIncome = isIncome
             )
         }
 
+        item { Spacer(modifier = Modifier.height(4.dp)) }
+
         when (val refreshState = transactions.loadState.refresh) {
             is LoadState.Loading -> {
                 items(5) { index ->
                     TransactionLoadingItem(
-                        padding = PaddingValues(14.dp)
+                        padding = PaddingValues(16.dp)
                     )
                 }
             }
@@ -136,7 +147,18 @@ private fun TransactionListContent(
                         }
                     ) { index ->
                         val transaction = transactions[index]
+                        
                         if (transaction != null) {
+                            // Show date header if it's the first item or the date has changed
+                            val showHeader = index == 0 || (index > 0 && transactions[index - 1]?.dateTime?.date != transaction.dateTime.date)
+                            
+                            if (showHeader) {
+                                DateHeader(
+                                    dateString = transaction.dateTime.date.formatAsHeaderDate(),
+                                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+                                )
+                            }
+
                             TransactionItem(
                                 transaction = transaction,
                                 animatedVisibilityScope = animatedVisibilityScope,
@@ -168,4 +190,18 @@ private fun TransactionListContent(
             else -> Unit
         }
     }
+}
+
+@Composable
+fun DateHeader(
+    dateString: String,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = dateString,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = modifier.padding(horizontal = 8.dp)
+    )
 }
