@@ -72,24 +72,44 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
             initialValue = Result.Loading
         )
 
-    fun loadHighlights(accountId: String? = null) {
+    private var lastHighlightsAccountId: String? = null
+    fun loadHighlights(accountId: String? = null, force: Boolean = false) {
+        if (!force && _highlights.value is Result.Success && lastHighlightsAccountId == accountId) return
+
         viewModelScope.launch {
             _highlights.value = Result.Loading
+            lastHighlightsAccountId = accountId
             _highlights.value = repo.getHighlightsSummary(accountId)
         }
     }
+
+    private var lastIncomeDistributionParams: String? = null
+    private var lastExpenseDistributionParams: String? = null
 
     private fun loadDistribution(
         weekOrMonthCode: String,
         type: TransactionType,
         start: String? = null,
         end: String? = null,
-        accountId: String? = null
+        accountId: String? = null,
+        force: Boolean = false
     ) {
+        val paramKey = "$weekOrMonthCode|$start|$end|$accountId"
+        val targetFlow = when (type) {
+            TransactionType.Income -> _incomeDistribution
+            TransactionType.Expense -> _expenseDistribution
+        }
+        val lastParams = when (type) {
+            TransactionType.Income -> lastIncomeDistributionParams
+            TransactionType.Expense -> lastExpenseDistributionParams
+        }
+
+        if (!force && targetFlow.value is Result.Success && lastParams == paramKey) return
+
         viewModelScope.launch {
-            val targetFlow = when (type) {
-                TransactionType.Income -> _incomeDistribution
-                TransactionType.Expense -> _expenseDistribution
+            when (type) {
+                TransactionType.Income -> lastIncomeDistributionParams = paramKey
+                TransactionType.Expense -> lastExpenseDistributionParams = paramKey
             }
 
             targetFlow.value = Result.Loading
@@ -103,9 +123,17 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
         }
     }
 
-    fun loadAvailablePeriods(accountId: String? = null) {
+    private var lastAvailablePeriodsAccountId: String? = "uninitialized"
+    fun loadAvailablePeriods(accountId: String? = null, force: Boolean = false) {
+        if (!force && lastAvailablePeriodsAccountId == accountId && (_availableWeeks.value.isNotEmpty() || _availableMonths.value.isNotEmpty() || _availableYears.value.isNotEmpty())) {
+            // Already populated, just ensure distribution is ready
+            reloadDistributionForCurrentSelection(accountId, force = false)
+            return
+        }
+
         viewModelScope.launch {
             try {
+                lastAvailablePeriodsAccountId = accountId
                 val weeksDeferred = viewModelScope.async {
                     val result = repo.getAvailableWeeks(accountId)
                     if (result is Result.Success) result.data.weeks else emptyList()
@@ -135,7 +163,7 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
                 }
 
                 // Load BOTH income and expense data for the initial period
-                reloadDistributionForCurrentSelection(accountId)
+                reloadDistributionForCurrentSelection(accountId, force = false)
 
             } catch (e: Exception) {
                 _availableWeeks.value = emptyList()
@@ -145,16 +173,24 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
         }
     }
 
-    fun loadOverview(accountId: String? = null) {
+    private var lastOverviewAccountId: String? = null
+    fun loadOverview(accountId: String? = null, force: Boolean = false) {
+        if (!force && _overview.value is Result.Success && lastOverviewAccountId == accountId) return
+        
         viewModelScope.launch {
             _overview.value = Result.Loading
+            lastOverviewAccountId = accountId
             _overview.value = repo.getOverviewSummary(accountId)
         }
     }
 
-    fun loadCategoryComparisons(accountId: String? = null) {
+    private var lastCategoryComparisonAccountId: String? = null
+    fun loadCategoryComparisons(accountId: String? = null, force: Boolean = false) {
+        if (!force && _categoryComparisons.value is Result.Success && lastCategoryComparisonAccountId == accountId) return
+
         viewModelScope.launch {
             _categoryComparisons.value = Result.Loading
+            lastCategoryComparisonAccountId = accountId
             _categoryComparisons.value = repo.getCategoryComparisons(accountId)
         }
     }
@@ -166,10 +202,10 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
     fun onPeriodChanged(period: Period, accountId: String? = null) {
         _selectedPeriod.value = period
         // Load BOTH income and expense data for the new period
-        reloadDistributionForCurrentSelection(accountId)
+        reloadDistributionForCurrentSelection(accountId, force = true)
     }
 
-    fun reloadDistributionForCurrentSelection(accountId: String? = null) {
+    fun reloadDistributionForCurrentSelection(accountId: String? = null, force: Boolean = false) {
         val currentPeriod = _selectedPeriod.value
         if (currentPeriod != null) {
             val periodCode = when (currentPeriod) {
@@ -179,14 +215,22 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
             }
 
             // Load BOTH income and expense data for this period
-            loadDistribution(periodCode, TransactionType.Income, accountId = accountId)
-            loadDistribution(periodCode, TransactionType.Expense, accountId = accountId)
+            loadDistribution(periodCode, TransactionType.Income, accountId = accountId, force = force)
+            loadDistribution(periodCode, TransactionType.Expense, accountId = accountId, force = force)
         }
     }
 
-    fun loadTransactionCounts(accountId: String, isIncome: Boolean? = null) {
+    private var lastTransactionCountsAccountId: String? = null
+    private var lastTransactionCountsIsIncome: Boolean? = null
+    fun loadTransactionCounts(accountId: String, isIncome: Boolean? = null, force: Boolean = false) {
+        if (!force && _transactionCounts.value is Result.Success && 
+            lastTransactionCountsAccountId == accountId && 
+            lastTransactionCountsIsIncome == isIncome) return
+
         viewModelScope.launch {
             _transactionCounts.value = Result.Loading
+            lastTransactionCountsAccountId = accountId
+            lastTransactionCountsIsIncome = isIncome
             _transactionCounts.value = repo.getTransactionCounts(accountId, isIncome)
         }
     }

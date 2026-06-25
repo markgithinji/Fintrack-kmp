@@ -130,40 +130,37 @@ fun AddTransactionScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
+    var isDataLoaded by remember(transactionId) { mutableStateOf(false) }
+
     LaunchedEffect(transactionId) {
         if (transactionId != null) {
             transactionsViewModel.loadTransactionById(transactionId)
         } else {
             transactionsViewModel.resetSelectedTransaction()
+            isDataLoaded = true // Nothing to load for new transaction
         }
     }
 
-    LaunchedEffect(selectedTransactionResult) {
-        if (transactionId != null && selectedTransactionResult is Result.Success) {
-            val transaction = (selectedTransactionResult as Result.Success<Transaction>).data
-            amount = transaction.amount.toLong().toString()
-            isIncome = transaction.isIncome
-            category = Category.fromName(transaction.category, !transaction.isIncome)
-            description = transaction.description ?: ""
-            dateTime = transaction.dateTime
-            
-            // Try to match account from accounts list
-            if (accountsResult is Result.Success) {
-                val accounts = (accountsResult as Result.Success<List<Account>>).data
-                selectedAccount = accounts.find { it.id == transaction.accountId }
-            }
-        }
-    }
-
-    // Also update selectedAccount when accountsResult loads if we have a pending transaction
-    LaunchedEffect(accountsResult) {
+    LaunchedEffect(selectedTransactionResult, accountsResult) {
         if (transactionId != null && 
             selectedTransactionResult is Result.Success && 
-            accountsResult is Result.Success && 
-            selectedAccount == null) {
+            !isDataLoaded) {
+            
             val transaction = (selectedTransactionResult as Result.Success<Transaction>).data
-            val accounts = (accountsResult as Result.Success<List<Account>>).data
-            selectedAccount = accounts.find { it.id == transaction.accountId }
+            
+            // Wait for accounts to be loaded to fully initialize
+            if (accountsResult is Result.Success) {
+                val accounts = (accountsResult as Result.Success<List<Account>>).data
+                
+                amount = transaction.amount.toLong().toString()
+                isIncome = transaction.isIncome
+                category = Category.fromName(transaction.category, !transaction.isIncome)
+                description = transaction.description ?: ""
+                dateTime = transaction.dateTime
+                selectedAccount = accounts.find { it.id == transaction.accountId }
+                
+                isDataLoaded = true
+            }
         }
     }
 

@@ -61,7 +61,7 @@ class BudgetViewModel(
         )
 
     init {
-        reloadBudgets()
+        reloadBudgets(force = false)
     }
 
     fun setAccount(account: Account?) {
@@ -111,7 +111,9 @@ class BudgetViewModel(
         _formState.value = formState
     }
 
-    fun reloadBudgets() {
+    fun reloadBudgets(force: Boolean = true) {
+        if (!force && _budgets.value is Result.Success) return
+
         viewModelScope.launch {
             if (_budgets.value !is Result.Success) {
                 _budgets.value = Result.Loading
@@ -155,7 +157,10 @@ class BudgetViewModel(
 
                     val result = repo.addOrUpdateBudget(budget)
                     _saveState.value = when (result) {
-                        is Result.Success -> SaveState.Success(result.data)
+                        is Result.Success -> {
+                            reloadBudgets(force = true)
+                            SaveState.Success(result.data)
+                        }
                         is Result.Error -> SaveState.Error(result.exception)
                         is Result.Loading -> SaveState.Loading
                     }
@@ -173,6 +178,9 @@ class BudgetViewModel(
     }
 
     fun loadBudgetById(id: String) {
+        val current = _selectedBudget.value
+        if (current is Result.Success && current.data.budget.id == id) return
+
         viewModelScope.launch {
             _selectedBudget.value = Result.Loading
             _selectedBudget.value = repo.getBudgetById(id)

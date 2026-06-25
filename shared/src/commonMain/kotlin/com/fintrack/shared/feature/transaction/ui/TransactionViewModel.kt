@@ -138,6 +138,9 @@ class TransactionViewModel(
     }
 
     fun loadTransactionById(id: String) {
+        val current = _selectedTransaction.value
+        if (current is Result.Success && current.data.id == id) return
+
         viewModelScope.launch {
             _selectedTransaction.value = Result.Loading
             _selectedTransaction.value = repo.getTransaction(id)
@@ -167,14 +170,21 @@ class TransactionViewModel(
         }
     }
 
-    fun loadRecentTransactions(accountId: String?) {
+    private var lastLoadedRecentAccountId: String? = null
+
+    fun loadRecentTransactions(accountId: String?, force: Boolean = false) {
         if (accountId == null) {
             _recentTransactions.value = Result.Error(Exception("No account selected"))
             return
         }
 
+        if (!force && _recentTransactions.value is Result.Success && lastLoadedRecentAccountId == accountId) {
+            return
+        }
+
         viewModelScope.launch {
             _recentTransactions.value = Result.Loading
+            lastLoadedRecentAccountId = accountId
             val result = repo.getTransactions(
                 limit = 6,
                 sortBy = "date",

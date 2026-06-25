@@ -24,11 +24,13 @@ class AccountsViewModel(private val repo: AccountRepository) : ViewModel() {
     val deleteResult: StateFlow<Result<Unit>?> = _deleteResult
 
     init {
-        reloadAccounts()
+        reloadAccounts(force = false)
     }
 
     // Reload all accounts
-    fun reloadAccounts() {
+    fun reloadAccounts(force: Boolean = true) {
+        if (!force && _accounts.value is Result.Success) return
+
         viewModelScope.launch {
             _accounts.value = Result.Loading
 

@@ -90,7 +90,7 @@ fun BudgetScreen(
     val listState = rememberLazyListState()
 
     LaunchedEffect(Unit) {
-        viewModel.reloadBudgets()
+        viewModel.reloadBudgets(force = false)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
