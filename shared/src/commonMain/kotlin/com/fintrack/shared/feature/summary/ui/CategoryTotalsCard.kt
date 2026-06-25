@@ -250,7 +250,8 @@ fun LoadingInteractiveDonutWithText(
             var startAngle = -90f
 
             mockSegments.forEachIndexed { index, (_, amount) ->
-                val sweep = (((amount / mockTotal) * 360.0).toFloat()) - 360f * 0.02f
+                val allocatedAngle = (((amount / mockTotal) * 360.0).toFloat())
+                val sweep = (allocatedAngle - 360f * 0.02f).coerceAtLeast(0.5f)
                 val shimmerAlpha = (0.3f + (index * 0.1f)).coerceAtMost(0.7f)
                 drawArc(
                     color = segmentColors[index].copy(alpha = shimmerAlpha),
@@ -261,7 +262,7 @@ fun LoadingInteractiveDonutWithText(
                     size = Size(diameter, diameter),
                     style = Stroke(width = strokeWidth, cap = StrokeCap.Butt)
                 )
-                startAngle += sweep + 360f * 0.02f
+                startAngle += allocatedAngle
             }
         }
 

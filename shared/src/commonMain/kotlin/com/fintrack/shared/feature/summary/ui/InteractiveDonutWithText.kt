@@ -97,7 +97,8 @@ fun InteractiveDonutWithText(
             var startAngle = -90f
 
             categorySums.forEachIndexed { index, (_, amount) ->
-                val sweep = (((amount / totalAmount) * 360.0).toFloat()) - 360f * gapPercentage
+                val allocatedAngle = ((amount / totalAmount) * 360.0).toFloat()
+                val sweep = (allocatedAngle - 360f * gapPercentage).coerceAtLeast(0.5f)
                 drawArc(
                     color = segmentColors[index % segmentColors.size],
                     startAngle = startAngle,
@@ -110,7 +111,7 @@ fun InteractiveDonutWithText(
                         cap = StrokeCap.Butt
                     )
                 )
-                startAngle += sweep + 360f * gapPercentage
+                startAngle += allocatedAngle
             }
         }
 
@@ -181,12 +182,13 @@ private fun calculateAnglesList(
     totalAmount: Double,
     gapPercentage: Float
 ): List<DrawingAngles> {
-    val gapAngle = 360f * gapPercentage
     var startAngle = 270f // Start at 12 o'clock
     return data.map { (_, amount) ->
-        val sweep = ((amount / totalAmount * 360.0).toFloat()) - gapAngle
-        val angle = DrawingAngles(startAngle, sweep)
-        startAngle += sweep + gapAngle
+        val allocatedSweep = (amount / totalAmount * 360.0).toFloat()
+        // We use the full allocated angle for hit testing so that even the gaps are clickable
+        // and to prevent negative sweeps which break the 'isInsideAngle' logic.
+        val angle = DrawingAngles(startAngle, allocatedSweep)
+        startAngle += allocatedSweep
         angle
     }
 }
