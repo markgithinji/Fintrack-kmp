@@ -1,6 +1,10 @@
 package com.fintrack.shared.feature.transaction.ui.addtransaction
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.SharedTransitionScope.OverlayClip
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -91,6 +95,7 @@ import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
@@ -103,14 +108,18 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun AddTransactionScreen(
     transactionId: String? = null,
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     accountsViewModel: AccountsViewModel = koinViewModel(),
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onBack: () -> Unit = {}
 ) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+        ?: throw IllegalStateException("No SharedTransitionScope found")
+
     val saveState by transactionsViewModel.saveState.collectAsStateWithLifecycle()
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
     val validationError by transactionsViewModel.validationError.collectAsStateWithLifecycle()
@@ -174,6 +183,7 @@ fun AddTransactionScreen(
             is SaveState.Success<*> -> {
                 delay(1000)
                 onBack()
+                transactionsViewModel.resetSaveState()
             }
             else -> Unit
         }
@@ -186,12 +196,30 @@ fun AddTransactionScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Header with Amount
-            AmountHeader(
-                amount = amount,
-                onAmountChange = { amount = it },
-                isIncome = isIncome,
-                themeColor = themeColor
-            )
+            with(sharedTransitionScope) {
+                AmountHeader(
+                    amount = amount,
+                    onAmountChange = { amount = it },
+                    isIncome = isIncome,
+                    themeColor = themeColor,
+                    modifier = Modifier.sharedBounds(
+                        rememberSharedContentState(key = "transaction_header_${transactionId ?: "new"}"),
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        boundsTransform = { _, _ ->
+                            spring(
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessLow
+                            )
+                        },
+                        clipInOverlayDuringTransition = OverlayClip(
+                            RoundedCornerShape(
+                                bottomStart = 32.dp,
+                                bottomEnd = 32.dp
+                            )
+                        )
+                    )
+                )
+            }
 
             Column(
                 modifier = Modifier

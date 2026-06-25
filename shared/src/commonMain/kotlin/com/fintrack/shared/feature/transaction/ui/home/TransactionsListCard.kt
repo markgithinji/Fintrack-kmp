@@ -2,6 +2,9 @@ package com.fintrack.shared.feature.transaction.ui.home
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope.OverlayClip
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -91,6 +94,7 @@ fun TransactionsListCard(
                     } else {
                         TransactionsListContent(
                             transactions = transactions,
+                            animatedVisibilityScope = animatedVisibilityScope,
                             onTransactionClick = onTransactionClick
                         )
                     }
@@ -224,17 +228,42 @@ private fun TransactionsEmptyState() {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun TransactionsListContent(
     transactions: List<Transaction>,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onTransactionClick: (Transaction) -> Unit
 ) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+
     Column {
         transactions.forEachIndexed { index, transaction ->
-            TransactionRow(
-                transaction = transaction,
-                onClick = { onTransactionClick(transaction) }
-            )
+            if (sharedTransitionScope != null) {
+                with(sharedTransitionScope) {
+                    TransactionRow(
+                        transaction = transaction,
+                        onClick = { onTransactionClick(transaction) },
+                        modifier = Modifier.sharedBounds(
+                            rememberSharedContentState(key = "transaction_header_${transaction.id}"),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            boundsTransform = { _, _ ->
+                                spring(
+                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                    stiffness = Spring.StiffnessLow
+                                )
+                            },
+                            clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp))
+                        )
+                    )
+                }
+            } else {
+                TransactionRow(
+                    transaction = transaction,
+                    onClick = { onTransactionClick(transaction) }
+                )
+            }
+
             if (index < transactions.lastIndex) {
                 HorizontalDivider(
                     modifier = Modifier.padding(start = 80.dp, end = 20.dp),

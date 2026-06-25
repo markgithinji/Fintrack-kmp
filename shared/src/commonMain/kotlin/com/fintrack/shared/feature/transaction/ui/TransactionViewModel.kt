@@ -207,4 +207,8 @@ class TransactionViewModel(
         return repo.getTransactionsPagingFlow(accountId, isIncome)
             .cachedIn(viewModelScope)
     }
+
+    fun resetSaveState() {
+        _saveState.value = SaveState.Idle
+    }
 }

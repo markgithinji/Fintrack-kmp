@@ -71,8 +71,9 @@ fun AppNavigation(
                     val isFromAuth = initialState.destination.route == Screen.Login.route || 
                                    initialState.destination.route == Screen.Register.route
                     
-                    val isToMorphScreen = targetState.destination.route == Screen.BudgetDetail.route ||
-                                         targetState.destination.route?.contains("transaction_list") == true
+                    val isToMorphScreen = targetState.destination.route?.contains("budget_detail") == true ||
+                                         targetState.destination.route?.contains("transaction_list") == true ||
+                                         targetState.destination.route?.contains("add_transaction") == true
 
                     if (isFromAuth && !isToAuth) { // Login success
                         scaleIn(initialScale = 0.9f, animationSpec = tween(600)) + fadeIn(animationSpec = tween(600))
@@ -92,8 +93,9 @@ fun AppNavigation(
                     val isFromAuth = initialState.destination.route == Screen.Login.route || 
                                    initialState.destination.route == Screen.Register.route
                     
-                    val isFromMorphScreen = initialState.destination.route == Screen.BudgetDetail.route ||
-                                           initialState.destination.route?.contains("transaction_list") == true
+                    val isFromMorphScreen = initialState.destination.route?.contains("budget_detail") == true ||
+                                           initialState.destination.route?.contains("transaction_list") == true ||
+                                           initialState.destination.route?.contains("add_transaction") == true
 
                     if (isFromAuth && !isToAuth) { // Login success
                         scaleOut(targetScale = 1.1f, animationSpec = tween(600)) + fadeOut(animationSpec = tween(600))
@@ -109,8 +111,9 @@ fun AppNavigation(
                 },
                 popEnterTransition = { EnterTransition.None },
                 popExitTransition = {
-                    val isFromMorphScreen = initialState.destination.route == Screen.BudgetDetail.route ||
-                                           initialState.destination.route?.contains("transaction_list") == true
+                    val isFromMorphScreen = initialState.destination.route?.contains("budget_detail") == true ||
+                                           initialState.destination.route?.contains("transaction_list") == true ||
+                                           initialState.destination.route?.contains("add_transaction") == true
                     if (isFromMorphScreen) {
                         fadeOut(animationSpec = tween(400))
                     } else {
@@ -146,28 +149,7 @@ fun AppNavigation(
                             nullable = true
                             defaultValue = null
                         }
-                    ),
-                    enterTransition = {
-                        slideIntoContainer(
-                            AnimatedContentTransitionScope.SlideDirection.Up,
-                            animationSpec = tween(400, easing = FastOutSlowInEasing)
-                        ) + fadeIn(animationSpec = tween(400))
-                    },
-                    exitTransition = {
-                        slideOutOfContainer(
-                            AnimatedContentTransitionScope.SlideDirection.Down,
-                            animationSpec = tween(400, easing = FastOutSlowInEasing)
-                        ) + fadeOut(animationSpec = tween(400))
-                    },
-                    popEnterTransition = {
-                        EnterTransition.None
-                    },
-                    popExitTransition = {
-                        slideOutOfContainer(
-                            AnimatedContentTransitionScope.SlideDirection.Down,
-                            animationSpec = tween(400, easing = FastOutSlowInEasing)
-                        ) + fadeOut(animationSpec = tween(400))
-                    }
+                    )
                 ) { backStackEntry ->
                     val transactionId = backStackEntry.arguments?.getString("transactionId")
 
@@ -182,6 +164,7 @@ fun AppNavigation(
                     }
                     AddTransactionScreen(
                         transactionId = transactionId,
+                        animatedVisibilityScope = this,
                         onBack = { navController.popBackStack() }
                     )
                 }

@@ -1,5 +1,10 @@
 package com.fintrack.shared.feature.transaction.ui.transactionlist
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope.OverlayClip
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,14 +34,18 @@ import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.formatAsShortDate
 import com.fintrack.shared.feature.core.util.formatToCurrency
+import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun TransactionItem(
     transaction: Transaction,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
     val category = Category.fromName(
@@ -45,10 +54,28 @@ fun TransactionItem(
     )
     val amountColor = if (transaction.isIncome) GreenIncome else PinkExpense
     val formattedDate = transaction.dateTime.date.formatAsShortDate()
+    val sharedTransitionScope = LocalSharedTransitionScope.current
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
+            .then(
+                if (sharedTransitionScope != null) {
+                    with(sharedTransitionScope) {
+                        Modifier.sharedBounds(
+                            rememberSharedContentState(key = "transaction_header_${transaction.id}"),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            boundsTransform = { _, _ ->
+                                spring(
+                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                    stiffness = Spring.StiffnessLow
+                                )
+                            },
+                            clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(16.dp))
+                        )
+                    }
+                } else Modifier
+            )
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),

@@ -139,6 +139,8 @@ private fun TransactionListContent(
                         if (transaction != null) {
                             TransactionItem(
                                 transaction = transaction,
+                                animatedVisibilityScope = animatedVisibilityScope,
+                                modifier = Modifier.animateItem(),
                                 onClick = { transaction.id?.let { id -> onTransactionClick(id) } }
                             )
                         }
