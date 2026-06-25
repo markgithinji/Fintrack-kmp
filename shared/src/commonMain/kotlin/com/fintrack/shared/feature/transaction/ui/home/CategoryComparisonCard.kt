@@ -67,9 +67,9 @@ fun CategoryComparisonCard(
 
             when (categoryComparisonResult) {
                 is Result.Loading -> {
-                    repeat(3) { index ->
+                    repeat(2) { index ->
                         LoadingCategoryComparisonItem()
-                        if (index < 2) {
+                        if (index < 1) {
                             HorizontalDivider(
                                 modifier = Modifier.padding(vertical = 8.dp),
                                 thickness = 0.5.dp,

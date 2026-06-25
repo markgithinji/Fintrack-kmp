@@ -760,9 +760,10 @@ fun CategorySelectionSection(
                 rows = StaggeredGridCells.Adaptive(48.dp),
                 horizontalItemSpacing = 8.dp,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp),
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(8.dp)
+                    .padding(vertical = 8.dp)
             ) {
                 val categories =
                     if (isExpense) Category.expenseCategories else Category.incomeCategories

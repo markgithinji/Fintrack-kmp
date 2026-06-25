@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -534,9 +535,10 @@ fun CategorySelectionSection(
                 rows = StaggeredGridCells.Adaptive(48.dp),
                 horizontalItemSpacing = 8.dp,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp),
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(8.dp)
+                    .padding(vertical = 8.dp)
             ) {
                 val categories =
                     if (isIncome) Category.incomeCategories else Category.expenseCategories
