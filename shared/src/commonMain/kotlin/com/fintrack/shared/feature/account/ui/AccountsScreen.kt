@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.core.util.formatToCurrency
+import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -64,7 +64,7 @@ fun AccountsTestScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(account.name)
-                                Text("Balance: ${(account.balance ?: 0.0).formatToCurrency()}")
+                                Text("Balance: ${(account.balance ?: 0.0).toCurrencyString()}")
                             }
                         }
                     }

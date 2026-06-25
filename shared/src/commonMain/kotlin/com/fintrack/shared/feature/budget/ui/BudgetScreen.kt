@@ -70,7 +70,7 @@ import com.example.compose.GreenIncome
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDate
-import com.fintrack.shared.feature.core.util.formatToCurrency
+import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import org.koin.compose.viewmodel.koinViewModel
@@ -689,7 +689,7 @@ fun BudgetItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = budget.limit.formatToCurrency(),
+                            text = budget.limit.toCurrencyString(),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -706,7 +706,7 @@ fun BudgetItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = status.spent.formatToCurrency(),
+                            text = status.spent.toCurrencyString(),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -723,7 +723,7 @@ fun BudgetItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = status.remaining.formatToCurrency(),
+                            text = status.remaining.toCurrencyString(),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
                             color = if (status.isExceeded) MaterialTheme.colorScheme.error

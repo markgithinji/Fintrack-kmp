@@ -37,7 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.core.util.formatToCurrency
+import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.transaction.domain.model.Category
@@ -187,7 +187,7 @@ private fun CategoryComparisonItem(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     Text(
-                        text = comparison.currentTotal.formatToCurrency(),
+                        text = comparison.currentTotal.toCurrencyString(),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )

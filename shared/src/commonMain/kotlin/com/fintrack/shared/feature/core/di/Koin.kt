@@ -6,6 +6,7 @@ import com.fintrack.shared.feature.budget.di.budgetModule
 import com.fintrack.shared.feature.core.data.remote.ApiConfig
 import com.fintrack.shared.feature.core.data.remote.Environment
 import com.fintrack.shared.feature.summary.di.summaryModule
+import com.fintrack.shared.feature.settings.di.settingsModule
 import com.fintrack.shared.feature.transaction.di.transactionModule
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
@@ -37,7 +38,8 @@ object Koin {
                 accountModule,
                 transactionModule,
                 budgetModule,
-                summaryModule
+                summaryModule,
+                settingsModule
             )
         }
     }

@@ -71,7 +71,7 @@ import com.example.compose.periodUnselectedBg
 import com.example.compose.periodUnselectedText
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.core.util.formatToCurrency
+import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.TabType
@@ -401,7 +401,7 @@ fun CategoryList(
                         contentAlignment = Alignment.CenterStart
                     ) {
                         Text(
-                            text = amount.toDouble().formatToCurrency(),
+                            text = amount.toDouble().toCurrencyString(),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = categoryAmountText

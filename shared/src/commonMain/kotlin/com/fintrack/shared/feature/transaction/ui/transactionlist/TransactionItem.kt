@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.formatAsShortDate
-import com.fintrack.shared.feature.core.util.formatToCurrency
+import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
@@ -149,7 +149,7 @@ fun TransactionItem(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "${if (transaction.isIncome) "+" else "-"}${transaction.amount.formatToCurrency()}",
+                    text = "${if (transaction.isIncome) "+" else "-"}${transaction.amount.toCurrencyString()}",
                     color = amountColor,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold

@@ -28,14 +28,3 @@ fun CategoriesScreen() {
         Text("Categories Management - Coming Soon")
     }
 }
-
-@Composable
-fun SettingsScreen() {
-    // TODO: Implement settings
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Settings - Coming Soon")
-    }
-}

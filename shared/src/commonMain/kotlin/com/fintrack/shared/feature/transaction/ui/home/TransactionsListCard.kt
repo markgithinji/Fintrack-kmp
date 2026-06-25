@@ -42,7 +42,7 @@ import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDate
-import com.fintrack.shared.feature.core.util.formatToCurrency
+import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
@@ -340,7 +340,7 @@ fun TransactionRow(
             horizontalAlignment = Alignment.End
         ) {
             Text(
-                text = "${if (isExpense) "-" else "+"}${transaction.amount.formatToCurrency()}",
+                text = "${if (isExpense) "-" else "+"}${transaction.amount.toCurrencyString()}",
                 style = MaterialTheme.typography.bodyLarge,
                 color = amountColor
             )

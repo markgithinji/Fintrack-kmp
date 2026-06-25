@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.dp
 import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.account.domain.model.Account
-import com.fintrack.shared.feature.core.util.formatToCurrency
+import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
@@ -85,7 +85,7 @@ fun IncomeExpenseCards(
 
                 InfoCard(
                     title = "Total Income",
-                    amount = totalIncome.formatToCurrency(),
+                    amount = totalIncome.toCurrencyString(),
                     isIncomeCard = true,
                     animatedVisibilityScope = animatedVisibilityScope,
                     onClick = { onCardClick(true) },
@@ -94,7 +94,7 @@ fun IncomeExpenseCards(
 
                 InfoCard(
                     title = "Total Expense",
-                    amount = totalExpense.formatToCurrency(),
+                    amount = totalExpense.toCurrencyString(),
                     isIncomeCard = false,
                     animatedVisibilityScope = animatedVisibilityScope,
                     onClick = { onCardClick(false) },

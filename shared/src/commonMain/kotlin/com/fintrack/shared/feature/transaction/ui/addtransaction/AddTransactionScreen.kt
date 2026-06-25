@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.transaction.ui.addtransaction
 
 import androidx.compose.animation.AnimatedContent
+import com.fintrack.shared.feature.settings.ui.LocalCurrency
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
@@ -396,7 +397,7 @@ fun AmountHeader(
                         .width(IntrinsicSize.Min)
                 ) {
                     Text(
-                        text = "KSh",
+                        text = LocalCurrency.current.symbol,
                         color = Color.White.copy(alpha = 0.7f),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,

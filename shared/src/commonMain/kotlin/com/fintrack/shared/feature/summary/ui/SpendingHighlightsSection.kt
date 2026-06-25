@@ -41,7 +41,7 @@ import com.example.compose.SegmentColor3
 import com.example.compose.SegmentColor4
 import com.example.compose.SegmentColor5
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.core.util.formatToCurrency
+import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.Highlight
 import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.model.TabType
@@ -153,7 +153,7 @@ private fun SuccessContent(
                 modifier = Modifier.weight(1f),
                 title = "Highest Month",
                 value = month.value.toMonthName(),
-                description = "${month.amount.formatToCurrency()} $amountSuffix",
+                description = "${month.amount.toCurrencyString()} $amountSuffix",
                 backgroundColor = SegmentColor3,
                 titleColor = Color.White,
                 valueColor = Color.White
@@ -162,7 +162,7 @@ private fun SuccessContent(
                 modifier = Modifier.weight(1f),
                 title = "Top Category",
                 value = category.value,
-                description = "${category.amount.formatToCurrency()} $amountSuffix",
+                description = "${category.amount.toCurrencyString()} $amountSuffix",
                 backgroundColor = SegmentColor4,
                 titleColor = Color.White,
                 valueColor = Color.White
@@ -180,7 +180,7 @@ private fun SuccessContent(
                 modifier = Modifier.weight(1f),
                 title = "Highest Daily",
                 value = day.value.toFormattedDate(),
-                description = "${day.amount.formatToCurrency()} $amountSuffix",
+                description = "${day.amount.toCurrencyString()} $amountSuffix",
                 backgroundColor = SegmentColor5,
                 titleColor = Color.White,
                 valueColor = Color.White
@@ -188,7 +188,7 @@ private fun SuccessContent(
             HighlightCard(
                 modifier = Modifier.weight(1f),
                 title = "Average Per Day",
-                value = average.formatToCurrency(),
+                value = average.toCurrencyString(),
                 description = dailyLabel,
                 backgroundColor = SegmentColor2,
                 titleColor = Color.White,
