@@ -85,6 +85,7 @@ fun HomeScreen(
         item {
             TransactionsListCard(
                 transactionsResult = transactionsResult,
+                animatedVisibilityScope = animatedVisibilityScope,
                 onViewAllClick = {
                     val accountId = (selectedAccountResult as? Result.Success)?.data?.id
                     accountId?.let { onCardClick(it, null) }

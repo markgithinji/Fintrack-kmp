@@ -72,7 +72,7 @@ fun AppNavigation(
                                    initialState.destination.route == Screen.Register.route
                     
                     val isToMorphScreen = targetState.destination.route == Screen.BudgetDetail.route ||
-                                         targetState.destination.route?.startsWith("transaction_list") == true
+                                         targetState.destination.route?.contains("transaction_list") == true
 
                     if (isFromAuth && !isToAuth) { // Login success
                         scaleIn(initialScale = 0.9f, animationSpec = tween(600)) + fadeIn(animationSpec = tween(600))
@@ -93,7 +93,7 @@ fun AppNavigation(
                                    initialState.destination.route == Screen.Register.route
                     
                     val isFromMorphScreen = initialState.destination.route == Screen.BudgetDetail.route ||
-                                           initialState.destination.route?.startsWith("transaction_list") == true
+                                           initialState.destination.route?.contains("transaction_list") == true
 
                     if (isFromAuth && !isToAuth) { // Login success
                         scaleOut(targetScale = 1.1f, animationSpec = tween(600)) + fadeOut(animationSpec = tween(600))
@@ -110,7 +110,7 @@ fun AppNavigation(
                 popEnterTransition = { EnterTransition.None },
                 popExitTransition = {
                     val isFromMorphScreen = initialState.destination.route == Screen.BudgetDetail.route ||
-                                           initialState.destination.route?.startsWith("transaction_list") == true
+                                           initialState.destination.route?.contains("transaction_list") == true
                     if (isFromMorphScreen) {
                         fadeOut(animationSpec = tween(400))
                     } else {

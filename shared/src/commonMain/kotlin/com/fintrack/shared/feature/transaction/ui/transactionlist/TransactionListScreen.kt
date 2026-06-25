@@ -75,11 +75,15 @@ private fun TransactionListContent(
         modifier = modifier
             .fillMaxSize()
             .then(
-                if (sharedTransitionScope != null && isIncome != null) {
+                if (sharedTransitionScope != null) {
                     with(sharedTransitionScope) {
                         Modifier.sharedElement(
                             sharedContentState = rememberSharedContentState(
-                                key = if (isIncome) "income_card" else "expense_card"
+                                key = when (isIncome) {
+                                    true -> "income_card"
+                                    false -> "expense_card"
+                                    null -> "all_transactions_card"
+                                }
                             ),
                             animatedVisibilityScope = animatedVisibilityScope
                         )
