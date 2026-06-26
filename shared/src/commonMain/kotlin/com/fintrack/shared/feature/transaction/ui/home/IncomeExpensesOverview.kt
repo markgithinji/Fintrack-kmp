@@ -95,9 +95,19 @@ private fun OverviewLoadingState(
                 .height(240.dp),
             contentAlignment = Alignment.Center
         ) {
-            when (selectedPeriod) {
-                OverviewPeriod.Weekly -> LoadingBarChart()
-                OverviewPeriod.Monthly -> LoadingLineChart()
+            AnimatedContent(
+                targetState = selectedPeriod,
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(400)) togetherWith
+                            fadeOut(animationSpec = tween(400))
+                }
+            ) { period ->
+                when (period) {
+                    OverviewPeriod.Weekly -> LoadingBarChart()
+                    OverviewPeriod.Monthly -> LoadingLineChart()
+                }
             }
         }
     }
@@ -165,27 +175,37 @@ private fun OverviewSuccessState(
                 .fillMaxWidth()
                 .height(240.dp)
         ) {
-            when (selectedPeriod) {
-                OverviewPeriod.Weekly -> {
-                    val weeklyData = overview.weeklyOverview.map {
-                        val dayName = LocalDate.parse(it.date).shortDayName()
-                        dayName to (it.income to it.expense)
-                    }
-                    BarChart(
-                        data = weeklyData,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .align(Alignment.Center)
-                    )
+            AnimatedContent(
+                targetState = selectedPeriod,
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+                transitionSpec = {
+                    (fadeIn(animationSpec = tween(500)) + scaleIn(initialScale = 0.92f)) togetherWith
+                            fadeOut(animationSpec = tween(500))
                 }
+            ) { period ->
+                when (period) {
+                    OverviewPeriod.Weekly -> {
+                        val weeklyData = overview.weeklyOverview.map {
+                            val dayName = LocalDate.parse(it.date).shortDayName()
+                            dayName to (it.income to it.expense)
+                        }
+                        BarChart(
+                            data = weeklyData,
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .padding(horizontal = 16.dp)
+                        )
+                    }
 
-                OverviewPeriod.Monthly -> {
-                    CustomLineChart(
-                        data = overview.monthlyOverview,
-                        modifier = Modifier
-                            .padding(bottom = 16.dp)
-                            .align(Alignment.Center)
-                    )
+                    OverviewPeriod.Monthly -> {
+                        CustomLineChart(
+                            data = overview.monthlyOverview,
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .padding(bottom = 16.dp)
+                        )
+                    }
                 }
             }
         }

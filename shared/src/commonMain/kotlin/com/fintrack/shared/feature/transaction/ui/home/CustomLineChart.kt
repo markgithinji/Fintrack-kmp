@@ -89,9 +89,7 @@ fun CustomLineChart(
 
     val density = LocalDensity.current
     val minSpacingDp = 48.dp
-    val minSpacingPx = with(density) { minSpacingDp.toPx() }
     val totalChartWidthDp = (minSpacingDp * (sortedData.size - 1).coerceAtLeast(0)) + 80.dp
-
     val selectionLineColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
 
     Box(
@@ -101,198 +99,201 @@ fun CustomLineChart(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = { selectedDay = null }
-            )
+            ),
+        contentAlignment = Alignment.Center
     ) {
-        // --- Static Y-axis background ---
-        Canvas(modifier = Modifier.fillMaxWidth().height(200.dp).padding(bottom = 24.dp, start = 36.dp, end = 12.dp)) {
-            val height = size.height
-            val gridLines = 4
-            for (i in 0..gridLines) {
-                val y = height - (height / gridLines.toFloat()) * i
-                val value = (maxValue / gridLines.toFloat()) * i
-                
-                drawLine(
-                    color = Color.LightGray.copy(alpha = 0.2f),
-                    start = Offset(0f, y),
-                    end = Offset(size.width, y),
-                    strokeWidth = 1.dp.toPx()
-                )
+        Box(modifier = Modifier.height(200.dp)) {
+            // --- Static Y-axis background ---
+            Canvas(modifier = Modifier.fillMaxWidth().height(200.dp).padding(bottom = 24.dp, start = 36.dp, end = 12.dp)) {
+                val height = size.height
+                val gridLines = 4
+                for (i in 0..gridLines) {
+                    val y = height - (height / gridLines.toFloat()) * i
+                    val value = (maxValue / gridLines.toFloat()) * i
+                    
+                    drawLine(
+                        color = Color.LightGray.copy(alpha = 0.2f),
+                        start = Offset(0f, y),
+                        end = Offset(size.width, y),
+                        strokeWidth = 1.dp.toPx()
+                    )
 
-                val label = if (value >= 1000) "${(value / 1000).toInt()}k" else value.toInt().toString()
-                val textLayoutResult = textMeasurer.measure(label, labelStyle)
-                drawText(
-                    textLayoutResult = textLayoutResult,
-                    topLeft = Offset(-textLayoutResult.size.width.toFloat() - 8.dp.toPx(), y - textLayoutResult.size.height / 2)
-                )
+                    val label = if (value >= 1000) "${(value / 1000).toInt()}k" else value.toInt().toString()
+                    val textLayoutResult = textMeasurer.measure(label, labelStyle)
+                    drawText(
+                        textLayoutResult = textLayoutResult,
+                        topLeft = Offset(-textLayoutResult.size.width.toFloat() - 8.dp.toPx(), y - textLayoutResult.size.height / 2)
+                    )
+                }
             }
-        }
 
-        // --- Scrollable Area ---
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 36.dp)
-                .horizontalScroll(rememberScrollState())
-        ) {
+            // --- Scrollable Area ---
             Box(
                 modifier = Modifier
-                    .width(totalChartWidthDp)
-                    .height(200.dp)
-                    .pointerInput(sortedData, maxValue) {
-                        detectTapGestures { offset ->
-                            val chartWidth = size.width - 24.dp.toPx()
-                            val spacingX = if (sortedData.size > 1) chartWidth / (sortedData.size - 1) else chartWidth
-                            val index = (offset.x / spacingX).roundToInt().coerceIn(0, sortedData.size - 1)
-                            
-                            selectedDay = sortedData[index]
-                            touchOffset = offset
-                        }
-                    }
+                    .fillMaxWidth()
+                    .padding(start = 36.dp)
+                    .horizontalScroll(rememberScrollState())
             ) {
-                Canvas(
+                Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 24.dp, end = 24.dp)
+                        .width(totalChartWidthDp)
+                        .height(200.dp)
+                        .pointerInput(sortedData, maxValue) {
+                            detectTapGestures { offset ->
+                                val chartWidth = size.width - 24.dp.toPx()
+                                val spacingX = if (sortedData.size > 1) chartWidth / (sortedData.size - 1) else chartWidth
+                                val index = (offset.x / spacingX).roundToInt().coerceIn(0, sortedData.size - 1)
+                                
+                                selectedDay = sortedData[index]
+                                touchOffset = offset
+                            }
+                        }
                 ) {
-                    val width = size.width
-                    val height = size.height
-                    val spacingX = if (sortedData.size > 1) width / (sortedData.size - 1) else width
+                    Canvas(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = 24.dp, end = 24.dp)
+                    ) {
+                        val width = size.width
+                        val height = size.height
+                        val spacingX = if (sortedData.size > 1) width / (sortedData.size - 1) else width
 
-                    // --- Prepare Paths ---
-                    val incomePath = Path()
-                    val expensePath = Path()
-                    val incomeFillPath = Path()
-                    val expenseFillPath = Path()
+                        // --- Prepare Paths ---
+                        val incomePath = Path()
+                        val expensePath = Path()
+                        val incomeFillPath = Path()
+                        val expenseFillPath = Path()
 
-                    sortedData.forEachIndexed { index, day ->
-                        val x = index * spacingX
-                        val yIncome = height - (day.income.toFloat() / maxValue) * height
-                        val yExpense = height - (day.expense.toFloat() / maxValue) * height
+                        sortedData.forEachIndexed { index, day ->
+                            val x = index * spacingX
+                            val yIncome = height - (day.income.toFloat() / maxValue) * height
+                            val yExpense = height - (day.expense.toFloat() / maxValue) * height
 
-                        if (index == 0) {
-                            incomePath.moveTo(x, yIncome)
-                            expensePath.moveTo(x, yExpense)
-                            incomeFillPath.moveTo(x, height)
-                            incomeFillPath.lineTo(x, yIncome)
-                            expenseFillPath.moveTo(x, height)
-                            expenseFillPath.lineTo(x, yExpense)
-                        } else {
-                            incomePath.lineTo(x, yIncome)
-                            expensePath.lineTo(x, yExpense)
-                            incomeFillPath.lineTo(x, yIncome)
-                            expenseFillPath.lineTo(x, yExpense)
-                        }
+                            if (index == 0) {
+                                incomePath.moveTo(x, yIncome)
+                                expensePath.moveTo(x, yExpense)
+                                incomeFillPath.moveTo(x, height)
+                                incomeFillPath.lineTo(x, yIncome)
+                                expenseFillPath.moveTo(x, height)
+                                expenseFillPath.lineTo(x, yExpense)
+                            } else {
+                                incomePath.lineTo(x, yIncome)
+                                expensePath.lineTo(x, yExpense)
+                                incomeFillPath.lineTo(x, yIncome)
+                                expenseFillPath.lineTo(x, yExpense)
+                            }
 
-                        if (index == sortedData.size - 1) {
-                            incomeFillPath.lineTo(x, height)
-                            incomeFillPath.close()
-                            expenseFillPath.lineTo(x, height)
-                            expenseFillPath.close()
-                        }
+                            if (index == sortedData.size - 1) {
+                                incomeFillPath.lineTo(x, height)
+                                incomeFillPath.close()
+                                expenseFillPath.lineTo(x, height)
+                                expenseFillPath.close()
+                            }
 
-                        // --- X-axis Labels ---
-                        val dateLabel = day.date.split("-").last()
-                        val textLayoutResult = textMeasurer.measure(dateLabel, labelStyle)
-                        drawText(
-                            textLayoutResult = textLayoutResult,
-                            topLeft = Offset(x - textLayoutResult.size.width / 2, height + 8.dp.toPx())
-                        )
-                    }
-
-                    // --- Draw Paths with Animation ---
-                    clipRect(right = width * animationProgress.value) {
-                        if (sortedData.size > 1) {
-                            drawPath(
-                                path = expenseFillPath,
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(PinkExpense.copy(alpha = 0.15f), Color.Transparent)
-                                )
-                            )
-                            drawPath(
-                                path = expensePath,
-                                color = PinkExpense,
-                                style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
-                            )
-                            drawPath(
-                                path = incomeFillPath,
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(GreenIncome.copy(alpha = 0.15f), Color.Transparent)
-                                )
-                            )
-                            drawPath(
-                                path = incomePath,
-                                color = GreenIncome,
-                                style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
+                            // --- X-axis Labels ---
+                            val dateLabel = day.date.split("-").last()
+                            val textLayoutResult = textMeasurer.measure(dateLabel, labelStyle)
+                            drawText(
+                                textLayoutResult = textLayoutResult,
+                                topLeft = Offset(x - textLayoutResult.size.width / 2, height + 8.dp.toPx())
                             )
                         }
-                    }
 
-                    // Selection Highlights
-                    selectedDay?.let { day ->
-                        val index = sortedData.indexOf(day)
-                        val x = index * spacingX
-                        val yIncome = height - (day.income.toFloat() / maxValue) * height
-                        val yExpense = height - (day.expense.toFloat() / maxValue) * height
-
-                        drawLine(
-                            color = selectionLineColor,
-                            start = Offset(x, 0f),
-                            end = Offset(x, height),
-                            strokeWidth = 2.dp.toPx()
-                        )
-
-                        drawCircle(Color.White, radius = 6.dp.toPx(), center = Offset(x, yIncome))
-                        drawCircle(GreenIncome, radius = 4.dp.toPx(), center = Offset(x, yIncome))
-
-                        drawCircle(Color.White, radius = 6.dp.toPx(), center = Offset(x, yExpense))
-                        drawCircle(PinkExpense, radius = 4.dp.toPx(), center = Offset(x, yExpense))
-                    }
-                }
-
-                // Tooltip
-                AnimatedVisibility(
-                    visible = selectedDay != null,
-                    enter = fadeIn() + scaleIn(),
-                    exit = fadeOut() + scaleOut(),
-                    modifier = Modifier.offset {
-                        val xOffset = (touchOffset.x - 60.dp.toPx()).toInt()
-                        val yOffset = (touchOffset.y - 90.dp.toPx()).toInt().coerceAtLeast(0)
-                        IntOffset(xOffset, yOffset)
-                    }
-                ) {
-                    selectedDay?.let { day ->
-                        Surface(
-                            color = MaterialTheme.colorScheme.surface,
-                            shape = RoundedCornerShape(12.dp),
-                            shadowElevation = 8.dp,
-                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                            modifier = Modifier.widthIn(min = 120.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(8.dp)) {
-                                Text(
-                                    text = try { LocalDate.parse(day.date).shortDayName() + ", " + day.date.split("-").last() } catch(_: Exception) { day.date },
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(Modifier.height(4.dp))
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(Modifier.size(6.dp).background(GreenIncome, CircleShape))
-                                    Text(
-                                        text = " " + day.income.toCurrencyString(),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = GreenIncome
+                        // --- Draw Paths with Animation ---
+                        clipRect(right = width * animationProgress.value) {
+                            if (sortedData.size > 1) {
+                                drawPath(
+                                    path = expenseFillPath,
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(PinkExpense.copy(alpha = 0.15f), Color.Transparent)
                                     )
-                                }
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(Modifier.size(6.dp).background(PinkExpense, CircleShape))
-                                    Text(
-                                        text = " " + day.expense.toCurrencyString(),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = PinkExpense
+                                )
+                                drawPath(
+                                    path = expensePath,
+                                    color = PinkExpense,
+                                    style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
+                                )
+                                drawPath(
+                                    path = incomeFillPath,
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(GreenIncome.copy(alpha = 0.15f), Color.Transparent)
                                     )
+                                )
+                                drawPath(
+                                    path = incomePath,
+                                    color = GreenIncome,
+                                    style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
+                                )
+                            }
+                        }
+
+                        // Selection Highlights
+                        selectedDay?.let { day ->
+                            val index = sortedData.indexOf(day)
+                            val x = index * spacingX
+                            val yIncome = height - (day.income.toFloat() / maxValue) * height
+                            val yExpense = height - (day.expense.toFloat() / maxValue) * height
+
+                            drawLine(
+                                color = selectionLineColor,
+                                start = Offset(x, 0f),
+                                end = Offset(x, height),
+                                strokeWidth = 2.dp.toPx()
+                            )
+
+                            drawCircle(Color.White, radius = 6.dp.toPx(), center = Offset(x, yIncome))
+                            drawCircle(GreenIncome, radius = 4.dp.toPx(), center = Offset(x, yIncome))
+
+                            drawCircle(Color.White, radius = 6.dp.toPx(), center = Offset(x, yExpense))
+                            drawCircle(PinkExpense, radius = 4.dp.toPx(), center = Offset(x, yExpense))
+                        }
+                    }
+
+                    // Tooltip
+                    AnimatedVisibility(
+                        visible = selectedDay != null,
+                        enter = fadeIn() + scaleIn(),
+                        exit = fadeOut() + scaleOut(),
+                        modifier = Modifier.offset {
+                            val xOffset = (touchOffset.x - 60.dp.toPx()).toInt()
+                            val yOffset = (touchOffset.y - 90.dp.toPx()).toInt().coerceAtLeast(0)
+                            IntOffset(xOffset, yOffset)
+                        }
+                    ) {
+                        selectedDay?.let { day ->
+                            Surface(
+                                color = MaterialTheme.colorScheme.surface,
+                                shape = RoundedCornerShape(12.dp),
+                                shadowElevation = 8.dp,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                                modifier = Modifier.widthIn(min = 120.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(8.dp)) {
+                                    Text(
+                                        text = try { LocalDate.parse(day.date).shortDayName() + ", " + day.date.split("-").last() } catch(_: Exception) { day.date },
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(Modifier.size(6.dp).background(GreenIncome, CircleShape))
+                                        Text(
+                                            text = " " + day.income.toCurrencyString(),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = GreenIncome
+                                        )
+                                    }
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(Modifier.size(6.dp).background(PinkExpense, CircleShape))
+                                        Text(
+                                            text = " " + day.expense.toCurrencyString(),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = PinkExpense
+                                        )
+                                    }
                                 }
                             }
                         }
