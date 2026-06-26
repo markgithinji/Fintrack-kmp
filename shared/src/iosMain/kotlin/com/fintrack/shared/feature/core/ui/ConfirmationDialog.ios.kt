@@ -2,13 +2,13 @@ package com.fintrack.shared.feature.core.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.interop.LocalUIViewController
+import androidx.compose.ui.uikit.LocalUIViewController
 import platform.UIKit.UIAlertAction
 import platform.UIKit.UIAlertActionStyleCancel
 import platform.UIKit.UIAlertActionStyleDefault
 import platform.UIKit.UIAlertActionStyleDestructive
 import platform.UIKit.UIAlertController
-import platform.UIKit.UIAlertControllerStyleActionSheet
+import platform.UIKit.UIAlertControllerStyleAlert
 
 @Composable
 actual fun ConfirmationDialog(
@@ -26,7 +26,7 @@ actual fun ConfirmationDialog(
         val alertController = UIAlertController.alertControllerWithTitle(
             title = title,
             message = message,
-            preferredStyle = UIAlertControllerStyleActionSheet
+            preferredStyle = UIAlertControllerStyleAlert
         )
 
         alertController.addAction(
