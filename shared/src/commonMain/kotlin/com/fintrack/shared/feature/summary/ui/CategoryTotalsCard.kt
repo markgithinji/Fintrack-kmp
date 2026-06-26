@@ -62,10 +62,14 @@ import com.example.compose.SegmentColor4
 import com.example.compose.SegmentColor5
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.formatAsShortDate
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.TabType
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
 
 @Composable
 fun CategoryTotalsCardWithTabs(
@@ -337,10 +341,10 @@ fun PeriodSelector(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    val (options, selectedCode, onSelected) = when (selectedPeriod) {
-        is Period.Week -> Triple(availableWeeks, selectedPeriod.code, onWeekSelected)
-        is Period.Month -> Triple(availableMonths, selectedPeriod.code, onMonthSelected)
-        is Period.Year -> Triple(availableYears, selectedPeriod.code, onYearSelected)
+    val (options, selectedCode, onSelected, currentType) = when (selectedPeriod) {
+        is Period.Week -> Triple(availableWeeks, selectedPeriod.code, onWeekSelected).let { it.copy(fourth = TimeSpan.WEEK) }
+        is Period.Month -> Triple(availableMonths, selectedPeriod.code, onMonthSelected).let { it.copy(fourth = TimeSpan.MONTH) }
+        is Period.Year -> Triple(availableYears, selectedPeriod.code, onYearSelected).let { it.copy(fourth = TimeSpan.YEAR) }
     }
 
     Box {
@@ -353,9 +357,10 @@ fun PeriodSelector(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = selectedCode ?: "Select",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold
+                text = formatPeriodCode(selectedCode ?: "Select", currentType),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
             )
             Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(16.dp))
         }
@@ -400,7 +405,12 @@ fun PeriodSelector(
             
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(option, style = MaterialTheme.typography.bodySmall) },
+                    text = { 
+                        Text(
+                            text = formatPeriodCode(option, currentType), 
+                            style = MaterialTheme.typography.bodySmall 
+                        ) 
+                    },
                     onClick = {
                         onSelected(option)
                         expanded = false
@@ -410,6 +420,61 @@ fun PeriodSelector(
         }
     }
 }
+
+private fun formatPeriodCode(code: String, type: TimeSpan): String {
+    return try {
+        when (type) {
+            TimeSpan.WEEK -> {
+                // code format: 2024-W25
+                val parts = code.split("-W")
+                if (parts.size == 2) {
+                    val year = parts[0].toIntOrNull() ?: return code
+                    val week = parts[1].toIntOrNull() ?: return code
+
+                    // ISO week calculation (Simplified for UI)
+                    // Monday is 0 in kotlinx-datetime ordinal
+                    val jan1 = LocalDate(year, 1, 1)
+                    val jan1DayOfWeek = jan1.dayOfWeek.ordinal + 1 // Mon=1, Sun=7
+                    val daysToFirstMonday = (8 - jan1DayOfWeek) % 7
+                    val firstMonday = jan1.plus(DatePeriod(days = daysToFirstMonday))
+                    val weekStart = firstMonday.plus(DatePeriod(days = (week - 1) * 7))
+                    val weekEnd = weekStart.plus(DatePeriod(days = 6))
+
+                    "${weekStart.formatAsShortDate()} - ${weekEnd.formatAsShortDate()}"
+                } else code
+            }
+            TimeSpan.MONTH -> {
+                // code format: 2024-06
+                val parts = code.split("-")
+                if (parts.size == 2) {
+                    val year = parts[0]
+                    val month = parts[1].toIntOrNull() ?: return code
+                    val monthName = when (month) {
+                        1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
+                        5 -> "May"; 6 -> "Jun"; 7 -> "Jul"; 8 -> "Aug"
+                        9 -> "Sep"; 10 -> "Oct"; 11 -> "Nov"; 12 -> "Dec"
+                        else -> ""
+                    }
+                    "$monthName $year"
+                } else code
+            }
+            TimeSpan.YEAR -> code
+        }
+    } catch (_: Exception) {
+        code
+    }
+}
+
+private fun <A, B, C> Triple<A, B, C>.copy(fourth: TimeSpan): Quadruple<A, B, C, TimeSpan> {
+    return Quadruple(first, second, third, fourth)
+}
+
+data class Quadruple<out A, out B, out C, out D>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D
+)
 
 val SegmentColors = listOf(
     SegmentColor3, // Blue
