@@ -190,4 +190,8 @@ class BudgetViewModel(
     fun resetSaveState() {
         _saveState.value = SaveState.Idle
     }
+
+    fun resetDeleteResult() {
+        _deleteResult.value = null
+    }
 }
