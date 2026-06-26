@@ -9,16 +9,29 @@ import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.safeApiCall
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class BudgetRepositoryImpl(
     private val api: BudgetApi
 ) : BudgetRepository {
 
-    override suspend fun getBudgets(): Result<List<BudgetWithStatus>> =
-        safeApiCall {
+    private val _budgets = MutableStateFlow<Result<List<BudgetWithStatus>>>(Result.Loading)
+    override val budgets: Flow<Result<List<BudgetWithStatus>>> = _budgets.asStateFlow()
+
+    override suspend fun getBudgets(forceRefresh: Boolean): Result<List<BudgetWithStatus>> {
+        if (!forceRefresh && _budgets.value is Result.Success) {
+            return _budgets.value
+        }
+        
+        val result = safeApiCall {
             val budgetsWithStatusDto = api.getBudgets()
             budgetsWithStatusDto.map { it.toDomain() }
         }
+        _budgets.value = result
+        return result
+    }
 
     override suspend fun getBudgetById(id: String): Result<BudgetWithStatus> =
         safeApiCall {
@@ -26,8 +39,8 @@ class BudgetRepositoryImpl(
             budgetWithStatusDto.toDomain()
         }
 
-    override suspend fun addOrUpdateBudget(budget: Budget): Result<Budget> =
-        safeApiCall {
+    override suspend fun addOrUpdateBudget(budget: Budget): Result<Budget> {
+        val result = safeApiCall {
             if (budget.id == null) {
                 val createRequest = budget.toCreateRequest()
                 val dto = api.addBudget(createRequest)
@@ -38,9 +51,19 @@ class BudgetRepositoryImpl(
                 dto.budget.toDomain()
             }
         }
+        if (result is Result.Success) {
+            getBudgets(forceRefresh = true)
+        }
+        return result
+    }
 
-    override suspend fun deleteBudget(id: String): Result<Unit> =
-        safeApiCall {
+    override suspend fun deleteBudget(id: String): Result<Unit> {
+        val result = safeApiCall {
             api.deleteBudget(id)
         }
+        if (result is Result.Success) {
+            getBudgets(forceRefresh = true)
+        }
+        return result
+    }
 }

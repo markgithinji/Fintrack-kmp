@@ -28,8 +28,12 @@ class BudgetViewModel(
     private val validationUseCase: BudgetValidationUseCase
 ) : ViewModel() {
 
-    private val _budgets = MutableStateFlow<Result<List<BudgetWithStatus>>>(Result.Loading)
-    val budgets: StateFlow<Result<List<BudgetWithStatus>>> = _budgets
+    val budgets: StateFlow<Result<List<BudgetWithStatus>>> = repo.budgets
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = Result.Loading
+        )
 
     private val _saveState = MutableStateFlow<SaveState<Budget>>(SaveState.Idle)
     val saveState: StateFlow<SaveState<Budget>> = _saveState
@@ -112,13 +116,8 @@ class BudgetViewModel(
     }
 
     fun reloadBudgets(force: Boolean = true) {
-        if (!force && _budgets.value is Result.Success) return
-
         viewModelScope.launch {
-            if (_budgets.value !is Result.Success) {
-                _budgets.value = Result.Loading
-            }
-            _budgets.value = repo.getBudgets()
+            repo.getBudgets(forceRefresh = force)
         }
     }
 
@@ -158,7 +157,6 @@ class BudgetViewModel(
                     val result = repo.addOrUpdateBudget(budget)
                     _saveState.value = when (result) {
                         is Result.Success -> {
-                            reloadBudgets(force = true)
                             SaveState.Success(result.data)
                         }
                         is Result.Error -> SaveState.Error(result.exception)
@@ -173,7 +171,6 @@ class BudgetViewModel(
         viewModelScope.launch {
             _deleteResult.value = Result.Loading
             _deleteResult.value = repo.deleteBudget(id)
-            reloadBudgets()
         }
     }
 
