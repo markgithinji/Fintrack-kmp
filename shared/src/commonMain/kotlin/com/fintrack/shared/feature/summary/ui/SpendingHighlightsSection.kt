@@ -234,20 +234,48 @@ fun LoadingHighlightCard(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
     ) {
         Column(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            AnimatedShimmerBox(modifier = Modifier.size(40.dp).clip(CircleShape))
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                AnimatedShimmerBox(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clip(CircleShape)
+                )
+            }
+
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                AnimatedShimmerBox(modifier = Modifier.width(60.dp).height(12.dp))
-                AnimatedShimmerBox(modifier = Modifier.width(100.dp).height(16.dp))
-                AnimatedShimmerBox(modifier = Modifier.width(80.dp).height(10.dp))
+                AnimatedShimmerBox(
+                    modifier = Modifier
+                        .width(60.dp)
+                        .height(12.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                )
+                AnimatedShimmerBox(
+                    modifier = Modifier
+                        .width(100.dp)
+                        .height(16.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                )
+                AnimatedShimmerBox(
+                    modifier = Modifier
+                        .width(80.dp)
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                )
             }
         }
     }
