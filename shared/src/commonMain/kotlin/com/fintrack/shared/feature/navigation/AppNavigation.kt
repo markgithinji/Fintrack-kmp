@@ -166,6 +166,7 @@ fun AppNavigation(
                     }
                     AddTransactionScreen(
                         transactionId = transactionId,
+                        paddingValues = paddingValues,
                         animatedVisibilityScope = this,
                         onBack = { navController.popBackStack() }
                     )
@@ -274,6 +275,7 @@ fun AppNavigation(
 
                     BudgetDetailScreen(
                         budgetId = budgetId,
+                        paddingValues = paddingValues,
                         animatedVisibilityScope = this,
                         onSave = { navController.popBackStack() },
                         onBack = { navController.popBackStack() }

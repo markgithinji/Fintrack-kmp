@@ -116,6 +116,7 @@ fun AddTransactionScreen(
     transactionId: String? = null,
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     accountsViewModel: AccountsViewModel = koinViewModel(),
+    paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onBack: () -> Unit = {}
 ) {
@@ -204,6 +205,7 @@ fun AddTransactionScreen(
                     onAmountChange = { amount = it },
                     isIncome = isIncome,
                     themeColor = themeColor,
+                    paddingValues = paddingValues,
                     modifier = Modifier.sharedBounds(
                         rememberSharedContentState(key = "transaction_header_${transactionId ?: "new"}"),
                         animatedVisibilityScope = animatedVisibilityScope,
@@ -268,6 +270,7 @@ fun AddTransactionScreen(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .padding(bottom = paddingValues.calculateBottomPadding())
                 .padding(20.dp)
         ) {
             SaveTransactionButton(
@@ -350,19 +353,21 @@ fun AmountHeader(
     onAmountChange: (String) -> Unit,
     isIncome: Boolean,
     themeColor: Color,
+    paddingValues: PaddingValues = PaddingValues(0.dp),
     modifier: Modifier = Modifier
 ) {
     Surface(
         color = themeColor,
         modifier = modifier
             .fillMaxWidth()
-            .height(200.dp),
+            .height(200.dp + paddingValues.calculateTopPadding()),
         shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(top = paddingValues.calculateTopPadding())
                     .padding(bottom = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center

@@ -134,6 +134,7 @@ fun BudgetDetailScreen(
     budgetId: String?,
     viewModel: BudgetViewModel = koinViewModel(),
     accountsViewModel: AccountsViewModel = koinViewModel(),
+    paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onSave: () -> Unit,
     onBack: () -> Unit
@@ -201,6 +202,7 @@ fun BudgetDetailScreen(
                             onAmountChange = { viewModel.setAmount(it) },
                             isExpense = formState.isExpense,
                             themeColor = themeColor,
+                            paddingValues = paddingValues,
                             modifier = Modifier.sharedBounds(
                                 rememberSharedContentState(key = "budget_header_${budgetId ?: "new"}"),
                                 animatedVisibilityScope = animatedVisibilityScope,
@@ -261,6 +263,7 @@ fun BudgetDetailScreen(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .padding(bottom = paddingValues.calculateBottomPadding())
                 .padding(20.dp)
         ) {
             SaveBudgetButton(
@@ -288,18 +291,20 @@ fun BudgetAmountHeader(
     onAmountChange: (String) -> Unit,
     isExpense: Boolean,
     themeColor: Color,
+    paddingValues: PaddingValues = PaddingValues(0.dp),
     modifier: Modifier = Modifier
 ) {
     Surface(
         color = themeColor,
         modifier = modifier
             .fillMaxWidth()
-            .height(200.dp),
+            .height(200.dp + paddingValues.calculateTopPadding()),
         shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(top = paddingValues.calculateTopPadding())
                 .padding(bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
