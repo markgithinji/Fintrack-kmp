@@ -72,13 +72,6 @@ fun StatisticsScreen(
                     .background(MaterialTheme.colorScheme.background)
                     .padding(top = 16.dp, bottom = 8.dp)
             ) {
-                Text(
-                    text = "Statistics",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Black,
-                    modifier = Modifier.padding(horizontal = 20.dp)
-                )
-                Spacer(Modifier.height(16.dp))
                 TabSwitcher(
                     selectedTab = selectedTab,
                     onTabSelected = { viewModel.onTabChanged(it) }
