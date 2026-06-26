@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.transaction.ui.addtransaction
 
 import androidx.compose.runtime.Composable
+import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import kotlinx.datetime.LocalDate
 
 @Composable
@@ -9,4 +10,9 @@ actual fun PickDate(
     onDateSelected: (LocalDate) -> Unit,
     onDismiss: () -> Unit
 ) {
+    FintrackDatePickerDialog(
+        initialDate = initialDate,
+        onDateSelected = onDateSelected,
+        onDismiss = onDismiss
+    )
 }

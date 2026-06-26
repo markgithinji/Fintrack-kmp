@@ -37,6 +37,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -49,6 +54,19 @@ fun ProfileScreen(
     onNavigateToBudgets: () -> Unit,
     onLogout: () -> Unit
 ) {
+    var showLogoutConfirmation by remember { mutableStateOf(false) }
+
+    if (showLogoutConfirmation) {
+        ConfirmationDialog(
+            title = "Logout",
+            message = "Are you sure you want to logout? You will need to sign in again to access your data.",
+            confirmLabel = "Logout",
+            isDestructive = true,
+            onConfirm = onLogout,
+            onDismiss = { showLogoutConfirmation = false }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -126,7 +144,7 @@ fun ProfileScreen(
 
                 // Logout Button
                 Button(
-                    onClick = onLogout,
+                    onClick = { showLogoutConfirmation = true },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),

@@ -1,6 +1,6 @@
 package com.fintrack.shared
 
 import androidx.compose.ui.window.ComposeUIViewController
-import com.fintrack.shared.feature.transaction.ui.IncomeTrackerScreen
+import com.fintrack.shared.feature.navigation.MainScreen
 
-fun MainViewController() = ComposeUIViewController { IncomeTrackerScreen() }
+fun MainViewController() = ComposeUIViewController { MainScreen() }
