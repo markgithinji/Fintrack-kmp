@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -77,17 +78,102 @@ fun LoadingBarChart() {
 
 @Composable
 fun LoadingLineChart() {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .height(240.dp)
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
+            .padding(16.dp)
     ) {
-        AnimatedShimmerBox(
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.Bottom
+        ) {
+            // Y-axis labels
+            Column(
+                modifier = Modifier
+                    .height(180.dp)
+                    .padding(end = 12.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                repeat(5) {
+                    AnimatedShimmerBox(
+                        modifier = Modifier
+                            .width(30.dp)
+                            .height(12.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                    )
+                }
+            }
+
+            // Line Chart Area Placeholder
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(180.dp)
+            ) {
+                // Background grid lines shimmers
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    repeat(5) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .clip(CircleShape)
+                        ) {
+                            AnimatedShimmerBox(modifier = Modifier.fillMaxSize())
+                        }
+                    }
+                }
+
+                // Simulated "Line" shimmers
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    // Two wavy-ish lines
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .height(4.dp)
+                            .padding(start = 20.dp)
+                            .clip(CircleShape)
+                    ) {
+                        AnimatedShimmerBox(modifier = Modifier.fillMaxSize())
+                    }
+                    Spacer(modifier = Modifier.height(30.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.6f)
+                            .height(4.dp)
+                            .padding(start = 50.dp)
+                            .clip(CircleShape)
+                    ) {
+                        AnimatedShimmerBox(modifier = Modifier.fillMaxSize())
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // X-axis labels shimmers
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(8.dp))
-        )
+                .fillMaxWidth()
+                .padding(start = 42.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            repeat(6) {
+                AnimatedShimmerBox(
+                    modifier = Modifier
+                        .width(20.dp)
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                )
+            }
+        }
     }
 }
