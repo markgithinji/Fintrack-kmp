@@ -14,19 +14,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -38,36 +26,25 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.GreenIncome
+import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDate
@@ -114,6 +91,7 @@ fun BudgetScreen(
 
             is Result.Success -> {
                 val data = currentBudgets.data
+                
                 LazyColumn(
                     state = listState,
                     contentPadding = PaddingValues(
@@ -123,11 +101,15 @@ fun BudgetScreen(
                 ) {
                     if (data.isNotEmpty()) {
                         item {
+                            BudgetSummaryHeader(data)
+                        }
+
+                        item {
                             with(sharedTransitionScope) {
                                 SexyAddBudgetButton(
                                     onClick = onAddBudget,
                                     modifier = Modifier
-                                        .padding(16.dp)
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
                                         .sharedBounds(
                                             rememberSharedContentState(key = "budget_header_new"),
                                             animatedVisibilityScope = animatedVisibilityScope,
@@ -179,6 +161,91 @@ fun BudgetScreen(
 }
 
 @Composable
+private fun BudgetSummaryHeader(budgets: List<BudgetWithStatus>) {
+    val totalLimit = budgets.sumOf { it.budget.limit }
+    val totalSpent = budgets.sumOf { it.status.spent }
+    val progress = if (totalLimit > 0) (totalSpent / totalLimit).toFloat().coerceIn(0f, 1f) else 0f
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Total Monthly Budget",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = totalLimit.toCurrencyString(),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Outlined.AccountBalanceWallet,
+                        null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(20.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Text(
+                    text = "Spent ${totalSpent.toCurrencyString()}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "${(progress * 100).toInt()}% used",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = if (progress > 0.9f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(50)),
+                color = if (progress > 0.9f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                strokeCap = StrokeCap.Round
+            )
+        }
+    }
+}
+
+@Composable
 fun SexyAddBudgetButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -190,7 +257,7 @@ fun SexyAddBudgetButton(
             .fillMaxWidth()
             .height(72.dp)
             .shadow(
-                elevation = if (isPressed) 8.dp else 16.dp,
+                elevation = if (isPressed) 4.dp else 12.dp,
                 shape = RoundedCornerShape(20.dp),
                 clip = false
             )
@@ -265,13 +332,13 @@ fun SexyAddBudgetButton(
                     Text(
                         text = "Create New Budget",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
                     )
                     Text(
-                        text = "Set up a spending or income plan",
+                        text = "Plan your spending strategically",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        color = Color.Black.copy(alpha = 0.6f)
                     )
                 }
             }
@@ -280,9 +347,165 @@ fun SexyAddBudgetButton(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                tint = Color.Black.copy(alpha = 0.4f)
             )
         }
+    }
+}
+
+@Composable
+fun BudgetItem(
+    budgetWithStatus: BudgetWithStatus,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val budget = budgetWithStatus.budget
+    val status = budgetWithStatus.status
+    val progress = ((status.percentageUsed / 100.0).coerceAtMost(1.0)).toFloat()
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = budget.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "${budget.startDate.formatAsShortDate()} - ${budget.endDate.formatAsShortDate()}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                StatusChip(status.percentageUsed, status.isExceeded)
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = status.spent.toCurrencyString(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (status.isExceeded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "of ${budget.limit.toCurrencyString()}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(50)),
+                    color = if (status.isExceeded) MaterialTheme.colorScheme.error
+                    else if (progress > 0.8f) Color(0xFFFF9800)
+                    else MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    strokeCap = StrokeCap.Round
+                )
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "${status.percentageUsed.formatToSinglePrecision()}% used",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = if (status.isExceeded) "Over budget" else "${status.remaining.toCurrencyString()} left",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (status.isExceeded) MaterialTheme.colorScheme.error else GreenIncome
+                    )
+                }
+            }
+
+            if (budget.categories.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    budget.categories.take(3).forEach { category ->
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                            modifier = Modifier.wrapContentSize()
+                        ) {
+                            Text(
+                                text = category.name,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                    if (budget.categories.size > 3) {
+                        Text(
+                            text = "+${budget.categories.size - 3} more",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusChip(percentage: Double, isExceeded: Boolean) {
+    val (label, color) = when {
+        isExceeded -> "Exceeded" to MaterialTheme.colorScheme.error
+        percentage > 90 -> "Critical" to Color(0xFFF44336)
+        percentage > 75 -> "Warning" to Color(0xFFFF9800)
+        else -> "On Track" to GreenIncome
+    }
+
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = color.copy(alpha = 0.1f),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.2f))
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = color,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+        )
     }
 }
 
@@ -292,15 +515,15 @@ fun BudgetEmptyState(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.padding(32.dp),
+        modifier = modifier.padding(32.dp).fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Box(
             modifier = Modifier
-                .size(120.dp)
+                .size(140.dp)
                 .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
                     shape = CircleShape
                 ),
             contentAlignment = Alignment.Center
@@ -308,56 +531,50 @@ fun BudgetEmptyState(
             Icon(
                 imageVector = Icons.Outlined.AccountBalanceWallet,
                 contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                modifier = Modifier.size(56.dp),
+                tint = MaterialTheme.colorScheme.primary
             )
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(32.dp))
 
         Text(
-            text = "No Budgets Yet",
+            text = "Master Your Money",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
         Text(
-            text = "Start by creating your first budget to track your finances",
+            text = "Create your first budget to gain clarity on your spending habits and achieve your financial goals.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            lineHeight = 22.sp
         )
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(40.dp))
 
         Button(
             onClick = onAddBudget,
             modifier = Modifier
-                .height(54.dp)
+                .height(56.dp)
                 .fillMaxWidth(0.8f),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(20.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.secondary,
                 contentColor = Color.Black
             ),
-            elevation = ButtonDefaults.buttonElevation(
-                defaultElevation = 8.dp,
-                pressedElevation = 4.dp
-            )
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
+            Icon(Icons.Default.Add, null)
             Spacer(Modifier.width(8.dp))
             Text(
-                text = "Create Budget",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold
+                text = "Add First Budget",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
             )
         }
     }
@@ -410,8 +627,8 @@ fun BudgetErrorRetryState(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "Oops!",
-            style = MaterialTheme.typography.headlineMedium,
+            text = "Something went wrong",
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -420,17 +637,8 @@ fun BudgetErrorRetryState(
 
         Text(
             text = errorMessage,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Please check your connection and try again",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
 
@@ -445,40 +653,11 @@ fun BudgetErrorRetryState(
             colors = ButtonDefaults.buttonColors(
                 containerColor = GreenIncome,
                 contentColor = Color.White
-            ),
-            elevation = ButtonDefaults.buttonElevation(
-                defaultElevation = 8.dp,
-                pressedElevation = 4.dp
             )
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Refresh,
-                    contentDescription = "Retry",
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Try Again",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        TextButton(
-            onClick = { /* Optional: Add support action */ },
-            modifier = Modifier.fillMaxWidth(0.6f)
-        ) {
-            Text(
-                text = "Contact Support",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Icon(Icons.Outlined.Refresh, null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Try Again", fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -493,317 +672,51 @@ fun BudgetScreenLoadingState(paddingValues: PaddingValues = PaddingValues(0.dp))
         )
     ) {
         item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
             ) {
-                AnimatedShimmerBox(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(CircleShape)
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                AnimatedShimmerBox(
-                    modifier = Modifier
-                        .width(100.dp)
-                        .height(20.dp)
-                )
+                Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    AnimatedShimmerBox(modifier = Modifier.width(120.dp).height(20.dp))
+                    AnimatedShimmerBox(modifier = Modifier.width(180.dp).height(32.dp))
+                    AnimatedShimmerBox(modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape))
+                }
             }
         }
 
-        items(5) {
-            Card(
+        item {
+            AnimatedShimmerBox(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(4.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .height(72.dp)
+                    .clip(RoundedCornerShape(20.dp))
+            )
+        }
+
+        items(3) {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        AnimatedShimmerBox(
-                            modifier = Modifier
-                                .width(120.dp)
-                                .height(24.dp)
-                        )
-
-                        AnimatedShimmerBox(
-                            modifier = Modifier
-                                .width(60.dp)
-                                .height(28.dp)
-                                .clip(RoundedCornerShape(50))
-                        )
-                    }
-
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(6.dp)
-                                .clip(RoundedCornerShape(50))
-                                .background(Color.LightGray.copy(alpha = 0.3f))
-                        ) {
-                            AnimatedShimmerBox(
-                                modifier = Modifier
-                                    .fillMaxWidth(0.7f)
-                                    .fillMaxHeight()
-                                    .clip(RoundedCornerShape(50))
-                            )
+                Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column {
+                            AnimatedShimmerBox(modifier = Modifier.width(140.dp).height(24.dp))
+                            Spacer(Modifier.height(4.dp))
+                            AnimatedShimmerBox(modifier = Modifier.width(100.dp).height(12.dp))
                         }
-
-                        AnimatedShimmerBox(
-                            modifier = Modifier
-                                .width(50.dp)
-                                .height(14.dp)
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Start
-                        ) {
-                            repeat(3) {
-                                AnimatedShimmerBox(
-                                    modifier = Modifier
-                                        .width(80.dp)
-                                        .height(40.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                            }
-                        }
+                        AnimatedShimmerBox(modifier = Modifier.width(60.dp).height(24.dp).clip(RoundedCornerShape(12.dp)))
                     }
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        repeat(3) {
-                            AnimatedShimmerBox(
-                                modifier = Modifier
-                                    .width(60.dp)
-                                    .height(32.dp)
-                                    .clip(RoundedCornerShape(50))
-                            )
-                        }
-                        AnimatedShimmerBox(
-                            modifier = Modifier
-                                .width(70.dp)
-                                .height(32.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                        )
-                    }
-
-                    AnimatedShimmerBox(
-                        modifier = Modifier
-                            .width(180.dp)
-                            .height(14.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun BudgetItem(
-    budgetWithStatus: BudgetWithStatus,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val budget = budgetWithStatus.budget
-    val status = budgetWithStatus.status
-    val visibleCategories = budget.categories.take(3)
-    val remainingCategoriesCount = budget.categories.size - 3
-
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = budget.name,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                )
-
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = if (budget.isExpense)
-                                MaterialTheme.colorScheme.errorContainer
-                            else
-                                MaterialTheme.colorScheme.primaryContainer,
-                            shape = RoundedCornerShape(50)
-                        )
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = if (budget.isExpense) "Expense" else "Income",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = if (budget.isExpense)
-                            MaterialTheme.colorScheme.onErrorContainer
-                        else
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                LinearProgressIndicator(
-                    progress = { ((status.percentageUsed / 100.0).coerceAtMost(1.0)).toFloat() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(50)),
-                    color = if (status.isExceeded) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.primary,
-                    strokeCap = StrokeCap.Butt,
-                    gapSize = 0.dp,
-                    drawStopIndicator = {}
-                )
-
-                Text(
-                    text = "${status.percentageUsed.formatToSinglePrecision()}% used",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (status.isExceeded) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.Start,
-                        modifier = Modifier.width(80.dp)
-                    ) {
-                        Text(
-                            text = "Limit",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = budget.limit.toCurrencyString(),
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-
-                    Column(
-                        horizontalAlignment = Alignment.Start,
-                        modifier = Modifier.width(80.dp)
-                    ) {
-                        Text(
-                            text = "Spent",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = status.spent.toCurrencyString(),
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-
-                    Column(
-                        horizontalAlignment = Alignment.Start,
-                        modifier = Modifier.width(100.dp)
-                    ) {
-                        Text(
-                            text = "Remaining",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = status.remaining.toCurrencyString(),
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium,
-                            color = if (status.isExceeded) MaterialTheme.colorScheme.error
-                            else MaterialTheme.colorScheme.onSurface
-                        )
+                    AnimatedShimmerBox(modifier = Modifier.fillMaxWidth().height(10.dp).clip(CircleShape))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        AnimatedShimmerBox(modifier = Modifier.width(80.dp).height(12.dp))
+                        AnimatedShimmerBox(modifier = Modifier.width(60.dp).height(12.dp))
                     }
                 }
             }
-
-            if (budget.categories.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start
-                ) {
-                    visibleCategories.forEach { category ->
-                        AssistChip(
-                            onClick = {},
-                            label = {
-                                Text(
-                                    category.name,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    maxLines = 1
-                                )
-                            },
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            ),
-                            border = BorderStroke(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                            ),
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                    }
-
-                    if (remainingCategoriesCount > 0) {
-                        Box(
-                            modifier = Modifier
-                                .height(32.dp)
-                                .background(
-                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                .padding(horizontal = 12.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "+$remainingCategoriesCount more",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                }
-            }
-
-            Text(
-                text = "${budget.startDate.formatAsShortDate()} - ${budget.endDate.formatAsShortDate()}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
