@@ -1,0 +1,201 @@
+package com.fintrack.shared.feature.transaction.ui.home
+
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.compose.GreenIncome
+import com.example.compose.PinkExpense
+import com.fintrack.shared.feature.summary.domain.model.DaySummary
+
+@Composable
+fun CustomLineChart(
+    data: List<DaySummary>,
+    modifier: Modifier = Modifier,
+) {
+    if (data.isEmpty()) {
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(200.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                "No data for this period",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
+        }
+        return
+    }
+
+    val textMeasurer = rememberTextMeasurer()
+    val labelStyle = TextStyle(
+        color = Color.Gray,
+        fontSize = 10.sp
+    )
+
+    val animationProgress = remember { Animatable(0f) }
+    LaunchedEffect(data) {
+        animationProgress.animateTo(1f, animationSpec = tween(1500))
+    }
+
+    val sortedData = data.sortedBy { it.date }
+    val maxIncome = sortedData.maxOfOrNull { it.income } ?: 0.0
+    val maxExpense = sortedData.maxOfOrNull { it.expense } ?: 0.0
+    val maxValue = maxOf(maxIncome, maxExpense).coerceAtLeast(1.0).toFloat() * 1.2f
+
+    // Scroll Logic: Minimum spacing between points
+    val minSpacingDp = 40.dp
+    val minSpacingPx = with(LocalDensity.current) { minSpacingDp.toPx() }
+    val totalChartWidthDp = (minSpacingDp * (sortedData.size - 1).coerceAtLeast(0)) + 60.dp
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        // --- Static Y-axis background ---
+        Canvas(modifier = Modifier.fillMaxWidth().height(200.dp).padding(bottom = 24.dp, start = 36.dp, end = 12.dp)) {
+            val height = size.height
+            val gridLines = 4
+            for (i in 0..gridLines) {
+                val y = height - (height / gridLines.toFloat()) * i
+                val value = (maxValue / gridLines.toFloat()) * i
+                
+                drawLine(
+                    color = Color.LightGray.copy(alpha = 0.2f),
+                    start = Offset(0f, y),
+                    end = Offset(size.width, y),
+                    strokeWidth = 1.dp.toPx()
+                )
+
+                val label = if (value >= 1000) "${(value / 1000).toInt()}k" else value.toInt().toString()
+                val textLayoutResult = textMeasurer.measure(label, labelStyle)
+                drawText(
+                    textLayoutResult = textLayoutResult,
+                    topLeft = Offset(-textLayoutResult.size.width.toFloat() - 8.dp.toPx(), y - textLayoutResult.size.height / 2)
+                )
+            }
+        }
+
+        // --- Scrollable Area ---
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 36.dp) // Offset for static Y labels
+                .horizontalScroll(rememberScrollState())
+        ) {
+            Canvas(
+                modifier = Modifier
+                    .width(totalChartWidthDp)
+                    .height(200.dp)
+                    .padding(bottom = 24.dp, end = 24.dp)
+            ) {
+                val width = size.width
+                val height = size.height
+                val spacingX = if (sortedData.size > 1) width / (sortedData.size - 1) else width
+
+                // --- Prepare Paths ---
+                val incomePath = Path()
+                val expensePath = Path()
+                val incomeFillPath = Path()
+                val expenseFillPath = Path()
+
+                sortedData.forEachIndexed { index, day ->
+                    val x = index * spacingX
+                    val yIncome = height - (day.income.toFloat() / maxValue) * height
+                    val yExpense = height - (day.expense.toFloat() / maxValue) * height
+
+                    if (index == 0) {
+                        incomePath.moveTo(x, yIncome)
+                        expensePath.moveTo(x, yExpense)
+                        incomeFillPath.moveTo(x, height)
+                        incomeFillPath.lineTo(x, yIncome)
+                        expenseFillPath.moveTo(x, height)
+                        expenseFillPath.lineTo(x, yExpense)
+                    } else {
+                        incomePath.lineTo(x, yIncome)
+                        expensePath.lineTo(x, yExpense)
+                        incomeFillPath.lineTo(x, yIncome)
+                        expenseFillPath.lineTo(x, yExpense)
+                    }
+
+                    if (index == sortedData.size - 1) {
+                        incomeFillPath.lineTo(x, height)
+                        incomeFillPath.close()
+                        expenseFillPath.lineTo(x, height)
+                        expenseFillPath.close()
+                    }
+
+                    // --- X-axis Labels ---
+                    val dateLabel = day.date.split("-").last()
+                    val textLayoutResult = textMeasurer.measure(dateLabel, labelStyle)
+                    drawText(
+                        textLayoutResult = textLayoutResult,
+                        topLeft = Offset(x - textLayoutResult.size.width / 2, height + 8.dp.toPx())
+                    )
+                }
+
+                // --- Draw Paths with Animation ---
+                clipRect(right = width * animationProgress.value) {
+                    if (sortedData.size > 1) {
+                        drawPath(
+                            path = expenseFillPath,
+                            brush = Brush.verticalGradient(
+                                colors = listOf(PinkExpense.copy(alpha = 0.2f), Color.Transparent)
+                            )
+                        )
+                        drawPath(
+                            path = expensePath,
+                            color = PinkExpense,
+                            style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round)
+                        )
+                        drawPath(
+                            path = incomeFillPath,
+                            brush = Brush.verticalGradient(
+                                colors = listOf(GreenIncome.copy(alpha = 0.2f), Color.Transparent)
+                            )
+                        )
+                        drawPath(
+                            path = incomePath,
+                            color = GreenIncome,
+                            style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round)
+                        )
+                    } else if (sortedData.size == 1) {
+                        val day = sortedData[0]
+                        val yIncome = height - (day.income.toFloat() / maxValue) * height
+                        val yExpense = height - (day.expense.toFloat() / maxValue) * height
+                        drawCircle(color = GreenIncome, radius = 4.dp.toPx(), center = Offset(0f, yIncome))
+                        drawCircle(color = PinkExpense, radius = 4.dp.toPx(), center = Offset(0f, yExpense))
+                    }
+                }
+            }
+        }
+    }
+}

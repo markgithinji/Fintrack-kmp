@@ -34,34 +34,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.summary.domain.model.DaySummary
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
 import com.fintrack.shared.feature.core.util.shortDayName
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.toLocalDate
-import kotlinx.datetime.until
-import network.chaintech.chartsLib.ui.linechart.model.IntersectionPoint
-import network.chaintech.cmpcharts.axis.AxisProperties
-import network.chaintech.cmpcharts.common.extensions.formatToSinglePrecision
-import network.chaintech.cmpcharts.common.model.Point
-import network.chaintech.cmpcharts.common.ui.GridLinesUtil
-import network.chaintech.cmpcharts.common.ui.SelectionHighlightPoint
-import network.chaintech.cmpcharts.common.ui.SelectionHighlightPopUp
-import network.chaintech.cmpcharts.common.ui.ShadowUnderLine
-import network.chaintech.cmpcharts.ui.linechart.LineChart
-import network.chaintech.cmpcharts.ui.linechart.model.Line
-import network.chaintech.cmpcharts.ui.linechart.model.LineChartProperties
-import network.chaintech.cmpcharts.ui.linechart.model.LinePlotData
-import network.chaintech.cmpcharts.ui.linechart.model.LineStyle
 
 @Composable
 fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
@@ -127,7 +108,6 @@ private fun OverviewLoadingState(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Show loading chart based on selected period
         when (selectedPeriod) {
             OverviewPeriod.Weekly -> LoadingBarChart()
             OverviewPeriod.Monthly -> LoadingLineChart()
@@ -206,11 +186,11 @@ private fun OverviewSuccessState(
                     val dayName = LocalDate.parse(it.date).shortDayName()
                     dayName to (it.income to it.expense)
                 }
-                BarChart(data = weeklyData, modifier = Modifier.padding(16.dp))
+                BarChart(data = weeklyData, modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp))
             }
 
             OverviewPeriod.Monthly -> {
-                MonthlyLineChartDefault(monthly = overview.monthlyOverview)
+                CustomLineChart(data = overview.monthlyOverview, modifier = Modifier.padding(bottom = 16.dp))
             }
         }
     }
@@ -316,10 +296,8 @@ fun BarChart(
     data: List<Pair<String, Pair<Double, Double>>>,
     modifier: Modifier = Modifier
 ) {
-    val totalBarHeight = 200.dp
-    val barWidth = 24.dp
-
-    // Ensure all days are present
+    val totalBarHeight = 180.dp
+    val barWidth = 16.dp
     val weekDays = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
     val fullData = weekDays.map { day ->
         data.find { it.first == day } ?: (day to (0.0 to 0.0))
@@ -335,10 +313,10 @@ fun BarChart(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Bottom
     ) {
-        // Y-axis
+        // Y-axis labels
         Column(
             modifier = Modifier
-                .height(totalBarHeight) // same height as bars
+                .height(totalBarHeight)
                 .padding(end = 8.dp),
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.End
@@ -361,7 +339,7 @@ fun BarChart(
 
         // Bars
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.weight(1f),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.Bottom
         ) {
@@ -377,30 +355,29 @@ fun BarChart(
                         modifier = Modifier
                             .width(barWidth)
                             .height(totalBarHeight)
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
                     ) {
                         // Income bar
                         Box(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
-                                .fillMaxHeight(incomeHeightFraction)
+                                .fillMaxHeight(incomeHeightFraction.coerceAtLeast(0.01f))
                                 .width(barWidth)
-                                .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                                .background(GreenIncome)
+                                .background(GreenIncome, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp))
                         )
 
                         // Expense stacked on income
                         Box(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
-                                .fillMaxHeight(expenseHeightFraction)
+                                .fillMaxHeight(expenseHeightFraction.coerceAtLeast(0.01f))
                                 .width(barWidth)
                                 .offset(y = -totalBarHeight * incomeHeightFraction)
-                                .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                                .background(PinkExpense)
+                                .background(PinkExpense, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = label,
                         style = MaterialTheme.typography.labelSmall,
@@ -410,119 +387,6 @@ fun BarChart(
             }
         }
     }
-}
-
-@Composable
-fun MonthlyLineChartDefault(
-    monthly: List<DaySummary>,
-    modifier: Modifier = Modifier
-) {
-    if (monthly.isEmpty()) return
-
-    val textMeasurer = rememberTextMeasurer()
-    val steps = 5
-
-    // --- Ensure correct order by full date ---
-    val sorted = monthly.sortedBy { LocalDate.parse(it.date) }
-    val baseDate = LocalDate.parse(sorted.first().date)
-
-    // Convert to "days since start" → x coordinate
-    val incomePoints = sorted.map { day ->
-        val date = LocalDate.parse(day.date)
-        val x = baseDate.until(date, DateTimeUnit.DAY).toFloat()
-        Point(x = x, y = day.income.toFloat())
-    }
-    val expensePoints = sorted.map { day ->
-        val date = LocalDate.parse(day.date)
-        val x = baseDate.until(date, DateTimeUnit.DAY).toFloat()
-        Point(x = x, y = day.expense.toFloat())
-    }
-
-    val allPoints = incomePoints + expensePoints
-
-    val xAxisProperties = AxisProperties(
-        font = FontFamily.SansSerif,
-        stepSize = 30.dp,
-        topPadding = 105.dp,
-        labelColor = Color.Black,
-        lineColor = Color.Black,
-        stepCount = sorted.size - 1,
-        labelFormatter = { i ->
-            val safeIndex = i.coerceAtMost(sorted.lastIndex)
-            // just day-of-month for label
-            sorted[safeIndex].date.split("-").last()
-        },
-        labelPadding = 15.dp
-    )
-
-    val yAxisProperties = AxisProperties(
-        font = FontFamily.SansSerif,
-        stepCount = steps,
-        labelColor = Color.Black,
-        lineColor = Color.Black,
-        labelPadding = 20.dp,
-        labelFormatter = { i ->
-            val yMin = allPoints.minOf { it.y }
-            val yMax = allPoints.maxOf { it.y }
-            val yScale = (yMax - yMin) / steps
-            val value = ((i * yScale) + yMin)
-
-            if (value >= 1000f) {
-                "${(value / 1000f).formatToSinglePrecision()}k"
-            } else {
-                value.formatToSinglePrecision()
-            }
-        }
-    )
-
-    val lineChartProperties = LineChartProperties(
-        linePlotData = LinePlotData(
-            lines = listOf(
-                Line(
-                    dataPoints = incomePoints,
-                    lineStyle = LineStyle(
-                        color = GreenIncome,
-                        width = 3f
-                    ),
-                    intersectionPoint = IntersectionPoint(color = GreenIncome),
-                    selectionHighlightPoint = SelectionHighlightPoint(color = GreenIncome),
-                    shadowUnderLine = ShadowUnderLine(GreenIncome.copy(alpha = 0.2f)),
-                    selectionHighlightPopUp = SelectionHighlightPopUp(
-                        textMeasurer = textMeasurer,
-                        backgroundColor = GreenIncome,
-                        labelColor = Color.White,
-                        labelTypeface = FontWeight.Bold
-                    )
-                ),
-                Line(
-                    dataPoints = expensePoints,
-                    lineStyle = LineStyle(
-                        color = PinkExpense,
-                        width = 3f
-                    ),
-                    intersectionPoint = IntersectionPoint(color = PinkExpense),
-                    selectionHighlightPoint = SelectionHighlightPoint(color = PinkExpense),
-                    shadowUnderLine = ShadowUnderLine(PinkExpense.copy(alpha = 0.2f)),
-                    selectionHighlightPopUp = SelectionHighlightPopUp(
-                        textMeasurer = textMeasurer,
-                        backgroundColor = PinkExpense,
-                        labelColor = Color.White,
-                        labelTypeface = FontWeight.Bold
-                    )
-                )
-            )
-        ),
-        xAxisProperties = xAxisProperties,
-        yAxisProperties = yAxisProperties,
-        gridLines = GridLinesUtil(color = Color.LightGray)
-    )
-
-    LineChart(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(300.dp),
-        lineChartProperties = lineChartProperties
-    )
 }
 
 enum class OverviewPeriod {
