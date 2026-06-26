@@ -278,7 +278,8 @@ fun AppNavigation(
                         paddingValues = paddingValues,
                         animatedVisibilityScope = this,
                         onSave = { navController.popBackStack() },
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        onUpdateAppBarState = onUpdateAppBarState
                     )
                 }
 

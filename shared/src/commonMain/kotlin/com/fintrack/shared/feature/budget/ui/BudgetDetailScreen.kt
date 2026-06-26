@@ -121,12 +121,14 @@ import com.fintrack.shared.feature.core.ui.FinanceNumpad
 import com.fintrack.shared.feature.core.ui.ThousandsSeparatorTransformation
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
+import com.fintrack.shared.feature.core.ui.KMPBackHandler
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
+import com.fintrack.shared.feature.navigation.AppBarState
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.transaction.ui.addtransaction.CategoryChip
 import com.fintrack.shared.feature.transaction.ui.addtransaction.TypeToggleButton
@@ -153,7 +155,8 @@ fun BudgetDetailScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onSave: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onUpdateAppBarState: (AppBarState) -> Unit
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
         ?: throw IllegalStateException("No SharedTransitionScope found")
@@ -168,6 +171,10 @@ fun BudgetDetailScreen(
     var showNumpad by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
+    KMPBackHandler(enabled = showNumpad) {
+        showNumpad = false
+    }
+
     val initialFormState = remember(budgetId, selectedBudgetResult, accountsResult) {
         computeInitialFormState(budgetId, selectedBudgetResult, accountsResult)
     }
@@ -179,6 +186,22 @@ fun BudgetDetailScreen(
     LaunchedEffect(budgetId) {
         viewModel.resetDeleteResult()
         budgetId?.let { viewModel.loadBudgetById(it) }
+    }
+
+    LaunchedEffect(showNumpad, budgetId) {
+        onUpdateAppBarState(
+            AppBarState(
+                title = if (budgetId == null) "Add Budget" else "Edit Budget",
+                showBackButton = true,
+                onBack = {
+                    if (showNumpad) {
+                        showNumpad = false
+                    } else {
+                        onBack()
+                    }
+                }
+            )
+        )
     }
 
     LaunchedEffect(saveState) {
@@ -394,6 +417,16 @@ fun BudgetAmountHeader(
 ) {
     val focusRequester = remember { FocusRequester() }
 
+    val amountFontSize by animateDpAsState(
+        targetValue = when {
+            amount.length >= 10 -> 32.dp
+            amount.length >= 8 -> 38.dp
+            amount.length >= 6 -> 44.dp
+            else -> 48.dp
+        }.value.dp,
+        animationSpec = spring(stiffness = Spring.StiffnessLow)
+    )
+
     Surface(
         color = themeColor,
         modifier = modifier
@@ -439,70 +472,98 @@ fun BudgetAmountHeader(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
+            // Increased touch target area for the amount
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .animateContentSize()
-            ) {
-                Text(
-                    text = LocalCurrency.current.symbol,
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 12.dp, end = 8.dp)
-                )
-
-                BasicTextField(
-                    value = amount,
-                    onValueChange = { /* Controlled by Numpad */ },
-                    readOnly = true,
-                    textStyle = TextStyle(
-                        color = Color.Transparent,
-                        fontSize = 48.sp,
-                        fontWeight = FontWeight.Black,
-                        textAlign = TextAlign.Start,
-                        letterSpacing = 0.sp
+                    .height(80.dp)
+                    .clickable(
+                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                        indication = null,
+                        onClick = { 
+                            onToggleNumpad(true)
+                            focusRequester.requestFocus() 
+                        }
                     ),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    visualTransformation = ThousandsSeparatorTransformation(),
-                    cursorBrush = SolidColor(Color.White),
-                    singleLine = true,
-                    modifier = Modifier
-                        .focusRequester(focusRequester)
-                        .width(IntrinsicSize.Min)
-                        .widthIn(min = 16.dp),
-                    decorationBox = { innerTextField ->
-                        Box(contentAlignment = Alignment.CenterStart) {
-                            if (amount.isEmpty()) {
-                                Text(
-                                    "0",
-                                    color = Color.White.copy(alpha = 0.4f),
-                                    fontSize = 48.sp,
-                                    fontWeight = FontWeight.Black
-                                )
-                            } else {
-                                val formattedAmount = amount.reversed()
-                                    .chunked(3)
-                                    .joinToString(",")
-                                    .reversed()
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.animateContentSize()
+                ) {
+                    Text(
+                        text = LocalCurrency.current.symbol,
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = (amountFontSize.value * 0.5f).sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = (amountFontSize.value * 0.2f).dp, end = 8.dp)
+                    )
 
-                                AnimatedNumber(
-                                    value = formattedAmount,
-                                    style = TextStyle(
-                                        color = Color.White,
-                                        fontSize = 48.sp,
-                                        fontWeight = FontWeight.Black,
-                                        textAlign = TextAlign.Start,
-                                        letterSpacing = 0.sp
+                    BasicTextField(
+                        value = amount,
+                        onValueChange = { /* Controlled by Numpad */ },
+                        readOnly = true,
+                        textStyle = TextStyle(
+                            color = Color.Transparent,
+                            fontSize = amountFontSize.value.sp,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Start,
+                            letterSpacing = 0.sp
+                        ),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        visualTransformation = ThousandsSeparatorTransformation(),
+                        cursorBrush = SolidColor(Color.White),
+                        singleLine = true,
+                        modifier = Modifier
+                            .focusRequester(focusRequester)
+                            .width(IntrinsicSize.Min)
+                            .widthIn(min = 16.dp),
+                        decorationBox = { innerTextField ->
+                            Box(contentAlignment = Alignment.CenterStart) {
+                                if (amount.isEmpty()) {
+                                    Text(
+                                        "0",
+                                        color = Color.White.copy(alpha = 0.4f),
+                                        fontSize = amountFontSize.value.sp,
+                                        fontWeight = FontWeight.Black
                                     )
+                                } else {
+                                    val formattedAmount = amount.reversed()
+                                        .chunked(3)
+                                        .joinToString(",")
+                                        .reversed()
+
+                                    AnimatedNumber(
+                                        value = formattedAmount,
+                                        style = TextStyle(
+                                            color = Color.White,
+                                            fontSize = amountFontSize.value.sp,
+                                            fontWeight = FontWeight.Black,
+                                            textAlign = TextAlign.Start,
+                                            letterSpacing = 0.sp
+                                        )
+                                    )
+                                }
+                                innerTextField()
+                                
+                                // Overlay to capture clicks specifically on the amount text area
+                                Box(
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .clickable(
+                                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                            indication = null,
+                                            onClick = { 
+                                                onToggleNumpad(true)
+                                                focusRequester.requestFocus() 
+                                            }
+                                        )
                                 )
                             }
-                            innerTextField()
                         }
-                    }
-                )
+                    )
+                }
             }
         }
     }
@@ -765,7 +826,7 @@ fun SaveBudgetButton(
             disabledContainerColor = if (isSuccess) themeColor else themeColor.copy(alpha = 0.5f),
             disabledContentColor = if (isSuccess) Color.White else Color.White.copy(alpha = 0.5f)
         ),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
         enabled = !isInProgress && !isSuccess && isFormValid
     ) {
         when (saveState) {

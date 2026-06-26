@@ -257,7 +257,7 @@ fun SexyAddBudgetButton(
             .fillMaxWidth()
             .height(72.dp)
             .shadow(
-                elevation = if (isPressed) 4.dp else 12.dp,
+                elevation = if (isPressed) 2.dp else 6.dp,
                 shape = RoundedCornerShape(20.dp),
                 clip = false
             )
@@ -567,7 +567,7 @@ fun BudgetEmptyState(
                 containerColor = MaterialTheme.colorScheme.secondary,
                 contentColor = Color.Black
             ),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
         ) {
             Icon(Icons.Default.Add, null)
             Spacer(Modifier.width(8.dp))
