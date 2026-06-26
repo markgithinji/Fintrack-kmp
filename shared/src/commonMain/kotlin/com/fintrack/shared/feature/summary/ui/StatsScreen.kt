@@ -44,7 +44,8 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun StatisticsScreen(
-    viewModel: StatisticsViewModel = koinViewModel()
+    viewModel: StatisticsViewModel = koinViewModel(),
+    paddingValues: PaddingValues = PaddingValues(0.dp)
 ) {
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
     val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle()
@@ -64,26 +65,31 @@ fun StatisticsScreen(
         viewModel.loadHighlights()
     }
 
-    Scaffold(
-        topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(top = 16.dp, bottom = 8.dp)
-            ) {
-                TabSwitcher(
-                    selectedTab = selectedTab,
-                    onTabSelected = { viewModel.onTabChanged(it) }
-                )
-            }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(top = paddingValues.calculateTopPadding())
+    ) {
+        // Top Tab Switcher
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, bottom = 8.dp)
+        ) {
+            TabSwitcher(
+                selectedTab = selectedTab,
+                onTabSelected = { viewModel.onTabChanged(it) }
+            )
         }
-    ) { paddingValues ->
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(bottom = 32.dp),
+                .weight(1f),
+            contentPadding = PaddingValues(
+                bottom = paddingValues.calculateBottomPadding() + 32.dp
+            ),
             state = listState,
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {

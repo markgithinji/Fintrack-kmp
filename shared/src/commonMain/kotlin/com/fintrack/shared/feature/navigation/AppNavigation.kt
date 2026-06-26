@@ -13,6 +13,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -59,12 +60,12 @@ fun AppNavigation(
         if (isAuthenticated) Screen.Home.route else Screen.Login.route 
     }
 
-    SharedTransitionLayout {
+    SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
         CompositionLocalProvider(LocalSharedTransitionScope provides this) {
             NavHost(
                 navController = navController,
                 startDestination = startDestination,
-                modifier = Modifier.padding(paddingValues),
+                modifier = Modifier.fillMaxSize(),
                 enterTransition = {
                     val isToAuth = targetState.destination.route == Screen.Login.route || 
                                  targetState.destination.route == Screen.Register.route
@@ -126,6 +127,7 @@ fun AppNavigation(
                         onUpdateAppBarState(AppBarState(title = "Home"))
                     }
                     HomeScreen(
+                        paddingValues = paddingValues,
                         animatedVisibilityScope = this,
                         onEditTransaction = { transactionId ->
                             navController.navigate(Screen.AddTransaction.createRoute(transactionId))
@@ -173,7 +175,7 @@ fun AppNavigation(
                     LaunchedEffect(Unit) {
                         onUpdateAppBarState(AppBarState(title = "Statistics"))
                     }
-                    StatisticsScreen()
+                    StatisticsScreen(paddingValues = paddingValues)
                 }
 
                 composable(Screen.Budget.route) {
@@ -181,6 +183,7 @@ fun AppNavigation(
                         onUpdateAppBarState(AppBarState(title = "Budget"))
                     }
                     BudgetScreen(
+                        paddingValues = paddingValues,
                         animatedVisibilityScope = this,
                         onAddBudget = {
                             navController.navigate(Screen.BudgetDetail.createRoute(null))
@@ -200,6 +203,7 @@ fun AppNavigation(
                         onUpdateAppBarState(AppBarState(title = "Profile"))
                     }
                     ProfileScreen(
+                        paddingValues = paddingValues,
                         onNavigateToAccounts = { navController.navigate(Screen.Accounts.route) },
                         onNavigateToCategories = { navController.navigate(Screen.Categories.route) },
                         onNavigateToSettings = { navController.navigate(Screen.Settings.route) },

@@ -17,6 +17,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -79,6 +80,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun BudgetScreen(
     viewModel: BudgetViewModel = koinViewModel(),
+    paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onAddBudget: () -> Unit = {},
     onBudgetClick: (BudgetWithStatus) -> Unit
@@ -93,10 +95,14 @@ fun BudgetScreen(
         viewModel.reloadBudgets(force = false)
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
         when (val currentBudgets = budgets) {
             is Result.Loading -> {
-                BudgetScreenLoadingState()
+                BudgetScreenLoadingState(paddingValues)
             }
 
             is Result.Error -> {
@@ -108,7 +114,13 @@ fun BudgetScreen(
 
             is Result.Success -> {
                 val data = currentBudgets.data
-                LazyColumn(state = listState) {
+                LazyColumn(
+                    state = listState,
+                    contentPadding = PaddingValues(
+                        top = paddingValues.calculateTopPadding(),
+                        bottom = paddingValues.calculateBottomPadding() + 80.dp
+                    )
+                ) {
                     if (data.isNotEmpty()) {
                         item {
                             with(sharedTransitionScope) {
@@ -472,9 +484,13 @@ fun BudgetErrorRetryState(
 }
 
 @Composable
-fun BudgetScreenLoadingState() {
+fun BudgetScreenLoadingState(paddingValues: PaddingValues = PaddingValues(0.dp)) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            top = paddingValues.calculateTopPadding(),
+            bottom = paddingValues.calculateBottomPadding()
+        )
     ) {
         item {
             Row(
