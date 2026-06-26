@@ -18,6 +18,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -36,6 +38,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.Result
@@ -65,33 +68,40 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
     var selectedPeriod by remember { mutableStateOf(OverviewPeriod.Weekly) }
     var expanded by remember { mutableStateOf(false) }
 
-    when (overviewResult) {
-        is Result.Loading -> {
-            OverviewLoadingState(
-                selectedPeriod = selectedPeriod,
-                expanded = expanded,
-                onExpandedChange = { expanded = it },
-                onPeriodSelected = { period -> selectedPeriod = period }
-            )
-        }
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        when (overviewResult) {
+            is Result.Loading -> {
+                OverviewLoadingState(
+                    selectedPeriod = selectedPeriod,
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it },
+                    onPeriodSelected = { period -> selectedPeriod = period }
+                )
+            }
 
-        is Result.Error -> {
-            OverviewErrorState(
-                selectedPeriod = selectedPeriod,
-                expanded = expanded,
-                onExpandedChange = { expanded = it },
-                onPeriodSelected = { period -> selectedPeriod = period }
-            )
-        }
+            is Result.Error -> {
+                OverviewErrorState(
+                    selectedPeriod = selectedPeriod,
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it },
+                    onPeriodSelected = { period -> selectedPeriod = period }
+                )
+            }
 
-        is Result.Success -> {
-            OverviewSuccessState(
-                overview = overviewResult.data,
-                selectedPeriod = selectedPeriod,
-                expanded = expanded,
-                onExpandedChange = { expanded = it },
-                onPeriodSelected = { period -> selectedPeriod = period }
-            )
+            is Result.Success -> {
+                OverviewSuccessState(
+                    overview = overviewResult.data,
+                    selectedPeriod = selectedPeriod,
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it },
+                    onPeriodSelected = { period -> selectedPeriod = period }
+                )
+            }
         }
     }
 }
@@ -106,8 +116,7 @@ private fun OverviewLoadingState(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surface)
+            .background(Color.Transparent)
     ) {
         OverviewHeader(
             selectedPeriod = selectedPeriod,
@@ -136,8 +145,7 @@ private fun OverviewErrorState(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surface)
+            .background(Color.Transparent)
     ) {
         OverviewHeader(
             selectedPeriod = selectedPeriod,
@@ -181,8 +189,7 @@ private fun OverviewSuccessState(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surface)
+            .background(Color.Transparent)
     ) {
         OverviewHeader(
             selectedPeriod = selectedPeriod,
@@ -227,7 +234,8 @@ private fun OverviewHeader(
             Text(
                 "Overview",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -249,13 +257,18 @@ private fun OverviewHeader(
 
         Box {
             Row(
-                modifier = Modifier.clickable { onExpandedChange(true) },
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .clickable { onExpandedChange(true) }
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     selectedPeriod.name,
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold
                 )
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,

@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -32,6 +33,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -42,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -86,12 +89,13 @@ fun CurrentBalanceCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(130.dp)
+                .height(140.dp) // Slightly taller to accommodate the new layout
         ) {
             LowerRightWavesBackground(modifier = Modifier.matchParentSize())
 
@@ -144,13 +148,6 @@ private fun CurrentBalanceLoadingState() {
                         .clip(RoundedCornerShape(4.dp))
                 )
             }
-
-            AnimatedShimmerBox(
-                modifier = Modifier
-                    .width(120.dp)
-                    .height(26.dp)
-                    .clip(RoundedCornerShape(14.dp))
-            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -225,16 +222,12 @@ private fun CurrentBalanceSuccessState(
 ) {
     val balance = account.balance ?: 0.0
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Column(modifier = Modifier.align(Alignment.TopStart)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = AccountIcon.fromAccountName(account.name).icon,
@@ -246,30 +239,13 @@ private fun CurrentBalanceSuccessState(
                 Text(
                     account.name,
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontWeight = FontWeight.Bold
                 )
             }
-
-            Button(
-                onClick = onChangeAccountClicked,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                ),
-                shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.height(26.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp)
-            ) {
-                Text(
-                    text = "Change Account",
-                    style = MaterialTheme.typography.labelMedium
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Column {
+            
+            Spacer(modifier = Modifier.height(20.dp))
+            
             Text(
                 text = "Current Balance",
                 style = MaterialTheme.typography.bodyMedium,
@@ -279,8 +255,35 @@ private fun CurrentBalanceSuccessState(
             Text(
                 text = balance.toCurrencyString(),
                 style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onPrimary
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontWeight = FontWeight.Black
             )
+        }
+
+        Surface(
+            onClick = onChangeAccountClicked,
+            shape = RoundedCornerShape(12.dp),
+            color = Color.White.copy(alpha = 0.2f),
+            modifier = Modifier.align(Alignment.BottomEnd)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.SwapHoriz,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = "Switch",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
@@ -296,7 +299,7 @@ fun AccountSelectionDialog(
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(12.dp),
+            elevation = CardDefaults.cardElevation(0.dp),
             modifier = Modifier
                 .fillMaxWidth(0.85f)
                 .wrapContentHeight()
@@ -305,7 +308,8 @@ fun AccountSelectionDialog(
                 Text(
                     "Select Account",
                     style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Divider(
@@ -356,7 +360,8 @@ fun AccountSelectionDialog(
                 ) {
                     Text(
                         "Close",
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -501,7 +506,8 @@ private fun AccountSelectionListState(
                     Text(
                         acc.name,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold
                     )
                     Text(
                         (acc.balance ?: 0.0).toCurrencyString(),
