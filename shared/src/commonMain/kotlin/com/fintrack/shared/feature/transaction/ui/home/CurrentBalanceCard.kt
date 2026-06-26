@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.transaction.ui.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -95,7 +96,7 @@ fun CurrentBalanceCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(140.dp) // Slightly taller to accommodate the new layout
+                .height(120.dp)
         ) {
             LowerRightWavesBackground(modifier = Modifier.matchParentSize())
 
@@ -225,65 +226,71 @@ private fun CurrentBalanceSuccessState(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
+            .padding(top = 12.dp, start = 20.dp, end = 20.dp, bottom = 12.dp)
     ) {
-        Column(modifier = Modifier.align(Alignment.TopStart)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = AccountIcon.fromAccountName(account.name).icon,
-                    contentDescription = "Bank",
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    account.name,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Bold
-                )
+        Column(modifier = Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = AccountIcon.fromAccountName(account.name).icon,
+                        contentDescription = "Bank",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        account.name,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Surface(
+                    onClick = onChangeAccountClicked,
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White.copy(alpha = 0.15f),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SwapHoriz,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "Switch",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
             
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             
             Text(
                 text = "Current Balance",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = balance.toCurrencyString(),
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontWeight = FontWeight.Black
             )
-        }
-
-        Surface(
-            onClick = onChangeAccountClicked,
-            shape = RoundedCornerShape(12.dp),
-            color = Color.White.copy(alpha = 0.2f),
-            modifier = Modifier.align(Alignment.BottomEnd)
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.SwapHoriz,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    text = "Switch",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-            }
         }
     }
 }
