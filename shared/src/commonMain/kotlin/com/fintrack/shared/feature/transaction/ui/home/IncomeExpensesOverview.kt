@@ -1,40 +1,31 @@
 package com.fintrack.shared.feature.transaction.ui.home
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
@@ -42,12 +33,12 @@ import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
 import com.fintrack.shared.feature.core.util.shortDayName
+import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import kotlinx.datetime.LocalDate
 
 @Composable
 fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
     var selectedPeriod by remember { mutableStateOf(OverviewPeriod.Weekly) }
-    var expanded by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -59,8 +50,6 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
             is Result.Loading -> {
                 OverviewLoadingState(
                     selectedPeriod = selectedPeriod,
-                    expanded = expanded,
-                    onExpandedChange = { expanded = it },
                     onPeriodSelected = { period -> selectedPeriod = period }
                 )
             }
@@ -68,8 +57,6 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
             is Result.Error -> {
                 OverviewErrorState(
                     selectedPeriod = selectedPeriod,
-                    expanded = expanded,
-                    onExpandedChange = { expanded = it },
                     onPeriodSelected = { period -> selectedPeriod = period }
                 )
             }
@@ -78,8 +65,6 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
                 OverviewSuccessState(
                     overview = overviewResult.data,
                     selectedPeriod = selectedPeriod,
-                    expanded = expanded,
-                    onExpandedChange = { expanded = it },
                     onPeriodSelected = { period -> selectedPeriod = period }
                 )
             }
@@ -90,8 +75,6 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
 @Composable
 private fun OverviewLoadingState(
     selectedPeriod: OverviewPeriod,
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
     onPeriodSelected: (OverviewPeriod) -> Unit
 ) {
     Column(
@@ -101,8 +84,6 @@ private fun OverviewLoadingState(
     ) {
         OverviewHeader(
             selectedPeriod = selectedPeriod,
-            expanded = expanded,
-            onExpandedChange = onExpandedChange,
             onPeriodSelected = onPeriodSelected
         )
 
@@ -118,8 +99,6 @@ private fun OverviewLoadingState(
 @Composable
 private fun OverviewErrorState(
     selectedPeriod: OverviewPeriod,
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
     onPeriodSelected: (OverviewPeriod) -> Unit
 ) {
     Column(
@@ -129,8 +108,6 @@ private fun OverviewErrorState(
     ) {
         OverviewHeader(
             selectedPeriod = selectedPeriod,
-            expanded = expanded,
-            onExpandedChange = onExpandedChange,
             onPeriodSelected = onPeriodSelected
         )
 
@@ -162,8 +139,6 @@ private fun OverviewErrorState(
 private fun OverviewSuccessState(
     overview: OverviewSummary,
     selectedPeriod: OverviewPeriod,
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
     onPeriodSelected: (OverviewPeriod) -> Unit
 ) {
     Column(
@@ -173,8 +148,6 @@ private fun OverviewSuccessState(
     ) {
         OverviewHeader(
             selectedPeriod = selectedPeriod,
-            expanded = expanded,
-            onExpandedChange = onExpandedChange,
             onPeriodSelected = onPeriodSelected
         )
 
@@ -199,14 +172,12 @@ private fun OverviewSuccessState(
 @Composable
 private fun OverviewHeader(
     selectedPeriod: OverviewPeriod,
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
     onPeriodSelected: (OverviewPeriod) -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top
     ) {
@@ -219,73 +190,50 @@ private fun OverviewHeader(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(10.dp).background(GreenIncome))
+                Box(Modifier.size(8.dp).background(GreenIncome, CircleShape))
                 Text(
                     " Income",
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(Modifier.width(8.dp))
-                Box(Modifier.size(10.dp).background(PinkExpense))
+                Spacer(Modifier.width(12.dp))
+                Box(Modifier.size(8.dp).background(PinkExpense, CircleShape))
                 Text(
                     " Expenses",
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
-        Box {
+        // Pill-style Period Switcher (App Consistent)
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+        ) {
             Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                    .clickable { onExpandedChange(true) }
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text(
-                    selectedPeriod.name,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Bold
-                )
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Select period",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { onExpandedChange(false) }
-            ) {
-                DropdownMenuItem(
-                    text = {
+                OverviewPeriod.entries.forEach { period ->
+                    val isSelected = period == selectedPeriod
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                            .clickable { onPeriodSelected(period) }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Text(
-                            "Weekly",
-                            style = MaterialTheme.typography.bodyMedium
+                            text = period.name,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    },
-                    onClick = {
-                        onPeriodSelected(OverviewPeriod.Weekly)
-                        onExpandedChange(false)
                     }
-                )
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            "Monthly",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    },
-                    onClick = {
-                        onPeriodSelected(OverviewPeriod.Monthly)
-                        onExpandedChange(false)
-                    }
-                )
+                }
             }
         }
     }
@@ -298,92 +246,177 @@ fun BarChart(
 ) {
     val totalBarHeight = 180.dp
     val barWidth = 16.dp
+    val density = LocalDensity.current
     val weekDays = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
     val fullData = weekDays.map { day ->
         data.find { it.first == day } ?: (day to (0.0 to 0.0))
     }
 
     val maxTotal = fullData.maxOfOrNull { it.second.first + it.second.second } ?: 1.0
+    val totalBarHeightPx = with(density) { totalBarHeight.toPx() }
 
-    // number of Y-axis levels
-    val levels = 5
-    val step = maxTotal / levels
+    var selectedAmount by remember { mutableStateOf<Double?>(null) }
+    var selectedColor by remember { mutableStateOf<Color>(Color.Transparent) }
+    var touchOffset by remember { mutableStateOf(Offset.Zero) }
+    var barsWidth by remember { mutableStateOf(0f) }
 
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Bottom
-    ) {
-        // Y-axis labels
-        Column(
+    Column(modifier = modifier.fillMaxWidth()) {
+        Box(
             modifier = Modifier
-                .height(totalBarHeight)
-                .padding(end = 8.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.End
-        ) {
-            for (i in levels downTo 0) {
-                val value = step * i
-                val text = if (value >= 1000) {
-                    val kValue = (value / 100).toInt() / 10.0
-                    "${kValue}k"
-                } else {
-                    value.toInt().toString()
-                }
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { selectedAmount = null }
                 )
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Bottom
+            ) {
+                // Y-axis labels
+                Column(
+                    modifier = Modifier.width(40.dp).height(totalBarHeight),
+                    verticalArrangement = Arrangement.SpaceBetween,
+                    horizontalAlignment = Alignment.End
+                ) {
+                    val levels = 5
+                    val step = maxTotal / levels
+                    for (i in levels downTo 0) {
+                        val value = step * i
+                        val text = if (value >= 1000) "${(value / 1000).toInt()}k" else value.toInt().toString()
+                        Text(
+                            text = text,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(Modifier.width(8.dp))
+
+                // Interactive Bars Area
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(totalBarHeight)
+                        .onGloballyPositioned { barsWidth = it.size.width.toFloat() }
+                        .pointerInput(fullData, maxTotal) {
+                            detectTapGestures { offset ->
+                                if (barsWidth <= 0) return@detectTapGestures
+                                
+                                val barAreaWidth = barsWidth / 7f
+                                val index = (offset.x / barAreaWidth).toInt().coerceIn(0, 6)
+                                val values = fullData[index].second
+                                
+                                val incomeH = (values.first / maxTotal).toFloat() * totalBarHeightPx
+                                val expenseH = (values.second / maxTotal).toFloat() * totalBarHeightPx
+                                
+                                val incomeTop = totalBarHeightPx - incomeH
+                                val expenseTop = incomeTop - expenseH
+                                
+                                // Increased hit-test sensitivity: allows touching anywhere in the bar's column
+                                // instead of just the narrow 16.dp bar width.
+                                val isWithinBarX = true 
+
+                                if (isWithinBarX) {
+                                    if (offset.y in (expenseTop - 10.dp.toPx())..incomeTop) {
+                                        selectedAmount = values.second
+                                        selectedColor = PinkExpense
+                                        touchOffset = offset
+                                    } else if (offset.y in incomeTop..(totalBarHeightPx + 10.dp.toPx())) {
+                                        selectedAmount = values.first
+                                        selectedColor = GreenIncome
+                                        touchOffset = offset
+                                    } else {
+                                        selectedAmount = null
+                                    }
+                                }
+                            }
+                        }
+                ) {
+                    // Visual Bars
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        fullData.forEach { (label, values) ->
+                            val incomeHeightFraction = (values.first / maxTotal).toFloat()
+                            val expenseHeightFraction = (values.second / maxTotal).toFloat()
+
+                            Box(
+                                modifier = Modifier
+                                    .width(barWidth)
+                                    .height(totalBarHeight)
+                                    .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                            ) {
+                                // Income bar
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomCenter)
+                                        .fillMaxHeight(incomeHeightFraction.coerceAtLeast(0.01f))
+                                        .width(barWidth)
+                                        .background(GreenIncome, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp))
+                                )
+
+                                // Expense stacked on income
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomCenter)
+                                        .fillMaxHeight(expenseHeightFraction.coerceAtLeast(0.01f))
+                                        .width(barWidth)
+                                        .offset(y = -totalBarHeight * incomeHeightFraction)
+                                        .background(PinkExpense, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                                )
+                            }
+                        }
+                    }
+
+                    // Popup Overlay (Floating Layer - Absolutely positioned within Chart Area)
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = selectedAmount != null,
+                        enter = fadeIn() + scaleIn(),
+                        exit = fadeOut() + scaleOut(),
+                        modifier = Modifier.offset {
+                            IntOffset(
+                                x = (touchOffset.x - 40.dp.toPx()).toInt(),
+                                y = (touchOffset.y - 45.dp.toPx()).toInt()
+                            )
+                        }
+                    ) {
+                        Surface(
+                            color = selectedColor,
+                            shape = RoundedCornerShape(8.dp),
+                            shadowElevation = 4.dp
+                        ) {
+                            Text(
+                                text = selectedAmount?.toCurrencyString() ?: "",
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
             }
         }
 
-        // Bars
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Day labels aligned to bars
         Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.Bottom
+            modifier = Modifier.fillMaxWidth().padding(start = 48.dp), // Match chart area start offset
+            horizontalArrangement = Arrangement.SpaceAround
         ) {
-            fullData.forEach { (label, values) ->
-                val incomeHeightFraction = (values.first / maxTotal).toFloat()
-                val expenseHeightFraction = (values.second / maxTotal).toFloat()
-
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Bottom
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .width(barWidth)
-                            .height(totalBarHeight)
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                    ) {
-                        // Income bar
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .fillMaxHeight(incomeHeightFraction.coerceAtLeast(0.01f))
-                                .width(barWidth)
-                                .background(GreenIncome, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp))
-                        )
-
-                        // Expense stacked on income
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .fillMaxHeight(expenseHeightFraction.coerceAtLeast(0.01f))
-                                .width(barWidth)
-                                .offset(y = -totalBarHeight * incomeHeightFraction)
-                                .background(PinkExpense, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            weekDays.forEach { day ->
+                Text(
+                    text = day,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
