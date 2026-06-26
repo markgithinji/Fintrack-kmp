@@ -23,7 +23,7 @@ fun LoadingBarChart() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp)
+            .height(240.dp)
             .padding(16.dp)
     ) {
         // Y-axis placeholder
@@ -80,7 +80,7 @@ fun LoadingLineChart() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(300.dp)
+            .height(240.dp)
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {

@@ -89,9 +89,16 @@ private fun OverviewLoadingState(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        when (selectedPeriod) {
-            OverviewPeriod.Weekly -> LoadingBarChart()
-            OverviewPeriod.Monthly -> LoadingLineChart()
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(240.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            when (selectedPeriod) {
+                OverviewPeriod.Weekly -> LoadingBarChart()
+                OverviewPeriod.Monthly -> LoadingLineChart()
+            }
         }
     }
 }
@@ -114,7 +121,7 @@ private fun OverviewErrorState(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(150.dp),
+                .height(240.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -153,17 +160,33 @@ private fun OverviewSuccessState(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        when (selectedPeriod) {
-            OverviewPeriod.Weekly -> {
-                val weeklyData = overview.weeklyOverview.map {
-                    val dayName = LocalDate.parse(it.date).shortDayName()
-                    dayName to (it.income to it.expense)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(240.dp)
+        ) {
+            when (selectedPeriod) {
+                OverviewPeriod.Weekly -> {
+                    val weeklyData = overview.weeklyOverview.map {
+                        val dayName = LocalDate.parse(it.date).shortDayName()
+                        dayName to (it.income to it.expense)
+                    }
+                    BarChart(
+                        data = weeklyData,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .align(Alignment.Center)
+                    )
                 }
-                BarChart(data = weeklyData, modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp))
-            }
 
-            OverviewPeriod.Monthly -> {
-                CustomLineChart(data = overview.monthlyOverview, modifier = Modifier.padding(bottom = 16.dp))
+                OverviewPeriod.Monthly -> {
+                    CustomLineChart(
+                        data = overview.monthlyOverview,
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .align(Alignment.Center)
+                    )
+                }
             }
         }
     }
@@ -260,16 +283,17 @@ fun BarChart(
     var touchOffset by remember { mutableStateOf(Offset.Zero) }
     var barsWidth by remember { mutableStateOf(0f) }
 
-    Column(modifier = modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = { selectedAmount = null }
-                )
-        ) {
+    // Use a root container that is clickable to dismiss
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = { selectedAmount = null }
+            )
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Bottom
@@ -402,21 +426,21 @@ fun BarChart(
                     }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        // Day labels aligned to bars
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 48.dp), // Match chart area start offset
-            horizontalArrangement = Arrangement.SpaceAround
-        ) {
-            weekDays.forEach { day ->
-                Text(
-                    text = day,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            // Day labels aligned to bars
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(start = 48.dp), // Match chart area start offset
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                weekDays.forEach { day ->
+                    Text(
+                        text = day,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
