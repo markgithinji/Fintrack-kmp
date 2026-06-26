@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.transaction.ui.addtransaction
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
 import com.fintrack.shared.feature.settings.ui.LocalCurrency
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -74,6 +75,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -91,6 +94,7 @@ import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.ui.AccountSelectionSection
+import com.fintrack.shared.feature.core.ui.AnimatedNumber
 import com.fintrack.shared.feature.core.ui.ThousandsSeparatorTransformation
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
@@ -356,11 +360,18 @@ fun AmountHeader(
     paddingValues: PaddingValues = PaddingValues(0.dp),
     modifier: Modifier = Modifier
 ) {
+    val focusRequester = remember { FocusRequester() }
+
     Surface(
         color = themeColor,
         modifier = modifier
             .fillMaxWidth()
-            .height(200.dp + paddingValues.calculateTopPadding()),
+            .height(200.dp + paddingValues.calculateTopPadding())
+            .clickable(
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = null,
+                onClick = { focusRequester.requestFocus() }
+            ),
         shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -399,7 +410,7 @@ fun AmountHeader(
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .width(IntrinsicSize.Min)
+                        .animateContentSize()
                 ) {
                     Text(
                         text = LocalCurrency.current.symbol,
@@ -416,26 +427,44 @@ fun AmountHeader(
                             onAmountChange(filtered)
                         },
                         textStyle = TextStyle(
-                            color = Color.White,
+                            color = Color.Transparent,
                             fontSize = 48.sp,
                             fontWeight = FontWeight.Black,
-                            textAlign = TextAlign.Start
+                            textAlign = TextAlign.Start,
+                            letterSpacing = 0.sp
                         ),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         visualTransformation = ThousandsSeparatorTransformation(),
                         cursorBrush = SolidColor(Color.White),
                         singleLine = true,
                         modifier = Modifier
+                            .focusRequester(focusRequester)
                             .width(IntrinsicSize.Min)
-                            .widthIn(min = 32.dp),
+                            .widthIn(min = 16.dp),
                         decorationBox = { innerTextField ->
-                            Box {
+                            Box(contentAlignment = Alignment.CenterStart) {
                                 if (amount.isEmpty()) {
                                     Text(
                                         "0",
                                         color = Color.White.copy(alpha = 0.4f),
                                         fontSize = 48.sp,
                                         fontWeight = FontWeight.Black
+                                    )
+                                } else {
+                                    val formattedAmount = amount.reversed()
+                                        .chunked(3)
+                                        .joinToString(",")
+                                        .reversed()
+                                    
+                                    AnimatedNumber(
+                                        value = formattedAmount,
+                                        style = TextStyle(
+                                            color = Color.White,
+                                            fontSize = 48.sp,
+                                            fontWeight = FontWeight.Black,
+                                            textAlign = TextAlign.Start,
+                                            letterSpacing = 0.sp
+                                        )
                                     )
                                 }
                                 innerTextField()
