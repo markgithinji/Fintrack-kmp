@@ -1,12 +1,15 @@
 package com.fintrack.shared.feature.summary.ui
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,17 +21,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.compose.GreenIncome
+import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.TabType
 import org.koin.compose.viewmodel.koinViewModel
@@ -50,54 +59,142 @@ fun StatisticsScreen(
         getDefaultPeriod(availableWeeks, availableMonths, availableYears)
     }
 
-    // Load initial data
     LaunchedEffect(Unit) {
         viewModel.loadAvailablePeriods()
         viewModel.loadHighlights()
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 16.dp),
-        state = listState
-    ) {
-        item(key = "screenHeader") {
-            ScreenHeader(
-                selectedTab = selectedTab,
-                onTabSelected = { viewModel.onTabChanged(it) }
-            )
+    Scaffold(
+        topBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(top = 16.dp, bottom = 8.dp)
+            ) {
+                Text(
+                    text = "Statistics",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Black,
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                )
+                Spacer(Modifier.height(16.dp))
+                TabSwitcher(
+                    selectedTab = selectedTab,
+                    onTabSelected = { viewModel.onTabChanged(it) }
+                )
+            }
         }
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentPadding = PaddingValues(bottom = 32.dp),
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            item { Spacer(Modifier.height(8.dp)) }
 
-        item(key = "spacer1") { Spacer(Modifier.height(16.dp)) }
+            item(key = "spendingHighlights") {
+                SpendingHighlightsSection(
+                    tabType = selectedTab,
+                    highlightsResult = highlights,
+                    loadHighlights = { viewModel.loadHighlights() }
+                )
+            }
 
-        item(key = "spendingHighlights") {
-            SpendingHighlightsSection(
-                tabType = selectedTab,
-                highlightsResult = highlights,
-                loadHighlights = { viewModel.loadHighlights() }
-            )
-        }
-
-        item(key = "spacer2") { Spacer(Modifier.height(16.dp)) }
-
-        item(key = "categoryTotals") {
-            CategoryTotalsCardWithTabs(
-                tabType = selectedTab,
-                period = safePeriod,
-                distributionResult = distributionResult,
-                availableWeeks = availableWeeks,
-                availableMonths = availableMonths,
-                availableYears = availableYears,
-                onWeekSelected = { week -> viewModel.onPeriodChanged(Period.Week(week)) },
-                onMonthSelected = { month -> viewModel.onPeriodChanged(Period.Month(month)) },
-                onYearSelected = { year -> viewModel.onPeriodChanged(Period.Year(year)) },
-                onPeriodSelected = { period -> viewModel.onPeriodChanged(period) }
-            )
+            item(key = "categoryTotals") {
+                CategoryTotalsCardWithTabs(
+                    tabType = selectedTab,
+                    period = safePeriod,
+                    distributionResult = distributionResult,
+                    availableWeeks = availableWeeks,
+                    availableMonths = availableMonths,
+                    availableYears = availableYears,
+                    onWeekSelected = { week -> viewModel.onPeriodChanged(Period.Week(week)) },
+                    onMonthSelected = { month -> viewModel.onPeriodChanged(Period.Month(month)) },
+                    onYearSelected = { year -> viewModel.onPeriodChanged(Period.Year(year)) },
+                    onPeriodSelected = { period -> viewModel.onPeriodChanged(period) }
+                )
+            }
         }
     }
 }
 
-// Helper function to create a default period
+@Composable
+fun TabSwitcher(
+    selectedTab: TabType,
+    onTabSelected: (TabType) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .padding(horizontal = 20.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        TabButton(
+            text = "Expenses",
+            isSelected = selectedTab == TabType.Expense,
+            selectedColor = PinkExpense,
+            modifier = Modifier.weight(1f),
+            onClick = { onTabSelected(TabType.Expense) }
+        )
+        TabButton(
+            text = "Income",
+            isSelected = selectedTab == TabType.Income,
+            selectedColor = GreenIncome,
+            modifier = Modifier.weight(1f),
+            onClick = { onTabSelected(TabType.Income) }
+        )
+    }
+}
+
+@Composable
+fun TabButton(
+    text: String,
+    isSelected: Boolean,
+    selectedColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val scale by animateFloatAsState(
+        targetValue = if (isSelected) 1f else 0.98f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy)
+    )
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isSelected) selectedColor else Color.Transparent,
+        animationSpec = tween(300)
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = tween(300)
+    )
+
+    Box(
+        modifier = modifier
+            .height(44.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(RoundedCornerShape(16.dp))
+            .background(backgroundColor)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = contentColor,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            fontSize = 15.sp
+        )
+    }
+}
+
 private fun getDefaultPeriod(
     availableWeeks: List<String>,
     availableMonths: List<String>,
@@ -107,72 +204,6 @@ private fun getDefaultPeriod(
         availableWeeks.isNotEmpty() -> Period.Week(availableWeeks.first())
         availableMonths.isNotEmpty() -> Period.Month(availableMonths.first())
         availableYears.isNotEmpty() -> Period.Year(availableYears.first())
-        else -> Period.Week("2024-W01") // Fallback default
-    }
-}
-
-
-@Composable
-fun ScreenHeader(
-    selectedTab: TabType,
-    onTabSelected: (TabType) -> Unit
-) {
-    val tabs = listOf(TabType.Income, TabType.Expense)
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.SpaceAround
-    ) {
-        tabs.forEach { tab ->
-            TabItem(
-                tab = tab,
-                isSelected = tab == selectedTab,
-                onClick = { onTabSelected(tab) }
-            )
-        }
-    }
-}
-
-@Composable
-fun TabItem(
-    tab: TabType,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val backgroundColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-        animationSpec = tween(durationMillis = 200)
-    )
-    val textColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-        animationSpec = tween(durationMillis = 200)
-    )
-
-    val shape = RoundedCornerShape(16.dp)
-
-    Box(
-        modifier = Modifier
-            .clip(shape)
-            .then(
-                if (!isSelected) {
-                    Modifier.border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                        shape = shape
-                    )
-                } else Modifier
-            )
-            .background(backgroundColor)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 24.dp, vertical = 10.dp)
-    ) {
-        Text(
-            text = tab.displayName,
-            color = textColor,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold
-        )
+        else -> Period.Week("2024-W01")
     }
 }

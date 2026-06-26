@@ -4,7 +4,9 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,20 +17,29 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,6 +47,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
+import com.example.compose.PinkExpense
 import com.example.compose.SegmentColor2
 import com.example.compose.SegmentColor3
 import com.example.compose.SegmentColor4
@@ -56,25 +68,16 @@ fun SpendingHighlightsSection(
     loadHighlights: () -> Unit
 ) {
     val sectionTitle = when (tabType) {
-        TabType.Income -> "Income Highlights"
-        TabType.Expense -> "Spending Highlights"
-    }
-
-    val amountSuffix = when (tabType) {
-        TabType.Income -> "received"
-        TabType.Expense -> "spent"
-    }
-
-    val dailyLabel = when (tabType) {
-        TabType.Income -> "Daily Income"
-        TabType.Expense -> "Daily Spending"
+        TabType.Income -> "Income Overview"
+        TabType.Expense -> "Spending Overview"
     }
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Text(
             text = sectionTitle,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -84,20 +87,12 @@ fun SpendingHighlightsSection(
         ) { result ->
             when (result) {
                 is Result.Loading -> {
-                    // Show loading highlight cards
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             LoadingHighlightCard(modifier = Modifier.weight(1f))
                             LoadingHighlightCard(modifier = Modifier.weight(1f))
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             LoadingHighlightCard(modifier = Modifier.weight(1f))
                             LoadingHighlightCard(modifier = Modifier.weight(1f))
                         }
@@ -112,13 +107,7 @@ fun SpendingHighlightsSection(
                 }
 
                 is Result.Success -> {
-                    val data = result.data
-                    SuccessContent(
-                        tabType = tabType,
-                        data = data,
-                        amountSuffix = amountSuffix,
-                        dailyLabel = dailyLabel
-                    )
+                    SuccessContent(tabType, result.data)
                 }
             }
         }
@@ -128,72 +117,114 @@ fun SpendingHighlightsSection(
 @Composable
 private fun SuccessContent(
     tabType: TabType,
-    data: StatisticsSummary,
-    amountSuffix: String,
-    dailyLabel: String
+    data: StatisticsSummary
 ) {
-    val summaryHighlights = when (tabType) {
+    val highlights = when (tabType) {
         TabType.Income -> data.incomeHighlights
         TabType.Expense -> data.expenseHighlights
     }
 
-    // Provide defaults if null
-    val month = summaryHighlights.highestMonth ?: Highlight("", "", 0.0)
-    val category = summaryHighlights.highestCategory ?: Highlight("", "", 0.0)
-    val day = summaryHighlights.highestDay ?: Highlight("", "", 0.0)
-    val average = summaryHighlights.averagePerDay
+    val isIncome = tabType == TabType.Income
+    val accentColor = if (isIncome) GreenIncome else PinkExpense
 
-    Column {
-        // First row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             HighlightCard(
                 modifier = Modifier.weight(1f),
-                title = "Highest Month",
-                value = month.value.toMonthName(),
-                description = "${month.amount.toCurrencyString()} $amountSuffix",
-                backgroundColor = SegmentColor3,
-                titleColor = Color.White,
-                valueColor = Color.White
+                title = "Busiest Month",
+                value = highlights.highestMonth?.value?.toMonthName() ?: "N/A",
+                subValue = highlights.highestMonth?.amount?.toCurrencyString() ?: "$0",
+                icon = Icons.Default.CalendarMonth,
+                color = SegmentColor3
             )
             HighlightCard(
                 modifier = Modifier.weight(1f),
                 title = "Top Category",
-                value = category.value,
-                description = "${category.amount.toCurrencyString()} $amountSuffix",
-                backgroundColor = SegmentColor4,
-                titleColor = Color.White,
-                valueColor = Color.White
+                value = highlights.highestCategory?.value ?: "N/A",
+                subValue = highlights.highestCategory?.amount?.toCurrencyString() ?: "$0",
+                icon = Icons.Default.Category,
+                color = SegmentColor4
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            HighlightCard(
+                modifier = Modifier.weight(1f),
+                title = "Peak Day",
+                value = highlights.highestDay?.value?.toFormattedDate() ?: "N/A",
+                subValue = highlights.highestDay?.amount?.toCurrencyString() ?: "$0",
+                icon = Icons.Default.Today,
+                color = SegmentColor5
+            )
+            HighlightCard(
+                modifier = Modifier.weight(1f),
+                title = "Daily Avg",
+                value = highlights.averagePerDay.toCurrencyString(),
+                subValue = if (isIncome) "Trend Up" else "Trend Down",
+                icon = if (isIncome) Icons.Default.TrendingUp else Icons.Default.TrendingDown,
+                color = SegmentColor2
+            )
+        }
+    }
+}
 
-        // Second row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+@Composable
+fun HighlightCard(
+    modifier: Modifier = Modifier,
+    title: String,
+    value: String,
+    subValue: String,
+    icon: ImageVector,
+    color: Color
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            HighlightCard(
-                modifier = Modifier.weight(1f),
-                title = "Highest Daily",
-                value = day.value.toFormattedDate(),
-                description = "${day.amount.toCurrencyString()} $amountSuffix",
-                backgroundColor = SegmentColor5,
-                titleColor = Color.White,
-                valueColor = Color.White
-            )
-            HighlightCard(
-                modifier = Modifier.weight(1f),
-                title = "Average Per Day",
-                value = average.toCurrencyString(),
-                description = dailyLabel,
-                backgroundColor = SegmentColor2,
-                titleColor = Color.White,
-                valueColor = Color.White
-            )
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(color.copy(alpha = 0.15f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = subValue,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
+                    color = color
+                )
+            }
         }
     }
 }
@@ -201,37 +232,22 @@ private fun SuccessContent(
 @Composable
 fun LoadingHighlightCard(modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier.height(100.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.LightGray.copy(alpha = 0.3f))
+        modifier = modifier,
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
     ) {
         Column(
             modifier = Modifier
                 .padding(16.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.Start
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Loading title
-            AnimatedShimmerBox(
-                modifier = Modifier
-                    .width(80.dp)
-                    .height(14.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            // Loading value
-            AnimatedShimmerBox(
-                modifier = Modifier
-                    .width(100.dp)
-                    .height(18.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            // Loading description
-            AnimatedShimmerBox(
-                modifier = Modifier
-                    .width(120.dp)
-                    .height(12.dp)
-            )
+            AnimatedShimmerBox(modifier = Modifier.size(40.dp).clip(CircleShape))
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                AnimatedShimmerBox(modifier = Modifier.width(60.dp).height(12.dp))
+                AnimatedShimmerBox(modifier = Modifier.width(100.dp).height(16.dp))
+                AnimatedShimmerBox(modifier = Modifier.width(80.dp).height(10.dp))
+            }
         }
     }
 }
@@ -242,123 +258,35 @@ fun ErrorHighlightCard(
     onRetry: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(120.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.2f))
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+            modifier = Modifier.padding(24.dp).fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Warning,
-                    contentDescription = "Error",
-                    tint = Color.Red,
-                    modifier = Modifier.size(20.dp)
-                )
-                Text(
-                    text = "Failed to load highlights",
-                    color = Color.Red,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
+            Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error)
+            Text(
+                text = "Oops! Something went wrong",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
             Text(
                 text = message,
-                color = Color.Gray,
-                fontSize = 12.sp,
-                textAlign = TextAlign.Center
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(12.dp))
             Button(
                 onClick = onRetry,
-                colors = ButtonDefaults.buttonColors(containerColor = GreenIncome),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.height(32.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text(
-                    text = "Try Again",
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                Text("Retry")
             }
-        }
-    }
-}
-
-@Composable
-fun HighlightCard(
-    modifier: Modifier = Modifier,
-    title: String,
-    value: String,
-    description: String,
-    backgroundColor: Color,
-    titleColor: Color,
-    valueColor: Color,
-    contentSpacing: Dp = 4.dp
-) {
-    val animatedBackground by animateColorAsState(
-        targetValue = backgroundColor,
-        animationSpec = tween(durationMillis = 300)
-    )
-
-    val descriptionColor = titleColor.copy(alpha = 0.7f)
-
-    Card(
-        modifier = modifier.height(110.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = animatedBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.Start
-        ) {
-            Text(
-                text = title,
-                fontSize = 14.sp,
-                color = titleColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(contentSpacing))
-
-            Text(
-                text = value,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = valueColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Spacer(modifier = Modifier.height(contentSpacing))
-
-            Text(
-                text = description,
-                fontSize = 12.sp,
-                color = descriptionColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
         }
     }
 }

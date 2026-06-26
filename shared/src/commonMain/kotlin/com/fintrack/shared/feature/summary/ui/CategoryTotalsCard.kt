@@ -32,6 +32,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -42,8 +43,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -61,14 +60,6 @@ import com.example.compose.SegmentColor1
 import com.example.compose.SegmentColor3
 import com.example.compose.SegmentColor4
 import com.example.compose.SegmentColor5
-import com.example.compose.categoryAmountText
-import com.example.compose.categoryCardBg
-import com.example.compose.categoryNameText
-import com.example.compose.categoryPercentageText
-import com.example.compose.periodSelectedBg
-import com.example.compose.periodSelectedText
-import com.example.compose.periodUnselectedBg
-import com.example.compose.periodUnselectedText
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
@@ -92,20 +83,19 @@ fun CategoryTotalsCardWithTabs(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 20.dp, vertical = 8.dp)
     ) {
-        Text(
-            text = when (tabType) {
-                is TabType.Income -> "Income Distribution"
-                is TabType.Expense -> "Expense Distribution"
-            },
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        Column {
-            Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Distribution",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            
             PeriodSelector(
                 selectedPeriod = period,
                 availableWeeks = availableWeeks,
@@ -116,8 +106,9 @@ fun CategoryTotalsCardWithTabs(
                 onYearSelected = onYearSelected,
                 onPeriodSelected = onPeriodSelected
             )
-            Spacer(modifier = Modifier.height(16.dp))
         }
+
+        Spacer(modifier = Modifier.height(20.dp))
 
         Crossfade(
             targetState = distributionResult,
@@ -127,61 +118,15 @@ fun CategoryTotalsCardWithTabs(
             key(period, tabType) {
                 when (result) {
                     is Result.Loading -> {
-                        Column {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             LoadingDonutChartSection()
-                            Spacer(Modifier.height(16.dp))
+                            Spacer(Modifier.height(32.dp))
                             LoadingCategoryList()
                         }
                     }
 
                     is Result.Error -> {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.PieChart,
-                                    contentDescription = "Error",
-                                    tint = Color.Gray,
-                                    modifier = Modifier.size(48.dp)
-                                )
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(
-                                        text = "Unable to Load Data",
-                                        color = Color.Black,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = result.exception.message
-                                            ?: "Failed to load distribution",
-                                        color = Color.Gray,
-                                        fontSize = 14.sp,
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                                Button(
-                                    onClick = { /* Add retry logic */ },
-                                    colors = ButtonDefaults.buttonColors(containerColor = GreenIncome),
-                                    shape = RoundedCornerShape(12.dp),
-                                    modifier = Modifier.height(40.dp)
-                                ) {
-                                    Text(
-                                        text = "Try Again",
-                                        color = Color.White,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
-                        }
+                        ErrorState(result.exception.message ?: "Failed to load distribution")
                     }
 
                     is Result.Success -> {
@@ -193,9 +138,9 @@ fun CategoryTotalsCardWithTabs(
                         val categorySums = categories.map { it.category to it.total.toFloat() }
                         val totalAmount = categories.sumOf { it.total }.toFloat()
 
-                        Column {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             DonutChartSection(categorySums, totalAmount)
-                            Spacer(Modifier.height(16.dp))
+                            Spacer(Modifier.height(32.dp))
                             CategoryList(
                                 categories = categorySums,
                                 totalAmount = totalAmount,
@@ -210,26 +155,50 @@ fun CategoryTotalsCardWithTabs(
 }
 
 @Composable
+private fun ErrorState(message: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                Icons.Default.PieChart,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(48.dp)
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
 fun LoadingDonutChartSection() {
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // Create mock data for 4 segments + others
             val mockSegments = listOf(
-                "Shopping" to 1500f,
-                "Food" to 1200f,
-                "Transport" to 800f,
-                "Entertainment" to 600f,
-                "Others" to 400f
+                "A" to 1500f,
+                "B" to 1200f,
+                "C" to 800f,
+                "D" to 600f,
+                "E" to 400f
             )
-            val mockTotal = mockSegments.sumOf { it.second.toDouble() }.toFloat()
-            val mockChartColors = mockSegments.mapIndexed { index, _ ->
-                if (index < 4) SegmentColors[index] else SegmentColors.last()
-            }
-
+            val mockTotal = 4500f
+            
             LoadingInteractiveDonutWithText(
                 mockSegments = mockSegments,
                 mockTotal = mockTotal,
-                segmentColors = mockChartColors
+                segmentColors = SegmentColors
             )
         }
     }
@@ -241,112 +210,59 @@ fun LoadingInteractiveDonutWithText(
     mockTotal: Float,
     segmentColors: List<Color>,
     modifier: Modifier = Modifier,
-    chartSize: Dp = 250.dp
+    chartSize: Dp = 200.dp
 ) {
     Box(modifier = modifier.size(chartSize), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val strokeWidth = 40.dp.toPx()
+            val strokeWidth = 36.dp.toPx()
             val diameter = size.minDimension - strokeWidth
             var startAngle = -90f
 
             mockSegments.forEachIndexed { index, (_, amount) ->
                 val allocatedAngle = (((amount / mockTotal) * 360.0).toFloat())
-                val sweep = (allocatedAngle - 360f * 0.02f).coerceAtLeast(0.5f)
-                val shimmerAlpha = (0.3f + (index * 0.1f)).coerceAtMost(0.7f)
+                val sweep = (allocatedAngle - 360f * 0.03f).coerceAtLeast(0.5f)
                 drawArc(
-                    color = segmentColors[index].copy(alpha = shimmerAlpha),
+                    color = segmentColors[index % segmentColors.size].copy(alpha = 0.2f),
                     startAngle = startAngle,
                     sweepAngle = sweep,
                     useCenter = false,
                     topLeft = Offset(strokeWidth / 2, strokeWidth / 2),
                     size = Size(diameter, diameter),
-                    style = Stroke(width = strokeWidth, cap = StrokeCap.Butt)
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                 )
                 startAngle += allocatedAngle
             }
         }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            AnimatedShimmerBox(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-            )
+            AnimatedShimmerBox(modifier = Modifier.size(24.dp).clip(CircleShape))
             Spacer(modifier = Modifier.height(8.dp))
-            AnimatedShimmerBox(
-                modifier = Modifier
-                    .width(80.dp)
-                    .height(16.dp)
-                    .clip(RoundedCornerShape(4.dp))
-            )
+            AnimatedShimmerBox(modifier = Modifier.width(60.dp).height(12.dp))
             Spacer(modifier = Modifier.height(4.dp))
-            AnimatedShimmerBox(
-                modifier = Modifier
-                    .width(100.dp)
-                    .height(20.dp)
-                    .clip(RoundedCornerShape(4.dp))
-            )
+            AnimatedShimmerBox(modifier = Modifier.width(80.dp).height(16.dp))
         }
     }
 }
 
 @Composable
 fun LoadingCategoryList() {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        repeat(4) { index ->
-            LoadingCategoryListItem(
-                color = SegmentColors.getOrElse(index) { Color.LightGray }
-            )
-            if (index < 3) {
-                Spacer(modifier = Modifier.height(12.dp))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+    ) {
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            repeat(3) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    AnimatedShimmerBox(modifier = Modifier.size(12.dp).clip(CircleShape))
+                    Spacer(Modifier.width(12.dp))
+                    AnimatedShimmerBox(modifier = Modifier.width(100.dp).height(14.dp))
+                    Spacer(Modifier.weight(1f))
+                    AnimatedShimmerBox(modifier = Modifier.width(80.dp).height(14.dp))
+                }
             }
         }
-    }
-}
-
-@Composable
-fun LoadingCategoryListItem(color: Color = Color.LightGray) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Color dot
-        Box(
-            modifier = Modifier
-                .size(12.dp)
-                .background(color, CircleShape)
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-
-        // Category name
-        AnimatedShimmerBox(
-            modifier = Modifier
-                .width(160.dp)
-                .height(14.dp)
-                .clip(RoundedCornerShape(4.dp))
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Amount
-        AnimatedShimmerBox(
-            modifier = Modifier
-                .width(100.dp)
-                .height(14.dp)
-                .clip(RoundedCornerShape(4.dp))
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // Percentage
-        AnimatedShimmerBox(
-            modifier = Modifier
-                .width(40.dp)
-                .height(14.dp)
-                .clip(RoundedCornerShape(4.dp))
-        )
     }
 }
 
@@ -358,64 +274,48 @@ fun CategoryList(
 ) {
     val sortedCategorySums = categories.sortedByDescending { it.second }
 
-    val categoryColors = sortedCategorySums.map { category ->
-        val chartIndex = categories.indexOfFirst { it.first == category.first }
-        if (chartIndex in 0..3) segmentColors[chartIndex] else segmentColors.last()
-    }
-
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = categoryCardBg),
-        border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             sortedCategorySums.forEachIndexed { index, (categoryName, amount) ->
                 val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
+                val color = segmentColors[index % segmentColors.size]
 
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(12.dp)
-                            .background(
-                                color = categoryColors[index],
-                                shape = CircleShape
-                            )
+                            .size(10.dp)
+                            .background(color, CircleShape)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
 
                     Text(
                         text = categoryName,
-                        fontSize = 14.sp,
-                        color = categoryNameText,
-                        modifier = Modifier.width(160.dp)
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f)
                     )
 
-                    Box(
-                        modifier = Modifier.width(100.dp),
-                        contentAlignment = Alignment.CenterStart
-                    ) {
+                    Column(horizontalAlignment = Alignment.End) {
                         Text(
                             text = amount.toDouble().toCurrencyString(),
-                            fontSize = 14.sp,
+                            style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
-                            color = categoryAmountText
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "$percent%",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = color
                         )
                     }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Text(
-                        text = "($percent%)",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = categoryPercentageText
-                    )
                 }
             }
         }
@@ -433,16 +333,40 @@ fun PeriodSelector(
     onMonthSelected: (String) -> Unit = {},
     onYearSelected: (String) -> Unit = {}
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val (options, selectedCode, onSelected) = when (selectedPeriod) {
+        is Period.Week -> Triple(availableWeeks, selectedPeriod.code, onWeekSelected)
+        is Period.Month -> Triple(availableMonths, selectedPeriod.code, onMonthSelected)
+        is Period.Year -> Triple(availableYears, selectedPeriod.code, onYearSelected)
+    }
+
+    Box {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                .clickable { expanded = true }
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // --- Tabs ---
+            Text(
+                text = selectedCode ?: "Select",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(16.dp))
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+        ) {
+            // TimeSpan Tabs inside Dropdown
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                modifier = Modifier.padding(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 TimeSpan.entries.forEach { span ->
                     val isSelected = when (span) {
@@ -450,158 +374,51 @@ fun PeriodSelector(
                         TimeSpan.MONTH -> selectedPeriod is Period.Month
                         TimeSpan.YEAR -> selectedPeriod is Period.Year
                     }
-
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                if (isSelected) periodSelectedBg else periodUnselectedBg
-                            )
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
                             .clickable {
                                 when (span) {
-                                    TimeSpan.WEEK -> availableWeeks.firstOrNull()
-                                        ?.let { onPeriodSelected(Period.Week(it)) }
-
-                                    TimeSpan.MONTH -> availableMonths.firstOrNull()
-                                        ?.let { onPeriodSelected(Period.Month(it)) }
-
-                                    TimeSpan.YEAR -> availableYears.firstOrNull()
-                                        ?.let { onPeriodSelected(Period.Year(it)) }
+                                    TimeSpan.WEEK -> availableWeeks.firstOrNull()?.let { onPeriodSelected(Period.Week(it)) }
+                                    TimeSpan.MONTH -> availableMonths.firstOrNull()?.let { onPeriodSelected(Period.Month(it)) }
+                                    TimeSpan.YEAR -> availableYears.firstOrNull()?.let { onPeriodSelected(Period.Year(it)) }
                                 }
                             }
-                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
                             text = span.displayName,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = if (isSelected) periodSelectedText else periodUnselectedText
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
             }
-
-            // --- Custom Dropdown ---
-            val (options, selectedCode, onSelected, placeholder) = when (selectedPeriod) {
-                is Period.Week -> Quad(
-                    availableWeeks,
-                    selectedPeriod.code,
-                    onWeekSelected,
-                    "Select Week"
-                )
-
-                is Period.Month -> Quad(
-                    availableMonths,
-                    selectedPeriod.code,
-                    onMonthSelected,
-                    "Select Month"
-                )
-
-                is Period.Year -> Quad(
-                    availableYears,
-                    selectedPeriod.code,
-                    onYearSelected,
-                    "Select Year"
-                )
-            }
-
-            if (options.isNotEmpty()) {
-                SexyDropdown(
-                    options = options,
-                    selected = selectedCode,
-                    onSelected = onSelected,
-                    placeholder = placeholder,
-                    modifier = Modifier.width(120.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun SexyDropdown(
-    options: List<String>,
-    selected: String?,
-    onSelected: (String) -> Unit,
-    placeholder: String = "Select",
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val menuBackground = Color(0xFFF0F0F0)
-
-    Box(modifier = modifier) {
-        Row(
-            modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .border(
-                    width = 1.dp,
-                    color = Color.LightGray.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .background(menuBackground)
-                .clickable { expanded = !expanded }
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = selected ?: placeholder,
-                fontSize = 12.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = Color.Black
-            )
-            Spacer(Modifier.width(4.dp))
-            Icon(
-                imageVector = if (expanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
-                contentDescription = null,
-                tint = Color.DarkGray
-            )
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier
-                .background(menuBackground)
-                .width(120.dp)
-                .clip(RoundedCornerShape(12.dp))
-        ) {
+            
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = option,
-                            fontSize = 14.sp,
-                            color = if (option == selected) GreenIncome else Color.Black,
-                            fontWeight = if (option == selected) FontWeight.Bold else FontWeight.Normal
-                        )
-                    },
+                    text = { Text(option, style = MaterialTheme.typography.bodySmall) },
                     onClick = {
                         onSelected(option)
                         expanded = false
-                    },
-                    modifier = Modifier.background(menuBackground),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    }
                 )
             }
         }
     }
 }
 
-// --- Segment Colors ---
 val SegmentColors = listOf(
     SegmentColor3, // Blue
     SegmentColor4, // Orange
     SegmentColor1, // Red
     SegmentColor5, // Teal
-    PinkExpense     // Pink / Others
+    PinkExpense    // Pink
 )
-
-private data class Quad<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
 enum class TimeSpan(val displayName: String) {
     WEEK("Week"),
     MONTH("Month"),
     YEAR("Year")
 }
-
