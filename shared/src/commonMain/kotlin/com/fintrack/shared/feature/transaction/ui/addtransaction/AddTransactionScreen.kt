@@ -77,6 +77,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -95,6 +96,7 @@ import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.ui.AccountSelectionSection
 import com.fintrack.shared.feature.core.ui.AnimatedNumber
+import com.fintrack.shared.feature.core.ui.FinanceNumpad
 import com.fintrack.shared.feature.core.ui.ThousandsSeparatorTransformation
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
@@ -145,6 +147,7 @@ fun AddTransactionScreen(
 
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
+    var showNumpad by remember { mutableStateOf(false) }
 
     var isDataLoaded by remember(transactionId) { mutableStateOf(false) }
 
@@ -210,6 +213,8 @@ fun AddTransactionScreen(
                     isIncome = isIncome,
                     themeColor = themeColor,
                     paddingValues = paddingValues,
+                    showNumpad = showNumpad,
+                    onToggleNumpad = { showNumpad = it },
                     modifier = Modifier.sharedBounds(
                         rememberSharedContentState(key = "transaction_header_${transactionId ?: "new"}"),
                         animatedVisibilityScope = animatedVisibilityScope,
@@ -257,7 +262,8 @@ fun AddTransactionScreen(
 
                 DescriptionInputSection(
                     description = description,
-                    onDescriptionChange = { description = it }
+                    onDescriptionChange = { description = it },
+                    onFocus = { showNumpad = false }
                 )
 
                 DateTimeSelectionSection(
@@ -285,6 +291,7 @@ fun AddTransactionScreen(
                 themeColor = themeColor,
                 isEditing = transactionId != null,
                 onSaveClick = {
+                    showNumpad = false
                     if (transactionId != null) {
                         transactionsViewModel.updateTransaction(
                             id = transactionId,
@@ -306,6 +313,28 @@ fun AddTransactionScreen(
                         )
                     }
                 }
+            )
+        }
+
+        // Custom Numpad
+        androidx.compose.animation.AnimatedVisibility(
+            visible = showNumpad,
+            modifier = Modifier.align(Alignment.BottomCenter),
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut()
+        ) {
+            FinanceNumpad(
+                onNumberClick = { num ->
+                    if (amount.length < 12) {
+                        amount += num
+                    }
+                },
+                onBackspaceClick = {
+                    if (amount.isNotEmpty()) {
+                        amount = amount.dropLast(1)
+                    }
+                },
+                onDoneClick = { showNumpad = false }
             )
         }
 
@@ -357,6 +386,8 @@ fun AmountHeader(
     onAmountChange: (String) -> Unit,
     isIncome: Boolean,
     themeColor: Color,
+    showNumpad: Boolean,
+    onToggleNumpad: (Boolean) -> Unit,
     paddingValues: PaddingValues = PaddingValues(0.dp),
     modifier: Modifier = Modifier
 ) {
@@ -370,7 +401,10 @@ fun AmountHeader(
             .clickable(
                 interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                 indication = null,
-                onClick = { focusRequester.requestFocus() }
+                onClick = { 
+                    onToggleNumpad(true)
+                    focusRequester.requestFocus() 
+                }
             ),
         shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
     ) {
@@ -422,10 +456,8 @@ fun AmountHeader(
 
                     BasicTextField(
                         value = amount,
-                        onValueChange = { newAmount ->
-                            val filtered = newAmount.filter { it.isDigit() }
-                            onAmountChange(filtered)
-                        },
+                        onValueChange = { /* Controlled by Numpad */ },
+                        readOnly = true,
                         textStyle = TextStyle(
                             color = Color.Transparent,
                             fontSize = 48.sp,
@@ -596,7 +628,8 @@ fun CategorySelectionSection(
 @Composable
 fun DescriptionInputSection(
     description: String,
-    onDescriptionChange: (String) -> Unit
+    onDescriptionChange: (String) -> Unit,
+    onFocus: () -> Unit = {}
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Description", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
@@ -612,7 +645,9 @@ fun DescriptionInputSection(
                 placeholder = { Text("Enter description") },
                 singleLine = false,
                 shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { if (it.isFocused) onFocus() },
                 leadingIcon = {
                     Icon(
                         Icons.AutoMirrored.Filled.Notes,

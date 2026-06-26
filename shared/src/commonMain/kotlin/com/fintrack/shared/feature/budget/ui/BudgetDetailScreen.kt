@@ -83,6 +83,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
@@ -106,6 +107,7 @@ import com.fintrack.shared.feature.budget.domain.model.Budget
 import com.fintrack.shared.feature.budget.domain.model.BudgetFormState
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.ui.AnimatedNumber
+import com.fintrack.shared.feature.core.ui.FinanceNumpad
 import com.fintrack.shared.feature.core.ui.ThousandsSeparatorTransformation
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
@@ -151,6 +153,8 @@ fun BudgetDetailScreen(
     val formState by viewModel.formState.collectAsStateWithLifecycle()
     val validationState by viewModel.validationState.collectAsStateWithLifecycle()
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
+
+    var showNumpad by remember { mutableStateOf(false) }
 
     val initialFormState = remember(budgetId, selectedBudgetResult, accountsResult) {
         computeInitialFormState(budgetId, selectedBudgetResult, accountsResult)
@@ -207,6 +211,8 @@ fun BudgetDetailScreen(
                             isExpense = formState.isExpense,
                             themeColor = themeColor,
                             paddingValues = paddingValues,
+                            showNumpad = showNumpad,
+                            onToggleNumpad = { showNumpad = it },
                             modifier = Modifier.sharedBounds(
                                 rememberSharedContentState(key = "budget_header_${budgetId ?: "new"}"),
                                 animatedVisibilityScope = animatedVisibilityScope,
@@ -236,7 +242,8 @@ fun BudgetDetailScreen(
 
                         BudgetNameSection(
                             name = formState.name,
-                            onNameChange = { viewModel.setName(it) }
+                            onNameChange = { viewModel.setName(it) },
+                            onFocus = { showNumpad = false }
                         )
 
                         AccountSelectionSection(
@@ -274,7 +281,32 @@ fun BudgetDetailScreen(
                 saveState = saveState,
                 validationState = validationState,
                 themeColor = themeColor,
-                onSaveClick = { viewModel.saveBudget() }
+                onSaveClick = { 
+                    showNumpad = false
+                    viewModel.saveBudget() 
+                }
+            )
+        }
+
+        // Custom Numpad
+        androidx.compose.animation.AnimatedVisibility(
+            visible = showNumpad,
+            modifier = Modifier.align(Alignment.BottomCenter),
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut()
+        ) {
+            FinanceNumpad(
+                onNumberClick = { num ->
+                    if (formState.amount.length < 12) {
+                        viewModel.setAmount(formState.amount + num)
+                    }
+                },
+                onBackspaceClick = {
+                    if (formState.amount.isNotEmpty()) {
+                        viewModel.setAmount(formState.amount.dropLast(1))
+                    }
+                },
+                onDoneClick = { showNumpad = false }
             )
         }
 
@@ -295,6 +327,8 @@ fun BudgetAmountHeader(
     onAmountChange: (String) -> Unit,
     isExpense: Boolean,
     themeColor: Color,
+    showNumpad: Boolean,
+    onToggleNumpad: (Boolean) -> Unit,
     paddingValues: PaddingValues = PaddingValues(0.dp),
     modifier: Modifier = Modifier
 ) {
@@ -308,7 +342,10 @@ fun BudgetAmountHeader(
             .clickable(
                 interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                 indication = null,
-                onClick = { focusRequester.requestFocus() }
+                onClick = { 
+                    onToggleNumpad(true)
+                    focusRequester.requestFocus() 
+                }
             ),
         shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
     ) {
@@ -359,10 +396,8 @@ fun BudgetAmountHeader(
 
                 BasicTextField(
                     value = amount,
-                    onValueChange = { newAmount ->
-                        val filtered = newAmount.filter { it.isDigit() }
-                        onAmountChange(filtered)
-                    },
+                    onValueChange = { /* Controlled by Numpad */ },
+                    readOnly = true,
                     textStyle = TextStyle(
                         color = Color.Transparent,
                         fontSize = 48.sp,
@@ -737,7 +772,8 @@ fun BudgetTypeSection(
 @Composable
 fun BudgetNameSection(
     name: String,
-    onNameChange: (String) -> Unit
+    onNameChange: (String) -> Unit,
+    onFocus: () -> Unit = {}
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Budget Name", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
@@ -753,7 +789,9 @@ fun BudgetNameSection(
                 placeholder = { Text("Enter budget name") },
                 singleLine = true,
                 shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { if (it.isFocused) onFocus() },
                 leadingIcon = {
                     Icon(
                         Icons.Default.Edit,
