@@ -272,7 +272,7 @@ fun AddTransactionScreen(
                     onTimeClicked = { showTimePicker = true }
                 )
 
-                Spacer(modifier = Modifier.height(80.dp)) // Space for FAB-like button
+                Spacer(modifier = Modifier.height(140.dp)) // Increased space for Save button and Numpad
             }
         }
 

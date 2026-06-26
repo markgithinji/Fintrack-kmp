@@ -28,14 +28,16 @@ fun FinanceNumpad(
     contentColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding(),
         color = backgroundColor,
         tonalElevation = 8.dp,
         shadowElevation = 16.dp
     ) {
         Column(
             modifier = Modifier
-                .padding(vertical = 16.dp, horizontal = 24.dp),
+                .padding(top = 16.dp, start = 24.dp, end = 24.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             val rows = listOf(

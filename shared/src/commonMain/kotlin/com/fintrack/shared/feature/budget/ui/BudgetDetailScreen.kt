@@ -265,7 +265,7 @@ fun BudgetDetailScreen(
                             onPeriodChange = { start, end -> viewModel.setPeriod(start, end) }
                         )
 
-                        Spacer(modifier = Modifier.height(80.dp))
+                        Spacer(modifier = Modifier.height(140.dp))
                     }
                 }
             }
