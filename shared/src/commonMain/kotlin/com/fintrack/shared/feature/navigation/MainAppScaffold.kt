@@ -95,7 +95,7 @@ fun MainAppScaffold(
                 floatingActionButton = {
                     if (showFAB) {
                         AddTransactionFAB(
-                            onClick = { navController.navigate(Screen.AddTransaction.route) }
+                            onClick = { navController.navigate(Screen.AddTransaction.createRoute()) }
                         )
                     }
                 },

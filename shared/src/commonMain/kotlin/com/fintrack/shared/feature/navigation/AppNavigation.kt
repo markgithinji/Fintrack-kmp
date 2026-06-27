@@ -1,9 +1,9 @@
 package com.fintrack.shared.feature.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -12,6 +12,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -83,7 +85,10 @@ fun AppNavigation(
                     } else if (isToAuth && isFromAuth) { // Between Login/Register
                         fadeIn(animationSpec = tween(400))
                     } else if (isToMorphScreen) {
-                        fadeIn(animationSpec = tween(500))
+                        slideInVertically(
+                            initialOffsetY = { it },
+                            animationSpec = tween(500, easing = FastOutSlowInEasing)
+                        ) + fadeIn(animationSpec = tween(500))
                     } else {
                         EnterTransition.None
                     }
@@ -105,18 +110,34 @@ fun AppNavigation(
                     } else if (isToAuth && isFromAuth) { // Between Login/Register
                         fadeOut(animationSpec = tween(400))
                     } else if (isFromMorphScreen) {
-                        fadeOut(animationSpec = tween(400))
+                        slideOutVertically(
+                            targetOffsetY = { it },
+                            animationSpec = tween(500, easing = FastOutSlowInEasing)
+                        ) + fadeOut(animationSpec = tween(400))
                     } else {
                         ExitTransition.None
                     }
                 },
-                popEnterTransition = { EnterTransition.None },
+                popEnterTransition = { 
+                    val isToMorphScreen = targetState.destination.route?.contains("budget_detail") == true ||
+                                         targetState.destination.route?.contains("transaction_list") == true ||
+                                         targetState.destination.route?.contains("add_transaction") == true
+                    
+                    if (isToMorphScreen) {
+                        fadeIn(animationSpec = tween(400))
+                    } else {
+                        EnterTransition.None
+                    }
+                },
                 popExitTransition = {
                     val isFromMorphScreen = initialState.destination.route?.contains("budget_detail") == true ||
                                            initialState.destination.route?.contains("transaction_list") == true ||
                                            initialState.destination.route?.contains("add_transaction") == true
                     if (isFromMorphScreen) {
-                        fadeOut(animationSpec = tween(400))
+                        slideOutVertically(
+                            targetOffsetY = { it },
+                            animationSpec = tween(500, easing = FastOutSlowInEasing)
+                        ) + fadeOut(animationSpec = tween(400))
                     } else {
                         ExitTransition.None
                     }
@@ -155,20 +176,12 @@ fun AppNavigation(
                 ) { backStackEntry ->
                     val transactionId = backStackEntry.arguments?.getString("transactionId")
 
-                    LaunchedEffect(transactionId) {
-                        onUpdateAppBarState(
-                            AppBarState(
-                                title = if (transactionId == null) "Add Transaction" else "Edit Transaction",
-                                showBackButton = true,
-                                onBack = { navController.popBackStack() }
-                            )
-                        )
-                    }
                     AddTransactionScreen(
                         transactionId = transactionId,
                         paddingValues = paddingValues,
                         animatedVisibilityScope = this,
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        onUpdateAppBarState = onUpdateAppBarState
                     )
                 }
 

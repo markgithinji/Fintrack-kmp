@@ -257,7 +257,7 @@ fun SexyAddBudgetButton(
             .fillMaxWidth()
             .height(72.dp)
             .shadow(
-                elevation = if (isPressed) 2.dp else 6.dp,
+                elevation = if (isPressed) 1.dp else 4.dp,
                 shape = RoundedCornerShape(20.dp),
                 clip = false
             )

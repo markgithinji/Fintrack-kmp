@@ -103,6 +103,8 @@ import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.ui.KMPBackHandler
+import com.fintrack.shared.feature.navigation.AppBarState
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
@@ -124,7 +126,8 @@ fun AddTransactionScreen(
     accountsViewModel: AccountsViewModel = koinViewModel(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    onUpdateAppBarState: (AppBarState) -> Unit
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
         ?: throw IllegalStateException("No SharedTransitionScope found")
@@ -150,6 +153,26 @@ fun AddTransactionScreen(
     var showNumpad by remember { mutableStateOf(false) }
 
     var isDataLoaded by remember(transactionId) { mutableStateOf(false) }
+
+    KMPBackHandler(enabled = showNumpad) {
+        showNumpad = false
+    }
+
+    LaunchedEffect(showNumpad, transactionId) {
+        onUpdateAppBarState(
+            AppBarState(
+                title = if (transactionId.isNullOrBlank()) "Create Transaction" else "Edit Transaction",
+                showBackButton = true,
+                onBack = {
+                    if (showNumpad) {
+                        showNumpad = false
+                    } else {
+                        onBack()
+                    }
+                }
+            )
+        )
+    }
 
     LaunchedEffect(transactionId) {
         if (transactionId != null) {
