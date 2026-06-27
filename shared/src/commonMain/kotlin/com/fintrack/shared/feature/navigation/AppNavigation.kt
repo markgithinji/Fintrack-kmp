@@ -262,7 +262,7 @@ fun AppNavigation(
                             )
                         )
                     }
-                    SettingsScreen()
+                    SettingsScreen(paddingValues = paddingValues)
                 }
 
                 composable(

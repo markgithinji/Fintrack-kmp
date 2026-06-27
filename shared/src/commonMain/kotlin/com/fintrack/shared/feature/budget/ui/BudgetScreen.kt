@@ -239,7 +239,9 @@ private fun BudgetSummaryHeader(budgets: List<BudgetWithStatus>) {
                     .clip(RoundedCornerShape(50)),
                 color = if (progress > 0.9f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                strokeCap = StrokeCap.Round
+                strokeCap = StrokeCap.Round,
+                gapSize = 0.dp,
+                drawStopIndicator = {}
             )
         }
     }
@@ -429,7 +431,9 @@ fun BudgetItem(
                     else if (progress > 0.8f) Color(0xFFFF9800)
                     else MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                    strokeCap = StrokeCap.Round
+                    strokeCap = StrokeCap.Round,
+                    gapSize = 0.dp,
+                    drawStopIndicator = {}
                 )
                 
                 Row(

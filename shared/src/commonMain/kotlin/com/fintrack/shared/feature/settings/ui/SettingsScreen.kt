@@ -26,43 +26,34 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    paddingValues: PaddingValues = PaddingValues(0.dp),
     viewModel: SettingsViewModel = koinViewModel()
 ) {
     val currentCurrency by viewModel.currency.collectAsStateWithLifecycle()
     var showCurrencyDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Settings", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp)
-        ) {
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "Preferences",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(paddingValues)
+            .padding(horizontal = 16.dp)
+    ) {
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Text(
+            text = "Preferences",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
 
-            SettingsItem(
-                title = "Currency",
-                subtitle = "${currentCurrency.name} (${currentCurrency.symbol})",
-                icon = Icons.Default.Payments,
-                onClick = { showCurrencyDialog = true }
-            )
-        }
+        SettingsItem(
+            title = "Currency",
+            subtitle = "${currentCurrency.name} (${currentCurrency.symbol})",
+            icon = Icons.Default.Payments,
+            onClick = { showCurrencyDialog = true }
+        )
     }
 
     if (showCurrencyDialog) {
@@ -103,6 +94,7 @@ fun CurrencySelectionDialog(
                     text = "Select Currency",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
@@ -156,7 +148,8 @@ fun CurrencySelectionDialog(
                                         Text(
                                             text = currency.name,
                                             style = MaterialTheme.typography.bodyLarge,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
                                             text = currency.code,
@@ -232,7 +225,8 @@ fun SettingsItem(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = subtitle,
