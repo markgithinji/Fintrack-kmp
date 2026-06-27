@@ -530,6 +530,14 @@ fun AmountHeader(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateContentSize()
+                        .clickable(
+                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                            indication = null,
+                            onClick = { 
+                                onToggleNumpad(true)
+                                focusRequester.requestFocus() 
+                            }
+                        )
                 ) {
                     Text(
                         text = LocalCurrency.current.symbol,
@@ -585,6 +593,20 @@ fun AmountHeader(
                                     )
                                 }
                                 innerTextField()
+
+                                // Overlay to capture clicks specifically on the amount text area
+                                Box(
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .clickable(
+                                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                            indication = null,
+                                            onClick = {
+                                                onToggleNumpad(true)
+                                                focusRequester.requestFocus()
+                                            }
+                                        )
+                                )
                             }
                         }
                     )

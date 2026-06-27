@@ -497,7 +497,16 @@ fun BudgetAmountHeader(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.animateContentSize()
+                    modifier = Modifier
+                        .animateContentSize()
+                        .clickable(
+                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                            indication = null,
+                            onClick = { 
+                                onToggleNumpad(true)
+                                focusRequester.requestFocus() 
+                            }
+                        )
                 ) {
                     Text(
                         text = LocalCurrency.current.symbol,
