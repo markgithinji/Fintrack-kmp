@@ -58,7 +58,7 @@ fun AppNavigation(
 ) {
     println("LOGIN_DEBUG: AppNavigation recomposing. isAuthenticated: $isAuthenticated")
     
-    val startDestination = remember { 
+    val startDestination = remember(isAuthenticated) {
         if (isAuthenticated) Screen.Home.route else Screen.Login.route 
     }
 
