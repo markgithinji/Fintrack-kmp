@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
+import com.fintrack.shared.feature.core.ui.CommonErrorState
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,77 +32,82 @@ fun CategoryManagementScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-    ) {
-        if (state.isLoading && state.categories.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { showAddDialog = true },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                item(span = { GridItemSpan(2) }) {
-                    Text(
-                        text = "Expenses",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-                }
-                items(state.categories.filter { it.isExpense }) { category ->
-                    CategoryItem(
-                        category = category,
-                        onDelete = { viewModel.deleteCategory(category.id) }
-                    )
-                }
-
-                item(span = { GridItemSpan(2) }) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Income",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-                }
-                items(state.categories.filter { !it.isExpense }) { category ->
-                    CategoryItem(
-                        category = category,
-                        onDelete = { viewModel.deleteCategory(category.id) }
-                    )
-                }
+                Icon(Icons.Default.Add, contentDescription = "Add Category")
             }
         }
-
-        FloatingActionButton(
-            onClick = { showAddDialog = true },
+    ) { innerPadding ->
+        Box(
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(innerPadding)
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Add Category")
-        }
+            when {
+                state.error != null -> {
+                    CommonErrorState(
+                        modifier = Modifier.fillMaxSize(),
+                        title = "Category Error",
+                        errorMessage = state.error,
+                        onRetry = {
+                            viewModel.clearError()
+                            viewModel.refresh()
+                        }
+                    )
+                }
 
-        if (state.error != null) {
-            Snackbar(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp),
-                action = {
-                    TextButton(onClick = { viewModel.clearError() }) {
-                        Text("Dismiss")
+                state.isLoading && state.categories.isEmpty() -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
                     }
                 }
-            ) {
-                Text(state.error!!)
+
+                else -> {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        item(span = { GridItemSpan(2) }) {
+                            Text(
+                                text = "Expenses",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
+                        items(state.categories.filter { it.isExpense }) { category ->
+                            CategoryItem(
+                                category = category,
+                                onDelete = { viewModel.deleteCategory(category.id) }
+                            )
+                        }
+
+                        item(span = { GridItemSpan(2) }) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Income",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
+                        items(state.categories.filter { !it.isExpense }) { category ->
+                            CategoryItem(
+                                category = category,
+                                onDelete = { viewModel.deleteCategory(category.id) }
+                            )
+                        }
+                    }
+                }
             }
         }
     }

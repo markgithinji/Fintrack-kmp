@@ -19,6 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.ui.CommonErrorState
+import com.fintrack.shared.feature.core.data.domain.ApiException
+import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
 import org.koin.compose.viewmodel.koinViewModel
@@ -40,13 +43,15 @@ fun AccountsScreen(
     val isOperating = deleteResult is Result.Loading || saveResult is Result.Loading
 
     LaunchedEffect(deleteResult) {
-        when (deleteResult) {
+        when (val result = deleteResult) {
             is Result.Success -> {
                 snackbarHostState.showSnackbar("Account deleted successfully")
                 viewModel.clearResults()
             }
             is Result.Error -> {
-                snackbarHostState.showSnackbar((deleteResult as Result.Error).exception.message ?: "Error deleting account")
+                val message = (result.exception as? ApiException)?.getUserFriendlyMessage()
+                    ?: result.exception.message ?: "Error deleting account"
+                snackbarHostState.showSnackbar(message)
                 viewModel.clearResults()
             }
             else -> Unit
@@ -54,14 +59,16 @@ fun AccountsScreen(
     }
 
     LaunchedEffect(saveResult) {
-        when (saveResult) {
+        when (val result = saveResult) {
             is Result.Success -> {
                 snackbarHostState.showSnackbar(if (isEditing) "Account updated" else "Account added")
                 viewModel.clearResults()
                 showAccountDialog = null
             }
             is Result.Error -> {
-                snackbarHostState.showSnackbar((saveResult as Result.Error).exception.message ?: "Error saving account")
+                val message = (result.exception as? ApiException)?.getUserFriendlyMessage()
+                    ?: result.exception.message ?: "Error saving account"
+                snackbarHostState.showSnackbar(message)
                 viewModel.clearResults()
             }
             else -> Unit
@@ -125,12 +132,12 @@ fun AccountsScreen(
                         )
                     }
                     is Result.Error -> {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text(
-                                text = "Error: ${state.exception.message}",
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
+                        CommonErrorState(
+                            modifier = Modifier.fillMaxSize(),
+                            title = "Failed to load accounts",
+                            error = state.exception,
+                            onRetry = { viewModel.reloadAccounts() }
+                        )
                     }
                 }
             }

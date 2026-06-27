@@ -61,6 +61,7 @@ import com.example.compose.SegmentColor3
 import com.example.compose.SegmentColor4
 import com.example.compose.SegmentColor5
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
+import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDate
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
@@ -130,7 +131,10 @@ fun CategoryTotalsCardWithTabs(
                     }
 
                     is Result.Error -> {
-                        ErrorState(result.exception.message ?: "Failed to load distribution")
+                        ErrorState(
+                            message = result.exception.message ?: "Failed to load distribution",
+                            onRetry = { /* distribution logic doesn't have an easy retry here, but we can pass one if needed */ }
+                        )
                     }
 
                     is Result.Success -> {
@@ -159,31 +163,16 @@ fun CategoryTotalsCardWithTabs(
 }
 
 @Composable
-private fun ErrorState(message: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                Icons.Default.PieChart,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(48.dp)
-            )
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
+private fun ErrorState(
+    message: String,
+    onRetry: (() -> Unit)? = null
+) {
+    CommonErrorState(
+        modifier = Modifier.fillMaxWidth().height(200.dp),
+        title = "Failed to load distribution",
+        errorMessage = message,
+        onRetry = onRetry
+    )
 }
 
 @Composable

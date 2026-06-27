@@ -54,6 +54,7 @@ import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
+import com.fintrack.shared.feature.core.ui.CommonErrorState
 
 @Composable
 fun CurrentBalanceCardWrapper(
@@ -176,42 +177,40 @@ private fun CurrentBalanceErrorState(
     errorMessage: String?,
     onRetry: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.ErrorOutline,
-            contentDescription = "Error",
-            tint = MaterialTheme.colorScheme.onPrimary,
-            modifier = Modifier.size(32.dp)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = errorMessage ?: "Failed to load account",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onPrimary,
-            textAlign = TextAlign.Center,
-            lineHeight = 18.sp
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Button(
-            onClick = onRetry,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface
-            ),
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier.height(32.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp)
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Try Again",
-                style = MaterialTheme.typography.labelMedium
+                text = "Failed to load account",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimary
             )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = errorMessage ?: "Please try again later",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Surface(
+                onClick = onRetry,
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.3f))
+            ) {
+                Text(
+                    text = "Retry",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+            }
         }
     }
 }
@@ -401,39 +400,12 @@ private fun AccountSelectionErrorState(
     errorMessage: String?,
     onRetry: () -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                imageVector = Icons.Default.ErrorOutline,
-                contentDescription = "Error",
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(48.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                errorMessage ?: "Failed to load accounts",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = onRetry,
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Text("Try Again")
-            }
-        }
-    }
+    CommonErrorState(
+        modifier = Modifier.fillMaxWidth().height(200.dp),
+        title = "Failed to load accounts",
+        errorMessage = errorMessage,
+        onRetry = onRetry
+    )
 }
 
 @Composable

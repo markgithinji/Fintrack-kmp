@@ -95,6 +95,8 @@ import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.ui.AccountSelectionSection
+import com.fintrack.shared.feature.core.data.domain.ApiException
+import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.ui.AnimatedNumber
 import com.fintrack.shared.feature.core.ui.FinanceNumpad
 import com.fintrack.shared.feature.core.ui.ThousandsSeparatorTransformation
@@ -452,8 +454,10 @@ fun AddTransactionScreen(
 
         if (saveState is SaveState.Error) {
             val error = (saveState as SaveState.Error).exception
+            val message = (error as? ApiException)?.getUserFriendlyMessage()
+                ?: error.message ?: "Failed to save transaction"
             MaterialToast(
-                message = error.message ?: "Failed to save transaction",
+                message = message,
                 isError = true,
                 modifier = Modifier.align(Alignment.TopCenter)
             )

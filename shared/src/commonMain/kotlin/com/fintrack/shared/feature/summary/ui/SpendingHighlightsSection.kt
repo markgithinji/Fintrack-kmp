@@ -60,6 +60,7 @@ import com.fintrack.shared.feature.summary.domain.model.TabType
 import com.fintrack.shared.feature.summary.ui.util.toFormattedDate
 import com.fintrack.shared.feature.summary.ui.util.toMonthName
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
+import com.fintrack.shared.feature.core.ui.CommonErrorState
 
 @Composable
 fun SpendingHighlightsSection(
@@ -289,34 +290,15 @@ fun ErrorHighlightCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.2f))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
     ) {
-        Column(
-            modifier = Modifier.padding(24.dp).fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error)
-            Text(
-                text = "Oops! Something went wrong",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Button(
-                onClick = onRetry,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Retry")
-            }
-        }
+        CommonErrorState(
+            modifier = Modifier.padding(16.dp),
+            title = "Oops! Something went wrong",
+            errorMessage = message,
+            onRetry = onRetry
+        )
     }
 }

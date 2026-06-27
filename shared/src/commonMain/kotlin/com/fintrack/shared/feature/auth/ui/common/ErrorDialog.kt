@@ -93,7 +93,7 @@ fun ErrorDialog(
                 Text(
                     text = errorMessage,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()

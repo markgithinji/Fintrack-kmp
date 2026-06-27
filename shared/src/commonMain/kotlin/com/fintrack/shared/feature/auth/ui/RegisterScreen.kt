@@ -295,8 +295,8 @@ fun RegisterScreen(
             colors = ButtonDefaults.buttonColors(
                 containerColor = colorScheme.primary,
                 contentColor = colorScheme.onPrimary,
-                disabledContainerColor = if (isSuccess) AuthGold else colorScheme.primary.copy(alpha = 0.5f),
-                disabledContentColor = if (isSuccess) colorScheme.onPrimary else colorScheme.onPrimary.copy(alpha = 0.7f)
+                disabledContainerColor = if (isSuccess) colorScheme.secondary else colorScheme.primary.copy(alpha = 0.5f),
+                disabledContentColor = if (isSuccess) colorScheme.onSecondary else colorScheme.onPrimary.copy(alpha = 0.7f)
             ),
             enabled = registerFormState.isFormValid && !isRegistering && !isSuccess
         ) {
@@ -402,7 +402,7 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = "Sign in",
-                color = AuthGold,
+                color = colorScheme.secondary,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.clickable { onLogin() }

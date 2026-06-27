@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
+import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDate
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
@@ -60,6 +61,7 @@ fun TransactionsListCard(
     onViewAllClick: () -> Unit,
     animatedVisibilityScope: AnimatedVisibilityScope,
     onTransactionClick: (Transaction) -> Unit = {},
+    onRetry: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
@@ -89,7 +91,10 @@ fun TransactionsListCard(
 
             when (transactionsResult) {
                 is Result.Loading -> TransactionsLoadingState()
-                is Result.Error -> TransactionsErrorState()
+                is Result.Error -> TransactionsErrorState(
+                    error = transactionsResult.exception,
+                    onRetry = onRetry
+                )
                 is Result.Success -> {
                     val transactions = transactionsResult.data
                     if (transactions.isEmpty()) {
@@ -189,40 +194,16 @@ private fun TransactionsLoadingState() {
 }
 
 @Composable
-private fun TransactionsErrorState() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.ErrorOutline,
-            contentDescription = "Error",
-            tint = MaterialTheme.colorScheme.error,
-            modifier = Modifier.size(32.dp)
-        )
-
-        Text(
-            text = "Failed to load transactions",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.error,
-            textAlign = TextAlign.Center
-        )
-
-        Button(
-            onClick = { /* Add retry logic */ },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ),
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.height(36.dp)
-        ) {
-            Text("Try Again")
-        }
-    }
+private fun TransactionsErrorState(
+    error: Throwable,
+    onRetry: () -> Unit
+) {
+    CommonErrorState(
+        modifier = Modifier.padding(bottom = 8.dp),
+        title = "Failed to load transactions",
+        error = error,
+        onRetry = onRetry
+    )
 }
 
 @Composable

@@ -51,6 +51,8 @@ fun MaterialToast(
                     .shadow(8.dp, RoundedCornerShape(8.dp)),
                 color = if (isError) MaterialTheme.colorScheme.error
                 else MaterialTheme.colorScheme.primary,
+                contentColor = if (isError) MaterialTheme.colorScheme.onError
+                else MaterialTheme.colorScheme.onPrimary,
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Row(
@@ -61,13 +63,11 @@ fun MaterialToast(
                         imageVector = if (isError) Icons.Default.Error
                         else Icons.Default.CheckCircle,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = message,
-                        color = MaterialTheme.colorScheme.onPrimary,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }

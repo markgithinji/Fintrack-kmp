@@ -116,6 +116,8 @@ import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.domain.model.Budget
 import com.fintrack.shared.feature.budget.domain.model.BudgetFormState
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
+import com.fintrack.shared.feature.core.data.domain.ApiException
+import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.ui.AnimatedNumber
 import com.fintrack.shared.feature.core.ui.FinanceNumpad
 import com.fintrack.shared.feature.core.ui.ThousandsSeparatorTransformation
@@ -123,6 +125,7 @@ import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.core.ui.KMPBackHandler
 import com.fintrack.shared.feature.core.ui.MaterialToast
+import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.core.util.formatToCurrency
@@ -237,12 +240,11 @@ fun BudgetDetailScreen(
             }
 
             budgetId != null && selectedBudgetResult is Result.Error -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "Failed to load budget",
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
+                CommonErrorState(
+                    title = "Failed to load budget",
+                    error = (selectedBudgetResult as Result.Error).exception,
+                    onRetry = { budgetId.let { viewModel.loadBudgetById(it) } }
+                )
             }
 
             else -> {
@@ -397,9 +399,11 @@ fun BudgetDetailScreen(
         }
 
         if (saveState is SaveState.Error) {
+                val message = (saveState as SaveState.Error).exception.let {
+                    (it as? ApiException)?.getUserFriendlyMessage() ?: it.message ?: "Failed to save budget"
+                }
             MaterialToast(
-                message = (saveState as SaveState.Error).exception.message
-                    ?: "Failed to save budget",
+                message = message,
                 isError = true,
                 modifier = Modifier.align(Alignment.TopCenter)
             )

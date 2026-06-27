@@ -51,6 +51,7 @@ import com.fintrack.shared.feature.core.util.formatAsShortDate
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
+import com.fintrack.shared.feature.core.ui.CommonErrorState
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -84,7 +85,7 @@ fun BudgetScreen(
 
             is Result.Error -> {
                 BudgetErrorRetryState(
-                    errorMessage = "Unable to load your budgets",
+                    error = currentBudgets.exception,
                     onRetry = { viewModel.reloadBudgets() }
                 )
             }
@@ -586,84 +587,16 @@ fun BudgetEmptyState(
 
 @Composable
 fun BudgetErrorRetryState(
-    errorMessage: String,
+    error: Throwable,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var isAnimating by remember { mutableStateOf(true) }
-    val rotation by animateFloatAsState(
-        targetValue = if (isAnimating) 10f else 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(500, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "error_icon_rotation"
+    CommonErrorState(
+        modifier = modifier.fillMaxSize(),
+        title = "Something went wrong",
+        error = error,
+        onRetry = onRetry
     )
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .size(120.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.errorContainer,
-                    shape = CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.ErrorOutline,
-                contentDescription = "Error",
-                modifier = Modifier
-                    .size(60.dp)
-                    .graphicsLayer {
-                        rotationZ = rotation
-                    },
-                tint = MaterialTheme.colorScheme.onErrorContainer
-            )
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Text(
-            text = "Something went wrong",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = errorMessage,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        Button(
-            onClick = onRetry,
-            modifier = Modifier
-                .height(54.dp)
-                .fillMaxWidth(0.7f),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = GreenIncome,
-                contentColor = Color.White
-            )
-        ) {
-            Icon(Icons.Outlined.Refresh, null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Try Again", fontWeight = FontWeight.Bold)
-        }
-    }
 }
 
 @Composable
