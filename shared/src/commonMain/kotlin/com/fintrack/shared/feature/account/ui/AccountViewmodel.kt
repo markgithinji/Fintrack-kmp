@@ -85,4 +85,9 @@ class AccountsViewModel(private val repo: AccountRepository) : ViewModel() {
             reloadAccounts()
         }
     }
+
+    fun clearResults() {
+        _saveResult.value = null
+        _deleteResult.value = null
+    }
 }

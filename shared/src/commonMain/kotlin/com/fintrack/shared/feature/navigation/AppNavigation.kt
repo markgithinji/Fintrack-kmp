@@ -236,7 +236,7 @@ fun AppNavigation(
                             )
                         )
                     }
-                    AccountsScreen()
+                    AccountsScreen(paddingValues = paddingValues)
                 }
 
                 composable(Screen.Categories.route) {

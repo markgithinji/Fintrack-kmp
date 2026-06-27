@@ -26,6 +26,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountsScreen(
+    paddingValues: PaddingValues = PaddingValues(0.dp),
     viewModel: AccountsViewModel = koinViewModel()
 ) {
     val accountsState by viewModel.accounts.collectAsStateWithLifecycle()
@@ -36,68 +37,100 @@ fun AccountsScreen(
     var isEditing by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val isOperating = deleteResult is Result.Loading || saveResult is Result.Loading
+
     LaunchedEffect(deleteResult) {
-        if (deleteResult is Result.Error) {
-            snackbarHostState.showSnackbar((deleteResult as Result.Error).exception.message ?: "Error deleting account")
+        when (deleteResult) {
+            is Result.Success -> {
+                snackbarHostState.showSnackbar("Account deleted successfully")
+                viewModel.clearResults()
+            }
+            is Result.Error -> {
+                snackbarHostState.showSnackbar((deleteResult as Result.Error).exception.message ?: "Error deleting account")
+                viewModel.clearResults()
+            }
+            else -> Unit
         }
     }
 
     LaunchedEffect(saveResult) {
-        if (saveResult is Result.Error) {
-            snackbarHostState.showSnackbar((saveResult as Result.Error).exception.message ?: "Error saving account")
+        when (saveResult) {
+            is Result.Success -> {
+                snackbarHostState.showSnackbar(if (isEditing) "Account updated" else "Account added")
+                viewModel.clearResults()
+                showAccountDialog = null
+            }
+            is Result.Error -> {
+                snackbarHostState.showSnackbar((saveResult as Result.Error).exception.message ?: "Error saving account")
+                viewModel.clearResults()
+            }
+            else -> Unit
         }
     }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { 
-                    showAccountDialog = Account(id = "", name = "")
-                    isEditing = false
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Account")
+            if (!isOperating) {
+                FloatingActionButton(
+                    onClick = { 
+                        showAccountDialog = Account(id = "", name = "")
+                        isEditing = false
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Account")
+                }
             }
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp)
+    ) { innerPadding ->
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .padding(innerPadding)
         ) {
-            Text(
-                text = "Your Accounts",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 16.dp)
-            )
-
-            when (val state = accountsState) {
-                is Result.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                }
-                is Result.Success -> {
-                    AccountList(
-                        accounts = state.data,
-                        onDeleteAccount = { viewModel.removeAccount(it.id) },
-                        onEditAccount = { 
-                            showAccountDialog = it
-                            isEditing = true
-                        }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+            ) {
+                if (isOperating) {
+                    LinearProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.primary
                     )
+                } else {
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
-                is Result.Error -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "Error: ${state.exception.message}",
-                            color = MaterialTheme.colorScheme.error
+
+                when (val state = accountsState) {
+                    is Result.Loading -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                    is Result.Success -> {
+                        AccountList(
+                            accounts = state.data,
+                            onDeleteAccount = { viewModel.removeAccount(it.id) },
+                            onEditAccount = { 
+                                if (!isOperating) {
+                                    showAccountDialog = it
+                                    isEditing = true
+                                }
+                            }
                         )
+                    }
+                    is Result.Error -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = "Error: ${state.exception.message}",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
                 }
             }
@@ -108,10 +141,10 @@ fun AccountsScreen(
         AccountDialog(
             account = account,
             isEditing = isEditing,
-            onDismiss = { showAccountDialog = null },
+            isLoading = saveResult is Result.Loading,
+            onDismiss = { if (!isOperating) showAccountDialog = null },
             onConfirm = { name ->
                 viewModel.saveAccount(account.copy(name = name))
-                showAccountDialog = null
             }
         )
     }
@@ -130,7 +163,7 @@ fun AccountList(
     } else {
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 80.dp)
+            contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp)
         ) {
             items(accounts) { account ->
                 AccountItem(
@@ -217,13 +250,14 @@ fun AccountItem(
 fun AccountDialog(
     account: Account,
     isEditing: Boolean,
+    isLoading: Boolean,
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit
 ) {
     var accountName by remember { mutableStateOf(account.name) }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isLoading) onDismiss() },
         title = { Text(if (isEditing) "Edit Account" else "Add New Account") },
         text = {
             OutlinedTextField(
@@ -231,19 +265,31 @@ fun AccountDialog(
                 onValueChange = { accountName = it },
                 label = { Text("Account Name") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                enabled = !isLoading
             )
         },
         confirmButton = {
             Button(
                 onClick = { if (accountName.isNotBlank()) onConfirm(accountName) },
-                enabled = accountName.isNotBlank()
+                enabled = accountName.isNotBlank() && !isLoading
             ) {
-                Text(if (isEditing) "Save" else "Add")
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text(if (isEditing) "Save" else "Add")
+                }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isLoading
+            ) {
                 Text("Cancel")
             }
         }
