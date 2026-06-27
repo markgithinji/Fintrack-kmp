@@ -24,46 +24,46 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.fintrack.shared.feature.transaction.domain.model.Category
 
 
-fun Category.toIcon(): ImageVector = when (this.id) {
-    Category.Food.id -> Icons.Default.Fastfood
-    Category.Transport.id -> Icons.Default.DirectionsCar
-    Category.Shopping.id -> Icons.Default.ShoppingCart
-    Category.Health.id -> Icons.Default.LocalHospital
-    Category.Bills.id -> Icons.Default.Receipt
-    Category.Entertainment.id -> Icons.Default.Movie
-    Category.Education.id -> Icons.Default.School
-    Category.GiftsExpense.id, Category.GiftsIncome.id -> Icons.Default.CardGiftcard
-    Category.Travel.id -> Icons.Default.Flight
-    Category.PersonalCare.id -> Icons.Default.ContentCut
-    Category.Subscriptions.id -> Icons.Default.Subscriptions
-    Category.Rent.id -> Icons.Default.Home
-    Category.Groceries.id -> Icons.Default.ShoppingBag
-    Category.Insurance.id -> Icons.Default.Shield
-    Category.MiscExpense.id, Category.OtherIncome.id -> Icons.Default.HelpOutline
-    Category.Salary.id -> Icons.Default.AttachMoney
-    Category.Freelance.id -> Icons.Default.Work
-    Category.Investments.id -> Icons.Default.TrendingUp
+fun Category.toIcon(): ImageVector = when (this.iconName ?: this.name) {
+    "Fastfood", "Food" -> Icons.Default.Fastfood
+    "DirectionsCar", "Transport" -> Icons.Default.DirectionsCar
+    "ShoppingCart", "Shopping" -> Icons.Default.ShoppingCart
+    "LocalHospital", "Health" -> Icons.Default.LocalHospital
+    "Receipt", "Bills" -> Icons.Default.Receipt
+    "Movie", "Entertainment" -> Icons.Default.Movie
+    "School", "Education" -> Icons.Default.School
+    "CardGiftcard", "Gifts" -> Icons.Default.CardGiftcard
+    "Flight", "Travel" -> Icons.Default.Flight
+    "ContentCut", "Personal Care" -> Icons.Default.ContentCut
+    "Subscriptions" -> Icons.Default.Subscriptions
+    "Home", "Rent" -> Icons.Default.Home
+    "ShoppingBag", "Groceries" -> Icons.Default.ShoppingBag
+    "Shield", "Insurance" -> Icons.Default.Shield
+    "HelpOutline", "Misc", "Other" -> Icons.Default.HelpOutline
+    "AttachMoney", "Salary", "Income" -> Icons.Default.AttachMoney
+    "Work", "Freelance" -> Icons.Default.Work
+    "TrendingUp", "Investments" -> Icons.Default.TrendingUp
     else -> Icons.Default.HelpOutline
 }
 
-fun Category.toColor(): Color = when (this.id) {
-    Category.Food.id -> Color(0xFFFFA726)
-    Category.Transport.id -> Color(0xFF29B6F6)
-    Category.Shopping.id -> Color(0xFFAB47BC)
-    Category.Health.id -> Color(0xFFEF5350)
-    Category.Bills.id -> Color(0xFF8D6E63)
-    Category.Entertainment.id -> Color(0xFFFF7043)
-    Category.Education.id -> Color(0xFF42A5F5)
-    Category.GiftsExpense.id, Category.GiftsIncome.id -> Color(0xFFEC407A)
-    Category.Travel.id -> Color(0xFF26C6DA)
-    Category.PersonalCare.id -> Color(0xFFFFCA28)
-    Category.Subscriptions.id -> Color(0xFF66BB6A)
-    Category.Rent.id -> Color(0xFF7E57C2)
-    Category.Groceries.id -> Color(0xFF8BC34A)
-    Category.Insurance.id -> Color(0xFF78909C)
-    Category.MiscExpense.id, Category.OtherIncome.id -> Color.Gray
-    Category.Salary.id -> Color(0xFF2E7D32)
-    Category.Freelance.id -> Color(0xFF0097A7)
-    Category.Investments.id -> Color(0xFFFFB300)
+fun Category.toColor(): Color = when (this.iconName ?: this.name) {
+    "Fastfood", "Food" -> Color(0xFFFFA726)
+    "DirectionsCar", "Transport" -> Color(0xFF29B6F6)
+    "ShoppingCart", "Shopping" -> Color(0xFFAB47BC)
+    "LocalHospital", "Health" -> Color(0xFFEF5350)
+    "Receipt", "Bills" -> Color(0xFF8D6E63)
+    "Movie", "Entertainment" -> Color(0xFFFF7043)
+    "School", "Education" -> Color(0xFF42A5F5)
+    "CardGiftcard", "Gifts" -> Color(0xFFEC407A)
+    "Flight", "Travel" -> Color(0xFF26C6DA)
+    "ContentCut", "Personal Care" -> Color(0xFFFFCA28)
+    "Subscriptions" -> Color(0xFF66BB6A)
+    "Home", "Rent" -> Color(0xFF7E57C2)
+    "ShoppingBag", "Groceries" -> Color(0xFF8BC34A)
+    "Shield", "Insurance" -> Color(0xFF78909C)
+    "HelpOutline", "Misc", "Other" -> Color.Gray
+    "AttachMoney", "Salary", "Income" -> Color(0xFF2E7D32)
+    "Work", "Freelance" -> Color(0xFF0097A7)
+    "TrendingUp", "Investments" -> Color(0xFFFFB300)
     else -> Color.Gray
 }
