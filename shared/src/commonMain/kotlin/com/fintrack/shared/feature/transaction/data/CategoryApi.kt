@@ -1,0 +1,35 @@
+package com.fintrack.shared.feature.transaction.data
+
+import com.fintrack.shared.feature.core.data.domain.ApiResponse
+import com.fintrack.shared.feature.transaction.data.model.CategoryDto
+import com.fintrack.shared.feature.transaction.data.model.CreateCategoryRequest
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.delete
+import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+
+class CategoryApi(
+    private val client: HttpClient,
+    private val baseUrl: String
+) {
+    suspend fun getCategories(): List<CategoryDto> {
+        val response: ApiResponse<List<CategoryDto>> = client.get("$baseUrl/categories").body()
+        return response.result
+    }
+
+    suspend fun addCategory(name: String, isExpense: Boolean, iconName: String? = null): CategoryDto {
+        val response: ApiResponse<CategoryDto> = client.post("$baseUrl/categories") {
+            contentType(ContentType.Application.Json)
+            setBody(CreateCategoryRequest(name, isExpense, iconName))
+        }.body()
+        return response.result
+    }
+
+    suspend fun deleteCategory(id: String) {
+        client.delete("$baseUrl/categories/$id")
+    }
+}
