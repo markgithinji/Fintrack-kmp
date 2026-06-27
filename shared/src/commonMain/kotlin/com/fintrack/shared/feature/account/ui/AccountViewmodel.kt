@@ -73,6 +73,12 @@ class AccountsViewModel(private val repo: AccountRepository) : ViewModel() {
     }
 
     fun removeAccount(id: String) {
+        val account = (accounts.value as? Result.Success)?.data?.find { it.id == id }
+        if (account?.isDefault == true) {
+            _deleteResult.value = Result.Error(Exception("Default accounts cannot be removed"))
+            return
+        }
+
         viewModelScope.launch {
             _deleteResult.value = Result.Loading
             _deleteResult.value = repo.deleteAccount(id)

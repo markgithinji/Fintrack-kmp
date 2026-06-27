@@ -8,17 +8,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
 @Composable
-fun AccountsScreen() {
-    // TODO: Implement accounts management
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Accounts Management - Coming Soon")
-    }
-}
-
-@Composable
 fun CategoriesScreen() {
     // TODO: Implement categories management
     Box(

@@ -15,5 +15,6 @@ fun AccountDto.toDomain(): Account = Account(
     name = this.name,
     balance = this.balance,
     income = this.income,
-    expense = this.expense
+    expense = this.expense,
+    isDefault = this.isDefault ?: false
 )

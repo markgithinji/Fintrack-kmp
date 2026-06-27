@@ -34,7 +34,7 @@ import com.fintrack.shared.feature.auth.ui.LoginScreen
 import com.fintrack.shared.feature.auth.ui.RegisterScreen
 import com.fintrack.shared.feature.budget.ui.BudgetDetailScreen
 import com.fintrack.shared.feature.budget.ui.BudgetScreen
-import com.fintrack.shared.feature.profile.AccountsScreen
+import com.fintrack.shared.feature.account.ui.AccountsScreen
 import com.fintrack.shared.feature.profile.CategoriesScreen
 import com.fintrack.shared.feature.profile.ProfileScreen
 import com.fintrack.shared.feature.settings.ui.SettingsScreen
@@ -262,7 +262,10 @@ fun AppNavigation(
                             )
                         )
                     }
-                    SettingsScreen(paddingValues = paddingValues)
+                    SettingsScreen(
+                        paddingValues = paddingValues,
+                        onNavigateToAccounts = { navController.navigate(Screen.Accounts.route) }
+                    )
                 }
 
                 composable(

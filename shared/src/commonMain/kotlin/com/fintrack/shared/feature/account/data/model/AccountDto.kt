@@ -8,5 +8,6 @@ data class AccountDto(
     val name: String,
     val balance: Double? = null,
     val income: Double? = null,
-    val expense: Double? = null
+    val expense: Double? = null,
+    val isDefault: Boolean? = false
 )
