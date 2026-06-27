@@ -6,6 +6,7 @@ import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.logger.LogTags
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
@@ -91,10 +92,17 @@ class ApiClient(
                             BearerTokens(response.accessToken, response.refreshToken)
                         } catch (e: Exception) {
                             logger.error(LogTags.AUTH, "Failed to refresh token: ${e.message}")
-                            // We only clear tokens if the refresh token itself is invalid (401)
-                            // If it's a network error, we should keep the tokens and let the user retry.
-                            if ((e.message?.contains("401") == true) || (e.message?.contains("403") == true)) {
-                                logger.warning(LogTags.AUTH, "Refresh token invalid or expired. Clearing session.")
+                            
+                            val isAuthError = when (e) {
+                                is ClientRequestException -> {
+                                    val status = e.response.status.value
+                                    status == 401 || status == 403
+                                }
+                                else -> e.message?.contains("401") == true || e.message?.contains("403") == true
+                            }
+
+                            if (isAuthError) {
+                                logger.warning(LogTags.AUTH, "Refresh token invalid or expired (401/403). Clearing session.")
                                 tokenDataSource.clearTokens()
                             }
                             null
