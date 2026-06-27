@@ -54,7 +54,6 @@ fun ProfileScreen(
     onNavigateToAccounts: () -> Unit,
     onNavigateToCategories: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    onNavigateToBudgets: () -> Unit,
     onLogout: () -> Unit
 ) {
     val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
@@ -132,11 +131,6 @@ fun ProfileScreen(
                 Icons.Default.Category,
                 "Manage transaction categories"
             ) { onNavigateToCategories() },
-            ProfileOption(
-                "Budgets",
-                Icons.Default.PieChart,
-                "View and manage budgets"
-            ) { onNavigateToBudgets() },
             ProfileOption(
                 "Settings",
                 Icons.Default.Settings,
