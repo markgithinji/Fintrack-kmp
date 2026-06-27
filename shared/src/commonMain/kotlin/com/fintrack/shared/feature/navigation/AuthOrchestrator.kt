@@ -15,6 +15,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
+import com.fintrack.shared.feature.core.data.domain.ApiException
+import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
 
 @Composable
 fun AuthOrchestrator(
@@ -89,6 +92,10 @@ fun AuthErrorScreen(
     error: Throwable,
     onRetry: () -> Unit
 ) {
+    val message = remember(error) {
+        (error as? ApiException)?.getUserFriendlyMessage() ?: error.message ?: "Unable to verify authentication"
+    }
+    
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -111,7 +118,7 @@ fun AuthErrorScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = error.message ?: "Unable to verify authentication",
+                text = message,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )

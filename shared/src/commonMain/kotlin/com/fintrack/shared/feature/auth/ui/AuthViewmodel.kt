@@ -295,12 +295,12 @@ class AuthViewModel(
                 }
 
                 is Result.Error -> {
-                    // On network error, treat as unauthenticated to be safe
-                    _authStatus.value = AuthState.Success(false)
+                    // On network error, show error state to allow retry instead of forcing login
+                    _authStatus.value = AuthState.Error(result.exception)
                 }
 
                 is Result.Loading -> {
-                    _authStatus.value = AuthState.Success(false)
+                    // Stay in loading if the repository returns loading
                 }
             }
         }

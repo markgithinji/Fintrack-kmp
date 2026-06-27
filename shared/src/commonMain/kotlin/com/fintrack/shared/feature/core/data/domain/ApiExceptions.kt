@@ -37,10 +37,10 @@ fun ApiException.getUserFriendlyMessage(): String = when (this) {
         AuthErrorType.UNAUTHORIZED -> "You are not authorized to perform this action."
         AuthErrorType.UNKNOWN -> "An authentication error occurred. Please try again."
     }
-    is ApiException.Network -> "Connection failed. Please check your internet and try again."
+    is ApiException.Network -> details.ifEmpty { "Connection failed. Please check your internet and try again." }
     is ApiException.Validation -> details
     is ApiException.NotFound -> "The requested information could not be found."
-    is ApiException.ServerError -> "Something went wrong on our end. We're working on it!"
+    is ApiException.ServerError -> if (details.contains("Server error", ignoreCase = true)) details else "Something went wrong on our end. We're working on it!"
     is ApiException.Unauthorized -> "Authentication required. Please log in again."
     is ApiException.Forbidden -> "You don't have permission to do this."
     is ApiException.ClientError -> details

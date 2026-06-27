@@ -44,13 +44,15 @@ private suspend fun convertToDomainException(e: Exception): ApiException = when 
     }
 
     is IOException -> {
-        logger.warning(LogTags.NETWORK, "Network connection failed")
-        ApiException.Network("Network connection failed: ${e.message}")
+        val cleanMessage = e.message.cleanKtorMessage()
+        logger.warning(LogTags.NETWORK, "Network connection failed: $cleanMessage")
+        ApiException.Network(cleanMessage.ifEmpty { "Network connection failed" })
     }
 
     is HttpRequestTimeoutException -> {
-        logger.warning(LogTags.NETWORK, "Request timeout")
-        ApiException.Network("Request timeout: ${e.message}")
+        val cleanMessage = e.message.cleanKtorMessage()
+        logger.warning(LogTags.NETWORK, "Request timeout: $cleanMessage")
+        ApiException.Network(cleanMessage.ifEmpty { "Request timeout" })
     }
 
     is IllegalStateException -> {
@@ -71,11 +73,12 @@ private suspend fun convertToDomainException(e: Exception): ApiException = when 
 
 private fun handleRedirectException(e: RedirectResponseException): ApiException {
     val statusCode = e.response.status.value
-    logger.warning(LogTags.ERROR, "Redirect response: $statusCode")
+    val cleanMessage = e.message.cleanKtorMessage()
+    logger.warning(LogTags.ERROR, "Redirect response: $statusCode - $cleanMessage")
     return when (statusCode) {
         401 -> ApiException.Unauthorized("Authentication required")
         403 -> ApiException.Forbidden("Access denied")
-        else -> ApiException.Network("Redirect error: ${e.message}")
+        else -> ApiException.Network("Redirect error: $cleanMessage")
     }
 }
 
@@ -142,16 +145,23 @@ private fun mapToAuthException(message: String, errorCode: String): ApiException
 
 private fun handleServerException(e: ServerResponseException): ApiException {
     val statusCode = e.response.status.value
-    logger.error(LogTags.ERROR, "Server error: $statusCode - ${e.message}")
+    val cleanMessage = e.message.cleanKtorMessage()
+    logger.error(LogTags.ERROR, "Server error: $statusCode - $cleanMessage")
 
     return when (statusCode) {
         500 -> ApiException.ServerError("Internal server error", statusCode)
         503 -> ApiException.ServerError("Service unavailable", statusCode)
-        else -> ApiException.ServerError("Server error $statusCode", statusCode)
+        else -> ApiException.ServerError("Server error $statusCode: $cleanMessage", statusCode)
     }
 }
 
 private fun handleUnknownException(e: Exception): ApiException {
-    val message = e.message ?: "Unknown error occurred"
-    return ApiException.Unknown(message)
+    val message = e.message.cleanKtorMessage()
+    return ApiException.Unknown(message.ifEmpty { "Unknown error occurred" })
+}
+
+private fun String?.cleanKtorMessage(): String {
+    if (this == null) return ""
+    // Remove Ktor-style metadata like [url=..., connect_timeout=...]
+    return this.substringBefore("[").trim()
 }
