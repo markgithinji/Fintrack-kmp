@@ -277,7 +277,7 @@ fun SexyAddBudgetButton(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondary,
-            contentColor = Color.Black
+            contentColor = MaterialTheme.colorScheme.onSecondary
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -333,12 +333,12 @@ fun SexyAddBudgetButton(
                         text = "Create New Budget",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSecondary
                     )
                     Text(
                         text = "Plan your spending strategically",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Black.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f)
                     )
                 }
             }
@@ -347,7 +347,7 @@ fun SexyAddBudgetButton(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = Color.Black.copy(alpha = 0.4f)
+                tint = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.4f)
             )
         }
     }
@@ -565,7 +565,7 @@ fun BudgetEmptyState(
             shape = RoundedCornerShape(20.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.secondary,
-                contentColor = Color.Black
+                contentColor = MaterialTheme.colorScheme.onSecondary
             ),
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
         ) {
