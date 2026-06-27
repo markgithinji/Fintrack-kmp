@@ -266,8 +266,7 @@ fun AppNavigation(
                         )
                     }
                     SettingsScreen(
-                        paddingValues = paddingValues,
-                        onNavigateToAccounts = { navController.navigate(Screen.Accounts.route) }
+                        paddingValues = paddingValues
                     )
                 }
 

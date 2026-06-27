@@ -8,6 +8,7 @@ import com.fintrack.shared.feature.core.data.remote.Environment
 import com.fintrack.shared.feature.summary.di.summaryModule
 import com.fintrack.shared.feature.settings.di.settingsModule
 import com.fintrack.shared.feature.transaction.di.transactionModule
+import com.fintrack.shared.feature.user.di.userModule
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
 
@@ -39,7 +40,8 @@ object Koin {
                 transactionModule,
                 budgetModule,
                 summaryModule,
-                settingsModule
+                settingsModule,
+                userModule
             )
         }
     }

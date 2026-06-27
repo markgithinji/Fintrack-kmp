@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.*
@@ -28,8 +27,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun SettingsScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
-    viewModel: SettingsViewModel = koinViewModel(),
-    onNavigateToAccounts: () -> Unit = {}
+    viewModel: SettingsViewModel = koinViewModel()
 ) {
     val currentCurrency by viewModel.currency.collectAsStateWithLifecycle()
     var showCurrencyDialog by remember { mutableStateOf(false) }
@@ -55,13 +53,6 @@ fun SettingsScreen(
             subtitle = "${currentCurrency.name} (${currentCurrency.symbol})",
             icon = Icons.Default.Payments,
             onClick = { showCurrencyDialog = true }
-        )
-
-        SettingsItem(
-            title = "Manage Accounts",
-            subtitle = "Add or remove your financial accounts",
-            icon = Icons.Default.AccountBalance,
-            onClick = onNavigateToAccounts
         )
     }
 

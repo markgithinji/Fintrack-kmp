@@ -43,17 +43,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun ProfileScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
+    viewModel: ProfileViewModel = koinViewModel(),
     onNavigateToAccounts: () -> Unit,
     onNavigateToCategories: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToBudgets: () -> Unit,
     onLogout: () -> Unit
 ) {
+    val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
     var showLogoutConfirmation by remember { mutableStateOf(false) }
 
     if (showLogoutConfirmation) {
@@ -103,13 +107,13 @@ fun ProfileScreen(
 
             Column {
                 Text(
-                    text = "John Doe", // Replace with actual user name
+                    text = userProfile?.name ?: "Loading...",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "john.doe@example.com", // Replace with actual user email
+                    text = userProfile?.email ?: "",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
