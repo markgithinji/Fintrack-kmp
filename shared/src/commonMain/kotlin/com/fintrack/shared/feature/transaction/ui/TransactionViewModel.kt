@@ -12,9 +12,13 @@ import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.usecase.CreateTransactionUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ValidateTransactionUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 
@@ -31,11 +35,24 @@ class TransactionViewModel(
     private val _saveState = MutableStateFlow<SaveState<Transaction>>(SaveState.Idle)
     val saveState: StateFlow<SaveState<Transaction>> = _saveState
 
+    private val _deleteResult = MutableStateFlow<Result<Unit>?>(null)
+    val deleteResult: StateFlow<Result<Unit>?> = _deleteResult
+
     private val _validationError = MutableStateFlow<String?>(null)
     val validationError: StateFlow<String?> = _validationError
 
     private val _selectedTransaction = MutableStateFlow<Result<Transaction>>(Result.Loading)
     val selectedTransaction: StateFlow<Result<Transaction>> = _selectedTransaction
+
+    private var lastLoadedRecentAccountId: String? = null
+
+    init {
+        viewModelScope.launch {
+            repo.refreshSignal.collectLatest {
+                lastLoadedRecentAccountId?.let { loadRecentTransactions(it, force = true) }
+            }
+        }
+    }
 
     fun validateTransaction(
         amount: String,
@@ -170,8 +187,6 @@ class TransactionViewModel(
         }
     }
 
-    private var lastLoadedRecentAccountId: String? = null
-
     fun loadRecentTransactions(accountId: String?, force: Boolean = false) {
         if (accountId == null) {
             _recentTransactions.value = Result.Error(Exception("No account selected"))
@@ -200,28 +215,31 @@ class TransactionViewModel(
         }
     }
 
-    private var lastPagingAccountId: String? = null
-    private var lastPagingIsIncome: Boolean? = null
-    private var cachedPagingFlow: Flow<PagingData<Transaction>>? = null
-
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun getTransactionsPagingData(
         accountId: String?,
         isIncome: Boolean? = null
     ): Flow<PagingData<Transaction>> {
-        val currentFlow = cachedPagingFlow
-        if (currentFlow != null && lastPagingAccountId == accountId && lastPagingIsIncome == isIncome) {
-            return currentFlow
-        }
-
-        lastPagingAccountId = accountId
-        lastPagingIsIncome = isIncome
-        val newFlow = repo.getTransactionsPagingFlow(accountId, isIncome)
+        return repo.refreshSignal
+            .onStart { emit(Unit) }
+            .flatMapLatest {
+                repo.getTransactionsPagingFlow(accountId, isIncome)
+            }
             .cachedIn(viewModelScope)
-        cachedPagingFlow = newFlow
-        return newFlow
     }
 
     fun resetSaveState() {
         _saveState.value = SaveState.Idle
+    }
+
+    fun deleteTransaction(id: String) {
+        viewModelScope.launch {
+            _deleteResult.value = Result.Loading
+            _deleteResult.value = repo.deleteTransaction(id)
+        }
+    }
+
+    fun resetDeleteResult() {
+        _deleteResult.value = null
     }
 }

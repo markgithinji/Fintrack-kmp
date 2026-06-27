@@ -103,6 +103,7 @@ import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.ui.KMPBackHandler
 import com.fintrack.shared.feature.navigation.AppBarState
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
@@ -111,6 +112,7 @@ import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
+import androidx.compose.material.icons.filled.Delete
 import kotlinx.coroutines.delay
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -133,6 +135,7 @@ fun AddTransactionScreen(
         ?: throw IllegalStateException("No SharedTransitionScope found")
 
     val saveState by transactionsViewModel.saveState.collectAsStateWithLifecycle()
+    val deleteResult by transactionsViewModel.deleteResult.collectAsStateWithLifecycle()
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
     val validationError by transactionsViewModel.validationError.collectAsStateWithLifecycle()
     val selectedTransactionResult by transactionsViewModel.selectedTransaction.collectAsStateWithLifecycle()
@@ -151,6 +154,7 @@ fun AddTransactionScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showNumpad by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     var isDataLoaded by remember(transactionId) { mutableStateOf(false) }
 
@@ -175,11 +179,18 @@ fun AddTransactionScreen(
     }
 
     LaunchedEffect(transactionId) {
+        transactionsViewModel.resetDeleteResult()
         if (transactionId != null) {
             transactionsViewModel.loadTransactionById(transactionId)
         } else {
             transactionsViewModel.resetSelectedTransaction()
             isDataLoaded = true // Nothing to load for new transaction
+        }
+    }
+
+    LaunchedEffect(deleteResult) {
+        if (deleteResult is Result.Success) {
+            onBack()
         }
     }
 
@@ -297,6 +308,50 @@ fun AddTransactionScreen(
 
                 Spacer(modifier = Modifier.height(140.dp)) // Increased space for Save button and Numpad
             }
+        }
+
+        // Delete Button (Top Right)
+        if (transactionId != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = paddingValues.calculateTopPadding())
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                contentAlignment = Alignment.TopEnd
+            ) {
+                IconButton(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier
+                        .background(Color.Black.copy(alpha = 0.2f), CircleShape)
+                ) {
+                    if (deleteResult is Result.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete Transaction",
+                            tint = Color.White
+                        )
+                    }
+                }
+            }
+        }
+
+        if (showDeleteDialog) {
+            ConfirmationDialog(
+                title = "Delete Transaction?",
+                message = "Are you sure you want to delete this transaction? This action cannot be undone.",
+                confirmLabel = "Delete",
+                isDestructive = true,
+                onConfirm = {
+                    transactionId?.let { transactionsViewModel.deleteTransaction(it) }
+                },
+                onDismiss = { showDeleteDialog = false }
+            )
         }
 
         // Prominent Save Button at bottom

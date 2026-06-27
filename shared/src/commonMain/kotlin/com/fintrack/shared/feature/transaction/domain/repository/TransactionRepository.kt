@@ -23,8 +23,13 @@ interface TransactionRepository {
 
     suspend fun updateTransaction(id: String, transaction: Transaction): Result<Transaction>
 
+    suspend fun deleteTransaction(id: String): Result<Unit>
+
     fun getTransactionsPagingFlow(
         accountId: String?,
         isIncome: Boolean? = null
     ): Flow<PagingData<Transaction>>
+
+    suspend fun triggerRefresh()
+    val refreshSignal: Flow<Unit>
 }

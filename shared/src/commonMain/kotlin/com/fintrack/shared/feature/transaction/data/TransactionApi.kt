@@ -6,6 +6,7 @@ import com.fintrack.shared.feature.transaction.data.model.CreateTransactionReque
 import com.fintrack.shared.feature.transaction.data.model.TransactionDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
@@ -58,5 +59,9 @@ class TransactionApi(
             setBody(request)
         }.body()
         return response.result
+    }
+
+    suspend fun deleteTransaction(id: String) {
+        client.delete("$baseUrl/transactions/$id")
     }
 }
