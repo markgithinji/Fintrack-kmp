@@ -378,6 +378,7 @@ fun AppNavigation(
                     TransactionListScreen(
                         accountId = accountId, 
                         isIncome = isIncome,
+                        paddingValues = paddingValues,
                         animatedVisibilityScope = this,
                         onEditTransaction = { transactionId ->
                             navController.navigate(Screen.AddTransaction.createRoute(transactionId))

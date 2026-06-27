@@ -253,8 +253,8 @@ private fun CurrentBalanceSuccessState(
                 Surface(
                     onClick = onChangeAccountClicked,
                     shape = RoundedCornerShape(12.dp),
-                    color = Color.White.copy(alpha = 0.15f),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f))
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -264,13 +264,13 @@ private fun CurrentBalanceSuccessState(
                         Icon(
                             imageVector = Icons.Default.SwapHoriz,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
                             text = "Switch",
                             style = MaterialTheme.typography.labelMedium,
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             fontWeight = FontWeight.Bold
                         )
                     }

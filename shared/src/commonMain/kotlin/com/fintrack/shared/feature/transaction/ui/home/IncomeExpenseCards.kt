@@ -110,7 +110,7 @@ fun LoadingInfoCard(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.height(70.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier

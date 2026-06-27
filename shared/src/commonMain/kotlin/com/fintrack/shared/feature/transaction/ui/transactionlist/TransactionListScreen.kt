@@ -28,7 +28,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.example.compose.transactionBackground
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsHeaderDate
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
@@ -43,6 +42,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun TransactionListScreen(
     accountId: String,
     isIncome: Boolean? = null,
+    paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onEditTransaction: (String) -> Unit,
     transactionsViewModel: TransactionViewModel = koinViewModel(),
@@ -65,6 +65,7 @@ fun TransactionListScreen(
         transactions = transactions,
         isIncome = isIncome,
         listState = listState,
+        paddingValues = paddingValues,
         animatedVisibilityScope = animatedVisibilityScope,
         sharedTransitionScope = sharedTransitionScope,
         onTransactionClick = onEditTransaction
@@ -78,6 +79,7 @@ private fun TransactionListContent(
     transactions: LazyPagingItems<Transaction>,
     isIncome: Boolean?,
     listState: androidx.compose.foundation.lazy.LazyListState,
+    paddingValues: PaddingValues,
     animatedVisibilityScope: AnimatedVisibilityScope,
     sharedTransitionScope: SharedTransitionScope?,
     onTransactionClick: (String) -> Unit = {},
@@ -102,8 +104,13 @@ private fun TransactionListContent(
                     }
                 } else Modifier
             )
-            .background(transactionBackground),
-        contentPadding = PaddingValues(16.dp),
+            .background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            top = 16.dp + paddingValues.calculateTopPadding(),
+            end = 16.dp,
+            bottom = 16.dp + paddingValues.calculateBottomPadding()
+        ),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         state = listState
     ) {
