@@ -165,6 +165,7 @@ fun BudgetDetailScreen(
     val saveState by viewModel.saveState.collectAsStateWithLifecycle()
     val deleteResult by viewModel.deleteResult.collectAsStateWithLifecycle()
     val formState by viewModel.formState.collectAsStateWithLifecycle()
+    val allCategories by viewModel.categories.collectAsStateWithLifecycle()
     val validationState by viewModel.validationState.collectAsStateWithLifecycle()
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
 
@@ -298,6 +299,7 @@ fun BudgetDetailScreen(
                         CategorySelectionSection(
                             isExpense = formState.isExpense,
                             selectedCategories = formState.selectedCategories,
+                            categories = allCategories,
                             onCategoryChange = { viewModel.setCategories(it) }
                         )
 
@@ -942,6 +944,7 @@ fun BudgetNameSection(
 fun CategorySelectionSection(
     isExpense: Boolean,
     selectedCategories: Set<Category>,
+    categories: List<Category>,
     onCategoryChange: (Set<Category>) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -963,11 +966,10 @@ fun CategorySelectionSection(
                     .fillMaxSize()
                     .padding(vertical = 8.dp)
             ) {
-                val categories =
-                    if (isExpense) Category.expenseCategories else Category.incomeCategories
+                val filteredCategories = categories.filter { it.isExpense == isExpense }
 
                 item {
-                    val allSelected = selectedCategories.size == categories.size
+                    val allSelected = selectedCategories.size == filteredCategories.size
                     CategoryChip(
                         text = "All",
                         icon = Icons.Default.SelectAll,
@@ -977,15 +979,15 @@ fun CategorySelectionSection(
                             val newSelection = if (allSelected) {
                                 emptySet()
                             } else {
-                                categories.toSet()
+                                filteredCategories.toSet()
                             }
                             onCategoryChange(newSelection)
                         }
                     )
                 }
 
-                items(categories.size) { index ->
-                    val cat = categories[index]
+                items(filteredCategories.size) { index ->
+                    val cat = filteredCategories[index]
                     val selected = selectedCategories.contains(cat)
                     CategoryChip(
                         text = cat.name,

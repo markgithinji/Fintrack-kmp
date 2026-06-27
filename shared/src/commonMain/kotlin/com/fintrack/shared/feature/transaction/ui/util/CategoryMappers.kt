@@ -24,45 +24,46 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.fintrack.shared.feature.transaction.domain.model.Category
 
 
-fun Category.toIcon(): ImageVector = when (this) {
-    Category.Food -> Icons.Default.Fastfood
-    Category.Transport -> Icons.Default.DirectionsCar
-    Category.Shopping -> Icons.Default.ShoppingCart
-    Category.Health -> Icons.Default.LocalHospital
-    Category.Bills -> Icons.Default.Receipt
-    Category.Entertainment -> Icons.Default.Movie
-    Category.Education -> Icons.Default.School
-    Category.GiftsExpense, Category.GiftsIncome -> Icons.Default.CardGiftcard
-    Category.Travel -> Icons.Default.Flight
-    Category.PersonalCare -> Icons.Default.ContentCut
-    Category.Subscriptions -> Icons.Default.Subscriptions
-    Category.Rent -> Icons.Default.Home
-    Category.Groceries -> Icons.Default.ShoppingBag
-    Category.Insurance -> Icons.Default.Shield
-    Category.MiscExpense, Category.OtherIncome -> Icons.Default.HelpOutline
-    Category.Salary -> Icons.Default.AttachMoney
-    Category.Freelance -> Icons.Default.Work
-    Category.Investments -> Icons.Default.TrendingUp
-    Category.OtherIncome -> Icons.Default.AttachMoney
+fun Category.toIcon(): ImageVector = when (this.id) {
+    Category.Food.id -> Icons.Default.Fastfood
+    Category.Transport.id -> Icons.Default.DirectionsCar
+    Category.Shopping.id -> Icons.Default.ShoppingCart
+    Category.Health.id -> Icons.Default.LocalHospital
+    Category.Bills.id -> Icons.Default.Receipt
+    Category.Entertainment.id -> Icons.Default.Movie
+    Category.Education.id -> Icons.Default.School
+    Category.GiftsExpense.id, Category.GiftsIncome.id -> Icons.Default.CardGiftcard
+    Category.Travel.id -> Icons.Default.Flight
+    Category.PersonalCare.id -> Icons.Default.ContentCut
+    Category.Subscriptions.id -> Icons.Default.Subscriptions
+    Category.Rent.id -> Icons.Default.Home
+    Category.Groceries.id -> Icons.Default.ShoppingBag
+    Category.Insurance.id -> Icons.Default.Shield
+    Category.MiscExpense.id, Category.OtherIncome.id -> Icons.Default.HelpOutline
+    Category.Salary.id -> Icons.Default.AttachMoney
+    Category.Freelance.id -> Icons.Default.Work
+    Category.Investments.id -> Icons.Default.TrendingUp
+    else -> Icons.Default.HelpOutline
 }
 
-fun Category.toColor(): Color = when (this) {
-    Category.Food -> Color(0xFFFFA726)
-    Category.Transport -> Color(0xFF29B6F6)
-    Category.Shopping -> Color(0xFFAB47BC)
-    Category.Health -> Color(0xFFEF5350)
-    Category.Bills -> Color(0xFF8D6E63)
-    Category.Entertainment -> Color(0xFFFF7043)
-    Category.Education -> Color(0xFF42A5F5)
-    Category.GiftsExpense, Category.GiftsIncome -> Color(0xFFEC407A)
-    Category.Travel -> Color(0xFF26C6DA)
-    Category.PersonalCare -> Color(0xFFFFCA28)
-    Category.Subscriptions -> Color(0xFF66BB6A)
-    Category.Rent -> Color(0xFF7E57C2)
-    Category.Groceries -> Color(0xFF8BC34A)
-    Category.Insurance -> Color(0xFF78909C)
-    Category.MiscExpense, Category.OtherIncome -> Color.Gray
-    Category.Salary -> Color(0xFF2E7D32)
-    Category.Freelance -> Color(0xFF0097A7)
-    Category.Investments -> Color(0xFFFFB300)
+fun Category.toColor(): Color = when (this.id) {
+    Category.Food.id -> Color(0xFFFFA726)
+    Category.Transport.id -> Color(0xFF29B6F6)
+    Category.Shopping.id -> Color(0xFFAB47BC)
+    Category.Health.id -> Color(0xFFEF5350)
+    Category.Bills.id -> Color(0xFF8D6E63)
+    Category.Entertainment.id -> Color(0xFFFF7043)
+    Category.Education.id -> Color(0xFF42A5F5)
+    Category.GiftsExpense.id, Category.GiftsIncome.id -> Color(0xFFEC407A)
+    Category.Travel.id -> Color(0xFF26C6DA)
+    Category.PersonalCare.id -> Color(0xFFFFCA28)
+    Category.Subscriptions.id -> Color(0xFF66BB6A)
+    Category.Rent.id -> Color(0xFF7E57C2)
+    Category.Groceries.id -> Color(0xFF8BC34A)
+    Category.Insurance.id -> Color(0xFF78909C)
+    Category.MiscExpense.id, Category.OtherIncome.id -> Color.Gray
+    Category.Salary.id -> Color(0xFF2E7D32)
+    Category.Freelance.id -> Color(0xFF0097A7)
+    Category.Investments.id -> Color(0xFFFFB300)
+    else -> Color.Gray
 }

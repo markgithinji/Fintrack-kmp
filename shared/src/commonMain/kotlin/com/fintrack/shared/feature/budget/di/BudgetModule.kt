@@ -5,6 +5,7 @@ import com.fintrack.shared.feature.budget.data.repository.BudgetRepositoryImpl
 import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.budget.domain.usecase.BudgetValidationUseCase
 import com.fintrack.shared.feature.budget.ui.BudgetViewModel
+import com.fintrack.shared.feature.transaction.domain.usecase.GetCategoriesUseCase
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -12,5 +13,5 @@ val budgetModule = module {
     single { BudgetApi(get(), getProperty("baseUrl")) }
     single<BudgetRepository> { BudgetRepositoryImpl(get()) }
     single { BudgetValidationUseCase() }
-    viewModel { BudgetViewModel(get(), get()) }
+    viewModel { BudgetViewModel(get(), get(), get()) }
 }

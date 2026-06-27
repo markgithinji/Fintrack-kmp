@@ -138,6 +138,7 @@ fun AddTransactionScreen(
     val deleteResult by transactionsViewModel.deleteResult.collectAsStateWithLifecycle()
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
     val validationError by transactionsViewModel.validationError.collectAsStateWithLifecycle()
+    val allCategories by transactionsViewModel.categories.collectAsStateWithLifecycle()
     val selectedTransactionResult by transactionsViewModel.selectedTransaction.collectAsStateWithLifecycle()
 
     var amount by remember { mutableStateOf("") }
@@ -291,6 +292,7 @@ fun AddTransactionScreen(
                 CategorySelectionSection(
                     isIncome = isIncome,
                     selectedCategory = category,
+                    categories = allCategories,
                     onCategorySelected = { category = it }
                 )
 
@@ -667,6 +669,7 @@ fun TypeToggleButton(
 fun CategorySelectionSection(
     isIncome: Boolean,
     selectedCategory: Category?,
+    categories: List<Category>,
     onCategorySelected: (Category?) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -688,10 +691,9 @@ fun CategorySelectionSection(
                     .fillMaxSize()
                     .padding(vertical = 8.dp)
             ) {
-                val categories =
-                    if (isIncome) Category.incomeCategories else Category.expenseCategories
-                items(categories.size) { index ->
-                    val cat = categories[index]
+                val filteredCategories = categories.filter { it.isExpense == !isIncome }
+                items(filteredCategories.size) { index ->
+                    val cat = filteredCategories[index]
                     val selected = selectedCategory == cat
                     CategoryChip(
                         text = cat.name,

@@ -35,11 +35,11 @@ import com.fintrack.shared.feature.auth.ui.RegisterScreen
 import com.fintrack.shared.feature.budget.ui.BudgetDetailScreen
 import com.fintrack.shared.feature.budget.ui.BudgetScreen
 import com.fintrack.shared.feature.account.ui.AccountsScreen
-import com.fintrack.shared.feature.profile.CategoriesScreen
 import com.fintrack.shared.feature.profile.ProfileScreen
 import com.fintrack.shared.feature.settings.ui.SettingsScreen
 import com.fintrack.shared.feature.summary.ui.StatisticsScreen
 import com.fintrack.shared.feature.transaction.ui.addtransaction.AddTransactionScreen
+import com.fintrack.shared.feature.transaction.ui.category.CategoryManagementScreen
 import com.fintrack.shared.feature.transaction.ui.home.HomeScreen
 import com.fintrack.shared.feature.transaction.ui.transactionlist.TransactionListScreen
 
@@ -249,7 +249,10 @@ fun AppNavigation(
                             )
                         )
                     }
-                    CategoriesScreen()
+                    CategoryManagementScreen(
+                        paddingValues = paddingValues,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
                 }
 
                 composable(Screen.Settings.route) {

@@ -11,11 +11,13 @@ import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.usecase.CreateTransactionUseCase
+import com.fintrack.shared.feature.transaction.domain.usecase.GetCategoriesUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ValidateTransactionUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onStart
@@ -26,8 +28,12 @@ import kotlinx.datetime.LocalDateTime
 class TransactionViewModel(
     private val repo: TransactionRepository,
     private val validateTransactionUseCase: ValidateTransactionUseCase,
-    private val createTransactionUseCase: CreateTransactionUseCase
+    private val createTransactionUseCase: CreateTransactionUseCase,
+    private val getCategoriesUseCase: GetCategoriesUseCase
 ) : ViewModel() {
+
+    private val _categories = MutableStateFlow<List<Category>>(emptyList())
+    val categories: StateFlow<List<Category>> = _categories.asStateFlow()
 
     private val _recentTransactions = MutableStateFlow<Result<List<Transaction>>>(Result.Loading)
     val recentTransactions: StateFlow<Result<List<Transaction>>> = _recentTransactions
@@ -50,6 +56,22 @@ class TransactionViewModel(
         viewModelScope.launch {
             repo.refreshSignal.collectLatest {
                 lastLoadedRecentAccountId?.let { loadRecentTransactions(it, force = true) }
+            }
+        }
+        viewModelScope.launch {
+            getCategoriesUseCase().collect {
+                _categories.value = it
+            }
+        }
+        refreshCategories()
+    }
+
+    fun refreshCategories() {
+        viewModelScope.launch {
+            try {
+                getCategoriesUseCase.refresh()
+            } catch (e: Exception) {
+                // Ignore error here or log it
             }
         }
     }

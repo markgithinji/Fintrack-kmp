@@ -162,7 +162,7 @@ fun AccountList(
         }
     } else {
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp)
         ) {
             items(accounts) { account ->
@@ -186,18 +186,18 @@ fun AccountItem(
     
     Surface(
         onClick = onEdit,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
-                .padding(16.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(36.dp)
                     .clip(CircleShape)
                     .background(accountIcon.color.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
@@ -206,21 +206,21 @@ fun AccountItem(
                     imageVector = accountIcon.icon,
                     contentDescription = null,
                     tint = accountIcon.color,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = account.name,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = (account.balance ?: 0.0).toCurrencyString(),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -230,14 +230,18 @@ fun AccountItem(
                     text = "Default",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                    modifier = Modifier.padding(end = 8.dp)
+                    modifier = Modifier.padding(end = 4.dp)
                 )
             } else {
-                IconButton(onClick = onDelete) {
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(32.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Delete Account",
-                        tint = MaterialTheme.colorScheme.error
+                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }

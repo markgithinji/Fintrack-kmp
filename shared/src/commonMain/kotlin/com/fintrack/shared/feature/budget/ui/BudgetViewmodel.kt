@@ -9,6 +9,7 @@ import com.fintrack.shared.feature.budget.domain.model.BudgetFormState
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.budget.domain.usecase.BudgetValidationUseCase
+import com.fintrack.shared.feature.transaction.domain.usecase.GetCategoriesUseCase
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Category
@@ -25,8 +26,17 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalTime::class)
 class BudgetViewModel(
     private val repo: BudgetRepository,
-    private val validationUseCase: BudgetValidationUseCase
+    private val validationUseCase: BudgetValidationUseCase,
+    private val getCategoriesUseCase: GetCategoriesUseCase
 ) : ViewModel() {
+
+    private val _categories = MutableStateFlow<List<Category>>(emptyList())
+    val categories: StateFlow<List<Category>> = _categories
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     val budgets: StateFlow<Result<List<BudgetWithStatus>>> = repo.budgets
         .stateIn(
@@ -66,6 +76,28 @@ class BudgetViewModel(
 
     init {
         reloadBudgets(force = false)
+        viewModelScope.launch {
+            getCategoriesUseCase().collect { cats ->
+                _categories.value = cats
+                if (_formState.value.selectedCategories.isEmpty() && cats.isNotEmpty()) {
+                    val firstExpense = cats.firstOrNull { it.isExpense }
+                    if (firstExpense != null) {
+                        _formState.update { it.copy(selectedCategories = setOf(firstExpense)) }
+                    }
+                }
+            }
+        }
+        refreshCategories()
+    }
+
+    fun refreshCategories() {
+        viewModelScope.launch {
+            try {
+                getCategoriesUseCase.refresh()
+            } catch (e: Exception) {
+                // Ignore
+            }
+        }
     }
 
     fun setAccount(account: Account?) {
@@ -84,10 +116,13 @@ class BudgetViewModel(
         _formState.update { current ->
             val updatedCategories = if (isExpense != current.isExpense) {
                 // Reset categories when type changes
-                val firstCategory = if (isExpense && Category.expenseCategories.isNotEmpty()) {
-                    Category.expenseCategories[0]
-                } else if (!isExpense && Category.incomeCategories.isNotEmpty()) {
-                    Category.incomeCategories[0]
+                val expenseCategories = _categories.value.filter { it.isExpense }
+                val incomeCategories = _categories.value.filter { !it.isExpense }
+                
+                val firstCategory = if (isExpense && expenseCategories.isNotEmpty()) {
+                    expenseCategories[0]
+                } else if (!isExpense && incomeCategories.isNotEmpty()) {
+                    incomeCategories[0]
                 } else {
                     null
                 }

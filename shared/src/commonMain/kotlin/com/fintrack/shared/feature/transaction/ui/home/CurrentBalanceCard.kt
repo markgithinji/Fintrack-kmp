@@ -478,19 +478,19 @@ private fun AccountSelectionListState(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp, horizontal = 4.dp)
+                    .padding(vertical = 2.dp, horizontal = 4.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(
                         if (isSelected) MaterialTheme.colorScheme.primaryContainer
                         else Color.Transparent
                     )
-                    .clickable { onAccountSelected(acc.id) }  // Simplified
-                    .padding(vertical = 12.dp, horizontal = 8.dp),
+                    .clickable { onAccountSelected(acc.id) }
+                    .padding(vertical = 8.dp, horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(32.dp)
                         .background(
                             color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                             else MaterialTheme.colorScheme.surfaceVariant,
@@ -501,7 +501,7 @@ private fun AccountSelectionListState(
                     Icon(
                         imageVector = AccountIcon.fromAccountName(acc.name).icon,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(18.dp),
                         tint = if (isSelected) MaterialTheme.colorScheme.primary
                         else MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -512,13 +512,13 @@ private fun AccountSelectionListState(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         acc.name,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         (acc.balance ?: 0.0).toCurrencyString(),
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.labelSmall,
                         color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -528,7 +528,7 @@ private fun AccountSelectionListState(
                         Icons.Default.Check,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
