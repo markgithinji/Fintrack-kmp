@@ -322,19 +322,19 @@ fun AddTransactionScreen(
                 IconButton(
                     onClick = { showDeleteDialog = true },
                     modifier = Modifier
-                        .background(Color.Black.copy(alpha = 0.2f), CircleShape)
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.2f), CircleShape)
                 ) {
                     if (deleteResult is Result.Loading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onSurface,
                             strokeWidth = 2.dp
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Delete Transaction",
-                            tint = Color.White
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -366,9 +366,10 @@ fun AddTransactionScreen(
                 amount = amount,
                 category = category,
                 selectedAccount = selectedAccount,
+                isIncome = isIncome,
                 themeColor = themeColor,
                 isEditing = transactionId != null,
-                onSaveClick = {
+                onSaveClick = { 
                     showNumpad = false
                     if (transactionId != null) {
                         transactionsViewModel.updateTransaction(
@@ -509,7 +510,7 @@ fun AmountHeader(
                 ) { targetIsIncome ->
                     Text(
                         text = if (targetIsIncome) "Income Amount" else "Expense Amount",
-                        color = Color.White.copy(alpha = 0.8f),
+                        color = (if (targetIsIncome) MaterialTheme.colorScheme.onTertiary else Color.White).copy(alpha = 0.8f),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Medium
                     )
@@ -526,7 +527,7 @@ fun AmountHeader(
                 ) {
                     Text(
                         text = LocalCurrency.current.symbol,
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = (if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White).copy(alpha = 0.7f),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 12.dp, end = 8.dp)
@@ -545,7 +546,7 @@ fun AmountHeader(
                         ),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         visualTransformation = ThousandsSeparatorTransformation(),
-                        cursorBrush = SolidColor(Color.White),
+                        cursorBrush = SolidColor(if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White),
                         singleLine = true,
                         modifier = Modifier
                             .focusRequester(focusRequester)
@@ -556,7 +557,7 @@ fun AmountHeader(
                                 if (amount.isEmpty()) {
                                     Text(
                                         "0",
-                                        color = Color.White.copy(alpha = 0.4f),
+                                        color = (if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White).copy(alpha = 0.4f),
                                         fontSize = 48.sp,
                                         fontWeight = FontWeight.Black
                                     )
@@ -569,7 +570,7 @@ fun AmountHeader(
                                     AnimatedNumber(
                                         value = formattedAmount,
                                         style = TextStyle(
-                                            color = Color.White,
+                                            color = if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White,
                                             fontSize = 48.sp,
                                             fontWeight = FontWeight.Black,
                                             textAlign = TextAlign.Start,
@@ -635,7 +636,9 @@ fun TypeToggleButton(
         animationSpec = tween(300)
     )
     val contentColor by animateColorAsState(
-        targetValue = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = if (isSelected) {
+            if (text.lowercase() == "income") MaterialTheme.colorScheme.onTertiary else Color.White
+        } else MaterialTheme.colorScheme.onSurfaceVariant,
         animationSpec = tween(300)
     )
 
@@ -671,7 +674,7 @@ fun CategorySelectionSection(
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp)
@@ -714,7 +717,7 @@ fun DescriptionInputSection(
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             TextField(
@@ -730,7 +733,7 @@ fun DescriptionInputSection(
                     Icon(
                         Icons.AutoMirrored.Filled.Notes,
                         null,
-                        tint = Color.Gray,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
                 },
@@ -741,7 +744,7 @@ fun DescriptionInputSection(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent,
-                    cursorColor = Color.Gray
+                    cursorColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
         }
@@ -759,7 +762,7 @@ fun DateTimeSelectionSection(
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -775,7 +778,7 @@ fun DateTimeSelectionSection(
                         .clickable(onClick = onDateClicked),
                     horizontalAlignment = Alignment.Start
                 ) {
-                    Text("Date", fontSize = 12.sp, color = Color.Gray)
+                    Text("Date", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
@@ -800,7 +803,7 @@ fun DateTimeSelectionSection(
                         .clickable(onClick = onTimeClicked),
                     horizontalAlignment = Alignment.Start
                 ) {
-                    Text("Time", fontSize = 12.sp, color = Color.Gray)
+                    Text("Time", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         val hourStr = dateTime.time.hour.toString().padStart(2, '0')
@@ -829,6 +832,7 @@ fun SaveTransactionButton(
     amount: String,
     category: Category?,
     selectedAccount: Account?,
+    isIncome: Boolean,
     themeColor: Color,
     isEditing: Boolean = false,
     onSaveClick: () -> Unit
@@ -845,9 +849,9 @@ fun SaveTransactionButton(
         shape = RoundedCornerShape(24.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = themeColor,
-            contentColor = Color.White,
+            contentColor = if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White,
             disabledContainerColor = if (isSuccess) themeColor else themeColor.copy(alpha = 0.5f),
-            disabledContentColor = if (isSuccess) Color.White else Color.White.copy(alpha = 0.5f)
+            disabledContentColor = if (isSuccess) (if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White) else (if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White).copy(alpha = 0.5f)
         ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),
         enabled = !isInProgress && !isSuccess && isFormValid
@@ -855,7 +859,7 @@ fun SaveTransactionButton(
         when (saveState) {
             is SaveState.Loading -> {
                 CircularProgressIndicator(
-                    color = Color.White,
+                    color = if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White,
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -868,7 +872,7 @@ fun SaveTransactionButton(
                     Icon(
                         Icons.Default.CheckCircle,
                         contentDescription = "Saved",
-                        tint = Color.White,
+                        tint = if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(if (isEditing) "Updated" else "Saved", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
@@ -940,15 +944,20 @@ fun CategoryChip(
         animationSpec = tween(durationMillis = 300)
     )
     val animatedContentColor by animateColorAsState(
-        targetValue = if (selected) Color.White else color,
+        targetValue = if (selected) {
+            // Check if it's one of the income categories
+            if (Category.incomeCategories.any { it.name == text }) MaterialTheme.colorScheme.onTertiary else Color.White
+        } else color,
         animationSpec = tween(durationMillis = 300)
     )
     val animatedTextColor by animateColorAsState(
-        targetValue = if (selected) Color.White else Color.Black,
+        targetValue = if (selected) {
+            if (Category.incomeCategories.any { it.name == text }) MaterialTheme.colorScheme.onTertiary else Color.White
+        } else MaterialTheme.colorScheme.onSurface,
         animationSpec = tween(durationMillis = 300)
     )
     val animatedBorderColor by animateColorAsState(
-        targetValue = if (selected) color else Color.LightGray.copy(alpha = 0.5f),
+        targetValue = if (selected) color else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
         animationSpec = tween(durationMillis = 300)
     )
     val animatedElevation by animateDpAsState(

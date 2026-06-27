@@ -239,7 +239,7 @@ fun BudgetDetailScreen(
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
                         text = "Failed to load budget",
-                        color = Color.Red
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
             }
@@ -323,6 +323,7 @@ fun BudgetDetailScreen(
                 saveState = saveState,
                 validationState = validationState,
                 themeColor = themeColor,
+                isExpense = formState.isExpense,
                 onSaveClick = { 
                     showNumpad = false
                     viewModel.saveBudget() 
@@ -342,19 +343,19 @@ fun BudgetDetailScreen(
                 IconButton(
                     onClick = { showDeleteDialog = true },
                     modifier = Modifier
-                        .background(Color.Black.copy(alpha = 0.2f), CircleShape)
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.2f), CircleShape)
                 ) {
                     if (deleteResult is Result.Loading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onSurface,
                             strokeWidth = 2.dp
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Delete Budget",
-                            tint = Color.White
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -464,7 +465,7 @@ fun BudgetAmountHeader(
             ) { targetIsExpense ->
                 Text(
                     text = if (targetIsExpense) "Expense Budget Limit" else "Income Target Limit",
-                    color = Color.White.copy(alpha = 0.8f),
+                    color = (if (targetIsExpense) Color.White else MaterialTheme.colorScheme.onTertiary).copy(alpha = 0.8f),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -494,7 +495,7 @@ fun BudgetAmountHeader(
                 ) {
                     Text(
                         text = LocalCurrency.current.symbol,
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = (if (isExpense) Color.White else MaterialTheme.colorScheme.onTertiary).copy(alpha = 0.7f),
                         fontSize = (amountFontSize.value * 0.5f).sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = (amountFontSize.value * 0.2f).dp, end = 8.dp)
@@ -513,7 +514,7 @@ fun BudgetAmountHeader(
                         ),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         visualTransformation = ThousandsSeparatorTransformation(),
-                        cursorBrush = SolidColor(Color.White),
+                        cursorBrush = SolidColor(if (isExpense) Color.White else MaterialTheme.colorScheme.onTertiary),
                         singleLine = true,
                         modifier = Modifier
                             .focusRequester(focusRequester)
@@ -524,7 +525,7 @@ fun BudgetAmountHeader(
                                 if (amount.isEmpty()) {
                                     Text(
                                         "0",
-                                        color = Color.White.copy(alpha = 0.4f),
+                                        color = (if (isExpense) Color.White else MaterialTheme.colorScheme.onTertiary).copy(alpha = 0.4f),
                                         fontSize = amountFontSize.value.sp,
                                         fontWeight = FontWeight.Black
                                     )
@@ -537,7 +538,7 @@ fun BudgetAmountHeader(
                                     AnimatedNumber(
                                         value = formattedAmount,
                                         style = TextStyle(
-                                            color = Color.White,
+                                            color = if (isExpense) Color.White else MaterialTheme.colorScheme.onTertiary,
                                             fontSize = amountFontSize.value.sp,
                                             fontWeight = FontWeight.Black,
                                             textAlign = TextAlign.Start,
@@ -644,7 +645,7 @@ fun AccountSelectionSection(
                 Card(
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Box(
@@ -662,7 +663,7 @@ fun AccountSelectionSection(
                 Card(
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
@@ -673,7 +674,7 @@ fun AccountSelectionSection(
                     ) {
                         Text(
                             text = "Failed to load accounts",
-                            color = Color.Red,
+                            color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                         Button(
@@ -704,7 +705,7 @@ fun AccountSelectionSection(
                         ) {
                             Text(
                                 text = "No accounts available. Create an account first.",
-                                color = Color.Gray
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -742,15 +743,15 @@ fun AccountChip(
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
     )
     val backgroundColor by animateColorAsState(
-        targetValue = if (isSelected) accountChipSelectedBg else MaterialTheme.colorScheme.surface,
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
         animationSpec = tween(300)
     )
     val borderColor by animateColorAsState(
-        targetValue = if (isSelected) accountChipBorder else Color.LightGray.copy(alpha = 0.3f),
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
         animationSpec = tween(300)
     )
     val elevation by animateDpAsState(
-        targetValue = if (isSelected) 4.dp else 1.dp,
+        targetValue = if (isSelected) 2.dp else 0.dp,
         animationSpec = tween(300)
     )
 
@@ -779,16 +780,17 @@ fun AccountChip(
             Icon(
                 imageVector = accountIcon.icon,
                 contentDescription = account.name,
-                tint = accountIcon.color,
+                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(24.dp)
             )
 
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(8.dp))
 
             Text(
                 text = account.name,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
+                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -796,7 +798,7 @@ fun AccountChip(
             Text(
                 text = account.balance?.toCurrencyString() ?: "${LocalCurrency.current.symbol} --",
                 fontSize = 12.sp,
-                color = Color.Gray
+                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -807,6 +809,7 @@ fun SaveBudgetButton(
     saveState: SaveState<Budget>,
     validationState: ValidationResult,
     themeColor: Color,
+    isExpense: Boolean,
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -822,7 +825,7 @@ fun SaveBudgetButton(
         shape = RoundedCornerShape(24.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = themeColor,
-            contentColor = Color.White,
+            contentColor = if (isExpense) Color.White else MaterialTheme.colorScheme.onTertiary,
             disabledContainerColor = if (isSuccess) themeColor else themeColor.copy(alpha = 0.5f),
             disabledContentColor = if (isSuccess) Color.White else Color.White.copy(alpha = 0.5f)
         ),
@@ -901,7 +904,7 @@ fun BudgetNameSection(
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             TextField(
@@ -917,7 +920,7 @@ fun BudgetNameSection(
                     Icon(
                         Icons.Default.Edit,
                         null,
-                        tint = Color.Gray,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
                 },
@@ -928,7 +931,7 @@ fun BudgetNameSection(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent,
-                    cursorColor = Color.Gray
+                    cursorColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
         }
@@ -946,7 +949,7 @@ fun CategorySelectionSection(
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp)
@@ -968,7 +971,7 @@ fun CategorySelectionSection(
                     CategoryChip(
                         text = "All",
                         icon = Icons.Default.SelectAll,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         selected = allSelected,
                         onClick = {
                             val newSelection = if (allSelected) {
@@ -1016,7 +1019,7 @@ fun PeriodSelectionSection(
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -1032,7 +1035,7 @@ fun PeriodSelectionSection(
                         .clickable { showStartPicker = true },
                     horizontalAlignment = Alignment.Start
                 ) {
-                    Text("Start Date", fontSize = 12.sp, color = Color.Gray)
+                    Text("Start Date", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
@@ -1058,7 +1061,7 @@ fun PeriodSelectionSection(
                         .clickable { showEndPicker = true },
                     horizontalAlignment = Alignment.Start
                 ) {
-                    Text("End Date", fontSize = 12.sp, color = Color.Gray)
+                    Text("End Date", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
