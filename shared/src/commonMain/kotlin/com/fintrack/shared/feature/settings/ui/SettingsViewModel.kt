@@ -154,7 +154,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsDataSource.setReminderTime(time)
             if (isReminderEnabled.value) {
-                notificationService.scheduleDailyReminder()
+                notificationService.scheduleDailyReminder(time)
             }
         }
     }
@@ -164,7 +164,7 @@ class SettingsViewModel(
         if (granted) {
             viewModelScope.launch {
                 settingsDataSource.setReminderEnabled(true)
-                notificationService.scheduleDailyReminder()
+                notificationService.scheduleDailyReminder(reminderTime.value)
             }
         } else {
             _error.value = "Notification permission denied"
