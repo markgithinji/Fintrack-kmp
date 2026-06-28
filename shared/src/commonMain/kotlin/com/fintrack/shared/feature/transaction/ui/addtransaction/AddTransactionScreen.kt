@@ -143,11 +143,12 @@ fun AddTransactionScreen(
     val allCategories by transactionsViewModel.categories.collectAsStateWithLifecycle()
     val selectedTransactionResult by transactionsViewModel.selectedTransaction.collectAsStateWithLifecycle()
 
-    var amount by remember { mutableStateOf("") }
+    val amount by transactionsViewModel.amount.collectAsStateWithLifecycle()
+    val category by transactionsViewModel.selectedCategory.collectAsStateWithLifecycle()
+    val selectedAccount by transactionsViewModel.selectedAccount.collectAsStateWithLifecycle()
+
     var isIncome by remember { mutableStateOf(false) }
-    var category by remember { mutableStateOf<Category?>(null) }
     var description by remember { mutableStateOf("") }
-    var selectedAccount by remember { mutableStateOf<Account?>(null) }
     var dateTime by remember {
         mutableStateOf(
             kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
@@ -208,12 +209,12 @@ fun AddTransactionScreen(
             if (accountsResult is Result.Success) {
                 val accounts = (accountsResult as Result.Success<List<Account>>).data
                 
-                amount = transaction.amount.toLong().toString()
+                transactionsViewModel.onAmountChange(transaction.amount.toLong().toString())
                 isIncome = transaction.isIncome
-                category = Category.fromName(transaction.category, !transaction.isIncome)
+                transactionsViewModel.onCategoryChange(Category.fromName(transaction.category, !transaction.isIncome))
                 description = transaction.description ?: ""
                 dateTime = transaction.dateTime
-                selectedAccount = accounts.find { it.id == transaction.accountId }
+                transactionsViewModel.onAccountChange(accounts.find { it.id == transaction.accountId })
                 
                 isDataLoaded = true
             }
@@ -246,7 +247,7 @@ fun AddTransactionScreen(
             with(sharedTransitionScope) {
                 AmountHeader(
                     amount = amount,
-                    onAmountChange = { amount = it },
+                    onAmountChange = { transactionsViewModel.onAmountChange(it) },
                     isIncome = isIncome,
                     themeColor = themeColor,
                     paddingValues = paddingValues,
@@ -287,7 +288,7 @@ fun AddTransactionScreen(
                 AccountSelectionSection(
                     accountsResult = accountsResult,
                     selectedAccount = selectedAccount,
-                    onAccountSelected = { selectedAccount = it },
+                    onAccountSelected = { transactionsViewModel.onAccountChange(it) },
                     onRetry = { accountsViewModel.reloadAccounts() }
                 )
 
@@ -295,7 +296,7 @@ fun AddTransactionScreen(
                     isIncome = isIncome,
                     selectedCategory = category,
                     categories = allCategories,
-                    onCategorySelected = { category = it }
+                    onCategorySelected = { transactionsViewModel.onCategoryChange(it) }
                 )
 
                 DescriptionInputSection(
@@ -409,12 +410,12 @@ fun AddTransactionScreen(
             FinanceNumpad(
                 onNumberClick = { num ->
                     if (amount.length < 12) {
-                        amount += num
+                        transactionsViewModel.onAmountChange(amount + num)
                     }
                 },
                 onBackspaceClick = {
                     if (amount.isNotEmpty()) {
-                        amount = amount.dropLast(1)
+                        transactionsViewModel.onAmountChange(amount.dropLast(1))
                     }
                 },
                 onDoneClick = { showNumpad = false }

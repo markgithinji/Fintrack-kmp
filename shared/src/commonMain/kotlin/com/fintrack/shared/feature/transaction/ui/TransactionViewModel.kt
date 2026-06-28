@@ -14,17 +14,20 @@ import com.fintrack.shared.feature.transaction.domain.usecase.CreateTransactionU
 import com.fintrack.shared.feature.transaction.domain.usecase.GetCategoriesUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ValidateTransactionUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 
-// TODO: add debouncing to validation logic
+@OptIn(FlowPreview::class)
 class TransactionViewModel(
     private val repo: TransactionRepository,
     private val validateTransactionUseCase: ValidateTransactionUseCase,
@@ -34,6 +37,15 @@ class TransactionViewModel(
 
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
     val categories: StateFlow<List<Category>> = _categories.asStateFlow()
+
+    private val _amount = MutableStateFlow("")
+    val amount: StateFlow<String> = _amount.asStateFlow()
+
+    private val _selectedCategory = MutableStateFlow<Category?>(null)
+    val selectedCategory: StateFlow<Category?> = _selectedCategory.asStateFlow()
+
+    private val _selectedAccount = MutableStateFlow<Account?>(null)
+    val selectedAccount: StateFlow<Account?> = _selectedAccount.asStateFlow()
 
     private val _recentTransactions = MutableStateFlow<Result<List<Transaction>>>(Result.Loading)
     val recentTransactions: StateFlow<Result<List<Transaction>>> = _recentTransactions
@@ -63,7 +75,31 @@ class TransactionViewModel(
                 _categories.value = it
             }
         }
+        
+        // Debounced validation
+        viewModelScope.launch {
+            combine(_amount, _selectedCategory, _selectedAccount) { a, c, acc ->
+                Triple(a, c, acc)
+            }.debounce(300).collect { (a, c, acc) ->
+                if (a.isNotEmpty()) {
+                    validateTransaction(a, c, acc)
+                }
+            }
+        }
+        
         refreshCategories()
+    }
+
+    fun onAmountChange(newAmount: String) {
+        _amount.value = newAmount
+    }
+
+    fun onCategoryChange(newCategory: Category?) {
+        _selectedCategory.value = newCategory
+    }
+
+    fun onAccountChange(newAccount: Account?) {
+        _selectedAccount.value = newAccount
     }
 
     fun refreshCategories() {

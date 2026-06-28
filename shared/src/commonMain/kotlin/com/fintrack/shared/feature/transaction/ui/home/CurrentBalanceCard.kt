@@ -73,7 +73,8 @@ fun CurrentBalanceCardWrapper(
         selectedAccountResult = selectedAccountResult,
         isBalanceHidden = isBalanceHidden,
         onChangeAccountClicked = { showDialog = true },
-        onToggleBalanceVisibility = onToggleBalanceVisibility
+        onToggleBalanceVisibility = onToggleBalanceVisibility,
+        onRetry = onRetry
     )
 
     if (showDialog) {
@@ -84,7 +85,8 @@ fun CurrentBalanceCardWrapper(
                 onAccountSelected(accountId)
                 showDialog = false
             },
-            onDismiss = { showDialog = false }
+            onDismiss = { showDialog = false },
+            onRetry = onRetry
         )
     }
 }
@@ -94,7 +96,8 @@ fun CurrentBalanceCard(
     selectedAccountResult: Result<Account>,
     isBalanceHidden: Boolean,
     onChangeAccountClicked: () -> Unit,
-    onToggleBalanceVisibility: (Boolean) -> Unit
+    onToggleBalanceVisibility: (Boolean) -> Unit,
+    onRetry: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -117,7 +120,7 @@ fun CurrentBalanceCard(
                 is Result.Error -> {
                     CurrentBalanceErrorState(
                         errorMessage = selectedAccountResult.exception.message,
-                        onRetry = onChangeAccountClicked
+                        onRetry = onRetry
                     )
                 }
 
@@ -331,7 +334,8 @@ fun AccountSelectionDialog(
     accountsResult: Result<List<Account>>,
     selectedAccountId: String?,
     onAccountSelected: (String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onRetry: () -> Unit = {}
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -364,8 +368,7 @@ fun AccountSelectionDialog(
                     is Result.Error -> {
                         AccountSelectionErrorState(
                             errorMessage = accountsResult.exception.message,
-                            onRetry = { // TODO: Add retry logic
-                            }
+                            onRetry = onRetry
                         )
                     }
 
