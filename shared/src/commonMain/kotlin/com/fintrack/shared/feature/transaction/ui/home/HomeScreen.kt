@@ -44,6 +44,12 @@ fun HomeScreen(
     val categoryComparisonResult by statsViewModel.categoryComparisons.collectAsStateWithLifecycle()
     val isBalanceHidden by settingsViewModel.isBalanceHidden.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        if (accountsResult is Result.Error || (accountsResult is Result.Success && (accountsResult as Result.Success).data.isEmpty())) {
+            accountsViewModel.reloadAccounts(force = true)
+        }
+    }
+
     LaunchedEffect(selectedAccountResult) {
         val accountId = (selectedAccountResult as? Result.Success)?.data?.id
         accountId?.let { id ->
@@ -72,7 +78,9 @@ fun HomeScreen(
                 isBalanceHidden = isBalanceHidden,
                 onAccountSelected = { accountId -> accountsViewModel.selectAccount(accountId) },
                 onToggleBalanceVisibility = { settingsViewModel.setBalanceHidden(it) },
-                onRetry = { accountsViewModel.reloadAccounts() }
+                onRetry = { 
+                    accountsViewModel.reloadAccounts(force = true)
+                }
             )
         }
 

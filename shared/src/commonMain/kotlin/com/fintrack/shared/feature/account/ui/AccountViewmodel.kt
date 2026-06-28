@@ -29,7 +29,8 @@ class AccountsViewModel(private val repo: AccountRepository) : ViewModel() {
 
     // Reload all accounts
     fun reloadAccounts(force: Boolean = true) {
-        if (!force && _accounts.value is Result.Success) return
+        val currentAccounts = _accounts.value
+        if (!force && currentAccounts is Result.Success && currentAccounts.data.isNotEmpty()) return
 
         viewModelScope.launch {
             _accounts.value = Result.Loading
