@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,7 +28,8 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun SettingsScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
-    viewModel: SettingsViewModel = koinViewModel()
+    viewModel: SettingsViewModel = koinViewModel(),
+    onNavigateToSecurity: () -> Unit = {}
 ) {
     val currentCurrency by viewModel.currency.collectAsStateWithLifecycle()
     var showCurrencyDialog by remember { mutableStateOf(false) }
@@ -53,6 +55,22 @@ fun SettingsScreen(
             subtitle = "${currentCurrency.name} (${currentCurrency.symbol})",
             icon = Icons.Default.Payments,
             onClick = { showCurrencyDialog = true }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Security",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        SettingsItem(
+            title = "Security Settings",
+            subtitle = "Password and biometric lock",
+            icon = Icons.Default.Security,
+            onClick = onNavigateToSecurity
         )
     }
 

@@ -36,6 +36,7 @@ import androidx.compose.ui.window.DialogProperties
 
 @Composable
 fun ErrorDialog(
+    title: String = "Error",
     errorMessage: String,
     onDismiss: () -> Unit,
     onRetry: () -> Unit,
@@ -80,7 +81,7 @@ fun ErrorDialog(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Login Failed",
+                    text = title,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
