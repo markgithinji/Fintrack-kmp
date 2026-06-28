@@ -2,14 +2,14 @@
 <resources>
     <!-- Base application theme. -->
     <style name="Theme.Fintrack" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
+        <!-- Customize your dark theme here. -->
         <item name="android:statusBarColor">?android:attr/colorBackground</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
         <!-- Set the splash screen background, animated icon, and animation duration. -->
-        <item name="windowSplashScreenBackground">@color/white</item>
+        <item name="windowSplashScreenBackground">@color/black</item>
 
         <!-- Use windowSplashScreenAnimatedIcon to display a custom icon. -->
         <item name="windowSplashScreenAnimatedIcon">@drawable/fintrack_splash_icon</item>

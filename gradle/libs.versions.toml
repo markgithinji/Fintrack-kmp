@@ -35,9 +35,11 @@ core = "1.7.0"
 lifecycleRuntimeKtx = "2.9.4"
 composeBom = "2025.10.00"
 securityCryptoKtx = "1.1.0"
+splashscreen = "1.0.1"
 spotless = "8.0.0"
 
 [libraries]
+androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "splashscreen" }
 androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "androidx-biometric" }
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "pagingRuntime" }
 androidx-paging-common = { module = "androidx.paging:paging-common", version.ref = "pagingRuntime" }
