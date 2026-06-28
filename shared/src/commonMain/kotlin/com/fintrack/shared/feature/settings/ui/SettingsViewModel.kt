@@ -7,6 +7,7 @@ import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
+import com.fintrack.shared.feature.settings.domain.util.NotificationService
 import com.fintrack.shared.feature.transaction.domain.usecase.ClearAllTransactionsUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ExportTransactionsUseCase
 import com.fintrack.shared.feature.core.util.Result
@@ -22,6 +23,7 @@ class SettingsViewModel(
     private val clearAllTransactionsUseCase: ClearAllTransactionsUseCase,
     private val exportTransactionsUseCase: ExportTransactionsUseCase,
     private val biometricAuthenticator: BiometricAuthenticator,
+    private val notificationService: NotificationService,
 ) : ViewModel() {
 
     val theme: StateFlow<AppTheme> = settingsDataSource.theme
@@ -45,6 +47,13 @@ class SettingsViewModel(
             initialValue = false
         )
 
+    val isReminderEnabled: StateFlow<Boolean> = settingsDataSource.isReminderEnabled
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
+
     private val _exportResult = MutableStateFlow<String?>(null)
     val exportResult: StateFlow<String?> = _exportResult.asStateFlow()
 
@@ -53,6 +62,9 @@ class SettingsViewModel(
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _showPermissionRequest = MutableStateFlow(false)
+    val showPermissionRequest: StateFlow<Boolean> = _showPermissionRequest.asStateFlow()
 
     fun setTheme(theme: AppTheme) {
         viewModelScope.launch {
@@ -70,6 +82,33 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsDataSource.setBalanceHidden(hidden)
         }
+    }
+
+    fun setReminderEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            if (enabled) {
+                _showPermissionRequest.value = true
+            } else {
+                settingsDataSource.setReminderEnabled(false)
+                notificationService.cancelDailyReminder()
+            }
+        }
+    }
+
+    fun onPermissionResult(granted: Boolean) {
+        _showPermissionRequest.value = false
+        if (granted) {
+            viewModelScope.launch {
+                settingsDataSource.setReminderEnabled(true)
+                notificationService.scheduleDailyReminder()
+            }
+        } else {
+            _error.value = "Notification permission denied"
+        }
+    }
+
+    fun dismissPermissionRequest() {
+        _showPermissionRequest.value = false
     }
 
     fun exportToCsv() {

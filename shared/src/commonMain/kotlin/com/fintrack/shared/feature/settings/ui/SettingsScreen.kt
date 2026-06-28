@@ -11,6 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Security
@@ -40,6 +41,8 @@ fun SettingsScreen(
     val currentCurrency by viewModel.currency.collectAsStateWithLifecycle()
     val currentTheme by viewModel.theme.collectAsStateWithLifecycle()
     val isBalanceHidden by viewModel.isBalanceHidden.collectAsStateWithLifecycle()
+    val isReminderEnabled by viewModel.isReminderEnabled.collectAsStateWithLifecycle()
+    val showPermissionRequest by viewModel.showPermissionRequest.collectAsStateWithLifecycle()
     val exportResult by viewModel.exportResult.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
@@ -116,6 +119,23 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
+                text = "Notifications",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+
+            SettingsToggleItem(
+                title = "Transaction Reminders",
+                subtitle = "Daily reminder to log your expenses",
+                icon = Icons.Default.Notifications,
+                checked = isReminderEnabled,
+                onCheckedChange = { viewModel.setReminderEnabled(it) }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
                 text = "Security",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
@@ -186,6 +206,12 @@ fun SettingsScreen(
             onDismiss = { showThemeDialog = false }
         )
     }
+
+    NotificationPermissionLauncher(
+        trigger = showPermissionRequest,
+        onResult = { viewModel.onPermissionResult(it) },
+        onDismissTrigger = { viewModel.dismissPermissionRequest() }
+    )
 
     if (showDeleteConfirmDialog) {
         ConfirmationDialog(

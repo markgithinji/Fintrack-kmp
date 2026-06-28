@@ -18,6 +18,7 @@ class AndroidSettingsDataSource(
     private val _currencyFlow = MutableStateFlow(Currency.KES)
     private val _biometricFlow = MutableStateFlow(false)
     private val _balanceHiddenFlow = MutableStateFlow(false)
+    private val _reminderFlow = MutableStateFlow(false)
 
     init {
         val themeName = prefs.getString("app_theme", AppTheme.SYSTEM.name)
@@ -31,6 +32,9 @@ class AndroidSettingsDataSource(
 
         val balanceHidden = prefs.getBoolean("balance_hidden", false)
         _balanceHiddenFlow.update { balanceHidden }
+
+        val reminderEnabled = prefs.getBoolean("reminder_enabled", false)
+        _reminderFlow.update { reminderEnabled }
     }
 
     override val theme: Flow<AppTheme> = _themeFlow
@@ -67,5 +71,14 @@ class AndroidSettingsDataSource(
             putBoolean("balance_hidden", hidden)
         }
         _balanceHiddenFlow.value = hidden
+    }
+
+    override val isReminderEnabled: Flow<Boolean> = _reminderFlow
+
+    override suspend fun setReminderEnabled(enabled: Boolean) {
+        prefs.edit(commit = true) {
+            putBoolean("reminder_enabled", enabled)
+        }
+        _reminderFlow.value = enabled
     }
 }

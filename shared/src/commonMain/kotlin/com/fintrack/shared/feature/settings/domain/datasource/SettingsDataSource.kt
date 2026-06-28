@@ -16,4 +16,7 @@ interface SettingsDataSource {
 
     val isBalanceHidden: Flow<Boolean>
     suspend fun setBalanceHidden(hidden: Boolean)
+
+    val isReminderEnabled: Flow<Boolean>
+    suspend fun setReminderEnabled(enabled: Boolean)
 }

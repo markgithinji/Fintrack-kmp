@@ -13,6 +13,7 @@ class IOSSettingsDataSource : SettingsDataSource {
     private val _currencyFlow = MutableStateFlow(Currency.KES)
     private val _biometricFlow = MutableStateFlow(false)
     private val _balanceHiddenFlow = MutableStateFlow(false)
+    private val _reminderFlow = MutableStateFlow(false)
 
     init {
         val themeName = userDefaults.stringForKey("app_theme") ?: AppTheme.SYSTEM.name
@@ -26,6 +27,9 @@ class IOSSettingsDataSource : SettingsDataSource {
 
         val balanceHidden = userDefaults.boolForKey("balance_hidden")
         _balanceHiddenFlow.value = balanceHidden
+
+        val reminderEnabled = userDefaults.boolForKey("reminder_enabled")
+        _reminderFlow.value = reminderEnabled
     }
 
     override val theme: Flow<AppTheme> = _themeFlow
@@ -54,6 +58,13 @@ class IOSSettingsDataSource : SettingsDataSource {
     override suspend fun setBalanceHidden(hidden: Boolean) {
         userDefaults.setBool(hidden, "balance_hidden")
         _balanceHiddenFlow.value = hidden
+    }
+
+    override val isReminderEnabled: Flow<Boolean> = _reminderFlow
+
+    override suspend fun setReminderEnabled(enabled: Boolean) {
+        userDefaults.setBool(enabled, "reminder_enabled")
+        _reminderFlow.value = enabled
     }
 }
 
