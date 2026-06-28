@@ -31,10 +31,12 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.biometric)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.androidx.security.crypto.ktx)
             implementation(libs.koin.android)
             implementation(libs.androidx.paging.runtime)
+            implementation(libs.androidx.paging.compose)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -57,7 +59,6 @@ kotlin {
             implementation(libs.koin.compose.viewmodel)
             implementation(libs.ktor.client.logging)
             implementation(libs.androidx.paging.common)
-            implementation(libs.androidx.paging.compose)
             implementation(libs.kotlinx.serialization.json)
         }
         iosMain.dependencies {
