@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
+import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import com.fintrack.shared.feature.settings.domain.util.NotificationService
@@ -32,6 +33,13 @@ class SettingsViewModel(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = AppTheme.SYSTEM
+        )
+
+    val timeFormat: StateFlow<TimeFormat> = settingsDataSource.timeFormat
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = TimeFormat.TWENTY_FOUR_HOUR
         )
 
     val currency: StateFlow<Currency> = settingsDataSource.currency
@@ -77,6 +85,12 @@ class SettingsViewModel(
     fun setTheme(theme: AppTheme) {
         viewModelScope.launch {
             settingsDataSource.setTheme(theme)
+        }
+    }
+
+    fun setTimeFormat(format: TimeFormat) {
+        viewModelScope.launch {
+            settingsDataSource.setTimeFormat(format)
         }
     }
 

@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
+import com.fintrack.shared.feature.settings.domain.model.TimeFormat
+import com.fintrack.shared.feature.settings.domain.util.format
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
 import org.koin.compose.viewmodel.koinViewModel
@@ -42,6 +44,7 @@ fun SettingsScreen(
 ) {
     val currentCurrency by viewModel.currency.collectAsStateWithLifecycle()
     val currentTheme by viewModel.theme.collectAsStateWithLifecycle()
+    val currentTimeFormat by viewModel.timeFormat.collectAsStateWithLifecycle()
     val isBalanceHidden by viewModel.isBalanceHidden.collectAsStateWithLifecycle()
     val isReminderEnabled by viewModel.isReminderEnabled.collectAsStateWithLifecycle()
     val reminderTime by viewModel.reminderTime.collectAsStateWithLifecycle()
@@ -52,6 +55,7 @@ fun SettingsScreen(
     
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showTimeFormatDialog by remember { mutableStateOf(false) }
     var showTimePickerDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
@@ -78,112 +82,124 @@ fun SettingsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = Color.Transparent
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "Preferences",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-
-            SettingsItem(
-                title = "Theme",
-                subtitle = when(currentTheme) {
-                    AppTheme.LIGHT -> "Light"
-                    AppTheme.DARK -> "Dark"
-                    AppTheme.SYSTEM -> "System Default"
-                },
-                icon = Icons.Default.Palette,
-                onClick = { showThemeDialog = true }
-            )
-
-            SettingsItem(
-                title = "Currency",
-                subtitle = "${currentCurrency.name} (${currentCurrency.symbol})",
-                icon = Icons.Default.Payments,
-                onClick = { showCurrencyDialog = true }
-            )
-
-            SettingsToggleItem(
-                title = "Privacy Mode",
-                subtitle = "Hide balances and amounts",
-                icon = Icons.Default.VisibilityOff,
-                checked = isBalanceHidden,
-                onCheckedChange = { viewModel.setBalanceHidden(it) }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Notifications",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-
-            SettingsToggleItem(
-                title = "Transaction Reminders",
-                subtitle = "Daily reminder to log your expenses",
-                icon = Icons.Default.Notifications,
-                checked = isReminderEnabled,
-                onCheckedChange = { viewModel.setReminderEnabled(it) }
-            )
-
-            if (isReminderEnabled) {
-                SettingsItem(
-                    title = "Reminder Time",
-                    subtitle = reminderTime.toString(),
-                    icon = Icons.Default.Schedule,
-                    onClick = { showTimePickerDialog = true }
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Preferences",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(vertical = 8.dp)
                 )
+
+                SettingsItem(
+                    title = "Theme",
+                    subtitle = when(currentTheme) {
+                        AppTheme.LIGHT -> "Light"
+                        AppTheme.DARK -> "Dark"
+                        AppTheme.SYSTEM -> "System Default"
+                    },
+                    icon = Icons.Default.Palette,
+                    onClick = { showThemeDialog = true }
+                )
+
+                SettingsItem(
+                    title = "Currency",
+                    subtitle = "${currentCurrency.name} (${currentCurrency.symbol})",
+                    icon = Icons.Default.Payments,
+                    onClick = { showCurrencyDialog = true }
+                )
+
+                SettingsItem(
+                    title = "Time Format",
+                    subtitle = if (currentTimeFormat == TimeFormat.TWELVE_HOUR) "12-hour" else "24-hour",
+                    icon = Icons.Default.Schedule,
+                    onClick = { showTimeFormatDialog = true }
+                )
+
+                SettingsToggleItem(
+                    title = "Privacy Mode",
+                    subtitle = "Hide balances and amounts",
+                    icon = Icons.Default.VisibilityOff,
+                    checked = isBalanceHidden,
+                    onCheckedChange = { viewModel.setBalanceHidden(it) }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Notifications",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+
+                SettingsToggleItem(
+                    title = "Transaction Reminders",
+                    subtitle = "Daily reminder to log your expenses",
+                    icon = Icons.Default.Notifications,
+                    checked = isReminderEnabled,
+                    onCheckedChange = { viewModel.setReminderEnabled(it) }
+                )
+
+                if (isReminderEnabled) {
+                    SettingsItem(
+                        title = "Reminder Time",
+                        subtitle = reminderTime.format(currentTimeFormat),
+                        icon = Icons.Default.Schedule,
+                        onClick = { showTimePickerDialog = true }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Security",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+
+                SettingsItem(
+                    title = "Security Settings",
+                    subtitle = "Password and biometric lock",
+                    icon = Icons.Default.Security,
+                    onClick = onNavigateToSecurity
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Data Management",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+
+                SettingsItem(
+                    title = "Export Data to CSV",
+                    subtitle = "Download all your transactions",
+                    icon = Icons.Default.FileDownload,
+                    onClick = { viewModel.exportToCsv() }
+                )
+
+                SettingsItem(
+                    title = "Clear All Transactions",
+                    subtitle = "Reset all transaction history",
+                    icon = Icons.Default.DeleteForever,
+                    onClick = { showDeleteConfirmDialog = true }
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Security",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-
-            SettingsItem(
-                title = "Security Settings",
-                subtitle = "Password and biometric lock",
-                icon = Icons.Default.Security,
-                onClick = onNavigateToSecurity
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Data Management",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-
-            SettingsItem(
-                title = "Export Data to CSV",
-                subtitle = "Download all your transactions",
-                icon = Icons.Default.FileDownload,
-                onClick = { viewModel.exportToCsv() }
-            )
-
-            SettingsItem(
-                title = "Clear All Transactions",
-                subtitle = "Reset all transaction history",
-                icon = Icons.Default.DeleteForever,
-                onClick = { showDeleteConfirmDialog = true }
-            )
         }
     }
 
@@ -212,6 +228,7 @@ fun SettingsScreen(
     if (showTimePickerDialog) {
         FintrackTimePickerDialog(
             initialTime = reminderTime,
+            timeFormat = currentTimeFormat,
             onTimeSelected = {
                 viewModel.setReminderTime(it)
                 showTimePickerDialog = false
@@ -220,25 +237,14 @@ fun SettingsScreen(
         )
     }
 
-    if (showThemeDialog) {
-        ThemeSelectionDialog(
-            currentTheme = currentTheme,
-            onThemeSelected = {
-                viewModel.setTheme(it)
-                showThemeDialog = false
+    if (showTimeFormatDialog) {
+        TimeFormatSelectionDialog(
+            currentFormat = currentTimeFormat,
+            onFormatSelected = {
+                viewModel.setTimeFormat(it)
+                showTimeFormatDialog = false
             },
-            onDismiss = { showThemeDialog = false }
-        )
-    }
-
-    if (showTimePickerDialog) {
-        FintrackTimePickerDialog(
-            initialTime = reminderTime,
-            onTimeSelected = {
-                viewModel.setReminderTime(it)
-                showTimePickerDialog = false
-            },
-            onDismiss = { showTimePickerDialog = false }
+            onDismiss = { showTimeFormatDialog = false }
         )
     }
 
@@ -268,6 +274,91 @@ fun SettingsScreen(
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimeFormatSelectionDialog(
+    currentFormat: TimeFormat,
+    onFormatSelected: (TimeFormat) -> Unit,
+    onDismiss: () -> Unit
+) {
+    BasicAlertDialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier
+            .padding(28.dp)
+            .widthIn(max = 400.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Text(
+                    text = "Select Time Format",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TimeFormat.entries.forEach { format ->
+                        val isSelected = format == currentFormat
+                        val label = if (format == TimeFormat.TWELVE_HOUR) "12-hour" else "24-hour"
+                        
+                        Surface(
+                            onClick = { onFormatSelected(format) },
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected) 
+                                MaterialTheme.colorScheme.primaryContainer 
+                            else 
+                                Color.Transparent,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Cancel")
+                }
+            }
         }
     }
 }

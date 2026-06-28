@@ -3,6 +3,7 @@ package com.fintrack.shared.feature.settings.data.local
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
+import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.datetime.LocalTime
@@ -11,6 +12,7 @@ import platform.Foundation.NSUserDefaults
 class IOSSettingsDataSource : SettingsDataSource {
     private val userDefaults = NSUserDefaults.standardUserDefaults
     private val _themeFlow = MutableStateFlow(AppTheme.SYSTEM)
+    private val _timeFormatFlow = MutableStateFlow(TimeFormat.TWENTY_FOUR_HOUR)
     private val _currencyFlow = MutableStateFlow(Currency.KES)
     private val _biometricFlow = MutableStateFlow(false)
     private val _balanceHiddenFlow = MutableStateFlow(false)
@@ -20,6 +22,9 @@ class IOSSettingsDataSource : SettingsDataSource {
     init {
         val themeName = userDefaults.stringForKey("app_theme") ?: AppTheme.SYSTEM.name
         _themeFlow.value = AppTheme.fromName(themeName)
+
+        val timeFormatName = userDefaults.stringForKey("time_format") ?: TimeFormat.TWENTY_FOUR_HOUR.name
+        _timeFormatFlow.value = TimeFormat.fromName(timeFormatName)
 
         val currencyCode = userDefaults.stringForKey("currency_code") ?: Currency.KES.code
         _currencyFlow.value = Currency.fromCode(currencyCode)
@@ -42,6 +47,13 @@ class IOSSettingsDataSource : SettingsDataSource {
     override suspend fun setTheme(theme: AppTheme) {
         userDefaults.setObject(theme.name, "app_theme")
         _themeFlow.value = theme
+    }
+
+    override val timeFormat: Flow<TimeFormat> = _timeFormatFlow
+
+    override suspend fun setTimeFormat(format: TimeFormat) {
+        userDefaults.setObject(format.name, "time_format")
+        _timeFormatFlow.value = format
     }
 
     override val currency: Flow<Currency> = _currencyFlow

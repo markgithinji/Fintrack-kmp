@@ -4,6 +4,7 @@ import android.content.Context
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
+import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -16,6 +17,7 @@ class AndroidSettingsDataSource(
 
     private val prefs = context.getSharedPreferences("fintrack_settings", Context.MODE_PRIVATE)
     private val _themeFlow = MutableStateFlow(AppTheme.SYSTEM)
+    private val _timeFormatFlow = MutableStateFlow(TimeFormat.TWENTY_FOUR_HOUR)
     private val _currencyFlow = MutableStateFlow(Currency.KES)
     private val _biometricFlow = MutableStateFlow(false)
     private val _balanceHiddenFlow = MutableStateFlow(false)
@@ -25,6 +27,9 @@ class AndroidSettingsDataSource(
     init {
         val themeName = prefs.getString("app_theme", AppTheme.SYSTEM.name)
         _themeFlow.update { AppTheme.fromName(themeName) }
+
+        val timeFormatName = prefs.getString("time_format", TimeFormat.TWENTY_FOUR_HOUR.name)
+        _timeFormatFlow.update { TimeFormat.fromName(timeFormatName) }
 
         val currencyCode = prefs.getString("currency_code", Currency.KES.code)
         _currencyFlow.update { Currency.fromCode(currencyCode) }
@@ -49,6 +54,15 @@ class AndroidSettingsDataSource(
             putString("app_theme", theme.name)
         }
         _themeFlow.value = theme
+    }
+
+    override val timeFormat: Flow<TimeFormat> = _timeFormatFlow
+
+    override suspend fun setTimeFormat(format: TimeFormat) {
+        prefs.edit(commit = true) {
+            putString("time_format", format.name)
+        }
+        _timeFormatFlow.value = format
     }
 
     override val currency: Flow<Currency> = _currencyFlow

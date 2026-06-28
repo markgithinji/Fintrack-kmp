@@ -18,20 +18,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import kotlinx.datetime.LocalTime
 
 @Composable
 fun FintrackTimePickerDialog(
     initialTime: LocalTime?,
+    timeFormat: TimeFormat = TimeFormat.TWENTY_FOUR_HOUR,
     onTimeSelected: (LocalTime) -> Unit,
     onDismiss: () -> Unit
 ) {
     val baseTime = initialTime ?: LocalTime(12, 0)
+    val is24Hour = timeFormat == TimeFormat.TWENTY_FOUR_HOUR
     
-    // Convert 24h to 12h format
-    var hour12 by remember { 
+    // Convert 24h to 12h format if needed
+    var hour by remember { 
         val h = baseTime.hour
-        mutableStateOf(if (h == 0 || h == 12) 12 else h % 12) 
+        if (is24Hour) {
+            mutableStateOf(h)
+        } else {
+            mutableStateOf(if (h == 0 || h == 12) 12 else h % 12) 
+        }
     }
     var isAm by remember { mutableStateOf(baseTime.hour < 12) }
     var minute by remember { mutableStateOf(baseTime.minute) }
@@ -65,9 +72,9 @@ fun FintrackTimePickerDialog(
                 ) {
                     TimeUnitPicker(
                         label = "Hour",
-                        value = hour12,
-                        range = 1..12,
-                        onValueChange = { hour12 = it }
+                        value = hour,
+                        range = if (is24Hour) 0..23 else 1..12,
+                        onValueChange = { hour = it }
                     )
                     
                     Text(
@@ -83,24 +90,26 @@ fun FintrackTimePickerDialog(
                         onValueChange = { minute = it }
                     )
 
-                    Spacer(modifier = Modifier.width(16.dp))
+                    if (!is24Hour) {
+                        Spacer(modifier = Modifier.width(16.dp))
 
-                    // AM/PM Selector
-                    Column(
-                        modifier = Modifier.padding(top = 24.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        AmPmButton(
-                            text = "AM",
-                            isSelected = isAm,
-                            onClick = { isAm = true }
-                        )
-                        AmPmButton(
-                            text = "PM",
-                            isSelected = !isAm,
-                            onClick = { isAm = false }
-                        )
+                        // AM/PM Selector
+                        Column(
+                            modifier = Modifier.padding(top = 24.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            AmPmButton(
+                                text = "AM",
+                                isSelected = isAm,
+                                onClick = { isAm = true }
+                            )
+                            AmPmButton(
+                                text = "PM",
+                                isSelected = !isAm,
+                                onClick = { isAm = false }
+                            )
+                        }
                     }
                 }
 
@@ -117,12 +126,16 @@ fun FintrackTimePickerDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            // Convert back to 24h format
-                            val finalHour = when {
-                                isAm && hour12 == 12 -> 0
-                                !isAm && hour12 == 12 -> 12
-                                !isAm -> hour12 + 12
-                                else -> hour12
+                            val finalHour = if (is24Hour) {
+                                hour
+                            } else {
+                                // Convert back to 24h format
+                                when {
+                                    isAm && hour == 12 -> 0
+                                    !isAm && hour == 12 -> 12
+                                    !isAm -> hour + 12
+                                    else -> hour
+                                }
                             }
                             onTimeSelected(LocalTime(finalHour, minute))
                         },
