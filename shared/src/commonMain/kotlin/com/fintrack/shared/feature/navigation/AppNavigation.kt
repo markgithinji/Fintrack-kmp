@@ -35,6 +35,7 @@ import com.fintrack.shared.feature.auth.ui.RegisterScreen
 import com.fintrack.shared.feature.budget.ui.BudgetDetailScreen
 import com.fintrack.shared.feature.budget.ui.BudgetScreen
 import com.fintrack.shared.feature.account.ui.AccountsScreen
+import com.fintrack.shared.feature.profile.EditProfileScreen
 import com.fintrack.shared.feature.profile.ProfileScreen
 import com.fintrack.shared.feature.settings.ui.ChangePasswordScreen
 import com.fintrack.shared.feature.settings.ui.SecurityScreen
@@ -223,7 +224,23 @@ fun AppNavigation(
                         onNavigateToAccounts = { navController.navigate(Screen.Accounts.route) },
                         onNavigateToCategories = { navController.navigate(Screen.Categories.route) },
                         onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                        onNavigateToEditProfile = { navController.navigate(Screen.EditProfile.route) },
                         onLogout = onLogout
+                    )
+                }
+
+                composable(Screen.EditProfile.route) {
+                    LaunchedEffect(Unit) {
+                        onUpdateAppBarState(
+                            AppBarState(
+                                title = "Edit Profile",
+                                showBackButton = true,
+                                onBack = { navController.popBackStack() }
+                            )
+                        )
+                    }
+                    EditProfileScreen(
+                        onNavigateBack = { navController.popBackStack() }
                     )
                 }
 

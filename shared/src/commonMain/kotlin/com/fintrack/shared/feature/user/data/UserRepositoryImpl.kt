@@ -21,4 +21,9 @@ class UserRepositoryImpl(
             // Handle error or rethrow
         }
     }
+
+    override suspend fun updateProfile(name: String, email: String) {
+        val dto = api.updateProfile(name, email)
+        _userProfile.value = User(name = dto.name, email = dto.email)
+    }
 }

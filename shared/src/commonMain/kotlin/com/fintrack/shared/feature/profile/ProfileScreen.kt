@@ -54,6 +54,7 @@ fun ProfileScreen(
     onNavigateToAccounts: () -> Unit,
     onNavigateToCategories: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToEditProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
     val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
@@ -121,6 +122,11 @@ fun ProfileScreen(
 
         // Profile Options
         val profileOptions = listOf(
+            ProfileOption(
+                "Edit Profile",
+                Icons.Default.Person,
+                "Change display name and email"
+            ) { onNavigateToEditProfile() },
             ProfileOption(
                 "Accounts",
                 Icons.Default.AccountBalance,
