@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.settings.domain.model.Currency
+import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
+import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import com.fintrack.shared.feature.transaction.domain.usecase.ClearAllTransactionsUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ExportTransactionsUseCase
 import com.fintrack.shared.feature.core.util.Result
@@ -18,6 +20,7 @@ class SettingsViewModel(
     private val settingsDataSource: SettingsDataSource,
     private val clearAllTransactionsUseCase: ClearAllTransactionsUseCase,
     private val exportTransactionsUseCase: ExportTransactionsUseCase,
+    private val biometricAuthenticator: BiometricAuthenticator,
 ) : ViewModel() {
 
     val currency: StateFlow<Currency> = settingsDataSource.currency
@@ -33,6 +36,9 @@ class SettingsViewModel(
     private val _isLoading = MutableStateFlow(value = false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
     fun setCurrency(currency: Currency) {
         viewModelScope.launch {
             settingsDataSource.setCurrency(currency)
@@ -41,27 +47,62 @@ class SettingsViewModel(
 
     fun exportToCsv() {
         viewModelScope.launch {
-            _exportResult.value = null
-            _isLoading.value = true
-            when (val result = exportTransactionsUseCase()) {
-                is Result.Success -> {
-                    _exportResult.value = result.data
+            val authResult = biometricAuthenticator.authenticate(
+                title = "Export Data",
+                subtitle = "Confirm your identity to export your transactions"
+            )
+
+            if (authResult is BiometricResult.Success || authResult is BiometricResult.NotAvailable) {
+                _exportResult.value = null
+                _isLoading.value = true
+                when (val result = exportTransactionsUseCase()) {
+                    is Result.Success -> {
+                        _exportResult.value = result.data
+                    }
+                    is Result.Error -> {
+                        _error.value = "Failed to export transactions"
+                    }
+                    else -> {}
                 }
-                is Result.Error -> {
-                    // We could add an error state flow here if needed
-                }
-                else -> {}
+                _isLoading.value = false
+            } else if (authResult is BiometricResult.Error) {
+                _error.value = authResult.message
             }
-            _isLoading.value = false
         }
     }
 
     fun clearAllTransactions() {
         viewModelScope.launch {
-            _isLoading.value = true
-            clearAllTransactionsUseCase()
-            _isLoading.value = false
+            val authResult = biometricAuthenticator.authenticate(
+                title = "Clear Data",
+                subtitle = "Confirm your identity to delete all transactions"
+            )
+            
+            when (authResult) {
+                is BiometricResult.Success -> {
+                    _isLoading.value = true
+                    val result = clearAllTransactionsUseCase()
+                    if (result is Result.Error) {
+                        _error.value = "Failed to clear transactions"
+                    }
+                    _isLoading.value = false
+                }
+                is BiometricResult.Error -> {
+                    _error.value = authResult.message
+                }
+                BiometricResult.NotAvailable -> {
+                    // If biometric is not available, we could fallback to PIN/Password
+                    // For now, we'll allow it since they already confirmed in the dialog
+                    _isLoading.value = true
+                    clearAllTransactionsUseCase()
+                    _isLoading.value = false
+                }
+            }
         }
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 
     fun clearExportResult() {

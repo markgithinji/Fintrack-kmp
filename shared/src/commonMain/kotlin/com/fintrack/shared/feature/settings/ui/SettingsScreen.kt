@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.settings.domain.model.Currency
+import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,6 +36,7 @@ fun SettingsScreen(
 ) {
     val currentCurrency by viewModel.currency.collectAsStateWithLifecycle()
     val exportResult by viewModel.exportResult.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     
     var showCurrencyDialog by remember { mutableStateOf(false) }
@@ -49,6 +51,13 @@ fun SettingsScreen(
                 duration = SnackbarDuration.Long
             )
             viewModel.clearExportResult()
+        }
+    }
+
+    LaunchedEffect(error) {
+        error?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearError()
         }
     }
 
@@ -132,26 +141,16 @@ fun SettingsScreen(
     }
 
     if (showDeleteConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirmDialog = false },
-            title = { Text("Clear All Transactions") },
-            text = { Text("Are you sure you want to delete all transactions? This action cannot be undone.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.clearAllTransactions()
-                        showDeleteConfirmDialog = false
-                    },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Text("Clear All")
-                }
+        ConfirmationDialog(
+            title = "Clear All Transactions",
+            message = "Are you sure you want to delete all transactions? This action cannot be undone.",
+            confirmLabel = "Clear All",
+            isDestructive = true,
+            onConfirm = {
+                viewModel.clearAllTransactions()
+                showDeleteConfirmDialog = false
             },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text("Cancel")
-                }
-            }
+            onDismiss = { showDeleteConfirmDialog = false }
         )
     }
 
