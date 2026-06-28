@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import androidx.core.content.edit
+import kotlinx.datetime.LocalTime
 
 class AndroidSettingsDataSource(
     private val context: Context
@@ -19,6 +20,7 @@ class AndroidSettingsDataSource(
     private val _biometricFlow = MutableStateFlow(false)
     private val _balanceHiddenFlow = MutableStateFlow(false)
     private val _reminderFlow = MutableStateFlow(false)
+    private val _reminderTimeFlow = MutableStateFlow(LocalTime(20, 0))
 
     init {
         val themeName = prefs.getString("app_theme", AppTheme.SYSTEM.name)
@@ -35,6 +37,9 @@ class AndroidSettingsDataSource(
 
         val reminderEnabled = prefs.getBoolean("reminder_enabled", false)
         _reminderFlow.update { reminderEnabled }
+
+        val reminderTimeStr = prefs.getString("reminder_time", "20:00") ?: "20:00"
+        _reminderTimeFlow.update { LocalTime.parse(reminderTimeStr) }
     }
 
     override val theme: Flow<AppTheme> = _themeFlow
@@ -80,5 +85,14 @@ class AndroidSettingsDataSource(
             putBoolean("reminder_enabled", enabled)
         }
         _reminderFlow.value = enabled
+    }
+
+    override val reminderTime: Flow<LocalTime> = _reminderTimeFlow
+
+    override suspend fun setReminderTime(time: LocalTime) {
+        prefs.edit(commit = true) {
+            putString("reminder_time", time.toString())
+        }
+        _reminderTimeFlow.value = time
     }
 }

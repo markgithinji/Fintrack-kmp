@@ -3,6 +3,7 @@ package com.fintrack.shared.feature.settings.domain.datasource
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.LocalTime
 
 interface SettingsDataSource {
     val theme: Flow<AppTheme>
@@ -19,4 +20,7 @@ interface SettingsDataSource {
 
     val isReminderEnabled: Flow<Boolean>
     suspend fun setReminderEnabled(enabled: Boolean)
+
+    val reminderTime: Flow<LocalTime>
+    suspend fun setReminderTime(time: LocalTime)
 }

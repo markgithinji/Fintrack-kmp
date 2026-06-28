@@ -5,6 +5,7 @@ import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.datetime.LocalTime
 import platform.Foundation.NSUserDefaults
 
 class IOSSettingsDataSource : SettingsDataSource {
@@ -14,6 +15,7 @@ class IOSSettingsDataSource : SettingsDataSource {
     private val _biometricFlow = MutableStateFlow(false)
     private val _balanceHiddenFlow = MutableStateFlow(false)
     private val _reminderFlow = MutableStateFlow(false)
+    private val _reminderTimeFlow = MutableStateFlow(LocalTime(20, 0))
 
     init {
         val themeName = userDefaults.stringForKey("app_theme") ?: AppTheme.SYSTEM.name
@@ -30,6 +32,9 @@ class IOSSettingsDataSource : SettingsDataSource {
 
         val reminderEnabled = userDefaults.boolForKey("reminder_enabled")
         _reminderFlow.value = reminderEnabled
+
+        val reminderTimeStr = userDefaults.stringForKey("reminder_time") ?: "20:00"
+        _reminderTimeFlow.value = LocalTime.parse(reminderTimeStr)
     }
 
     override val theme: Flow<AppTheme> = _themeFlow
@@ -65,6 +70,13 @@ class IOSSettingsDataSource : SettingsDataSource {
     override suspend fun setReminderEnabled(enabled: Boolean) {
         userDefaults.setBool(enabled, "reminder_enabled")
         _reminderFlow.value = enabled
+    }
+
+    override val reminderTime: Flow<LocalTime> = _reminderTimeFlow
+
+    override suspend fun setReminderTime(time: LocalTime) {
+        userDefaults.setObject(time.toString(), "reminder_time")
+        _reminderTimeFlow.value = time
     }
 }
 

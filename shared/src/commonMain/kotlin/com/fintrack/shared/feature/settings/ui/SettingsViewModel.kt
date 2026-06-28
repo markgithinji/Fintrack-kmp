@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalTime
 
 class SettingsViewModel(
     private val settingsDataSource: SettingsDataSource,
@@ -52,6 +53,13 @@ class SettingsViewModel(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = false
+        )
+
+    val reminderTime: StateFlow<LocalTime> = settingsDataSource.reminderTime
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = LocalTime(20, 0)
         )
 
     private val _exportResult = MutableStateFlow<String?>(null)
@@ -91,6 +99,15 @@ class SettingsViewModel(
             } else {
                 settingsDataSource.setReminderEnabled(false)
                 notificationService.cancelDailyReminder()
+            }
+        }
+    }
+
+    fun setReminderTime(time: LocalTime) {
+        viewModelScope.launch {
+            settingsDataSource.setReminderTime(time)
+            if (isReminderEnabled.value) {
+                notificationService.scheduleDailyReminder()
             }
         }
     }

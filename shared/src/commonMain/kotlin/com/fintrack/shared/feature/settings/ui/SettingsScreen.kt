@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -29,6 +30,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
+import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,6 +44,7 @@ fun SettingsScreen(
     val currentTheme by viewModel.theme.collectAsStateWithLifecycle()
     val isBalanceHidden by viewModel.isBalanceHidden.collectAsStateWithLifecycle()
     val isReminderEnabled by viewModel.isReminderEnabled.collectAsStateWithLifecycle()
+    val reminderTime by viewModel.reminderTime.collectAsStateWithLifecycle()
     val showPermissionRequest by viewModel.showPermissionRequest.collectAsStateWithLifecycle()
     val exportResult by viewModel.exportResult.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
@@ -49,6 +52,7 @@ fun SettingsScreen(
     
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showTimePickerDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -133,6 +137,15 @@ fun SettingsScreen(
                 onCheckedChange = { viewModel.setReminderEnabled(it) }
             )
 
+            if (isReminderEnabled) {
+                SettingsItem(
+                    title = "Reminder Time",
+                    subtitle = reminderTime.toString(),
+                    icon = Icons.Default.Schedule,
+                    onClick = { showTimePickerDialog = true }
+                )
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
@@ -196,6 +209,17 @@ fun SettingsScreen(
         )
     }
 
+    if (showTimePickerDialog) {
+        FintrackTimePickerDialog(
+            initialTime = reminderTime,
+            onTimeSelected = {
+                viewModel.setReminderTime(it)
+                showTimePickerDialog = false
+            },
+            onDismiss = { showTimePickerDialog = false }
+        )
+    }
+
     if (showThemeDialog) {
         ThemeSelectionDialog(
             currentTheme = currentTheme,
@@ -204,6 +228,17 @@ fun SettingsScreen(
                 showThemeDialog = false
             },
             onDismiss = { showThemeDialog = false }
+        )
+    }
+
+    if (showTimePickerDialog) {
+        FintrackTimePickerDialog(
+            initialTime = reminderTime,
+            onTimeSelected = {
+                viewModel.setReminderTime(it)
+                showTimePickerDialog = false
+            },
+            onDismiss = { showTimePickerDialog = false }
         )
     }
 
