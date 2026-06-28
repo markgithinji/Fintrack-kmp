@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -32,19 +31,6 @@ fun MainScreen() {
 
                 // Use a stable NavController that persists across auth changes.
                 val navController = rememberNavController()
-
-                // Explicitly handle authentication navigation to ensure it's clean and doesn't flicker
-                LaunchedEffect(authStatusState) {
-                    val currentStatus = authStatusState
-                    if (currentStatus is AuthState.Success) {
-                        val isAuthenticated = currentStatus.data
-                        val route = if (isAuthenticated) Screen.Home.route else Screen.Login.route
-                        println("LOGOUT_DEBUG: [6] Navigating to $route because authStatus is $currentStatus")
-                        navController.navigate(route) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    }
-                }
 
                 // Track current route
                 val navBackStackEntry by navController.currentBackStackEntryAsState()

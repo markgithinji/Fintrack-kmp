@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.navigation
 
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -29,6 +28,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.savedstate.read
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import com.fintrack.shared.feature.auth.ui.LoginScreen
 import com.fintrack.shared.feature.auth.ui.RegisterScreen
@@ -56,7 +56,7 @@ fun AppNavigation(
     paddingValues: PaddingValues,
     onUpdateAppBarState: (AppBarState) -> Unit,
     authViewModel: AuthViewModel,
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
 ) {
     println("LOGIN_DEBUG: AppNavigation recomposing. isAuthenticated: $isAuthenticated")
     
@@ -71,10 +71,10 @@ fun AppNavigation(
                 startDestination = startDestination,
                 modifier = Modifier.fillMaxSize(),
                 enterTransition = {
-                    val isToAuth = targetState.destination.route == Screen.Login.route || 
-                                 targetState.destination.route == Screen.Register.route
-                    val isFromAuth = initialState.destination.route == Screen.Login.route || 
-                                   initialState.destination.route == Screen.Register.route
+                    val isToAuth = (targetState.destination.route == Screen.Login.route || 
+                                 targetState.destination.route == Screen.Register.route)
+                    val isFromAuth = (initialState.destination.route == Screen.Login.route || 
+                                   initialState.destination.route == Screen.Register.route)
                     
                     val isToMorphScreen = targetState.destination.route?.contains("budget_detail") == true ||
                                          targetState.destination.route?.contains("transaction_list") == true ||
@@ -176,7 +176,7 @@ fun AppNavigation(
                         }
                     )
                 ) { backStackEntry ->
-                    val transactionId = backStackEntry.arguments?.getString("transactionId")
+                    val transactionId = backStackEntry.arguments?.read { getString("transactionId") }
 
                     AddTransactionScreen(
                         transactionId = transactionId,
@@ -311,7 +311,7 @@ fun AppNavigation(
                         }
                     )
                 ) { backStackEntry ->
-                    val budgetIdArg = backStackEntry.arguments?.getString("budgetId")
+                    val budgetIdArg = backStackEntry.arguments?.read { getString("budgetId") }
                     val budgetId = if (budgetIdArg.isNullOrEmpty()) null else budgetIdArg
 
                     LaunchedEffect(budgetId) {
@@ -395,8 +395,8 @@ fun AppNavigation(
                         }
                     )
                 ) { backStackEntry ->
-                    val accountId = backStackEntry.arguments?.getString("accountId") ?: return@composable
-                    val isIncomeStr = backStackEntry.arguments?.getString("isIncome")
+                    val accountId = backStackEntry.arguments?.read { getString("accountId") } ?: return@composable
+                    val isIncomeStr = backStackEntry.arguments?.read { getString("isIncome") }
                     val isIncome: Boolean? = isIncomeStr?.toBooleanStrictOrNull()
 
                     LaunchedEffect(Unit) {

@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.auth.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Fingerprint
@@ -16,7 +15,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun LockScreen(
-    onUnlock: () -> Unit
+    onUnlock: () -> Unit,
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -62,7 +61,7 @@ fun LockScreen(
             ) {
                 Icon(Icons.Default.Fingerprint, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Unlock with Biometrics", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("Use Fingerprint", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

@@ -21,7 +21,7 @@ fun SecurityScreen(
     onNavigateBack: () -> Unit,
     onNavigateToChangePassword: () -> Unit,
     paddingValues: PaddingValues = PaddingValues(0.dp),
-    viewModel: SecurityViewModel = koinViewModel()
+    viewModel: SecurityViewModel = koinViewModel(),
 ) {
     val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsStateWithLifecycle()
     val biometricError by viewModel.biometricError.collectAsStateWithLifecycle()
@@ -73,7 +73,7 @@ fun SecurityScreen(
             onDismiss = viewModel::clearBiometricError,
             onRetry = {
                 viewModel.clearBiometricError()
-                viewModel.toggleBiometric(true)
+                viewModel.toggleBiometric(enabled = true)
             },
             colorScheme = colorScheme
         )
