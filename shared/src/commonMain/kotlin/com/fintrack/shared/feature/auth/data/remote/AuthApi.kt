@@ -2,6 +2,7 @@ package com.fintrack.shared.feature.auth.data.remote
 
 import com.fintrack.shared.feature.auth.data.model.AuthResponseDto
 import com.fintrack.shared.feature.auth.data.model.AuthValidationResponse
+import com.fintrack.shared.feature.auth.data.model.ChangePasswordRequest
 import com.fintrack.shared.feature.auth.data.model.LoginRequest
 import com.fintrack.shared.feature.auth.data.model.RegisterRequest
 import io.ktor.client.HttpClient
@@ -55,6 +56,13 @@ class AuthApi(
         client.post("$baseUrl/auth/logout") {
             contentType(ContentType.Application.Json)
             setBody(mapOf("refreshToken" to refreshToken))
+        }
+    }
+
+    suspend fun changePassword(request: ChangePasswordRequest) {
+        client.post("$baseUrl/auth/change-password") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
         }
     }
 }

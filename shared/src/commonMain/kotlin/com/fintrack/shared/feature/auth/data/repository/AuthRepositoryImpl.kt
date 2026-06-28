@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.auth.data.repository
 
+import com.fintrack.shared.feature.auth.data.model.ChangePasswordRequest
 import com.fintrack.shared.feature.auth.data.model.LoginRequest
 import com.fintrack.shared.feature.auth.data.model.RegisterRequest
 import com.fintrack.shared.feature.auth.data.model.toDomain
@@ -63,5 +64,13 @@ class AuthRepositoryImpl(
             val domainResponse = authResponse.toDomain()
             tokenDataSource.saveTokens(domainResponse.accessToken, domainResponse.refreshToken)
             domainResponse
+        }
+
+    override suspend fun changePassword(
+        currentPassword: String,
+        newPassword: String
+    ): Result<Unit> =
+        safeApiCall {
+            api.changePassword(ChangePasswordRequest(currentPassword, newPassword))
         }
 }

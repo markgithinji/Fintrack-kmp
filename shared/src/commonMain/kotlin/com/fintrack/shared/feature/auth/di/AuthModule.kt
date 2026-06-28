@@ -5,6 +5,8 @@ import com.fintrack.shared.feature.auth.data.remote.AuthApi
 import com.fintrack.shared.feature.auth.data.repository.AuthRepositoryImpl
 import com.fintrack.shared.feature.auth.domain.datasource.TokenDataSource
 import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
+import com.fintrack.shared.feature.auth.domain.usecase.ChangePasswordUseCase
+import com.fintrack.shared.feature.auth.domain.usecase.ChangePasswordValidationUseCase
 import com.fintrack.shared.feature.auth.domain.usecase.LoginValidationUseCase
 import com.fintrack.shared.feature.auth.domain.usecase.RegisterValidationUseCase
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
@@ -18,6 +20,8 @@ val authModule = module {
     single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
     single { RegisterValidationUseCase() }
     single { LoginValidationUseCase() }
+    single { ChangePasswordUseCase(get()) }
+    single { ChangePasswordValidationUseCase() }
     viewModel {
         AuthViewModel(
             repository = get(),
