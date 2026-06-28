@@ -6,4 +6,7 @@ import kotlinx.coroutines.flow.Flow
 interface SettingsDataSource {
     val currency: Flow<Currency>
     suspend fun setCurrency(currency: Currency)
+
+    val isBiometricEnabled: Flow<Boolean>
+    suspend fun setBiometricEnabled(enabled: Boolean)
 }

@@ -16,15 +16,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
+import com.fintrack.shared.feature.auth.ui.LockScreen
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 
 @Composable
@@ -34,9 +37,18 @@ fun AuthOrchestrator(
     navController: NavHostController,
     authViewModel: AuthViewModel
 ) {
+    val isAppLocked by authViewModel.isAppLocked.collectAsStateWithLifecycle()
+
     // LOGIN_DEBUG: Log orchestration decision
     androidx.compose.runtime.SideEffect {
-        println("LOGIN_DEBUG: AuthOrchestrator recomposing. authStatus: $authStatus, currentRoute: $currentRoute")
+        println("LOGIN_DEBUG: AuthOrchestrator recomposing. authStatus: $authStatus, currentRoute: $currentRoute, isAppLocked: $isAppLocked")
+    }
+
+    if (isAppLocked) {
+        LockScreen(
+            onUnlock = { authViewModel.unlockWithBiometrics() }
+        )
+        return
     }
 
     when (authStatus) {

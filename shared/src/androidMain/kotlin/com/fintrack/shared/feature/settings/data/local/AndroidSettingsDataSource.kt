@@ -14,10 +14,14 @@ class AndroidSettingsDataSource(
 
     private val prefs = context.getSharedPreferences("fintrack_settings", Context.MODE_PRIVATE)
     private val _currencyFlow = MutableStateFlow(Currency.KES)
+    private val _biometricFlow = MutableStateFlow(false)
 
     init {
         val currencyCode = prefs.getString("currency_code", Currency.KES.code)
         _currencyFlow.update { Currency.fromCode(currencyCode) }
+        
+        val biometricEnabled = prefs.getBoolean("biometric_enabled", false)
+        _biometricFlow.update { biometricEnabled }
     }
 
     override val currency: Flow<Currency> = _currencyFlow
@@ -27,5 +31,14 @@ class AndroidSettingsDataSource(
             putString("currency_code", currency.code)
         }
         _currencyFlow.value = currency
+    }
+
+    override val isBiometricEnabled: Flow<Boolean> = _biometricFlow
+
+    override suspend fun setBiometricEnabled(enabled: Boolean) {
+        prefs.edit(commit = true) {
+            putBoolean("biometric_enabled", enabled)
+        }
+        _biometricFlow.value = enabled
     }
 }

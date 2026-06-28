@@ -9,10 +9,14 @@ import platform.Foundation.NSUserDefaults
 class IOSSettingsDataSource : SettingsDataSource {
     private val userDefaults = NSUserDefaults.standardUserDefaults
     private val _currencyFlow = MutableStateFlow(Currency.KES)
+    private val _biometricFlow = MutableStateFlow(false)
 
     init {
         val currencyCode = userDefaults.stringForKey("currency_code") ?: Currency.KES.code
         _currencyFlow.value = Currency.fromCode(currencyCode)
+        
+        val biometricEnabled = userDefaults.boolForKey("biometric_enabled")
+        _biometricFlow.value = biometricEnabled
     }
 
     override val currency: Flow<Currency> = _currencyFlow
@@ -20,6 +24,13 @@ class IOSSettingsDataSource : SettingsDataSource {
     override suspend fun setCurrency(currency: Currency) {
         userDefaults.setObject(currency.code, "currency_code")
         _currencyFlow.value = currency
+    }
+
+    override val isBiometricEnabled: Flow<Boolean> = _biometricFlow
+
+    override suspend fun setBiometricEnabled(enabled: Boolean) {
+        userDefaults.setBool(enabled, "biometric_enabled")
+        _biometricFlow.value = enabled
     }
 }
 

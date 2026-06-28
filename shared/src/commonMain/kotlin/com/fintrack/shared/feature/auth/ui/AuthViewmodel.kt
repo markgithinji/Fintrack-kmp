@@ -14,9 +14,13 @@ import com.fintrack.shared.feature.auth.domain.usecase.RegisterValidationUseCase
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.logger.LogTags
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
+import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
+import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -26,8 +30,13 @@ class AuthViewModel(
     private val tokenDataSource: TokenDataSource,
     private val registerValidationUseCase: RegisterValidationUseCase,
     private val loginValidationUseCase: LoginValidationUseCase,
+    private val settingsDataSource: SettingsDataSource,
+    private val biometricAuthenticator: BiometricAuthenticator,
     private val logger: KMPLogger
 ) : ViewModel() {
+
+    private val _isAppLocked = MutableStateFlow(false)
+    val isAppLocked: StateFlow<Boolean> = _isAppLocked.asStateFlow()
 
     private val _loginState = MutableStateFlow<AuthState<AuthResponse>>(AuthState.Idle)
     val loginState: StateFlow<AuthState<AuthResponse>> = _loginState
@@ -51,6 +60,26 @@ class AuthViewModel(
     init {
         checkAuthenticationStatus()
         observeTokenChanges()
+        checkAppLockStatus()
+    }
+
+    private fun checkAppLockStatus() {
+        viewModelScope.launch {
+            val isBiometricEnabled = settingsDataSource.isBiometricEnabled.first()
+            _isAppLocked.value = isBiometricEnabled
+        }
+    }
+
+    fun unlockWithBiometrics() {
+        viewModelScope.launch {
+            val result = biometricAuthenticator.authenticate(
+                title = "Unlock Fintrack",
+                subtitle = "Authenticate to access your account"
+            )
+            if (result is BiometricResult.Success) {
+                _isAppLocked.value = false
+            }
+        }
     }
 
     private fun observeTokenChanges() {

@@ -28,6 +28,8 @@ val authModule = module {
             tokenDataSource = get(),
             registerValidationUseCase = get(),
             loginValidationUseCase = get(),
+            settingsDataSource = get(),
+            biometricAuthenticator = get(),
             logger = get()
         )
     }

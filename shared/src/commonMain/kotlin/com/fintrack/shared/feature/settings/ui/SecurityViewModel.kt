@@ -7,16 +7,58 @@ import com.fintrack.shared.feature.auth.domain.usecase.ChangePasswordValidationU
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
+import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
+import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class SecurityViewModel(
     private val changePasswordUseCase: ChangePasswordUseCase,
     private val validationUseCase: ChangePasswordValidationUseCase,
+    private val settingsDataSource: SettingsDataSource,
+    private val biometricAuthenticator: BiometricAuthenticator,
 ) : ViewModel() {
+
+    val isBiometricEnabled: StateFlow<Boolean> = settingsDataSource.isBiometricEnabled
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
+
+    private val _biometricError = MutableStateFlow<String?>(null)
+    val biometricError: StateFlow<String?> = _biometricError.asStateFlow()
+
+    fun toggleBiometric(enabled: Boolean) {
+        viewModelScope.launch {
+            if (enabled) {
+                // Verify before enabling
+                val result = biometricAuthenticator.authenticate(
+                    title = "Enable Biometric",
+                    subtitle = "Confirm your identity to enable biometric lock"
+                )
+                if (result is BiometricResult.Success) {
+                    settingsDataSource.setBiometricEnabled(true)
+                    _biometricError.value = null
+                } else if (result is BiometricResult.Error) {
+                    _biometricError.value = result.message
+                }
+            } else {
+                settingsDataSource.setBiometricEnabled(false)
+                _biometricError.value = null
+            }
+        }
+    }
+
+    fun clearBiometricError() {
+        _biometricError.value = null
+    }
 
     private val _changePasswordState = MutableStateFlow<SaveState<Unit>>(SaveState.Idle)
     val changePasswordState: StateFlow<SaveState<Unit>> = _changePasswordState.asStateFlow()
