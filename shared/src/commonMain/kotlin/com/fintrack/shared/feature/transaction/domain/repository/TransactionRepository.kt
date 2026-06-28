@@ -21,9 +21,13 @@ interface TransactionRepository {
 
     suspend fun getTransaction(id: String): Result<Transaction>
 
+    suspend fun getAllTransactions(): Result<List<Transaction>>
+
     suspend fun updateTransaction(id: String, transaction: Transaction): Result<Transaction>
 
     suspend fun deleteTransaction(id: String): Result<Unit>
+
+    suspend fun deleteAllTransactions(): Result<Unit>
 
     fun getTransactionsPagingFlow(
         accountId: String?,

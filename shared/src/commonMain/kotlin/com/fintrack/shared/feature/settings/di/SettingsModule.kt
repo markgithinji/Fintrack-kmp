@@ -10,6 +10,6 @@ import org.koin.dsl.module
 val settingsModule = module {
     single { createSettingsDataSource() }
     single { createBiometricAuthenticator() }
-    factory { SettingsViewModel(get()) }
+    factory { SettingsViewModel(get(), get(), get()) }
     viewModel { SecurityViewModel(get(), get(), get(), get()) }
 }

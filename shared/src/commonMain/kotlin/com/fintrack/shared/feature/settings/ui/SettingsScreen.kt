@@ -9,6 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.*
@@ -32,46 +34,90 @@ fun SettingsScreen(
     onNavigateToSecurity: () -> Unit = {}
 ) {
     val currentCurrency by viewModel.currency.collectAsStateWithLifecycle()
+    val exportResult by viewModel.exportResult.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    
     var showCurrencyDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(paddingValues)
-            .padding(horizontal = 16.dp)
-    ) {
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            text = "Preferences",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
+    val snackbarHostState = remember { SnackbarHostState() }
 
-        SettingsItem(
-            title = "Currency",
-            subtitle = "${currentCurrency.name} (${currentCurrency.symbol})",
-            icon = Icons.Default.Payments,
-            onClick = { showCurrencyDialog = true }
-        )
+    LaunchedEffect(exportResult) {
+        exportResult?.let { path ->
+            snackbarHostState.showSnackbar(
+                message = "Data exported to: $path",
+                duration = SnackbarDuration.Long
+            )
+            viewModel.clearExportResult()
+        }
+    }
 
-        Spacer(modifier = Modifier.height(16.dp))
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = Color.Transparent
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp)
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "Preferences",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
 
-        Text(
-            text = "Security",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
+            SettingsItem(
+                title = "Currency",
+                subtitle = "${currentCurrency.name} (${currentCurrency.symbol})",
+                icon = Icons.Default.Payments,
+                onClick = { showCurrencyDialog = true }
+            )
 
-        SettingsItem(
-            title = "Security Settings",
-            subtitle = "Password and biometric lock",
-            icon = Icons.Default.Security,
-            onClick = onNavigateToSecurity
-        )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Security",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+
+            SettingsItem(
+                title = "Security Settings",
+                subtitle = "Password and biometric lock",
+                icon = Icons.Default.Security,
+                onClick = onNavigateToSecurity
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Data Management",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+
+            SettingsItem(
+                title = "Export Data to CSV",
+                subtitle = "Download all your transactions",
+                icon = Icons.Default.FileDownload,
+                onClick = { viewModel.exportToCsv() }
+            )
+
+            SettingsItem(
+                title = "Clear All Transactions",
+                subtitle = "Reset all transaction history",
+                icon = Icons.Default.DeleteForever,
+                onClick = { showDeleteConfirmDialog = true }
+            )
+        }
     }
 
     if (showCurrencyDialog) {
@@ -83,6 +129,39 @@ fun SettingsScreen(
             },
             onDismiss = { showCurrencyDialog = false }
         )
+    }
+
+    if (showDeleteConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            title = { Text("Clear All Transactions") },
+            text = { Text("Are you sure you want to delete all transactions? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.clearAllTransactions()
+                        showDeleteConfirmDialog = false
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Clear All")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
     }
 }
 

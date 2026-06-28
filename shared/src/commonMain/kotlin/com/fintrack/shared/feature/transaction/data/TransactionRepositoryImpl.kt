@@ -72,6 +72,14 @@ class TransactionRepositoryImpl(
             api.getTransaction(id).toDomain()
         }
 
+    override suspend fun getAllTransactions(): Result<List<Transaction>> =
+        safeApiCall {
+            // Fetching with a large limit for export. 
+            // In a real app, this might need to handle pagination to get *everything*.
+            val paginated = api.getTransactions(limit = 1000)
+            paginated.data.map { it.toDomain() }
+        }
+
     override suspend fun updateTransaction(id: String, transaction: Transaction): Result<Transaction> {
         val result = safeApiCall {
             api.updateTransaction(id, transaction.toCreateRequest()).toDomain()
@@ -85,6 +93,16 @@ class TransactionRepositoryImpl(
     override suspend fun deleteTransaction(id: String): Result<Unit> {
         val result = safeApiCall {
             api.deleteTransaction(id)
+        }
+        if (result is Result.Success) {
+            triggerRefresh()
+        }
+        return result
+    }
+
+    override suspend fun deleteAllTransactions(): Result<Unit> {
+        val result = safeApiCall {
+            api.deleteAllTransactions()
         }
         if (result is Result.Success) {
             triggerRefresh()
