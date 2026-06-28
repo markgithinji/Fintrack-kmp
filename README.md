@@ -32,10 +32,12 @@ It allows users to **track income, expenses, and balances**, visualize **financi
 **Android UI Layer:**
 - **UI**: Jetpack Compose, Material 3
 - **Secure Storage**: Encrypted Preferences
+- **Security**: Android Biometric Library
 
 **iOS UI Layer:**
 - **UI**: SwiftUI
 - **Secure Storage**: Keychain
+- **Security**: LocalAuthentication (FaceID/TouchID)
 
 **Development & Quality:**
 - **Testing**: Unit Tests, ViewModel Tests, UI Tests (WIP)
@@ -54,7 +56,9 @@ It allows users to **track income, expenses, and balances**, visualize **financi
 - **Transaction History**: Comprehensive ledger with search, filter, and export capabilities
 - **Financial Highlights**: Key insights showing top expenses, savings rate, and financial health metrics
 - **Global Currency Preferences**: Seamlessly switch between multiple currencies (USD, KES, EUR, etc.) with real-time UI updates across the entire application.
-- **Secure Authentication**: Encrypted token storage
+- **Biometric Security**: Protect your financial data with **Fingerprint, FaceID, or TouchID** lock, ensuring privacy even if your device is unlocked.
+- **Secure Password Management**: Update your account password directly from the app with real-time validation and secure backend synchronization.
+- **Secure Authentication**: Encrypted token storage with automated token refresh and validation.
 
 ---
 
@@ -76,7 +80,6 @@ Fintrack KMP prioritizes a fluid user experience with high-quality animations an
 - 🚧 iOS SwiftUI integration
 - 🚧 Testing
 - 🚧 Code cleanups
-- 🚧 Biometric support
 
 ---
 
