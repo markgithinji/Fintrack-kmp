@@ -3,6 +3,7 @@ package com.fintrack.shared.feature.settings.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
+import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
@@ -22,6 +23,13 @@ class SettingsViewModel(
     private val exportTransactionsUseCase: ExportTransactionsUseCase,
     private val biometricAuthenticator: BiometricAuthenticator,
 ) : ViewModel() {
+
+    val theme: StateFlow<AppTheme> = settingsDataSource.theme
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = AppTheme.SYSTEM
+        )
 
     val currency: StateFlow<Currency> = settingsDataSource.currency
         .stateIn(
@@ -45,6 +53,12 @@ class SettingsViewModel(
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    fun setTheme(theme: AppTheme) {
+        viewModelScope.launch {
+            settingsDataSource.setTheme(theme)
+        }
+    }
 
     fun setCurrency(currency: Currency) {
         viewModelScope.launch {

@@ -12,15 +12,24 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
+import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.ui.CurrencyProvider
+import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.ui.theme.FinanceTrackerTheme
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun MainScreen() {
-    val isSystemInDarkTheme = isSystemInDarkTheme()
+    val settingsViewModel: SettingsViewModel = koinViewModel()
+    val appTheme by settingsViewModel.theme.collectAsStateWithLifecycle()
+    
+    val isDarkTheme = when(appTheme) {
+        AppTheme.LIGHT -> false
+        AppTheme.DARK -> true
+        AppTheme.SYSTEM -> isSystemInDarkTheme()
+    }
 
-    FinanceTrackerTheme(darkTheme = isSystemInDarkTheme) {
+    FinanceTrackerTheme(darkTheme = isDarkTheme) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background

@@ -11,6 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -24,6 +25,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import org.koin.compose.viewmodel.koinViewModel
@@ -36,12 +38,14 @@ fun SettingsScreen(
     onNavigateToSecurity: () -> Unit = {}
 ) {
     val currentCurrency by viewModel.currency.collectAsStateWithLifecycle()
+    val currentTheme by viewModel.theme.collectAsStateWithLifecycle()
     val isBalanceHidden by viewModel.isBalanceHidden.collectAsStateWithLifecycle()
     val exportResult by viewModel.exportResult.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     
     var showCurrencyDialog by remember { mutableStateOf(false) }
+    var showThemeDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -81,6 +85,17 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(vertical = 8.dp)
+            )
+
+            SettingsItem(
+                title = "Theme",
+                subtitle = when(currentTheme) {
+                    AppTheme.LIGHT -> "Light"
+                    AppTheme.DARK -> "Dark"
+                    AppTheme.SYSTEM -> "System Default"
+                },
+                icon = Icons.Default.Palette,
+                onClick = { showThemeDialog = true }
             )
 
             SettingsItem(
@@ -150,6 +165,28 @@ fun SettingsScreen(
         )
     }
 
+    if (showThemeDialog) {
+        ThemeSelectionDialog(
+            currentTheme = currentTheme,
+            onThemeSelected = {
+                viewModel.setTheme(it)
+                showThemeDialog = false
+            },
+            onDismiss = { showThemeDialog = false }
+        )
+    }
+
+    if (showThemeDialog) {
+        ThemeSelectionDialog(
+            currentTheme = currentTheme,
+            onThemeSelected = {
+                viewModel.setTheme(it)
+                showThemeDialog = false
+            },
+            onDismiss = { showThemeDialog = false }
+        )
+    }
+
     if (showDeleteConfirmDialog) {
         ConfirmationDialog(
             title = "Clear All Transactions",
@@ -170,6 +207,123 @@ fun SettingsScreen(
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ThemeSelectionDialog(
+    currentTheme: AppTheme,
+    onThemeSelected: (AppTheme) -> Unit,
+    onDismiss: () -> Unit
+) {
+    BasicAlertDialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier
+            .padding(28.dp)
+            .widthIn(max = 400.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Text(
+                    text = "Select Theme",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(AppTheme.entries) { theme ->
+                        val isSelected = theme == currentTheme
+                        
+                        Surface(
+                            onClick = { onThemeSelected(theme) },
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected) 
+                                MaterialTheme.colorScheme.primaryContainer 
+                            else 
+                                Color.Transparent,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    val (themeLabel, themeIcon) = when(theme) {
+                                        AppTheme.LIGHT -> "Light" to Icons.Default.Palette
+                                        AppTheme.DARK -> "Dark" to Icons.Default.Palette
+                                        AppTheme.SYSTEM -> "System Default" to Icons.Default.Palette
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                            .background(
+                                                if (isSelected)
+                                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                                else
+                                                    MaterialTheme.colorScheme.surfaceVariant
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = themeIcon,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp),
+                                            tint = if (isSelected)
+                                                MaterialTheme.colorScheme.primary
+                                            else
+                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    
+                                    Text(
+                                        text = themeLabel,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Cancel")
+                }
+            }
         }
     }
 }

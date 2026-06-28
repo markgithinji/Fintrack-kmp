@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.settings.data.local
 
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
+import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -8,11 +9,15 @@ import platform.Foundation.NSUserDefaults
 
 class IOSSettingsDataSource : SettingsDataSource {
     private val userDefaults = NSUserDefaults.standardUserDefaults
+    private val _themeFlow = MutableStateFlow(AppTheme.SYSTEM)
     private val _currencyFlow = MutableStateFlow(Currency.KES)
     private val _biometricFlow = MutableStateFlow(false)
     private val _balanceHiddenFlow = MutableStateFlow(false)
 
     init {
+        val themeName = userDefaults.stringForKey("app_theme") ?: AppTheme.SYSTEM.name
+        _themeFlow.value = AppTheme.fromName(themeName)
+
         val currencyCode = userDefaults.stringForKey("currency_code") ?: Currency.KES.code
         _currencyFlow.value = Currency.fromCode(currencyCode)
         
@@ -21,6 +26,13 @@ class IOSSettingsDataSource : SettingsDataSource {
 
         val balanceHidden = userDefaults.boolForKey("balance_hidden")
         _balanceHiddenFlow.value = balanceHidden
+    }
+
+    override val theme: Flow<AppTheme> = _themeFlow
+
+    override suspend fun setTheme(theme: AppTheme) {
+        userDefaults.setObject(theme.name, "app_theme")
+        _themeFlow.value = theme
     }
 
     override val currency: Flow<Currency> = _currencyFlow
