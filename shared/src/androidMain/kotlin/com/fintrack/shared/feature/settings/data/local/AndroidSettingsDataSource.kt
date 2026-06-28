@@ -15,6 +15,7 @@ class AndroidSettingsDataSource(
     private val prefs = context.getSharedPreferences("fintrack_settings", Context.MODE_PRIVATE)
     private val _currencyFlow = MutableStateFlow(Currency.KES)
     private val _biometricFlow = MutableStateFlow(false)
+    private val _balanceHiddenFlow = MutableStateFlow(false)
 
     init {
         val currencyCode = prefs.getString("currency_code", Currency.KES.code)
@@ -22,6 +23,9 @@ class AndroidSettingsDataSource(
         
         val biometricEnabled = prefs.getBoolean("biometric_enabled", false)
         _biometricFlow.update { biometricEnabled }
+
+        val balanceHidden = prefs.getBoolean("balance_hidden", false)
+        _balanceHiddenFlow.update { balanceHidden }
     }
 
     override val currency: Flow<Currency> = _currencyFlow
@@ -40,5 +44,14 @@ class AndroidSettingsDataSource(
             putBoolean("biometric_enabled", enabled)
         }
         _biometricFlow.value = enabled
+    }
+
+    override val isBalanceHidden: Flow<Boolean> = _balanceHiddenFlow
+
+    override suspend fun setBalanceHidden(hidden: Boolean) {
+        prefs.edit(commit = true) {
+            putBoolean("balance_hidden", hidden)
+        }
+        _balanceHiddenFlow.value = hidden
     }
 }

@@ -30,6 +30,13 @@ class SettingsViewModel(
             initialValue = Currency.KES
         )
 
+    val isBalanceHidden: StateFlow<Boolean> = settingsDataSource.isBalanceHidden
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
+
     private val _exportResult = MutableStateFlow<String?>(null)
     val exportResult: StateFlow<String?> = _exportResult.asStateFlow()
 
@@ -42,6 +49,12 @@ class SettingsViewModel(
     fun setCurrency(currency: Currency) {
         viewModelScope.launch {
             settingsDataSource.setCurrency(currency)
+        }
+    }
+
+    fun setBalanceHidden(hidden: Boolean) {
+        viewModelScope.launch {
+            settingsDataSource.setBalanceHidden(hidden)
         }
     }
 

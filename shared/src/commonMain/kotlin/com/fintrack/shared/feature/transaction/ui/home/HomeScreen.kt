@@ -20,6 +20,7 @@ import com.example.compose.backgroundGray
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
+import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -30,6 +31,7 @@ fun HomeScreen(
     accountsViewModel: AccountsViewModel = koinViewModel(),
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     statsViewModel: StatisticsViewModel = koinViewModel(),
+    settingsViewModel: SettingsViewModel = koinViewModel(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onEditTransaction: (String) -> Unit,
@@ -40,6 +42,7 @@ fun HomeScreen(
     val transactionsResult by transactionsViewModel.recentTransactions.collectAsStateWithLifecycle()
     val overviewResult by statsViewModel.overview.collectAsStateWithLifecycle()
     val categoryComparisonResult by statsViewModel.categoryComparisons.collectAsStateWithLifecycle()
+    val isBalanceHidden by settingsViewModel.isBalanceHidden.collectAsStateWithLifecycle()
 
     LaunchedEffect(selectedAccountResult) {
         val accountId = (selectedAccountResult as? Result.Success)?.data?.id
@@ -66,7 +69,9 @@ fun HomeScreen(
             CurrentBalanceCardWrapper(
                 accountsResult = accountsResult,
                 selectedAccountResult = selectedAccountResult,
+                isBalanceHidden = isBalanceHidden,
                 onAccountSelected = { accountId -> accountsViewModel.selectAccount(accountId) },
+                onToggleBalanceVisibility = { settingsViewModel.setBalanceHidden(it) },
                 onRetry = { accountsViewModel.reloadAccounts() }
             )
         }

@@ -26,6 +26,8 @@ import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -60,14 +62,18 @@ import com.fintrack.shared.feature.core.ui.CommonErrorState
 fun CurrentBalanceCardWrapper(
     selectedAccountResult: Result<Account>,
     accountsResult: Result<List<Account>>,
+    isBalanceHidden: Boolean,
     onAccountSelected: (String) -> Unit,
+    onToggleBalanceVisibility: (Boolean) -> Unit,
     onRetry: () -> Unit = {}
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
     CurrentBalanceCard(
         selectedAccountResult = selectedAccountResult,
-        onChangeAccountClicked = { showDialog = true }
+        isBalanceHidden = isBalanceHidden,
+        onChangeAccountClicked = { showDialog = true },
+        onToggleBalanceVisibility = onToggleBalanceVisibility
     )
 
     if (showDialog) {
@@ -86,7 +92,9 @@ fun CurrentBalanceCardWrapper(
 @Composable
 fun CurrentBalanceCard(
     selectedAccountResult: Result<Account>,
-    onChangeAccountClicked: () -> Unit
+    isBalanceHidden: Boolean,
+    onChangeAccountClicked: () -> Unit,
+    onToggleBalanceVisibility: (Boolean) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -97,7 +105,7 @@ fun CurrentBalanceCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(120.dp)
+                .height(130.dp)
         ) {
             LowerRightWavesBackground(modifier = Modifier.matchParentSize())
 
@@ -116,7 +124,9 @@ fun CurrentBalanceCard(
                 is Result.Success -> {
                     CurrentBalanceSuccessState(
                         account = selectedAccountResult.data,
-                        onChangeAccountClicked = onChangeAccountClicked
+                        isBalanceHidden = isBalanceHidden,
+                        onChangeAccountClicked = onChangeAccountClicked,
+                        onToggleBalanceVisibility = onToggleBalanceVisibility
                     )
                 }
             }
@@ -218,7 +228,9 @@ private fun CurrentBalanceErrorState(
 @Composable
 private fun CurrentBalanceSuccessState(
     account: Account,
-    onChangeAccountClicked: () -> Unit
+    isBalanceHidden: Boolean,
+    onChangeAccountClicked: () -> Unit,
+    onToggleBalanceVisibility: (Boolean) -> Unit
 ) {
     val balance = account.balance ?: 0.0
 
@@ -249,29 +261,49 @@ private fun CurrentBalanceSuccessState(
                     )
                 }
 
-                Surface(
-                    onClick = onChangeAccountClicked,
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        onClick = { onToggleBalanceVisibility(!isBalanceHidden) },
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
+                        modifier = Modifier.size(36.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.SwapHoriz,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text(
-                            text = "Switch",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = if (isBalanceHidden) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = if (isBalanceHidden) "Show Balance" else "Hide Balance",
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Surface(
+                        onClick = onChangeAccountClicked,
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SwapHoriz,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = "Switch",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }

@@ -9,4 +9,7 @@ interface SettingsDataSource {
 
     val isBiometricEnabled: Flow<Boolean>
     suspend fun setBiometricEnabled(enabled: Boolean)
+
+    val isBalanceHidden: Flow<Boolean>
+    suspend fun setBalanceHidden(hidden: Boolean)
 }

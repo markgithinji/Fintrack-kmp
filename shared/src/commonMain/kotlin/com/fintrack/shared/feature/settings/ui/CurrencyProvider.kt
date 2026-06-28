@@ -10,9 +10,13 @@ import com.fintrack.shared.feature.settings.domain.model.Currency
 import org.koin.compose.viewmodel.koinViewModel
 
 val LocalCurrency = compositionLocalOf { Currency.KES }
+val LocalPrivacyMode = compositionLocalOf { false }
 
 @Composable
 fun Double.toCurrencyString(): String {
+    if (LocalPrivacyMode.current) {
+        return "${LocalCurrency.current.symbol} ****"
+    }
     return this.formatToCurrency(LocalCurrency.current.symbol)
 }
 
@@ -22,7 +26,12 @@ fun CurrencyProvider(
     content: @Composable () -> Unit
 ) {
     val currency by viewModel.currency.collectAsStateWithLifecycle()
-    CompositionLocalProvider(LocalCurrency provides currency) {
+    val isBalanceHidden by viewModel.isBalanceHidden.collectAsStateWithLifecycle()
+
+    CompositionLocalProvider(
+        LocalCurrency provides currency,
+        LocalPrivacyMode provides isBalanceHidden
+    ) {
         content()
     }
 }

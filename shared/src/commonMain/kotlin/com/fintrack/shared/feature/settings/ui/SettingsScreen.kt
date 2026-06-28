@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,6 +36,7 @@ fun SettingsScreen(
     onNavigateToSecurity: () -> Unit = {}
 ) {
     val currentCurrency by viewModel.currency.collectAsStateWithLifecycle()
+    val isBalanceHidden by viewModel.isBalanceHidden.collectAsStateWithLifecycle()
     val exportResult by viewModel.exportResult.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
@@ -86,6 +88,14 @@ fun SettingsScreen(
                 subtitle = "${currentCurrency.name} (${currentCurrency.symbol})",
                 icon = Icons.Default.Payments,
                 onClick = { showCurrencyDialog = true }
+            )
+
+            SettingsToggleItem(
+                title = "Privacy Mode",
+                subtitle = "Hide balances and amounts",
+                icon = Icons.Default.VisibilityOff,
+                checked = isBalanceHidden,
+                onCheckedChange = { viewModel.setBalanceHidden(it) }
             )
 
             Spacer(modifier = Modifier.height(16.dp))

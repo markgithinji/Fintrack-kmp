@@ -10,6 +10,7 @@ class IOSSettingsDataSource : SettingsDataSource {
     private val userDefaults = NSUserDefaults.standardUserDefaults
     private val _currencyFlow = MutableStateFlow(Currency.KES)
     private val _biometricFlow = MutableStateFlow(false)
+    private val _balanceHiddenFlow = MutableStateFlow(false)
 
     init {
         val currencyCode = userDefaults.stringForKey("currency_code") ?: Currency.KES.code
@@ -17,6 +18,9 @@ class IOSSettingsDataSource : SettingsDataSource {
         
         val biometricEnabled = userDefaults.boolForKey("biometric_enabled")
         _biometricFlow.value = biometricEnabled
+
+        val balanceHidden = userDefaults.boolForKey("balance_hidden")
+        _balanceHiddenFlow.value = balanceHidden
     }
 
     override val currency: Flow<Currency> = _currencyFlow
@@ -31,6 +35,13 @@ class IOSSettingsDataSource : SettingsDataSource {
     override suspend fun setBiometricEnabled(enabled: Boolean) {
         userDefaults.setBool(enabled, "biometric_enabled")
         _biometricFlow.value = enabled
+    }
+
+    override val isBalanceHidden: Flow<Boolean> = _balanceHiddenFlow
+
+    override suspend fun setBalanceHidden(hidden: Boolean) {
+        userDefaults.setBool(hidden, "balance_hidden")
+        _balanceHiddenFlow.value = hidden
     }
 }
 
