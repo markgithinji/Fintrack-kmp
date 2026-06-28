@@ -177,7 +177,9 @@ fun AppNavigation(
                         }
                     )
                 ) { backStackEntry ->
-                    val transactionId = backStackEntry.arguments?.read { getString("transactionId") }
+                    val transactionId = backStackEntry.arguments?.read {
+                        if (contains("transactionId")) getString("transactionId") else null
+                    }
 
                     AddTransactionScreen(
                         transactionId = transactionId,
@@ -328,7 +330,9 @@ fun AppNavigation(
                         }
                     )
                 ) { backStackEntry ->
-                    val budgetIdArg = backStackEntry.arguments?.read { getString("budgetId") }
+                    val budgetIdArg = backStackEntry.arguments?.read {
+                        if (contains("budgetId")) getString("budgetId") else null
+                    }
                     val budgetId = if (budgetIdArg.isNullOrEmpty()) null else budgetIdArg
 
                     LaunchedEffect(budgetId) {
@@ -412,8 +416,12 @@ fun AppNavigation(
                         }
                     )
                 ) { backStackEntry ->
-                    val accountId = backStackEntry.arguments?.read { getString("accountId") } ?: return@composable
-                    val isIncomeStr = backStackEntry.arguments?.read { getString("isIncome") }
+                    val accountId = backStackEntry.arguments?.read {
+                        if (contains("accountId")) getString("accountId") else null
+                    } ?: return@composable
+                    val isIncomeStr = backStackEntry.arguments?.read {
+                        if (contains("isIncome")) getString("isIncome") else null
+                    }
                     val isIncome: Boolean? = isIncomeStr?.toBooleanStrictOrNull()
 
                     LaunchedEffect(Unit) {

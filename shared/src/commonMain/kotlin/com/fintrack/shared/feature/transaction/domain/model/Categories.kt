@@ -23,6 +23,11 @@ data class Category(
         val Rent = Category("rent", "Rent", true, "Home", true)
         val Groceries = Category("groceries", "Groceries", true, "ShoppingBag", true)
         val Insurance = Category("insurance", "Insurance", true, "Shield", true)
+        val DiningOut = Category("dining_out", "Dining Out", true, "Restaurant", true)
+        val Utilities = Category("utilities", "Utilities", true, "Lightbulb", true)
+        val Pets = Category("pets", "Pets", true, "Pets", true)
+        val Fitness = Category("fitness", "Fitness", true, "FitnessCenter", true)
+        val Maintenance = Category("maintenance", "Maintenance", true, "Build", true)
         val MiscExpense = Category("misc_expense", "Misc", true, "HelpOutline", true)
 
         // --- Income categories ---
@@ -30,14 +35,18 @@ data class Category(
         val Freelance = Category("freelance", "Freelance", false, "Work", true)
         val Investments = Category("investments", "Investments", false, "TrendingUp", true)
         val GiftsIncome = Category("gifts_income", "Gifts", false, "CardGiftcard", true)
+        val Bonus = Category("bonus", "Bonus", false, "Paid", true)
+        val Rental = Category("rental", "Rental", false, "RealEstateAgent", true)
+        val Dividends = Category("dividends", "Dividends", false, "Analytics", true)
+        val Interest = Category("interest", "Interest", false, "Percent", true)
         val OtherIncome = Category("other_income", "Other", false, "AttachMoney", true)
 
         val allCategories = listOf(
             Food, Transport, Shopping, Health, Bills,
             Entertainment, Education, GiftsExpense, Travel,
             PersonalCare, Subscriptions, Rent, Groceries,
-            Insurance, MiscExpense,
-            Salary, Freelance, Investments, GiftsIncome, OtherIncome
+            Insurance, DiningOut, Utilities, Pets, Fitness, Maintenance, MiscExpense,
+            Salary, Freelance, Investments, GiftsIncome, Bonus, Rental, Dividends, Interest, OtherIncome
         )
 
         val expenseCategories = allCategories.filter { it.isExpense }
