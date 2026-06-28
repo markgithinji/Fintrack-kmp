@@ -37,8 +37,6 @@ import com.fintrack.shared.feature.budget.ui.BudgetScreen
 import com.fintrack.shared.feature.account.ui.AccountsScreen
 import com.fintrack.shared.feature.profile.EditProfileScreen
 import com.fintrack.shared.feature.profile.ProfileScreen
-import com.fintrack.shared.feature.settings.ui.ChangePasswordScreen
-import com.fintrack.shared.feature.settings.ui.SecurityScreen
 import com.fintrack.shared.feature.settings.ui.SettingsScreen
 import com.fintrack.shared.feature.summary.ui.StatisticsScreen
 import com.fintrack.shared.feature.transaction.ui.addtransaction.AddTransactionScreen
@@ -286,39 +284,7 @@ fun AppNavigation(
                         )
                     }
                     SettingsScreen(
-                        paddingValues = paddingValues,
-                        onNavigateToSecurity = { navController.navigate(Screen.Security.route) }
-                    )
-                }
-
-                composable(Screen.Security.route) {
-                    LaunchedEffect(Unit) {
-                        onUpdateAppBarState(
-                            AppBarState(
-                                title = "Security",
-                                showBackButton = true,
-                                onBack = { navController.popBackStack() }
-                            )
-                        )
-                    }
-                    SecurityScreen(
-                        onNavigateBack = { navController.popBackStack() },
-                        onNavigateToChangePassword = { navController.navigate(Screen.ChangePassword.route) }
-                    )
-                }
-
-                composable(Screen.ChangePassword.route) {
-                    LaunchedEffect(Unit) {
-                        onUpdateAppBarState(
-                            AppBarState(
-                                title = "Change Password",
-                                showBackButton = true,
-                                onBack = { navController.popBackStack() }
-                            )
-                        )
-                    }
-                    ChangePasswordScreen(
-                        onNavigateBack = { navController.popBackStack() }
+                        paddingValues = paddingValues
                     )
                 }
 

@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.settings.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,15 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,33 +26,52 @@ import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import com.fintrack.shared.feature.settings.domain.util.format
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
+import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
+import com.fintrack.shared.feature.auth.ui.common.ErrorDialog
+import com.fintrack.shared.feature.core.domain.SaveState
 import org.koin.compose.viewmodel.koinViewModel
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
-    viewModel: SettingsViewModel = koinViewModel(),
-    onNavigateToSecurity: () -> Unit = {}
+    viewModel: SettingsViewModel = koinViewModel()
 ) {
     val currentCurrency by viewModel.currency.collectAsStateWithLifecycle()
     val currentTheme by viewModel.theme.collectAsStateWithLifecycle()
     val currentTimeFormat by viewModel.timeFormat.collectAsStateWithLifecycle()
     val isBalanceHidden by viewModel.isBalanceHidden.collectAsStateWithLifecycle()
     val isReminderEnabled by viewModel.isReminderEnabled.collectAsStateWithLifecycle()
+    val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsStateWithLifecycle()
     val reminderTime by viewModel.reminderTime.collectAsStateWithLifecycle()
     val showPermissionRequest by viewModel.showPermissionRequest.collectAsStateWithLifecycle()
     val exportResult by viewModel.exportResult.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+
+    val changePasswordFormState by viewModel.changePasswordFormState.collectAsStateWithLifecycle()
+    val changePasswordState by viewModel.changePasswordState.collectAsStateWithLifecycle()
     
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showTimeFormatDialog by remember { mutableStateOf(false) }
     var showTimePickerDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(changePasswordState) {
+        if (changePasswordState is SaveState.Success) {
+            snackbarHostState.showSnackbar("Password updated successfully")
+            delay(1000)
+            showChangePasswordDialog = false
+            viewModel.resetChangePasswordState()
+        }
+    }
 
     LaunchedEffect(exportResult) {
         exportResult?.let { path ->
@@ -80,7 +92,7 @@ fun SettingsScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = Color.Transparent
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -88,117 +100,156 @@ fun SettingsScreen(
                 .padding(innerPadding)
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            contentPadding = PaddingValues(bottom = 24.dp)
         ) {
             item {
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "Preferences",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-
-                SettingsItem(
-                    title = "Theme",
-                    subtitle = when(currentTheme) {
-                        AppTheme.LIGHT -> "Light"
-                        AppTheme.DARK -> "Dark"
-                        AppTheme.SYSTEM -> "System Default"
-                    },
-                    icon = Icons.Default.Palette,
-                    onClick = { showThemeDialog = true }
-                )
-
-                SettingsItem(
-                    title = "Currency",
-                    subtitle = "${currentCurrency.name} (${currentCurrency.symbol})",
-                    icon = Icons.Default.Payments,
-                    onClick = { showCurrencyDialog = true }
-                )
-
-                SettingsItem(
-                    title = "Time Format",
-                    subtitle = if (currentTimeFormat == TimeFormat.TWELVE_HOUR) "12-hour" else "24-hour",
-                    icon = Icons.Default.Schedule,
-                    onClick = { showTimeFormatDialog = true }
-                )
-
-                SettingsToggleItem(
-                    title = "Privacy Mode",
-                    subtitle = "Hide balances and amounts",
-                    icon = Icons.Default.VisibilityOff,
-                    checked = isBalanceHidden,
-                    onCheckedChange = { viewModel.setBalanceHidden(it) }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "Notifications",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-
-                SettingsToggleItem(
-                    title = "Transaction Reminders",
-                    subtitle = "Daily reminder to log your expenses",
-                    icon = Icons.Default.Notifications,
-                    checked = isReminderEnabled,
-                    onCheckedChange = { viewModel.setReminderEnabled(it) }
-                )
-
-                if (isReminderEnabled) {
+                SettingsSection(title = "General") {
                     SettingsItem(
-                        title = "Reminder Time",
-                        subtitle = reminderTime.format(currentTimeFormat),
+                        title = "Theme",
+                        subtitle = when(currentTheme) {
+                            AppTheme.LIGHT -> "Light"
+                            AppTheme.DARK -> "Dark"
+                            AppTheme.SYSTEM -> "System Default"
+                        },
+                        icon = Icons.Default.Palette,
+                        onClick = { showThemeDialog = true }
+                    )
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+
+                    SettingsItem(
+                        title = "Currency",
+                        subtitle = "${currentCurrency.name} (${currentCurrency.symbol})",
+                        icon = Icons.Default.Payments,
+                        onClick = { showCurrencyDialog = true }
+                    )
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+
+                    SettingsItem(
+                        title = "Time Format",
+                        subtitle = if (currentTimeFormat == TimeFormat.TWELVE_HOUR) "12-hour" else "24-hour",
                         icon = Icons.Default.Schedule,
-                        onClick = { showTimePickerDialog = true }
+                        onClick = { showTimeFormatDialog = true }
+                    )
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+
+                    SettingsToggleItem(
+                        title = "Privacy Mode",
+                        subtitle = "Hide balances and amounts",
+                        icon = Icons.Default.VisibilityOff,
+                        checked = isBalanceHidden,
+                        onCheckedChange = { viewModel.setBalanceHidden(it) }
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                SettingsSection(title = "Notifications") {
+                    SettingsToggleItem(
+                        title = "Daily Reminders",
+                        subtitle = "Never forget to log expenses",
+                        icon = Icons.Default.Notifications,
+                        checked = isReminderEnabled,
+                        onCheckedChange = { viewModel.setReminderEnabled(it) }
+                    )
 
-                Text(
-                    text = "Security",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
+                    if (isReminderEnabled) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+                        SettingsItem(
+                            title = "Reminder Time",
+                            subtitle = reminderTime.format(currentTimeFormat),
+                            icon = Icons.Default.Schedule,
+                            onClick = { showTimePickerDialog = true }
+                        )
+                    }
+                }
 
-                SettingsItem(
-                    title = "Security Settings",
-                    subtitle = "Password and biometric lock",
-                    icon = Icons.Default.Security,
-                    onClick = onNavigateToSecurity
-                )
+                SettingsSection(title = "Security") {
+                    SettingsToggleItem(
+                        title = "Biometric Lock",
+                        subtitle = "Use FaceID or Fingerprint",
+                        icon = Icons.Default.Fingerprint,
+                        checked = isBiometricEnabled,
+                        onCheckedChange = { viewModel.toggleBiometric(it) }
+                    )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
 
-                Text(
-                    text = "Data Management",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
+                    SettingsItem(
+                        title = "Change Password",
+                        subtitle = "Update your account password",
+                        icon = Icons.Default.Lock,
+                        onClick = { showChangePasswordDialog = true }
+                    )
+                }
 
-                SettingsItem(
-                    title = "Export Data to CSV",
-                    subtitle = "Download all your transactions",
-                    icon = Icons.Default.FileDownload,
-                    onClick = { viewModel.exportToCsv() }
-                )
+                SettingsSection(title = "Data & Backup") {
+                    SettingsItem(
+                        title = "Export Data",
+                        subtitle = "Download transactions as CSV",
+                        icon = Icons.Default.FileDownload,
+                        onClick = { viewModel.exportToCsv() }
+                    )
 
-                SettingsItem(
-                    title = "Clear All Transactions",
-                    subtitle = "Reset all transaction history",
-                    icon = Icons.Default.DeleteForever,
-                    onClick = { showDeleteConfirmDialog = true }
-                )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+
+                    SettingsItem(
+                        title = "Reset Data",
+                        subtitle = "Permanently delete all records",
+                        icon = Icons.Default.DeleteForever,
+                        iconContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f),
+                        iconTint = MaterialTheme.colorScheme.error,
+                        onClick = { showDeleteConfirmDialog = true }
+                    )
+                }
                 
-                Spacer(modifier = Modifier.height(16.dp))
+                SettingsSection(title = "About") {
+                    SettingsItem(
+                        title = "Version",
+                        subtitle = "1.0.0 (Stable)",
+                        icon = Icons.Default.Info,
+                        onClick = { }
+                    )
+                    
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+                    
+                    SettingsItem(
+                        title = "Help & Support",
+                        subtitle = "FAQ and contact us",
+                        icon = Icons.Default.HelpOutline,
+                        onClick = { }
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
@@ -268,6 +319,21 @@ fun SettingsScreen(
         )
     }
 
+    if (showChangePasswordDialog) {
+        ChangePasswordDialog(
+            formState = changePasswordFormState,
+            saveState = changePasswordState,
+            onCurrentPasswordChange = viewModel::updateCurrentPassword,
+            onNewPasswordChange = viewModel::updateNewPassword,
+            onConfirmPasswordChange = viewModel::updateConfirmPassword,
+            onConfirm = viewModel::changePassword,
+            onDismiss = {
+                showChangePasswordDialog = false
+                viewModel.resetChangePasswordState()
+            }
+        )
+    }
+
     if (isLoading) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -275,6 +341,141 @@ fun SettingsScreen(
         ) {
             CircularProgressIndicator()
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChangePasswordDialog(
+    formState: ChangePasswordFormState,
+    saveState: SaveState<Unit>,
+    onCurrentPasswordChange: (String) -> Unit,
+    onNewPasswordChange: (String) -> Unit,
+    onConfirmPasswordChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    var currentPasswordVisible by remember { mutableStateOf(false) }
+    var newPasswordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    val colorScheme = MaterialTheme.colorScheme
+
+    BasicAlertDialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier
+            .padding(28.dp)
+            .widthIn(max = 400.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = "Change Password",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 24.dp)
+                )
+
+                FinanceTextField(
+                    value = formState.currentPassword,
+                    onValueChange = onCurrentPasswordChange,
+                    label = "Current Password",
+                    leadingIcon = Icons.Default.Lock,
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Next,
+                    isPassword = true,
+                    passwordVisible = currentPasswordVisible,
+                    onPasswordToggle = { currentPasswordVisible = !currentPasswordVisible },
+                    colorScheme = colorScheme,
+                    isError = formState.currentPasswordError != null,
+                    errorMessage = formState.currentPasswordError,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                FinanceTextField(
+                    value = formState.newPassword,
+                    onValueChange = onNewPasswordChange,
+                    label = "New Password",
+                    leadingIcon = Icons.Default.Lock,
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Next,
+                    isPassword = true,
+                    passwordVisible = newPasswordVisible,
+                    onPasswordToggle = { newPasswordVisible = !newPasswordVisible },
+                    colorScheme = colorScheme,
+                    isError = formState.newPasswordError != null,
+                    errorMessage = formState.newPasswordError,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                FinanceTextField(
+                    value = formState.confirmPassword,
+                    onValueChange = onConfirmPasswordChange,
+                    label = "Confirm New Password",
+                    leadingIcon = Icons.Default.Lock,
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done,
+                    isPassword = true,
+                    passwordVisible = confirmPasswordVisible,
+                    onPasswordToggle = { confirmPasswordVisible = !confirmPasswordVisible },
+                    colorScheme = colorScheme,
+                    isError = formState.confirmPasswordError != null,
+                    errorMessage = formState.confirmPasswordError,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancel")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = onConfirm,
+                        enabled = saveState !is SaveState.Loading,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        if (saveState is SaveState.Loading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else {
+                            Text("Update")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (saveState is SaveState.Error) {
+        ErrorDialog(
+            title = "Update Failed",
+            errorMessage = saveState.exception.message ?: "An unknown error occurred",
+            onDismiss = { /* No-op, just shows error */ },
+            onRetry = onConfirm,
+            colorScheme = colorScheme
+        )
     }
 }
 
@@ -598,36 +799,70 @@ fun CurrencySelectionDialog(
 }
 
 @Composable
+fun SettingsSection(
+    title: String,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = 4.dp)
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 4.dp)
+        )
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(vertical = 4.dp)
+            ) {
+                content()
+            }
+        }
+    }
+}
+
+@Composable
 fun SettingsItem(
     title: String,
     subtitle: String,
     icon: ImageVector,
+    iconContainerColor: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+    iconTint: Color = MaterialTheme.colorScheme.primary,
     onClick: () -> Unit
 ) {
     Surface(
         onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp)),
+        modifier = Modifier.fillMaxWidth(),
         color = Color.Transparent
     ) {
         Row(
             modifier = Modifier
-                .padding(vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(40.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                    .background(iconContainerColor),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
+                    tint = iconTint,
+                    modifier = Modifier.size(20.dp)
                 )
             }
             
@@ -650,7 +885,8 @@ fun SettingsItem(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                modifier = Modifier.size(20.dp)
             )
         }
     }
@@ -666,19 +902,17 @@ fun SettingsToggleItem(
 ) {
     Surface(
         onClick = { onCheckedChange(!checked) },
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp)),
+        modifier = Modifier.fillMaxWidth(),
         color = Color.Transparent
     ) {
         Row(
             modifier = Modifier
-                .padding(vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(40.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
@@ -687,7 +921,7 @@ fun SettingsToggleItem(
                     imageVector = icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
             
@@ -709,7 +943,16 @@ fun SettingsToggleItem(
             
             Switch(
                 checked = checked,
-                onCheckedChange = onCheckedChange
+                onCheckedChange = onCheckedChange,
+                thumbContent = if (checked) {
+                    {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(SwitchDefaults.IconSize),
+                        )
+                    }
+                } else null
             )
         }
     }

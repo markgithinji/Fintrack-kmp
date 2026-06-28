@@ -12,11 +12,11 @@ import com.fintrack.shared.feature.settings.domain.util.NotificationService
 import com.fintrack.shared.feature.transaction.domain.usecase.ClearAllTransactionsUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ExportTransactionsUseCase
 import com.fintrack.shared.feature.core.util.Result
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
+import com.fintrack.shared.feature.auth.domain.usecase.ChangePasswordUseCase
+import com.fintrack.shared.feature.auth.domain.usecase.ChangePasswordValidationUseCase
+import com.fintrack.shared.feature.core.domain.SaveState
+import com.fintrack.shared.feature.core.domain.ValidationResult
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalTime
 
@@ -26,6 +26,8 @@ class SettingsViewModel(
     private val exportTransactionsUseCase: ExportTransactionsUseCase,
     private val biometricAuthenticator: BiometricAuthenticator,
     private val notificationService: NotificationService,
+    private val changePasswordUseCase: ChangePasswordUseCase,
+    private val validationUseCase: ChangePasswordValidationUseCase,
 ) : ViewModel() {
 
     val theme: StateFlow<AppTheme> = settingsDataSource.theme
@@ -63,6 +65,13 @@ class SettingsViewModel(
             initialValue = false
         )
 
+    val isBiometricEnabled: StateFlow<Boolean> = settingsDataSource.isBiometricEnabled
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
+
     val reminderTime: StateFlow<LocalTime> = settingsDataSource.reminderTime
         .stateIn(
             scope = viewModelScope,
@@ -81,6 +90,12 @@ class SettingsViewModel(
 
     private val _showPermissionRequest = MutableStateFlow(false)
     val showPermissionRequest: StateFlow<Boolean> = _showPermissionRequest.asStateFlow()
+
+    private val _changePasswordState = MutableStateFlow<SaveState<Unit>>(SaveState.Idle)
+    val changePasswordState: StateFlow<SaveState<Unit>> = _changePasswordState.asStateFlow()
+
+    private val _changePasswordFormState = MutableStateFlow(ChangePasswordFormState())
+    val changePasswordFormState: StateFlow<ChangePasswordFormState> = _changePasswordFormState.asStateFlow()
 
     fun setTheme(theme: AppTheme) {
         viewModelScope.launch {
@@ -103,6 +118,24 @@ class SettingsViewModel(
     fun setBalanceHidden(hidden: Boolean) {
         viewModelScope.launch {
             settingsDataSource.setBalanceHidden(hidden)
+        }
+    }
+
+    fun toggleBiometric(enabled: Boolean) {
+        viewModelScope.launch {
+            if (enabled) {
+                val result = biometricAuthenticator.authenticate(
+                    title = "Enable Biometric",
+                    subtitle = "Confirm your identity to enable biometric lock"
+                )
+                if (result is BiometricResult.Success) {
+                    settingsDataSource.setBiometricEnabled(true)
+                } else if (result is BiometricResult.Error) {
+                    _error.value = result.message
+                }
+            } else {
+                settingsDataSource.setBiometricEnabled(false)
+            }
         }
     }
 
@@ -205,4 +238,66 @@ class SettingsViewModel(
     fun clearExportResult() {
         _exportResult.value = null
     }
+
+    // Password change methods
+    fun updateCurrentPassword(password: String) {
+        _changePasswordFormState.update { it.copy(currentPassword = password, currentPasswordError = null) }
+    }
+
+    fun updateNewPassword(password: String) {
+        _changePasswordFormState.update { it.copy(newPassword = password, newPasswordError = null) }
+    }
+
+    fun updateConfirmPassword(password: String) {
+        _changePasswordFormState.update { it.copy(confirmPassword = password, confirmPasswordError = null) }
+    }
+
+    fun changePassword() {
+        val form = _changePasswordFormState.value
+        val currentPasswordResult = validationUseCase.validateCurrentPassword(form.currentPassword)
+        val newPasswordResult = validationUseCase.validateNewPassword(form.newPassword)
+        val confirmPasswordResult = validationUseCase.validateConfirmPassword(form.newPassword, form.confirmPassword)
+
+        val hasError = listOf(currentPasswordResult, newPasswordResult, confirmPasswordResult)
+            .any { it is ValidationResult.Error }
+
+        if (hasError) {
+            _changePasswordFormState.update {
+                it.copy(
+                    currentPasswordError = (currentPasswordResult as? ValidationResult.Error)?.message,
+                    newPasswordError = (newPasswordResult as? ValidationResult.Error)?.message,
+                    confirmPasswordError = (confirmPasswordResult as? ValidationResult.Error)?.message
+                )
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _changePasswordState.value = SaveState.Loading
+            when (val result = changePasswordUseCase(form.currentPassword, form.newPassword)) {
+                is Result.Success -> {
+                    _changePasswordState.value = SaveState.Success(Unit)
+                    _changePasswordFormState.value = ChangePasswordFormState()
+                }
+                is Result.Error -> {
+                    _changePasswordState.value = SaveState.Error(result.exception)
+                }
+                else -> {}
+            }
+        }
+    }
+
+    fun resetChangePasswordState() {
+        _changePasswordState.value = SaveState.Idle
+        _changePasswordFormState.value = ChangePasswordFormState()
+    }
 }
+
+data class ChangePasswordFormState(
+    val currentPassword: String = "",
+    val currentPasswordError: String? = null,
+    val newPassword: String = "",
+    val newPasswordError: String? = null,
+    val confirmPassword: String = "",
+    val confirmPasswordError: String? = null
+)
