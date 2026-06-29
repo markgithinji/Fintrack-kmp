@@ -59,6 +59,7 @@ It allows users to **track income, expenses, and balances**, visualize **financi
 - **Biometric Security**: Protect your financial data with **Fingerprint, FaceID, or TouchID** lock, ensuring privacy even if your device is unlocked.
 - **Secure Password Management**: Update your account password directly from the app with real-time validation and secure backend synchronization.
 - **Secure Authentication**: Encrypted token storage with automated token refresh and validation.
+- **Daily Reminders**: Never forget to log an expense with customizable daily push notifications scheduled via high-reliability background receivers.
 
 ---
 
