@@ -3,6 +3,7 @@ package com.fintrack.shared.feature.core.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Check
@@ -44,7 +45,7 @@ fun FinanceNumpad(
                 listOf("1", "2", "3"),
                 listOf("4", "5", "6"),
                 listOf("7", "8", "9"),
-                listOf("done", "0", "backspace")
+                listOf(".", "0", "backspace")
             )
 
             rows.forEach { row ->
@@ -70,15 +71,15 @@ fun FinanceNumpad(
                                         )
                                     }
                                 }
-                                "done" -> {
+                                "." -> {
                                     NumpadButton(
-                                        onClick = onDoneClick,
-                                        contentColor = MaterialTheme.colorScheme.primary
+                                        onClick = { onNumberClick(".") },
+                                        contentColor = contentColor
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Check,
-                                            contentDescription = "Done",
-                                            modifier = Modifier.size(28.dp)
+                                        Text(
+                                            text = ".",
+                                            fontSize = 28.sp,
+                                            fontWeight = FontWeight.Bold
                                         )
                                     }
                                 }
@@ -97,6 +98,29 @@ fun FinanceNumpad(
                             }
                         }
                     }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Surface(
+                onClick = onDoneClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(28.dp),
+                color = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Text(
+                        text = "Done",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }

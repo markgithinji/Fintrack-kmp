@@ -30,14 +30,16 @@ import kotlinx.coroutines.delay
 fun MaterialToast(
     message: String,
     isError: Boolean = false,
+    onDismiss: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    var showToast by remember { mutableStateOf(true) }
+    var showToast by remember(message) { mutableStateOf(true) }
 
     if (showToast) {
-        LaunchedEffect(Unit) {
+        LaunchedEffect(message) {
             delay(3000) // Show for 3 seconds
             showToast = false
+            onDismiss()
         }
 
         Box(

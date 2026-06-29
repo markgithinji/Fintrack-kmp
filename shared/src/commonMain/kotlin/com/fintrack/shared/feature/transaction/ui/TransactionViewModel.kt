@@ -50,6 +50,9 @@ class TransactionViewModel(
     private val _selectedAccount = MutableStateFlow<Account?>(null)
     val selectedAccount: StateFlow<Account?> = _selectedAccount.asStateFlow()
 
+    private val _description = MutableStateFlow("")
+    val description: StateFlow<String> = _description.asStateFlow()
+
     private val _recentTransactions = MutableStateFlow<Result<List<Transaction>>>(Result.Loading)
     val recentTransactions: StateFlow<Result<List<Transaction>>> = _recentTransactions
 
@@ -79,35 +82,32 @@ class TransactionViewModel(
             }
         }
         
-        // Debounced validation
-        viewModelScope.launch {
-            combine(_amount, _transactionCost, _selectedCategory, _selectedAccount) { a, cost, c, acc ->
-                data class ValidationParams(val a: String, val cost: String, val c: Category?, val acc: Account?)
-                ValidationParams(a, cost, c, acc)
-            }.debounce(300).collect { params ->
-                if (params.a.isNotEmpty()) {
-                    validateTransaction(params.a, params.cost, params.c, params.acc)
-                }
-            }
-        }
-        
         refreshCategories()
     }
 
     fun onAmountChange(newAmount: String) {
         _amount.value = newAmount
+        _validationError.value = null
     }
 
     fun onTransactionCostChange(newCost: String) {
         _transactionCost.value = newCost
+        _validationError.value = null
     }
 
     fun onCategoryChange(newCategory: Category?) {
         _selectedCategory.value = newCategory
+        _validationError.value = null
     }
 
     fun onAccountChange(newAccount: Account?) {
         _selectedAccount.value = newAccount
+        _validationError.value = null
+    }
+
+    fun onDescriptionChange(newDescription: String) {
+        _description.value = newDescription
+        _validationError.value = null
     }
 
     fun refreshCategories() {
@@ -123,10 +123,11 @@ class TransactionViewModel(
     fun validateTransaction(
         amount: String,
         transactionCost: String,
+        description: String,
         category: Category?,
         selectedAccount: Account?
     ): Boolean {
-        val result = validateTransactionUseCase(amount, transactionCost, category, selectedAccount)
+        val result = validateTransactionUseCase(amount, transactionCost, description, category, selectedAccount)
 
         when (result) {
             is ValidateTransactionUseCase.TransactionValidationResult.Valid -> {
@@ -151,7 +152,7 @@ class TransactionViewModel(
         dateTime: LocalDateTime
     ) {
         // Validate first
-        if (!validateTransaction(amount, transactionCost, category, selectedAccount)) {
+        if (!validateTransaction(amount, transactionCost, description, category, selectedAccount)) {
             return
         }
 
@@ -194,7 +195,7 @@ class TransactionViewModel(
         dateTime: LocalDateTime
     ) {
         // Validate first
-        if (!validateTransaction(amount, transactionCost, category, selectedAccount)) {
+        if (!validateTransaction(amount, transactionCost, description, category, selectedAccount)) {
             return
         }
 
@@ -312,5 +313,9 @@ class TransactionViewModel(
 
     fun resetDeleteResult() {
         _deleteResult.value = null
+    }
+
+    fun clearValidationError() {
+        _validationError.value = null
     }
 }

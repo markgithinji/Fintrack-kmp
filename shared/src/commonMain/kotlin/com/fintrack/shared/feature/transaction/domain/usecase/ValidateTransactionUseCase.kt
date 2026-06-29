@@ -7,6 +7,7 @@ class ValidateTransactionUseCase {
     operator fun invoke(
         amount: String,
         transactionCost: String = "0",
+        description: String,
         category: Category?,
         selectedAccount: Account?
     ): TransactionValidationResult {
@@ -25,6 +26,7 @@ class ValidateTransactionUseCase {
 
             category == null -> TransactionValidationResult.Invalid("Please select a category")
             selectedAccount == null -> TransactionValidationResult.Invalid("Please select an account")
+            description.isBlank() -> TransactionValidationResult.Invalid("Please enter a description")
             else -> TransactionValidationResult.Valid
         }
     }

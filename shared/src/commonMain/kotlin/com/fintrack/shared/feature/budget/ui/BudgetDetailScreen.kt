@@ -385,6 +385,7 @@ fun BudgetDetailScreen(
         ) {
             FinanceNumpad(
                 onNumberClick = { num ->
+                    if (num == "." && formState.amount.contains(".")) return@FinanceNumpad
                     if (formState.amount.length < 12) {
                         viewModel.setAmount(formState.amount + num)
                     }
@@ -405,6 +406,7 @@ fun BudgetDetailScreen(
             MaterialToast(
                 message = message,
                 isError = true,
+                onDismiss = { viewModel.resetSaveState() },
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(top = paddingValues.calculateTopPadding())
@@ -547,10 +549,9 @@ fun BudgetAmountHeader(
                                         fontWeight = FontWeight.Black
                                     )
                                 } else {
-                                    val formattedAmount = amount.reversed()
-                                        .chunked(3)
-                                        .joinToString(",")
-                                        .reversed()
+                                    val parts = amount.split(".")
+                                    val integerPart = parts[0].reversed().chunked(3).joinToString(",").reversed()
+                                    val formattedAmount = if (parts.size > 1) "$integerPart.${parts[1]}" else integerPart
 
                                     AnimatedNumber(
                                         value = formattedAmount,
