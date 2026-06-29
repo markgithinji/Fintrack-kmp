@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.profile
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,13 +19,17 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fintrack.shared.feature.core.data.domain.ApiException
+import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.domain.SaveState
+import com.fintrack.shared.feature.core.ui.MaterialToast
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,53 +60,59 @@ fun EditProfileScreen(
             )
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-        ) {
-            OutlinedTextField(
-                value = formState.name,
-                onValueChange = { viewModel.onNameChange(it) },
-                label = { Text("Display Name") },
-                modifier = Modifier.fillMaxWidth(),
-                isError = formState.nameError != null,
-                supportingText = formState.nameError?.let { { Text(it) } }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = formState.email,
-                onValueChange = { viewModel.onEmailChange(it) },
-                label = { Text("Email Address") },
-                modifier = Modifier.fillMaxWidth(),
-                isError = formState.emailError != null,
-                supportingText = formState.emailError?.let { { Text(it) } }
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Button(
-                onClick = { viewModel.updateProfile() },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = editState !is SaveState.Loading
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
             ) {
-                if (editState is SaveState.Loading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.padding(end = 8.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
+                OutlinedTextField(
+                    value = formState.name,
+                    onValueChange = { viewModel.onNameChange(it) },
+                    label = { Text("Display Name") },
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = formState.nameError != null,
+                    supportingText = formState.nameError?.let { { Text(it) } }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = formState.email,
+                    onValueChange = { viewModel.onEmailChange(it) },
+                    label = { Text("Email Address") },
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = formState.emailError != null,
+                    supportingText = formState.emailError?.let { { Text(it) } }
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Button(
+                    onClick = { viewModel.updateProfile() },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = editState !is SaveState.Loading
+                ) {
+                    if (editState is SaveState.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.padding(end = 8.dp),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                    Text("Save Changes")
                 }
-                Text("Save Changes")
             }
 
             if (editState is SaveState.Error) {
-                Text(
-                    text = (editState as SaveState.Error).exception.message ?: "An error occurred",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 16.dp)
+                val error = (editState as SaveState.Error).exception
+                val message = (error as? ApiException)?.getUserFriendlyMessage() ?: error.message ?: "An error occurred"
+                MaterialToast(
+                    message = message,
+                    isError = true,
+                    onDismiss = { viewModel.resetEditState() },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp)
                 )
             }
         }

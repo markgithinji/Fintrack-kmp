@@ -26,6 +26,7 @@ import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import com.fintrack.shared.feature.settings.domain.util.format
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
+import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
 import com.fintrack.shared.feature.auth.ui.common.ErrorDialog
 import com.fintrack.shared.feature.core.domain.SaveState
@@ -62,194 +63,208 @@ fun SettingsScreen(
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
 
-    val snackbarHostState = remember { SnackbarHostState() }
+    var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
 
     LaunchedEffect(changePasswordState) {
         if (changePasswordState is SaveState.Success) {
-            snackbarHostState.showSnackbar("Password updated successfully")
+            toastMessage = "Password updated successfully" to false
             delay(1000)
             showChangePasswordDialog = false
             viewModel.resetChangePasswordState()
+        } else if (changePasswordState is SaveState.Error) {
+            val exception = (changePasswordState as SaveState.Error).exception
+            toastMessage = (exception.message ?: "Update failed") to true
+            // We don't reset immediately so the form doesn't clear while the user is looking at the dialog
+            // But we might want to allow them to try again.
         }
     }
 
     LaunchedEffect(exportResult) {
         exportResult?.let { path ->
-            snackbarHostState.showSnackbar(
-                message = "Data exported to: $path",
-                duration = SnackbarDuration.Long
-            )
+            toastMessage = "Data exported to: $path" to false
             viewModel.clearExportResult()
         }
     }
 
     LaunchedEffect(error) {
         error?.let { message ->
-            snackbarHostState.showSnackbar(message)
+            toastMessage = message to true
             viewModel.clearError()
         }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(bottom = 24.dp)
-        ) {
-            item {
-                SettingsSection(title = "General") {
-                    SettingsItem(
-                        title = "Theme",
-                        subtitle = when(currentTheme) {
-                            AppTheme.LIGHT -> "Light"
-                            AppTheme.DARK -> "Dark"
-                            AppTheme.SYSTEM -> "System Default"
-                        },
-                        icon = Icons.Default.Palette,
-                        onClick = { showThemeDialog = true }
-                    )
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(bottom = 24.dp)
+            ) {
+                item {
+                    SettingsSection(title = "General") {
+                        SettingsItem(
+                            title = "Theme",
+                            subtitle = when(currentTheme) {
+                                AppTheme.LIGHT -> "Light"
+                                AppTheme.DARK -> "Dark"
+                                AppTheme.SYSTEM -> "System Default"
+                            },
+                            icon = Icons.Default.Palette,
+                            onClick = { showThemeDialog = true }
+                        )
 
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
-
-                    SettingsItem(
-                        title = "Currency",
-                        subtitle = "${currentCurrency.name} (${currentCurrency.symbol})",
-                        icon = Icons.Default.Payments,
-                        onClick = { showCurrencyDialog = true }
-                    )
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
-
-                    SettingsItem(
-                        title = "Time Format",
-                        subtitle = if (currentTimeFormat == TimeFormat.TWELVE_HOUR) "12-hour" else "24-hour",
-                        icon = Icons.Default.Schedule,
-                        onClick = { showTimeFormatDialog = true }
-                    )
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
-
-                    SettingsToggleItem(
-                        title = "Privacy Mode",
-                        subtitle = "Hide balances and amounts",
-                        icon = Icons.Default.VisibilityOff,
-                        checked = isBalanceHidden,
-                        onCheckedChange = { viewModel.setBalanceHidden(it) }
-                    )
-                }
-
-                SettingsSection(title = "Notifications") {
-                    SettingsToggleItem(
-                        title = "Daily Reminders",
-                        subtitle = "Never forget to log expenses",
-                        icon = Icons.Default.Notifications,
-                        checked = isReminderEnabled,
-                        onCheckedChange = { viewModel.setReminderEnabled(it) }
-                    )
-
-                    if (isReminderEnabled) {
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             thickness = 0.5.dp,
                             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                         )
+
                         SettingsItem(
-                            title = "Reminder Time",
-                            subtitle = reminderTime.format(currentTimeFormat),
+                            title = "Currency",
+                            subtitle = "${currentCurrency.name} (${currentCurrency.symbol})",
+                            icon = Icons.Default.Payments,
+                            onClick = { showCurrencyDialog = true }
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+
+                        SettingsItem(
+                            title = "Time Format",
+                            subtitle = if (currentTimeFormat == TimeFormat.TWELVE_HOUR) "12-hour" else "24-hour",
                             icon = Icons.Default.Schedule,
-                            onClick = { showTimePickerDialog = true }
+                            onClick = { showTimeFormatDialog = true }
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+
+                        SettingsToggleItem(
+                            title = "Privacy Mode",
+                            subtitle = "Hide balances and amounts",
+                            icon = Icons.Default.VisibilityOff,
+                            checked = isBalanceHidden,
+                            onCheckedChange = { viewModel.setBalanceHidden(it) }
                         )
                     }
-                }
 
-                SettingsSection(title = "Security") {
-                    SettingsToggleItem(
-                        title = "Biometric Lock",
-                        subtitle = "Use FaceID or Fingerprint",
-                        icon = Icons.Default.Fingerprint,
-                        checked = isBiometricEnabled,
-                        onCheckedChange = { viewModel.toggleBiometric(it) }
-                    )
+                    SettingsSection(title = "Notifications") {
+                        SettingsToggleItem(
+                            title = "Daily Reminders",
+                            subtitle = "Never forget to log expenses",
+                            icon = Icons.Default.Notifications,
+                            checked = isReminderEnabled,
+                            onCheckedChange = { viewModel.setReminderEnabled(it) }
+                        )
 
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
+                        if (isReminderEnabled) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                thickness = 0.5.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            )
+                            SettingsItem(
+                                title = "Reminder Time",
+                                subtitle = reminderTime.format(currentTimeFormat),
+                                icon = Icons.Default.Schedule,
+                                onClick = { showTimePickerDialog = true }
+                            )
+                        }
+                    }
 
-                    SettingsItem(
-                        title = "Change Password",
-                        subtitle = "Update your account password",
-                        icon = Icons.Default.Lock,
-                        onClick = { showChangePasswordDialog = true }
-                    )
-                }
+                    SettingsSection(title = "Security") {
+                        SettingsToggleItem(
+                            title = "Biometric Lock",
+                            subtitle = "Use FaceID or Fingerprint",
+                            icon = Icons.Default.Fingerprint,
+                            checked = isBiometricEnabled,
+                            onCheckedChange = { viewModel.toggleBiometric(it) }
+                        )
 
-                SettingsSection(title = "Data & Backup") {
-                    SettingsItem(
-                        title = "Export Data",
-                        subtitle = "Download transactions as CSV",
-                        icon = Icons.Default.FileDownload,
-                        onClick = { viewModel.exportToCsv() }
-                    )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
 
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
+                        SettingsItem(
+                            title = "Change Password",
+                            subtitle = "Update your account password",
+                            icon = Icons.Default.Lock,
+                            onClick = { showChangePasswordDialog = true }
+                        )
+                    }
 
-                    SettingsItem(
-                        title = "Reset Data",
-                        subtitle = "Permanently delete all records",
-                        icon = Icons.Default.DeleteForever,
-                        iconContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f),
-                        iconTint = MaterialTheme.colorScheme.error,
-                        onClick = { showDeleteConfirmDialog = true }
-                    )
-                }
-                
-                SettingsSection(title = "About") {
-                    SettingsItem(
-                        title = "Version",
-                        subtitle = "1.0.0 (Stable)",
-                        icon = Icons.Default.Info,
-                        onClick = { }
-                    )
+                    SettingsSection(title = "Data & Backup") {
+                        SettingsItem(
+                            title = "Export Data",
+                            subtitle = "Download transactions as CSV",
+                            icon = Icons.Default.FileDownload,
+                            onClick = { viewModel.exportToCsv() }
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+
+                        SettingsItem(
+                            title = "Reset Data",
+                            subtitle = "Permanently delete all records",
+                            icon = Icons.Default.DeleteForever,
+                            iconContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f),
+                            iconTint = MaterialTheme.colorScheme.error,
+                            onClick = { showDeleteConfirmDialog = true }
+                        )
+                    }
                     
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
+                    SettingsSection(title = "About") {
+                        SettingsItem(
+                            title = "Version",
+                            subtitle = "1.0.0 (Stable)",
+                            icon = Icons.Default.Info,
+                            onClick = { }
+                        )
+                        
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+                        
+                        SettingsItem(
+                            title = "Help & Support",
+                            subtitle = "FAQ and contact us",
+                            icon = Icons.Default.HelpOutline,
+                            onClick = { }
+                        )
+                    }
                     
-                    SettingsItem(
-                        title = "Help & Support",
-                        subtitle = "FAQ and contact us",
-                        icon = Icons.Default.HelpOutline,
-                        onClick = { }
-                    )
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
-                
-                Spacer(modifier = Modifier.height(32.dp))
+            }
+
+            toastMessage?.let { (message, isError) ->
+                MaterialToast(
+                    message = message,
+                    isError = isError,
+                    onDismiss = { toastMessage = null },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = paddingValues.calculateBottomPadding() + 20.dp)
+                )
             }
         }
     }
@@ -330,7 +345,8 @@ fun SettingsScreen(
             onDismiss = {
                 showChangePasswordDialog = false
                 viewModel.resetChangePasswordState()
-            }
+            },
+            onClearError = { viewModel.resetChangePasswordState() }
         )
     }
 
@@ -353,7 +369,8 @@ fun ChangePasswordDialog(
     onNewPasswordChange: (String) -> Unit,
     onConfirmPasswordChange: (String) -> Unit,
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onClearError: () -> Unit
 ) {
     var currentPasswordVisible by remember { mutableStateOf(false) }
     var newPasswordVisible by remember { mutableStateOf(false) }
@@ -466,16 +483,6 @@ fun ChangePasswordDialog(
                 }
             }
         }
-    }
-
-    if (saveState is SaveState.Error) {
-        ErrorDialog(
-            title = "Update Failed",
-            errorMessage = saveState.exception.message ?: "An unknown error occurred",
-            onDismiss = { /* No-op, just shows error */ },
-            onRetry = onConfirm,
-            colorScheme = colorScheme
-        )
     }
 }
 

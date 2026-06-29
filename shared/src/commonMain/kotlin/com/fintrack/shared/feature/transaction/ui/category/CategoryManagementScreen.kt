@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import com.fintrack.shared.feature.core.ui.CommonErrorState
+import com.fintrack.shared.feature.core.ui.MaterialToast
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,6 +32,14 @@ fun CategoryManagementScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
+    var toastMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(state.error) {
+        if (state.error != null && state.categories.isNotEmpty()) {
+            toastMessage = state.error
+            viewModel.clearError()
+        }
+    }
 
     Scaffold(
         floatingActionButton = {
@@ -50,7 +59,7 @@ fun CategoryManagementScreen(
                 .padding(innerPadding)
         ) {
             when {
-                state.error != null -> {
+                state.error != null && state.categories.isEmpty() -> {
                     CommonErrorState(
                         modifier = Modifier.fillMaxSize(),
                         title = "Category Error",
@@ -108,6 +117,17 @@ fun CategoryManagementScreen(
                         }
                     }
                 }
+            }
+
+            toastMessage?.let { message ->
+                MaterialToast(
+                    message = message,
+                    isError = true,
+                    onDismiss = { toastMessage = null },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp)
+                )
             }
         }
     }

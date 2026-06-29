@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.data.domain.ApiException
 import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
@@ -40,20 +41,20 @@ fun AccountsScreen(
     
     var showAccountDialog by remember { mutableStateOf<Account?>(null) }
     var isEditing by remember { mutableStateOf(false) }
-    val snackbarHostState = remember { SnackbarHostState() }
+    var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
 
     val isOperating = deleteResult is Result.Loading || saveResult is Result.Loading
 
     LaunchedEffect(deleteResult) {
         when (val result = deleteResult) {
             is Result.Success -> {
-                snackbarHostState.showSnackbar("Account deleted successfully")
+                toastMessage = "Account deleted successfully" to false
                 viewModel.clearResults()
             }
             is Result.Error -> {
                 val message = (result.exception as? ApiException)?.getUserFriendlyMessage()
                     ?: result.exception.message ?: "Error deleting account"
-                snackbarHostState.showSnackbar(message)
+                toastMessage = message to true
                 viewModel.clearResults()
             }
             else -> Unit
@@ -63,14 +64,14 @@ fun AccountsScreen(
     LaunchedEffect(saveResult) {
         when (val result = saveResult) {
             is Result.Success -> {
-                snackbarHostState.showSnackbar(if (isEditing) "Account updated" else "Account added")
+                toastMessage = (if (isEditing) "Account updated" else "Account added") to false
                 viewModel.clearResults()
                 showAccountDialog = null
             }
             is Result.Error -> {
                 val message = (result.exception as? ApiException)?.getUserFriendlyMessage()
                     ?: result.exception.message ?: "Error saving account"
-                snackbarHostState.showSnackbar(message)
+                toastMessage = message to true
                 viewModel.clearResults()
             }
             else -> Unit
@@ -78,7 +79,6 @@ fun AccountsScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             if (!isOperating) {
                 FloatingActionButton(
@@ -138,6 +138,17 @@ fun AccountsScreen(
                         )
                     }
                 }
+            }
+
+            toastMessage?.let { (message, isError) ->
+                MaterialToast(
+                    message = message,
+                    isError = isError,
+                    onDismiss = { toastMessage = null },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 84.dp)
+                )
             }
         }
     }
