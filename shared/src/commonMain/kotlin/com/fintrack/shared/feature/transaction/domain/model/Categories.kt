@@ -54,7 +54,7 @@ data class Category(
 
         fun fromName(name: String, isExpense: Boolean): Category =
             allCategories.find { it.name == name && it.isExpense == isExpense }
-                ?: if (isExpense) MiscExpense else OtherIncome
+                ?: Category(id = "custom_$name", name = name, isExpense = isExpense)
         
         fun fromId(id: String): Category? = 
             allCategories.find { it.id == id }

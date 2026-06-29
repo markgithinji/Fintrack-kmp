@@ -179,8 +179,8 @@ fun BudgetDetailScreen(
         showNumpad = false
     }
 
-    val initialFormState = remember(budgetId, selectedBudgetResult, accountsResult) {
-        computeInitialFormState(budgetId, selectedBudgetResult, accountsResult)
+    val initialFormState = remember(budgetId, selectedBudgetResult, accountsResult, allCategories) {
+        computeInitialFormState(budgetId, selectedBudgetResult, accountsResult, allCategories)
     }
 
     LaunchedEffect(initialFormState) {
@@ -592,12 +592,13 @@ fun BudgetAmountHeader(
 private fun computeInitialFormState(
     budgetId: String?,
     selectedBudgetResult: Result<BudgetWithStatus>?,
-    accountsResult: Result<List<Account>>
+    accountsResult: Result<List<Account>>,
+    allCategories: List<Category>
 ): BudgetFormState {
     val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
     val isAccountsSuccess = accountsResult is Result.Success
     val accountsData = if (isAccountsSuccess) accountsResult.data else emptyList()
-    val firstExpenseCategory = Category.expenseCategories.firstOrNull()
+    val firstExpenseCategory = allCategories.firstOrNull { it.isExpense } ?: Category.expenseCategories.firstOrNull()
 
     return if (budgetId == null) {
         BudgetFormState(
@@ -622,7 +623,9 @@ private fun computeInitialFormState(
                     id = budget.id,
                     name = budget.name,
                     amount = budget.limit.toLong().toString().let { if (it == "0") "" else it },
-                    selectedCategories = budget.categories.toSet(),
+                    selectedCategories = budget.categories.map { budgetCat ->
+                        allCategories.find { it.name == budgetCat.name && it.isExpense == budgetCat.isExpense } ?: budgetCat
+                    }.toSet(),
                     isExpense = budget.isExpense,
                     startDate = budget.startDate,
                     endDate = budget.endDate,
