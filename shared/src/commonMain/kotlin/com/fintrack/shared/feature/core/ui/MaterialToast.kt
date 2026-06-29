@@ -41,7 +41,7 @@ fun MaterialToast(
         }
 
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {

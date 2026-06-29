@@ -399,13 +399,15 @@ fun BudgetDetailScreen(
         }
 
         if (saveState is SaveState.Error) {
-                val message = (saveState as SaveState.Error).exception.let {
-                    (it as? ApiException)?.getUserFriendlyMessage() ?: it.message ?: "Failed to save budget"
-                }
+            val message = (saveState as SaveState.Error).exception.let {
+                (it as? ApiException)?.getUserFriendlyMessage() ?: it.message ?: "Failed to save budget"
+            }
             MaterialToast(
                 message = message,
                 isError = true,
-                modifier = Modifier.align(Alignment.TopCenter)
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = paddingValues.calculateTopPadding())
             )
         }
     }

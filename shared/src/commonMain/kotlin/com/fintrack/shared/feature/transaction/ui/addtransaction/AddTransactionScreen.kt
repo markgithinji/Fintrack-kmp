@@ -213,7 +213,7 @@ fun AddTransactionScreen(
                 val accounts = (accountsResult as Result.Success<List<Account>>).data
                 
                 transactionsViewModel.onAmountChange(transaction.amount.toLong().toString())
-                transactionsViewModel.onTransactionCostChange(transaction.transactionCost.toLong().toString())
+                transactionsViewModel.onTransactionCostChange(transaction.transactionCost.toString())
                 isIncome = transaction.isIncome
                 transactionsViewModel.onCategoryChange(Category.fromName(transaction.category, !transaction.isIncome))
                 description = transaction.description ?: ""
@@ -461,7 +461,9 @@ fun AddTransactionScreen(
             MaterialToast(
                 message = validationError!!,
                 isError = true,
-                modifier = Modifier.align(Alignment.TopCenter)
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = paddingValues.calculateTopPadding())
             )
         }
 
@@ -472,7 +474,9 @@ fun AddTransactionScreen(
             MaterialToast(
                 message = message,
                 isError = true,
-                modifier = Modifier.align(Alignment.TopCenter)
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = paddingValues.calculateTopPadding())
             )
         }
     }
