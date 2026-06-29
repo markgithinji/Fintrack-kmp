@@ -8,6 +8,7 @@ fun TransactionDto.toDomain(): Transaction =
         accountId = accountId,
         isIncome = isIncome,
         amount = amount,
+        transactionCost = transactionCost,
         category = category,
         dateTime = dateTime,
         description = description
@@ -18,6 +19,7 @@ fun Transaction.toCreateRequest(): CreateTransactionRequest {
         accountId = this.accountId,
         isIncome = this.isIncome,
         amount = this.amount,
+        transactionCost = this.transactionCost,
         category = this.category,
         dateTime = this.dateTime,
         description = this.description

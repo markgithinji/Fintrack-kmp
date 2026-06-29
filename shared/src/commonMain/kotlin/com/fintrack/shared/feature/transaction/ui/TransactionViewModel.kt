@@ -41,6 +41,9 @@ class TransactionViewModel(
     private val _amount = MutableStateFlow("")
     val amount: StateFlow<String> = _amount.asStateFlow()
 
+    private val _transactionCost = MutableStateFlow("")
+    val transactionCost: StateFlow<String> = _transactionCost.asStateFlow()
+
     private val _selectedCategory = MutableStateFlow<Category?>(null)
     val selectedCategory: StateFlow<Category?> = _selectedCategory.asStateFlow()
 
@@ -78,11 +81,12 @@ class TransactionViewModel(
         
         // Debounced validation
         viewModelScope.launch {
-            combine(_amount, _selectedCategory, _selectedAccount) { a, c, acc ->
-                Triple(a, c, acc)
-            }.debounce(300).collect { (a, c, acc) ->
-                if (a.isNotEmpty()) {
-                    validateTransaction(a, c, acc)
+            combine(_amount, _transactionCost, _selectedCategory, _selectedAccount) { a, cost, c, acc ->
+                data class ValidationParams(val a: String, val cost: String, val c: Category?, val acc: Account?)
+                ValidationParams(a, cost, c, acc)
+            }.debounce(300).collect { params ->
+                if (params.a.isNotEmpty()) {
+                    validateTransaction(params.a, params.cost, params.c, params.acc)
                 }
             }
         }
@@ -92,6 +96,10 @@ class TransactionViewModel(
 
     fun onAmountChange(newAmount: String) {
         _amount.value = newAmount
+    }
+
+    fun onTransactionCostChange(newCost: String) {
+        _transactionCost.value = newCost
     }
 
     fun onCategoryChange(newCategory: Category?) {
@@ -114,10 +122,11 @@ class TransactionViewModel(
 
     fun validateTransaction(
         amount: String,
+        transactionCost: String,
         category: Category?,
         selectedAccount: Account?
     ): Boolean {
-        val result = validateTransactionUseCase(amount, category, selectedAccount)
+        val result = validateTransactionUseCase(amount, transactionCost, category, selectedAccount)
 
         when (result) {
             is ValidateTransactionUseCase.TransactionValidationResult.Valid -> {
@@ -134,6 +143,7 @@ class TransactionViewModel(
 
     fun addTransaction(
         amount: String,
+        transactionCost: String,
         isIncome: Boolean,
         category: Category?,
         description: String,
@@ -141,12 +151,13 @@ class TransactionViewModel(
         dateTime: LocalDateTime
     ) {
         // Validate first
-        if (!validateTransaction(amount, category, selectedAccount)) {
+        if (!validateTransaction(amount, transactionCost, category, selectedAccount)) {
             return
         }
 
         val transaction = createTransactionUseCase(
             amount = amount,
+            transactionCost = transactionCost,
             isIncome = isIncome,
             category = category,
             description = description,
@@ -175,6 +186,7 @@ class TransactionViewModel(
     fun updateTransaction(
         id: String,
         amount: String,
+        transactionCost: String,
         isIncome: Boolean,
         category: Category?,
         description: String,
@@ -182,12 +194,13 @@ class TransactionViewModel(
         dateTime: LocalDateTime
     ) {
         // Validate first
-        if (!validateTransaction(amount, category, selectedAccount)) {
+        if (!validateTransaction(amount, transactionCost, category, selectedAccount)) {
             return
         }
 
         val transaction = createTransactionUseCase(
             amount = amount,
+            transactionCost = transactionCost,
             isIncome = isIncome,
             category = category,
             description = description,

@@ -8,6 +8,7 @@ import kotlinx.datetime.LocalDateTime
 class CreateTransactionUseCase {
     operator fun invoke(
         amount: String,
+        transactionCost: String = "0",
         isIncome: Boolean,
         category: Category?,
         description: String,
@@ -15,11 +16,13 @@ class CreateTransactionUseCase {
         dateTime: LocalDateTime
     ): Transaction? {
         val parsedAmount = amount.toDoubleOrNull() ?: return null
+        val parsedCost = transactionCost.toDoubleOrNull() ?: 0.0
 
         return Transaction(
             id = null,
             accountId = selectedAccount?.id ?: return null,
             amount = parsedAmount,
+            transactionCost = parsedCost,
             isIncome = isIncome,
             category = category?.name ?: return null,
             description = description.takeIf { it.isNotBlank() },

@@ -149,11 +149,21 @@ fun TransactionItem(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "${if (transaction.isIncome) "+" else "-"}${transaction.amount.toCurrencyString()}",
+                    text = "${if (transaction.isIncome) "+" else "-"}${transaction.totalAmount.toCurrencyString()}",
                     color = amountColor,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
+                
+                if (transaction.transactionCost > 0) {
+                    Text(
+                        text = "Incl. ${transaction.transactionCost.toCurrencyString()} fee",
+                        style = androidx.compose.ui.text.TextStyle(
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    )
+                }
                 
                 if (!transaction.description.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(2.dp))

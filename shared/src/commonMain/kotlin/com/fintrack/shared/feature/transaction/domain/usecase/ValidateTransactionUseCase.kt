@@ -6,14 +6,22 @@ import com.fintrack.shared.feature.transaction.domain.model.Category
 class ValidateTransactionUseCase {
     operator fun invoke(
         amount: String,
+        transactionCost: String = "0",
         category: Category?,
         selectedAccount: Account?
     ): TransactionValidationResult {
+        val parsedAmount = amount.toDoubleOrNull()
+        val parsedCost = transactionCost.toDoubleOrNull()
+
         return when {
             amount.isBlank() -> TransactionValidationResult.Invalid("Please enter an amount")
-            amount.toDoubleOrNull() == null -> TransactionValidationResult.Invalid("Please enter a valid amount")
-            amount.toDoubleOrNull()?.let { it <= 0 } == true ->
-                TransactionValidationResult.Invalid("Amount must be greater than zero")
+            parsedAmount == null -> TransactionValidationResult.Invalid("Please enter a valid amount")
+            parsedAmount <= 0 -> TransactionValidationResult.Invalid("Amount must be greater than zero")
+            
+            transactionCost.isNotBlank() && parsedCost == null -> 
+                TransactionValidationResult.Invalid("Please enter a valid transaction cost")
+            parsedCost != null && parsedCost < 0 -> 
+                TransactionValidationResult.Invalid("Transaction cost cannot be negative")
 
             category == null -> TransactionValidationResult.Invalid("Please select a category")
             selectedAccount == null -> TransactionValidationResult.Invalid("Please select an account")

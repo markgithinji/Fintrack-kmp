@@ -51,6 +51,8 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -114,12 +116,12 @@ import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
-import androidx.compose.material.icons.filled.Delete
 import kotlinx.coroutines.delay
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class, ExperimentalSharedTransitionApi::class)
@@ -144,6 +146,7 @@ fun AddTransactionScreen(
     val selectedTransactionResult by transactionsViewModel.selectedTransaction.collectAsStateWithLifecycle()
 
     val amount by transactionsViewModel.amount.collectAsStateWithLifecycle()
+    val transactionCost by transactionsViewModel.transactionCost.collectAsStateWithLifecycle()
     val category by transactionsViewModel.selectedCategory.collectAsStateWithLifecycle()
     val selectedAccount by transactionsViewModel.selectedAccount.collectAsStateWithLifecycle()
 
@@ -151,7 +154,7 @@ fun AddTransactionScreen(
     var description by remember { mutableStateOf("") }
     var dateTime by remember {
         mutableStateOf(
-            kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+            Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
         )
     }
 
@@ -210,6 +213,7 @@ fun AddTransactionScreen(
                 val accounts = (accountsResult as Result.Success<List<Account>>).data
                 
                 transactionsViewModel.onAmountChange(transaction.amount.toLong().toString())
+                transactionsViewModel.onTransactionCostChange(transaction.transactionCost.toLong().toString())
                 isIncome = transaction.isIncome
                 transactionsViewModel.onCategoryChange(Category.fromName(transaction.category, !transaction.isIncome))
                 description = transaction.description ?: ""
@@ -283,6 +287,12 @@ fun AddTransactionScreen(
                     isIncome = isIncome,
                     onIncomeChange = { isIncome = it },
                     themeColor = themeColor
+                )
+
+                TransactionCostSection(
+                    cost = transactionCost,
+                    onCostChange = { transactionsViewModel.onTransactionCostChange(it) },
+                    onFocus = { showNumpad = false }
                 )
 
                 AccountSelectionSection(
@@ -380,6 +390,7 @@ fun AddTransactionScreen(
                         transactionsViewModel.updateTransaction(
                             id = transactionId,
                             amount = amount,
+                            transactionCost = transactionCost,
                             isIncome = isIncome,
                             category = category,
                             description = description,
@@ -389,6 +400,7 @@ fun AddTransactionScreen(
                     } else {
                         transactionsViewModel.addTransaction(
                             amount = amount,
+                            transactionCost = transactionCost,
                             isIncome = isIncome,
                             category = category,
                             description = description,
@@ -693,6 +705,59 @@ fun TypeToggleButton(
 }
 
 @Composable
+fun TransactionCostSection(
+    cost: String,
+    onCostChange: (String) -> Unit,
+    onFocus: () -> Unit = {}
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Transaction Cost", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            TextField(
+                value = cost,
+                onValueChange = onCostChange,
+                placeholder = { Text("0.00") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { if (it.isFocused) onFocus() },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Payments,
+                        null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
+                },
+                suffix = {
+                    Text(
+                        LocalCurrency.current.symbol,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                    cursorColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            )
+        }
+    }
+}
+
+@Composable
 fun CategorySelectionSection(
     isIncome: Boolean,
     selectedCategory: Category?,
@@ -731,6 +796,72 @@ fun CategorySelectionSection(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun CategoryChip(
+    text: String,
+    icon: ImageVector,
+    color: Color,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.05f else 1.0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    )
+    val animatedBgColor by animateColorAsState(
+        targetValue = if (selected) color else MaterialTheme.colorScheme.surface,
+        animationSpec = tween(durationMillis = 300)
+    )
+    val animatedContentColor by animateColorAsState(
+        targetValue = if (selected) {
+            // Check if it's one of the income categories
+            if (Category.incomeCategories.any { it.name == text }) MaterialTheme.colorScheme.onTertiary else Color.White
+        } else color,
+        animationSpec = tween(durationMillis = 300)
+    )
+    val animatedTextColor by animateColorAsState(
+        targetValue = if (selected) {
+            if (Category.incomeCategories.any { it.name == text }) MaterialTheme.colorScheme.onTertiary else Color.White
+        } else MaterialTheme.colorScheme.onSurface,
+        animationSpec = tween(durationMillis = 300)
+    )
+    val animatedBorderColor by animateColorAsState(
+        targetValue = if (selected) color else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+        animationSpec = tween(durationMillis = 300)
+    )
+    val animatedElevation by animateDpAsState(
+        targetValue = if (selected) 6.dp else 0.dp,
+        animationSpec = tween(durationMillis = 300)
+    )
+
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        color = animatedBgColor,
+        border = BorderStroke(
+            width = 1.dp,
+            color = animatedBorderColor
+        ),
+        shadowElevation = animatedElevation,
+        modifier = Modifier.graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        }
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(icon, null, tint = animatedContentColor)
+            Text(text, color = animatedTextColor)
         }
     }
 }
@@ -949,72 +1080,6 @@ fun ToggleChip(
                 text,
                 color = if (selected) chipColor else MaterialTheme.colorScheme.onSurfaceVariant
             )
-        }
-    }
-}
-
-@Composable
-fun CategoryChip(
-    text: String,
-    icon: ImageVector,
-    color: Color,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    val scale by animateFloatAsState(
-        targetValue = if (selected) 1.05f else 1.0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        )
-    )
-    val animatedBgColor by animateColorAsState(
-        targetValue = if (selected) color else MaterialTheme.colorScheme.surface,
-        animationSpec = tween(durationMillis = 300)
-    )
-    val animatedContentColor by animateColorAsState(
-        targetValue = if (selected) {
-            // Check if it's one of the income categories
-            if (Category.incomeCategories.any { it.name == text }) MaterialTheme.colorScheme.onTertiary else Color.White
-        } else color,
-        animationSpec = tween(durationMillis = 300)
-    )
-    val animatedTextColor by animateColorAsState(
-        targetValue = if (selected) {
-            if (Category.incomeCategories.any { it.name == text }) MaterialTheme.colorScheme.onTertiary else Color.White
-        } else MaterialTheme.colorScheme.onSurface,
-        animationSpec = tween(durationMillis = 300)
-    )
-    val animatedBorderColor by animateColorAsState(
-        targetValue = if (selected) color else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-        animationSpec = tween(durationMillis = 300)
-    )
-    val animatedElevation by animateDpAsState(
-        targetValue = if (selected) 6.dp else 0.dp,
-        animationSpec = tween(durationMillis = 300)
-    )
-
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(14.dp),
-        color = animatedBgColor,
-        border = BorderStroke(
-            width = 1.dp,
-            color = animatedBorderColor
-        ),
-        shadowElevation = animatedElevation,
-        modifier = Modifier.graphicsLayer {
-            scaleX = scale
-            scaleY = scale
-        }
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Icon(icon, null, tint = animatedContentColor)
-            Text(text, color = animatedTextColor)
         }
     }
 }
