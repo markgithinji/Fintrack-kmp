@@ -408,8 +408,8 @@ fun BudgetDetailScreen(
                 isError = true,
                 onDismiss = { viewModel.resetSaveState() },
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = paddingValues.calculateTopPadding())
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = paddingValues.calculateBottomPadding() + 84.dp)
             )
         }
     }

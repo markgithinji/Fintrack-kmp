@@ -49,7 +49,7 @@ fun MaterialToast(
         ) {
             Surface(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
+                    .align(Alignment.Center)
                     .shadow(8.dp, RoundedCornerShape(8.dp)),
                 color = if (isError) MaterialTheme.colorScheme.error
                 else MaterialTheme.colorScheme.primary,
