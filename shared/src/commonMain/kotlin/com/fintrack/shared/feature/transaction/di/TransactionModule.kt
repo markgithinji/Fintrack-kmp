@@ -7,7 +7,6 @@ import com.fintrack.shared.feature.transaction.data.TransactionRepositoryImpl
 import com.fintrack.shared.feature.transaction.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.usecase.AddCategoryUseCase
-import com.fintrack.shared.feature.transaction.domain.usecase.ClearAllTransactionsUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.CreateTransactionUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.DeleteCategoryUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ExportTransactionsUseCase
@@ -30,7 +29,6 @@ val transactionModule = module {
     single { GetCategoriesUseCase(get()) }
     single { AddCategoryUseCase(get()) }
     single { DeleteCategoryUseCase(get()) }
-    single { ClearAllTransactionsUseCase(get()) }
     single { ExportTransactionsUseCase(get(), get()) }
 
     single { createTransactionImporter(get(), get()) }

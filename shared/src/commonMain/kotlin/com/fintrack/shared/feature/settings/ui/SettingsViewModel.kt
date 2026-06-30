@@ -9,7 +9,7 @@ import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import com.fintrack.shared.feature.settings.domain.util.NotificationService
-import com.fintrack.shared.feature.transaction.domain.usecase.ClearAllTransactionsUseCase
+import com.fintrack.shared.feature.core.domain.usecase.ClearAllUserDataUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ExportTransactionsUseCase
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.auth.domain.usecase.ChangePasswordUseCase
@@ -22,7 +22,7 @@ import kotlinx.datetime.LocalTime
 
 class SettingsViewModel(
     private val settingsDataSource: SettingsDataSource,
-    private val clearAllTransactionsUseCase: ClearAllTransactionsUseCase,
+    private val clearAllUserDataUseCase: ClearAllUserDataUseCase,
     private val exportTransactionsUseCase: ExportTransactionsUseCase,
     private val biometricAuthenticator: BiometricAuthenticator,
     private val notificationService: NotificationService,
@@ -237,9 +237,9 @@ class SettingsViewModel(
             when (authResult) {
                 is BiometricResult.Success -> {
                     _isLoading.value = true
-                    val result = clearAllTransactionsUseCase()
+                    val result = clearAllUserDataUseCase()
                     if (result is Result.Error) {
-                        _error.value = "Failed to clear transactions"
+                        _error.value = "Failed to clear data"
                     }
                     _isLoading.value = false
                 }
@@ -250,7 +250,7 @@ class SettingsViewModel(
                     // If biometric is not available, we could fallback to PIN/Password
                     // For now, we'll allow it since they already confirmed in the dialog
                     _isLoading.value = true
-                    clearAllTransactionsUseCase()
+                    clearAllUserDataUseCase()
                     _isLoading.value = false
                 }
             }

@@ -49,4 +49,8 @@ class BudgetApi(
         val response: ApiResponse<BudgetWithStatusDto> = client.get("$baseUrl/budgets/$id").body()
         return response.result
     }
+
+    suspend fun deleteAllBudgets() {
+        client.delete("$baseUrl/budgets/clear")
+    }
 }

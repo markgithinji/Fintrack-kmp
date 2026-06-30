@@ -66,6 +66,6 @@ class TransactionApi(
     }
 
     suspend fun deleteAllTransactions() {
-        client.delete("$baseUrl/transactions")
+        client.delete("$baseUrl/transactions/clear")
     }
 }
