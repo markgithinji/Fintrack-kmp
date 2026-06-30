@@ -95,7 +95,15 @@ class AuthViewModel(
                 } else {
                     val currentStatus = _authStatus.value
                     if (currentStatus !is AuthState.Success || !currentStatus.data) {
-                        logger.info(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel(${hashCode()}): Token detected, updating status to Success(true)")
+                        logger.info(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel(${hashCode()}): Token detected. loginState=${_loginState.value}, registerState=${_registerState.value}")
+                        
+                        // If we are currently logging in or just succeeded, delay to let UI show success
+                        if (_loginState.value !is AuthState.Idle || _registerState.value !is AuthState.Idle) {
+                            logger.info(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel(${hashCode()}): Delaying authStatus update (1s) for login/register transition")
+                            kotlinx.coroutines.delay(1000)
+                        }
+
+                        logger.info(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel(${hashCode()}): Updating authStatus to Success(true)")
                         _authStatus.value = AuthState.Success(true)
                     }
                 }
@@ -151,10 +159,12 @@ class AuthViewModel(
             when (val result = repository.login(formState.email, formState.password)) {
                 is Result.Success -> {
                     logger.info(LogTags.AUTH, "LOGIN_DEBUG: [2] AuthViewModel: Login successful for: ${formState.email}")
-                    // Add a small delay to ensure tokens are persisted and flows are updated
-                    // before the UI navigates and triggers follow-up requests.
-                    kotlinx.coroutines.delay(100)
+                    // Set login state to success to show success on button
                     _loginState.value = AuthState.Success(result.data)
+                    
+                    // Delay setting the global auth status to give the UI time to show success state
+                    kotlinx.coroutines.delay(1000)
+
                     logger.info(LogTags.AUTH, "LOGIN_DEBUG: [3] AuthViewModel: Setting _authStatus to Success(true)")
                     _authStatus.value = AuthState.Success(true)
                 }
@@ -280,9 +290,12 @@ class AuthViewModel(
                 repository.register(formState.name, formState.email, formState.password)) {
                 is Result.Success -> {
                     logger.info(LogTags.AUTH, "Registration successful for: ${formState.email}")
-                    // Add a small delay for token persistence propagation
-                    kotlinx.coroutines.delay(100)
+                    // Set register state to success to show success on button
                     _registerState.value = AuthState.Success(result.data)
+                    
+                    // Delay setting the global auth status to give the UI time to show success state
+                    kotlinx.coroutines.delay(1000)
+
                     _authStatus.value = AuthState.Success(true)
                 }
 

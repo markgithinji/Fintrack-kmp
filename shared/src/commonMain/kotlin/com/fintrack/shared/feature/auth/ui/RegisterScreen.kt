@@ -43,10 +43,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -58,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.compose.AuthGold
+import com.example.compose.GreenIncome
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.core.data.domain.ApiException
 import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
@@ -270,7 +273,7 @@ fun RegisterScreen(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colorScheme.primary,
                     contentColor = colorScheme.onPrimary,
-                    disabledContainerColor = if (isSuccess) colorScheme.secondary else colorScheme.primary.copy(alpha = 0.5f),
+                    disabledContainerColor = if (isSuccess) AuthGold else colorScheme.primary.copy(alpha = 0.5f),
                     disabledContentColor = if (isSuccess) colorScheme.onSecondary else colorScheme.onPrimary.copy(alpha = 0.7f)
                 ),
                 enabled = registerFormState.isFormValid && !isRegistering && !isSuccess
