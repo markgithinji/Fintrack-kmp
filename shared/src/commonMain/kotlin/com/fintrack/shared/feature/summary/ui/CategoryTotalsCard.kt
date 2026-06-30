@@ -143,20 +143,88 @@ fun CategoryTotalsCardWithTabs(
                             is TabType.Expense -> result.data.expenseCategories
                         }
 
-                        val categorySums = categories.map { it.category to it.total.toFloat() }
-                        val totalAmount = categories.sumOf { it.total }.toFloat()
+                        if (categories.isEmpty()) {
+                            EmptyDistributionState()
+                        } else {
+                            val categorySums = categories.map { it.category to it.total.toFloat() }
+                            val totalAmount = categories.sumOf { it.total }.toFloat()
 
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            DonutChartSection(categorySums, totalAmount)
-                            Spacer(Modifier.height(32.dp))
-                            CategoryList(
-                                categories = categorySums,
-                                totalAmount = totalAmount,
-                                segmentColors = SegmentColors
-                            )
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                DonutChartSection(categorySums, totalAmount)
+                                Spacer(Modifier.height(32.dp))
+                                CategoryList(
+                                    categories = categorySums,
+                                    totalAmount = totalAmount,
+                                    segmentColors = SegmentColors
+                                )
+                            }
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun EmptyDistributionState() {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier.size(200.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val strokeWidth = 36.dp.toPx()
+                val diameter = size.minDimension - strokeWidth
+                drawArc(
+                    color = Color.LightGray.copy(alpha = 0.2f),
+                    startAngle = -90f,
+                    sweepAngle = 360f,
+                    useCenter = false,
+                    topLeft = Offset(strokeWidth / 2, strokeWidth / 2),
+                    size = Size(diameter, diameter),
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                )
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Default.PieChart,
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "No Data",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(32.dp))
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No transactions found for this period.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
