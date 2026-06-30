@@ -85,78 +85,88 @@ fun CategoryTotalsCardWithTabs(
     onYearSelected: (String) -> Unit = {},
     onPeriodSelected: (Period) -> Unit = {}
 ) {
-    Column(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
         ) {
-            Text(
-                text = "Distribution",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            
-            PeriodSelector(
-                selectedPeriod = period,
-                availableWeeks = availableWeeks,
-                availableMonths = availableMonths,
-                availableYears = availableYears,
-                onWeekSelected = onWeekSelected,
-                onMonthSelected = onMonthSelected,
-                onYearSelected = onYearSelected,
-                onPeriodSelected = onPeriodSelected
-            )
-        }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Distribution",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
 
-        Spacer(modifier = Modifier.height(20.dp))
+                PeriodSelector(
+                    selectedPeriod = period,
+                    availableWeeks = availableWeeks,
+                    availableMonths = availableMonths,
+                    availableYears = availableYears,
+                    onWeekSelected = onWeekSelected,
+                    onMonthSelected = onMonthSelected,
+                    onYearSelected = onYearSelected,
+                    onPeriodSelected = onPeriodSelected
+                )
+            }
 
-        Crossfade(
-            targetState = distributionResult,
-            animationSpec = tween(durationMillis = 300),
-            label = "ChartContentFade"
-        ) { result ->
-            key(period, tabType) {
-                when (result) {
-                    is Result.Loading -> {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            LoadingDonutChartSection()
-                            Spacer(Modifier.height(32.dp))
-                            LoadingCategoryList()
-                        }
-                    }
+            Spacer(modifier = Modifier.height(20.dp))
 
-                    is Result.Error -> {
-                        ErrorState(
-                            message = result.exception.message ?: "Failed to load distribution",
-                            onRetry = { /* distribution logic doesn't have an easy retry here, but we can pass one if needed */ }
-                        )
-                    }
-
-                    is Result.Success -> {
-                        val categories = when (tabType) {
-                            is TabType.Income -> result.data.incomeCategories
-                            is TabType.Expense -> result.data.expenseCategories
-                        }
-
-                        if (categories.isEmpty()) {
-                            EmptyDistributionState()
-                        } else {
-                            val categorySums = categories.map { it.category to it.total.toFloat() }
-                            val totalAmount = categories.sumOf { it.total }.toFloat()
-
+            Crossfade(
+                targetState = distributionResult,
+                animationSpec = tween(durationMillis = 300),
+                label = "ChartContentFade"
+            ) { result ->
+                key(period, tabType) {
+                    when (result) {
+                        is Result.Loading -> {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                DonutChartSection(categorySums, totalAmount)
+                                LoadingDonutChartSection()
                                 Spacer(Modifier.height(32.dp))
-                                CategoryList(
-                                    categories = categorySums,
-                                    totalAmount = totalAmount,
-                                    segmentColors = SegmentColors
-                                )
+                                LoadingCategoryList()
+                            }
+                        }
+
+                        is Result.Error -> {
+                            ErrorState(
+                                message = result.exception.message ?: "Failed to load distribution",
+                                onRetry = { /* distribution logic doesn't have an easy retry here, but we can pass one if needed */ }
+                            )
+                        }
+
+                        is Result.Success -> {
+                            val categories = when (tabType) {
+                                is TabType.Income -> result.data.incomeCategories
+                                is TabType.Expense -> result.data.expenseCategories
+                            }
+
+                            if (categories.isEmpty()) {
+                                EmptyDistributionState()
+                            } else {
+                                val categorySums = categories.map { it.category to it.total.toFloat() }
+                                val totalAmount = categories.sumOf { it.total }.toFloat()
+
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    DonutChartSection(categorySums, totalAmount)
+                                    Spacer(Modifier.height(32.dp))
+                                    CategoryList(
+                                        categories = categorySums,
+                                        totalAmount = totalAmount,
+                                        segmentColors = SegmentColors
+                                    )
+                                }
                             }
                         }
                     }
@@ -206,26 +216,18 @@ fun EmptyDistributionState() {
             }
         }
         Spacer(modifier = Modifier.height(32.dp))
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "No transactions found for this period.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-            }
+            Text(
+                text = "No transactions found for this period.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -307,22 +309,14 @@ fun LoadingInteractiveDonutWithText(
 
 @Composable
 fun LoadingCategoryList() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
-    ) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            repeat(3) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    AnimatedShimmerBox(modifier = Modifier.size(12.dp).clip(CircleShape))
-                    Spacer(Modifier.width(12.dp))
-                    AnimatedShimmerBox(modifier = Modifier.width(100.dp).height(14.dp))
-                    Spacer(Modifier.weight(1f))
-                    AnimatedShimmerBox(modifier = Modifier.width(80.dp).height(14.dp))
-                }
+    Column(modifier = Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        repeat(3) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                AnimatedShimmerBox(modifier = Modifier.size(12.dp).clip(CircleShape))
+                Spacer(Modifier.width(12.dp))
+                AnimatedShimmerBox(modifier = Modifier.width(100.dp).height(14.dp))
+                Spacer(Modifier.weight(1f))
+                AnimatedShimmerBox(modifier = Modifier.width(80.dp).height(14.dp))
             }
         }
     }
@@ -336,49 +330,41 @@ fun CategoryList(
 ) {
     val sortedCategorySums = categories.sortedByDescending { it.second }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
-    ) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            sortedCategorySums.forEachIndexed { index, (categoryName, amount) ->
-                val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
-                val color = segmentColors[index % segmentColors.size]
+    Column(modifier = Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        sortedCategorySums.forEachIndexed { index, (categoryName, amount) ->
+            val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
+            val color = segmentColors[index % segmentColors.size]
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .background(color, CircleShape)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .background(color, CircleShape)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
 
+                Text(
+                    text = categoryName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+
+                Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = categoryName,
+                        text = amount.toDouble().toCurrencyString(),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f)
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = amount.toDouble().toCurrencyString(),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "$percent%",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = color
-                        )
-                    }
+                    Text(
+                        text = "$percent%",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = color
+                    )
                 }
             }
         }

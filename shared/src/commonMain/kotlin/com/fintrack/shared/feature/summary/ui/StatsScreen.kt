@@ -40,6 +40,7 @@ import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.TabType
+import com.fintrack.shared.feature.transaction.ui.home.IncomeExpensesOverview
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
