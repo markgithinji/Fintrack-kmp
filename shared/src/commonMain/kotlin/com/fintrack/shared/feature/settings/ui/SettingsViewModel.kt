@@ -79,6 +79,20 @@ class SettingsViewModel(
             initialValue = LocalTime(20, 0)
         )
 
+    val mpesaSimSlot: StateFlow<Int?> = settingsDataSource.mpesaSimSlot
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
+
+    val mpesaAccountId: StateFlow<String?> = settingsDataSource.mpesaAccountId
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
+
     private val _exportResult = MutableStateFlow<String?>(null)
     val exportResult: StateFlow<String?> = _exportResult.asStateFlow()
 
@@ -156,6 +170,18 @@ class SettingsViewModel(
             if (isReminderEnabled.value) {
                 notificationService.scheduleDailyReminder(time)
             }
+        }
+    }
+
+    fun setMpesaSimSlot(slot: Int?) {
+        viewModelScope.launch {
+            settingsDataSource.setMpesaSimSlot(slot)
+        }
+    }
+
+    fun setMpesaAccountId(accountId: String?) {
+        viewModelScope.launch {
+            settingsDataSource.setMpesaAccountId(accountId)
         }
     }
 

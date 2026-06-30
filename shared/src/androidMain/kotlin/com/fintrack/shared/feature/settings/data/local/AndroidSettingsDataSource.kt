@@ -23,6 +23,8 @@ class AndroidSettingsDataSource(
     private val _balanceHiddenFlow = MutableStateFlow(false)
     private val _reminderFlow = MutableStateFlow(false)
     private val _reminderTimeFlow = MutableStateFlow(LocalTime(20, 0))
+    private val _mpesaSimSlotFlow = MutableStateFlow<Int?>(null)
+    private val _mpesaAccountIdFlow = MutableStateFlow<String?>(null)
 
     init {
         val themeName = prefs.getString("app_theme", AppTheme.SYSTEM.name)
@@ -45,6 +47,12 @@ class AndroidSettingsDataSource(
 
         val reminderTimeStr = prefs.getString("reminder_time", "20:00") ?: "20:00"
         _reminderTimeFlow.update { LocalTime.parse(reminderTimeStr) }
+
+        val mpesaSimSlot = if (prefs.contains("mpesa_sim_slot")) prefs.getInt("mpesa_sim_slot", -1) else -1
+        _mpesaSimSlotFlow.update { if (mpesaSimSlot == -1) null else mpesaSimSlot }
+
+        val mpesaAccountId = prefs.getString("mpesa_account_id", null)
+        _mpesaAccountIdFlow.update { mpesaAccountId }
     }
 
     override val theme: Flow<AppTheme> = _themeFlow
@@ -108,5 +116,31 @@ class AndroidSettingsDataSource(
             putString("reminder_time", time.toString())
         }
         _reminderTimeFlow.value = time
+    }
+
+    override val mpesaSimSlot: Flow<Int?> = _mpesaSimSlotFlow
+
+    override suspend fun setMpesaSimSlot(slot: Int?) {
+        prefs.edit(commit = true) {
+            if (slot == null) {
+                remove("mpesa_sim_slot")
+            } else {
+                putInt("mpesa_sim_slot", slot)
+            }
+        }
+        _mpesaSimSlotFlow.value = slot
+    }
+
+    override val mpesaAccountId: Flow<String?> = _mpesaAccountIdFlow
+
+    override suspend fun setMpesaAccountId(accountId: String?) {
+        prefs.edit(commit = true) {
+            if (accountId == null) {
+                remove("mpesa_account_id")
+            } else {
+                putString("mpesa_account_id", accountId)
+            }
+        }
+        _mpesaAccountIdFlow.value = accountId
     }
 }

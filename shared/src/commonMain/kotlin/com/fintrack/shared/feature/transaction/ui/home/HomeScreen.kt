@@ -12,6 +12,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -22,6 +25,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
+import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -43,6 +47,8 @@ fun HomeScreen(
     val overviewResult by statsViewModel.overview.collectAsStateWithLifecycle()
     val categoryComparisonResult by statsViewModel.categoryComparisons.collectAsStateWithLifecycle()
     val isBalanceHidden by settingsViewModel.isBalanceHidden.collectAsStateWithLifecycle()
+    
+    var showSmsPermissionRequest by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         if (accountsResult is Result.Error || (accountsResult is Result.Success && (accountsResult as Result.Success).data.isEmpty())) {
@@ -78,6 +84,7 @@ fun HomeScreen(
                 isBalanceHidden = isBalanceHidden,
                 onAccountSelected = { accountId -> accountsViewModel.selectAccount(accountId) },
                 onToggleBalanceVisibility = { settingsViewModel.setBalanceHidden(it) },
+                onSyncMpesa = { showSmsPermissionRequest = true },
                 onRetry = { 
                     accountsViewModel.reloadAccounts(force = true)
                 }
@@ -116,4 +123,14 @@ fun HomeScreen(
             )
         }
     }
+
+    SmsPermissionLauncher(
+        trigger = showSmsPermissionRequest,
+        onResult = { granted ->
+            if (granted) {
+                transactionsViewModel.importMpesaTransactions()
+            }
+        },
+        onDismissTrigger = { showSmsPermissionRequest = false }
+    )
 }

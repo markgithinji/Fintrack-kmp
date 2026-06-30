@@ -13,6 +13,7 @@ import com.fintrack.shared.feature.transaction.domain.usecase.DeleteCategoryUseC
 import com.fintrack.shared.feature.transaction.domain.usecase.ExportTransactionsUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.GetCategoriesUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ValidateTransactionUseCase
+import com.fintrack.shared.feature.transaction.domain.util.createTransactionImporter
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import com.fintrack.shared.feature.transaction.ui.category.CategoryManagementViewModel
 import org.koin.core.module.dsl.viewModel
@@ -32,12 +33,15 @@ val transactionModule = module {
     single { ClearAllTransactionsUseCase(get()) }
     single { ExportTransactionsUseCase(get(), get()) }
 
+    single { createTransactionImporter(get(), get()) }
+
     viewModel {
         TransactionViewModel(
             repo = get(),
             validateTransactionUseCase = get(),
             createTransactionUseCase = get(),
-            getCategoriesUseCase = get()
+            getCategoriesUseCase = get(),
+            transactionImporter = get()
         )
     }
 

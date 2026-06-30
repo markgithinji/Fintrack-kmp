@@ -5,6 +5,7 @@ import com.fintrack.shared.feature.auth.data.local.initTokenDataStore
 import com.fintrack.shared.feature.settings.data.local.initSettingsDataStore
 import com.fintrack.shared.feature.settings.domain.util.initNotificationService
 import com.fintrack.shared.feature.core.util.initFileSaver
+import com.fintrack.shared.feature.transaction.domain.util.initTransactionImporter
 import com.fintrack.shared.feature.core.data.remote.Environment
 import com.fintrack.shared.feature.core.di.Koin
 
@@ -15,6 +16,7 @@ class FintrackApp : Application() {
         initSettingsDataStore(this)
         initNotificationService(this)
         initFileSaver(this)
+        initTransactionImporter(this)
 
         val environment = if (BuildConfig.DEBUG) {
             Environment.DEVELOPMENT

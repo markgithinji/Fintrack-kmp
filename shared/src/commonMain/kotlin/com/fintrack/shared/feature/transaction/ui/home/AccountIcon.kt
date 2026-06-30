@@ -13,6 +13,7 @@ sealed class AccountIcon(val icon: ImageVector, val color: Color = Color.Compani
     object Wallet : AccountIcon(Icons.Default.AccountCircle, Color.Companion.Green)
     object Cash : AccountIcon(Icons.Default.Money, Color.Companion.Yellow)
     object Savings : AccountIcon(Icons.Default.Savings, Color.Companion.Cyan) // new Savings account
+    object Mpesa : AccountIcon(Icons.Default.Money, Color(0xFF4CAF50))
     object Default : AccountIcon(Icons.Default.AccountBalance, Color.Companion.Gray)
 
     companion object {
@@ -22,6 +23,7 @@ sealed class AccountIcon(val icon: ImageVector, val color: Color = Color.Compani
             "wallet" -> Wallet
             "cash" -> Cash
             "savings" -> Savings
+            "mpesa" -> Mpesa
             else -> Default
         }
     }

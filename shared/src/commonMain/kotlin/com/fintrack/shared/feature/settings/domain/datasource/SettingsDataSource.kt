@@ -27,4 +27,10 @@ interface SettingsDataSource {
 
     val reminderTime: Flow<LocalTime>
     suspend fun setReminderTime(time: LocalTime)
+
+    val mpesaSimSlot: Flow<Int?>
+    suspend fun setMpesaSimSlot(slot: Int?)
+
+    val mpesaAccountId: Flow<String?>
+    suspend fun setMpesaAccountId(accountId: String?)
 }

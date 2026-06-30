@@ -3,11 +3,13 @@ package com.fintrack.shared.feature.account.data.model
 import com.fintrack.shared.feature.account.domain.model.Account
 
 fun Account.toCreateRequest(): CreateAccountRequest = CreateAccountRequest(
-    name = this.name
+    name = this.name,
+    isMpesa = this.isMpesa
 )
 
 fun Account.toUpdateRequest(): UpdateAccountRequest = UpdateAccountRequest(
-    name = this.name
+    name = this.name,
+    isMpesa = this.isMpesa
 )
 
 fun AccountDto.toDomain(): Account = Account(
@@ -16,5 +18,6 @@ fun AccountDto.toDomain(): Account = Account(
     balance = this.balance,
     income = this.income,
     expense = this.expense,
-    isDefault = this.isDefault ?: false
+    isDefault = this.isDefault ?: false,
+    isMpesa = this.isMpesa ?: false
 )

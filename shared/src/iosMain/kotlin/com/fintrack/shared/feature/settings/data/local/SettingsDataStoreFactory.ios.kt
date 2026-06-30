@@ -18,6 +18,8 @@ class IOSSettingsDataSource : SettingsDataSource {
     private val _balanceHiddenFlow = MutableStateFlow(false)
     private val _reminderFlow = MutableStateFlow(false)
     private val _reminderTimeFlow = MutableStateFlow(LocalTime(20, 0))
+    private val _mpesaSimSlotFlow = MutableStateFlow<Int?>(null)
+    private val _mpesaAccountIdFlow = MutableStateFlow<String?>(null)
 
     init {
         val themeName = userDefaults.stringForKey("app_theme") ?: AppTheme.SYSTEM.name
@@ -40,6 +42,12 @@ class IOSSettingsDataSource : SettingsDataSource {
 
         val reminderTimeStr = userDefaults.stringForKey("reminder_time") ?: "20:00"
         _reminderTimeFlow.value = LocalTime.parse(reminderTimeStr)
+
+        val mpesaSimSlot = if (userDefaults.objectForKey("mpesa_sim_slot") != null) userDefaults.integerForKey("mpesa_sim_slot").toInt() else -1
+        _mpesaSimSlotFlow.value = if (mpesaSimSlot == -1) null else mpesaSimSlot
+
+        val mpesaAccountId = userDefaults.stringForKey("mpesa_account_id")
+        _mpesaAccountIdFlow.value = mpesaAccountId
     }
 
     override val theme: Flow<AppTheme> = _themeFlow
@@ -89,6 +97,28 @@ class IOSSettingsDataSource : SettingsDataSource {
     override suspend fun setReminderTime(time: LocalTime) {
         userDefaults.setObject(time.toString(), "reminder_time")
         _reminderTimeFlow.value = time
+    }
+
+    override val mpesaSimSlot: Flow<Int?> = _mpesaSimSlotFlow
+
+    override suspend fun setMpesaSimSlot(slot: Int?) {
+        if (slot == null) {
+            userDefaults.removeObjectForKey("mpesa_sim_slot")
+        } else {
+            userDefaults.setInteger(slot.toLong(), "mpesa_sim_slot")
+        }
+        _mpesaSimSlotFlow.value = slot
+    }
+
+    override val mpesaAccountId: Flow<String?> = _mpesaAccountIdFlow
+
+    override suspend fun setMpesaAccountId(accountId: String?) {
+        if (accountId == null) {
+            userDefaults.removeObjectForKey("mpesa_account_id")
+        } else {
+            userDefaults.setObject(accountId, "mpesa_account_id")
+        }
+        _mpesaAccountIdFlow.value = accountId
     }
 }
 

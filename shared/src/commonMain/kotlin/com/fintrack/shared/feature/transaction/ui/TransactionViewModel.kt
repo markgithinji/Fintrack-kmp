@@ -32,7 +32,8 @@ class TransactionViewModel(
     private val repo: TransactionRepository,
     private val validateTransactionUseCase: ValidateTransactionUseCase,
     private val createTransactionUseCase: CreateTransactionUseCase,
-    private val getCategoriesUseCase: GetCategoriesUseCase
+    private val getCategoriesUseCase: GetCategoriesUseCase,
+    private val transactionImporter: com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
 ) : ViewModel() {
 
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
@@ -308,6 +309,13 @@ class TransactionViewModel(
         viewModelScope.launch {
             _deleteResult.value = Result.Loading
             _deleteResult.value = repo.deleteTransaction(id)
+        }
+    }
+
+    fun importMpesaTransactions() {
+        viewModelScope.launch {
+            transactionImporter.importHistory()
+            repo.triggerRefresh()
         }
     }
 

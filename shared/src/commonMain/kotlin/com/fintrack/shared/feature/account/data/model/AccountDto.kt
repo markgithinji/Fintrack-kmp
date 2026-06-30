@@ -9,5 +9,6 @@ data class AccountDto(
     val balance: Double? = null,
     val income: Double? = null,
     val expense: Double? = null,
-    val isDefault: Boolean? = false
+    val isDefault: Boolean? = false,
+    val isMpesa: Boolean? = false
 )

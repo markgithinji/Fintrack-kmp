@@ -65,6 +65,7 @@ fun CurrentBalanceCardWrapper(
     isBalanceHidden: Boolean,
     onAccountSelected: (String) -> Unit,
     onToggleBalanceVisibility: (Boolean) -> Unit,
+    onSyncMpesa: () -> Unit,
     onRetry: () -> Unit = {}
 ) {
     var showDialog by remember { mutableStateOf(false) }
@@ -74,6 +75,7 @@ fun CurrentBalanceCardWrapper(
         isBalanceHidden = isBalanceHidden,
         onChangeAccountClicked = { showDialog = true },
         onToggleBalanceVisibility = onToggleBalanceVisibility,
+        onSyncMpesa = onSyncMpesa,
         onRetry = onRetry
     )
 
@@ -97,6 +99,7 @@ fun CurrentBalanceCard(
     isBalanceHidden: Boolean,
     onChangeAccountClicked: () -> Unit,
     onToggleBalanceVisibility: (Boolean) -> Unit,
+    onSyncMpesa: () -> Unit,
     onRetry: () -> Unit = {}
 ) {
     Card(
@@ -128,8 +131,10 @@ fun CurrentBalanceCard(
                     CurrentBalanceSuccessState(
                         account = selectedAccountResult.data,
                         isBalanceHidden = isBalanceHidden,
+                        isMpesaLinked = selectedAccountResult.data.isMpesa,
                         onChangeAccountClicked = onChangeAccountClicked,
-                        onToggleBalanceVisibility = onToggleBalanceVisibility
+                        onToggleBalanceVisibility = onToggleBalanceVisibility,
+                        onSyncMpesa = onSyncMpesa
                     )
                 }
             }
@@ -232,8 +237,10 @@ private fun CurrentBalanceErrorState(
 private fun CurrentBalanceSuccessState(
     account: Account,
     isBalanceHidden: Boolean,
+    isMpesaLinked: Boolean,
     onChangeAccountClicked: () -> Unit,
-    onToggleBalanceVisibility: (Boolean) -> Unit
+    onToggleBalanceVisibility: (Boolean) -> Unit,
+    onSyncMpesa: () -> Unit
 ) {
     val balance = account.balance ?: 0.0
 
@@ -262,6 +269,25 @@ private fun CurrentBalanceSuccessState(
                         color = MaterialTheme.colorScheme.onPrimary,
                         fontWeight = FontWeight.Bold
                     )
+                    
+                    if (isMpesaLinked) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            onClick = onSyncMpesa,
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.SwapHoriz, // Should use a better sync icon
+                                    contentDescription = "Sync M-Pesa",
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                        }
+                    }
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {

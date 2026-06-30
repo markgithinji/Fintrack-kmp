@@ -25,6 +25,7 @@ import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.data.domain.ApiException
 import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
+import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
 import org.koin.compose.viewmodel.koinViewModel
@@ -33,7 +34,8 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun AccountsScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
-    viewModel: AccountsViewModel = koinViewModel()
+    viewModel: AccountsViewModel = koinViewModel(),
+    settingsViewModel: SettingsViewModel = koinViewModel()
 ) {
     val accountsState by viewModel.accounts.collectAsStateWithLifecycle()
     val deleteResult by viewModel.deleteResult.collectAsStateWithLifecycle()
@@ -158,9 +160,10 @@ fun AccountsScreen(
             account = account,
             isEditing = isEditing,
             isLoading = saveResult is Result.Loading,
+            isMpesaLinked = account.isMpesa,
             onDismiss = { if (!isOperating) showAccountDialog = null },
-            onConfirm = { name ->
-                viewModel.saveAccount(account.copy(name = name))
+            onConfirm = { name, isMpesa ->
+                viewModel.saveAccount(account.copy(name = name, isMpesa = isMpesa))
             }
         )
     }
@@ -204,7 +207,7 @@ fun AccountItem(
     onDelete: () -> Unit,
     onEdit: () -> Unit
 ) {
-    val accountIcon = AccountIcon.fromAccountName(account.name)
+    val accountIcon = if (account.isMpesa) AccountIcon.Mpesa else AccountIcon.fromAccountName(account.name)
     
     Surface(
         onClick = onEdit,
@@ -291,27 +294,46 @@ fun AccountDialog(
     account: Account,
     isEditing: Boolean,
     isLoading: Boolean,
+    isMpesaLinked: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit
+    onConfirm: (String, Boolean) -> Unit
 ) {
     var accountName by remember { mutableStateOf(account.name) }
+    var isMpesa by remember { mutableStateOf(isMpesaLinked) }
 
     AlertDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
         title = { Text(if (isEditing) "Edit Account" else "Add New Account") },
         text = {
-            OutlinedTextField(
-                value = accountName,
-                onValueChange = { accountName = it },
-                label = { Text("Account Name") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                enabled = !isLoading
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = accountName,
+                    onValueChange = { accountName = it },
+                    label = { Text("Account Name") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Checkbox(
+                        checked = isMpesa,
+                        onCheckedChange = { isMpesa = it },
+                        enabled = !isLoading
+                    )
+                    Text(
+                        text = "Link to M-Pesa SMS Import",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
         },
         confirmButton = {
             Button(
-                onClick = { if (accountName.isNotBlank()) onConfirm(accountName) },
+                onClick = { if (accountName.isNotBlank()) onConfirm(accountName, isMpesa) },
                 enabled = accountName.isNotBlank() && !isLoading
             ) {
                 if (isLoading) {
