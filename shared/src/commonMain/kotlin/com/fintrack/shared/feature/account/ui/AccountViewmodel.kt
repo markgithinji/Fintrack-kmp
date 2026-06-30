@@ -4,12 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
+import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.core.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class AccountsViewModel(private val repo: AccountRepository) : ViewModel() {
+class AccountsViewModel(
+    private val repo: AccountRepository,
+    private val globalRefreshManager: GlobalRefreshManager
+) : ViewModel() {
 
     private val _accounts = MutableStateFlow<Result<List<Account>>>(Result.Loading)
     val accounts: StateFlow<Result<List<Account>>> = _accounts
@@ -24,6 +28,11 @@ class AccountsViewModel(private val repo: AccountRepository) : ViewModel() {
     val deleteResult: StateFlow<Result<Unit>?> = _deleteResult
 
     init {
+        viewModelScope.launch {
+            globalRefreshManager.refreshEvent.collect {
+                reloadAccounts(force = true)
+            }
+        }
         reloadAccounts(force = false)
     }
 

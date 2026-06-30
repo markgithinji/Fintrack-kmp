@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -24,10 +25,15 @@ actual fun ConfirmationDialog(
     confirmLabel: String,
     cancelLabel: String,
     isDestructive: Boolean,
+    isLoading: Boolean,
+    isSuccess: Boolean,
+    successTitle: String?,
+    successMessage: String?,
+    autoDismiss: Boolean,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(onDismissRequest = if (isLoading || isSuccess) ({}) else onDismiss) {
         Card(
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -45,29 +51,31 @@ actual fun ConfirmationDialog(
                     modifier = Modifier
                         .size(64.dp)
                         .background(
-                            color = if (isDestructive) 
-                                MaterialTheme.colorScheme.errorContainer 
-                            else 
-                                MaterialTheme.colorScheme.primaryContainer,
+                            color = when {
+                                isSuccess -> Color(0xFF4CAF50).copy(alpha = 0.2f)
+                                isDestructive -> MaterialTheme.colorScheme.errorContainer
+                                else -> MaterialTheme.colorScheme.primaryContainer
+                            },
                             shape = CircleShape
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Warning,
+                        imageVector = if (isSuccess) Icons.Default.CheckCircle else Icons.Default.Warning,
                         contentDescription = null,
                         modifier = Modifier.size(32.dp),
-                        tint = if (isDestructive) 
-                            MaterialTheme.colorScheme.error 
-                        else 
-                            MaterialTheme.colorScheme.primary
+                        tint = when {
+                            isSuccess -> Color(0xFF4CAF50)
+                            isDestructive -> MaterialTheme.colorScheme.error
+                            else -> MaterialTheme.colorScheme.primary
+                        }
                     )
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = title,
+                    text = if (isSuccess) (successTitle ?: "Success!") else title,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -77,7 +85,7 @@ actual fun ConfirmationDialog(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = message,
+                    text = if (isSuccess) (successMessage ?: "Action completed successfully.") else message,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -90,39 +98,58 @@ actual fun ConfirmationDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    TextButton(
-                        onClick = onDismiss,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = cancelLabel,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                    if (!isSuccess) {
+                        TextButton(
+                            onClick = onDismiss,
+                            enabled = !isLoading,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = cancelLabel,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
 
                     Button(
                         onClick = {
-                            onConfirm()
-                            onDismiss()
+                            if (isSuccess) {
+                                onDismiss()
+                            } else {
+                                onConfirm()
+                                if (autoDismiss && !isLoading) {
+                                    onDismiss()
+                                }
+                            }
                         },
+                        enabled = !isLoading,
                         modifier = Modifier
                             .weight(1f)
                             .height(48.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isDestructive) 
-                                MaterialTheme.colorScheme.error 
-                            else 
-                                MaterialTheme.colorScheme.primary
+                            containerColor = when {
+                                isSuccess -> Color(0xFF4CAF50)
+                                isDestructive -> MaterialTheme.colorScheme.error
+                                else -> MaterialTheme.colorScheme.primary
+                            }
                         )
                     ) {
-                        Text(
-                            text = confirmLabel,
-                            fontWeight = FontWeight.Bold
-                        )
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else {
+                            Text(
+                                text = if (isSuccess) "Close" else confirmLabel,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }

@@ -55,6 +55,7 @@ fun SettingsScreen(
 
     val changePasswordFormState by viewModel.changePasswordFormState.collectAsStateWithLifecycle()
     val changePasswordState by viewModel.changePasswordState.collectAsStateWithLifecycle()
+    val clearDataState by viewModel.clearDataState.collectAsStateWithLifecycle()
     
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
@@ -326,11 +327,18 @@ fun SettingsScreen(
             message = "Are you sure you want to delete all transactions? This action cannot be undone.",
             confirmLabel = "Clear All",
             isDestructive = true,
+            isLoading = clearDataState is SaveState.Loading,
+            isSuccess = clearDataState is SaveState.Success,
+            successTitle = "Data Cleared",
+            successMessage = "All transactions and budgets have been successfully deleted.",
+            autoDismiss = false,
             onConfirm = {
                 viewModel.clearAllTransactions()
-                showDeleteConfirmDialog = false
             },
-            onDismiss = { showDeleteConfirmDialog = false }
+            onDismiss = {
+                showDeleteConfirmDialog = false
+                viewModel.resetClearDataState()
+            }
         )
     }
 

@@ -13,5 +13,5 @@ val budgetModule = module {
     single { BudgetApi(get(), getProperty("baseUrl")) }
     single<BudgetRepository> { BudgetRepositoryImpl(get()) }
     single { BudgetValidationUseCase() }
-    viewModel { BudgetViewModel(get(), get(), get()) }
+    viewModel { BudgetViewModel(get(), get(), get(), get()) }
 }

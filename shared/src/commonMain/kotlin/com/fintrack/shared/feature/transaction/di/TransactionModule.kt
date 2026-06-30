@@ -39,7 +39,8 @@ val transactionModule = module {
             validateTransactionUseCase = get(),
             createTransactionUseCase = get(),
             getCategoriesUseCase = get(),
-            transactionImporter = get()
+            transactionImporter = get(),
+            globalRefreshManager = get()
         )
     }
 

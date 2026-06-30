@@ -227,6 +227,9 @@ class SettingsViewModel(
         }
     }
 
+    private val _clearDataState = MutableStateFlow<SaveState<Unit>>(SaveState.Idle)
+    val clearDataState: StateFlow<SaveState<Unit>> = _clearDataState.asStateFlow()
+
     fun clearAllTransactions() {
         viewModelScope.launch {
             val authResult = biometricAuthenticator.authenticate(
@@ -236,25 +239,33 @@ class SettingsViewModel(
             
             when (authResult) {
                 is BiometricResult.Success -> {
-                    _isLoading.value = true
+                    _clearDataState.value = SaveState.Loading
                     val result = clearAllUserDataUseCase()
                     if (result is Result.Error) {
+                        _clearDataState.value = SaveState.Error(result.exception)
                         _error.value = "Failed to clear data"
+                    } else {
+                        _clearDataState.value = SaveState.Success(Unit)
                     }
-                    _isLoading.value = false
                 }
                 is BiometricResult.Error -> {
                     _error.value = authResult.message
                 }
                 BiometricResult.NotAvailable -> {
-                    // If biometric is not available, we could fallback to PIN/Password
-                    // For now, we'll allow it since they already confirmed in the dialog
-                    _isLoading.value = true
-                    clearAllUserDataUseCase()
-                    _isLoading.value = false
+                    _clearDataState.value = SaveState.Loading
+                    val result = clearAllUserDataUseCase()
+                    if (result is Result.Error) {
+                        _clearDataState.value = SaveState.Error(result.exception)
+                    } else {
+                        _clearDataState.value = SaveState.Success(Unit)
+                    }
                 }
             }
         }
+    }
+
+    fun resetClearDataState() {
+        _clearDataState.value = SaveState.Idle
     }
 
     fun clearError() {

@@ -6,6 +6,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.domain.SaveState
+import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
@@ -33,7 +34,8 @@ class TransactionViewModel(
     private val validateTransactionUseCase: ValidateTransactionUseCase,
     private val createTransactionUseCase: CreateTransactionUseCase,
     private val getCategoriesUseCase: GetCategoriesUseCase,
-    private val transactionImporter: com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
+    private val transactionImporter: com.fintrack.shared.feature.transaction.domain.util.TransactionImporter,
+    private val globalRefreshManager: GlobalRefreshManager
 ) : ViewModel() {
 
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
@@ -72,6 +74,12 @@ class TransactionViewModel(
     private var lastLoadedRecentAccountId: String? = null
 
     init {
+        viewModelScope.launch {
+            globalRefreshManager.refreshEvent.collect {
+                repo.triggerRefresh()
+                refreshCategories()
+            }
+        }
         viewModelScope.launch {
             repo.refreshSignal.collectLatest {
                 lastLoadedRecentAccountId?.let { loadRecentTransactions(it, force = true) }

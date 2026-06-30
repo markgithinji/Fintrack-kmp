@@ -2,6 +2,7 @@ package com.fintrack.shared.feature.summary.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
@@ -20,7 +21,26 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
+class StatisticsViewModel(
+    private val repo: SummaryRepository,
+    private val globalRefreshManager: GlobalRefreshManager
+) : ViewModel() {
+
+    init {
+        viewModelScope.launch {
+            globalRefreshManager.refreshEvent.collect {
+                // Force reload all data when global refresh is triggered
+                loadHighlights(lastHighlightsAccountId, force = true)
+                loadAvailablePeriods(lastAvailablePeriodsAccountId, force = true)
+                loadOverview(lastOverviewAccountId, force = true)
+                loadCategoryComparisons(lastCategoryComparisonAccountId, force = true)
+                
+                lastTransactionCountsAccountId?.let { accountId ->
+                    loadTransactionCounts(accountId, lastTransactionCountsIsIncome, force = true)
+                }
+            }
+        }
+    }
 
     private val _highlights = MutableStateFlow<Result<StatisticsSummary>>(Result.Loading)
     val highlights: StateFlow<Result<StatisticsSummary>> = _highlights
@@ -163,7 +183,7 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
                 }
 
                 // Load BOTH income and expense data for the initial period
-                reloadDistributionForCurrentSelection(accountId, force = false)
+                reloadDistributionForCurrentSelection(accountId, force = force)
 
             } catch (e: Exception) {
                 _availableWeeks.value = emptyList()
@@ -217,6 +237,24 @@ class StatisticsViewModel(private val repo: SummaryRepository) : ViewModel() {
             // Load BOTH income and expense data for this period
             loadDistribution(periodCode, TransactionType.Income, accountId = accountId, force = force)
             loadDistribution(periodCode, TransactionType.Expense, accountId = accountId, force = force)
+        } else {
+            // Clear distributions if no period is selected (e.g., after data deletion)
+            lastIncomeDistributionParams = null
+            lastExpenseDistributionParams = null
+            _incomeDistribution.value = Result.Success(
+                DistributionSummary(
+                    period = "",
+                    incomeCategories = emptyList(),
+                    expenseCategories = emptyList()
+                )
+            )
+            _expenseDistribution.value = Result.Success(
+                DistributionSummary(
+                    period = "",
+                    incomeCategories = emptyList(),
+                    expenseCategories = emptyList()
+                )
+            )
         }
     }
 

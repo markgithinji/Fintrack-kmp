@@ -2,7 +2,7 @@ package com.fintrack.shared.feature.core.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.uikit.LocalUIViewController
+import androidx.compose.ui.interop.LocalUIViewController
 import platform.UIKit.UIAlertAction
 import platform.UIKit.UIAlertActionStyleCancel
 import platform.UIKit.UIAlertActionStyleDefault
@@ -17,12 +17,36 @@ actual fun ConfirmationDialog(
     confirmLabel: String,
     cancelLabel: String,
     isDestructive: Boolean,
+    isLoading: Boolean,
+    isSuccess: Boolean,
+    successTitle: String?,
+    successMessage: String?,
+    autoDismiss: Boolean,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
     val viewController = LocalUIViewController.current
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(isLoading, isSuccess) {
+        if (isSuccess) {
+             val successAlert = UIAlertController.alertControllerWithTitle(
+                title = successTitle ?: "Success!",
+                message = successMessage ?: "Action completed successfully.",
+                preferredStyle = UIAlertControllerStyleAlert
+            )
+            successAlert.addAction(
+                UIAlertAction.actionWithTitle(
+                    title = "OK",
+                    style = UIAlertActionStyleDefault,
+                    handler = { onDismiss() }
+                )
+            )
+            viewController.presentViewController(successAlert, animated = true, completion = null)
+            return@LaunchedEffect
+        }
+
+        if (isLoading) return@LaunchedEffect
+
         val alertController = UIAlertController.alertControllerWithTitle(
             title = title,
             message = message,
@@ -35,7 +59,7 @@ actual fun ConfirmationDialog(
                 style = if (isDestructive) UIAlertActionStyleDestructive else UIAlertActionStyleDefault,
                 handler = {
                     onConfirm()
-                    onDismiss()
+                    if (autoDismiss) onDismiss()
                 }
             )
         )
