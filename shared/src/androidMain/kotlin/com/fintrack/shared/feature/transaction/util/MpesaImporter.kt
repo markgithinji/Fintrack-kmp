@@ -7,6 +7,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -52,7 +53,8 @@ class MpesaImporter(
             }
 
             if (transactions.isNotEmpty()) {
-                transactionRepository.importMpesaTransactions(transactions)
+                // We reverse to send oldest first, though importMpesaTransactions handles it on backend usually
+                transactionRepository.importMpesaTransactions(transactions.reversed())
             }
 
             // Correct account balance using an adjustment transaction if there's a discrepancy
@@ -63,7 +65,7 @@ class MpesaImporter(
                     val currentAppBalance = account.balance ?: 0.0
                     val discrepancy = latestBalance - currentAppBalance
                     
-                    if (discrepancy != 0.0) {
+                    if (kotlin.math.abs(discrepancy) > 0.01) { // Use a small epsilon for double comparison
                         transactionRepository.addTransaction(
                             Transaction(
                                 accountId = accountId,
@@ -71,8 +73,10 @@ class MpesaImporter(
                                 amount = kotlin.math.abs(discrepancy),
                                 transactionCost = 0.0,
                                 category = "General",
-                                dateTime = kotlin.time.Clock.System.now(),
-                                description = "M-Pesa Balance Adjustment"
+                                // Use 1s ago to avoid future date validation issues with backend clock skew
+                                dateTime = kotlin.time.Clock.System.now().minus(1.seconds),
+                                description = "M-Pesa Balance Adjustment",
+                                balance = latestBalance // Critical: set the balance here!
                             )
                         )
                     }

@@ -14,7 +14,8 @@ fun TransactionDto.toDomain(): Transaction =
         category = category,
         dateTime = dateTime,
         description = description,
-        externalId = externalId
+        externalId = externalId,
+        balance = balance
     )
 
 @OptIn(ExperimentalTime::class)
@@ -27,6 +28,7 @@ fun Transaction.toCreateRequest(): CreateTransactionRequest {
         category = this.category,
         dateTime = this.dateTime,
         description = this.description,
-        externalId = this.externalId
+        externalId = this.externalId,
+        balance = this.balance
     )
 }

@@ -168,6 +168,17 @@ fun TransactionItem(
                     )
                 }
                 
+                if (transaction.balance != null) {
+                    Text(
+                        text = "Bal: ${transaction.balance.toCurrencyString()}",
+                        style = androidx.compose.ui.text.TextStyle(
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+                }
+                
                 if (!transaction.description.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(

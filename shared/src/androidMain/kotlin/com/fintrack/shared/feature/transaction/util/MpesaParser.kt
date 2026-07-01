@@ -9,9 +9,18 @@ import java.util.Locale
 
 @OptIn(ExperimentalTime::class)
 object MpesaParser {
-    private val sentRegex = """([A-Z0-9]{10}) Confirmed\. Ksh([\d,]+\.\d{2}) sent to (.*) on (\d{1,2}/\d{1,2}/\d{2}) at (\d{1,2}:\d{2} [AP]M)\.""".toRegex()
-    private val receivedRegex = """([A-Z0-9]{10}) Confirmed\. You have received Ksh([\d,]+\.\d{2}) from (.*) on (\d{1,2}/\d{1,2}/\d{2}) at (\d{1,2}:\d{2} [AP]M)\.""".toRegex()
-    private val paidRegex = """([A-Z0-9]{10}) Confirmed\. Ksh([\d,]+\.\d{2}) paid to (.*) on (\d{1,2}/\d{1,2}/\d{2}) at (\d{1,2}:\d{2} [AP]M)\.""".toRegex()
+    // Basic regex components
+    private const val CODE = """([A-Z0-9]{10})"""
+    private const val AMOUNT = """Ksh([\d,]+\.\d{2})"""
+    private const val DATE = """(\d{1,2}/\d{1,2}/\d{2})"""
+    private const val TIME = """(\d{1,2}:\d{2} [AP]M)"""
+
+    private val sentRegex = """$CODE Confirmed\. $AMOUNT sent to (.*?) on $DATE at $TIME""".toRegex()
+    private val receivedRegex = """$CODE Confirmed\. You have received $AMOUNT from (.*?) on $DATE at $TIME""".toRegex()
+    private val paidRegex = """$CODE Confirmed\. $AMOUNT paid to (.*?) on $DATE at $TIME""".toRegex()
+    private val depositRegex = """$CODE Confirmed\. $AMOUNT deposited to your M-PESA account by (.*?) on $DATE at $TIME""".toRegex()
+    private val withdrawRegex = """$CODE Confirmed\. $AMOUNT withdrawn from (.*?) on $DATE at $TIME""".toRegex()
+    
     private val costRegex = """Transaction cost, Ksh([\d,]+\.\d{2})""".toRegex()
     private val balanceRegex = """New M-PESA balance is Ksh([\d,]+\.\d{2})""".toRegex()
 
@@ -21,52 +30,43 @@ object MpesaParser {
         if (!message.contains("Confirmed") || !message.contains("Ksh")) return null
 
         val cost = parseAmount(costRegex.find(message)?.groupValues?.get(1))
+        val balance = parseBalance(message)
 
-        sentRegex.find(message)?.let {
-            val amount = parseAmount(it.groupValues[2])
-            val recipient = it.groupValues[3]
-            val dateTime = parseDateTime(it.groupValues[4], it.groupValues[5])
+        // Try matching different transaction types
+        val match = sentRegex.find(message) ?: 
+                    receivedRegex.find(message) ?: 
+                    paidRegex.find(message) ?: 
+                    depositRegex.find(message) ?: 
+                    withdrawRegex.find(message)
+
+        if (match != null) {
+            val code = match.groupValues[1]
+            val amount = parseAmount(match.groupValues[2])
+            val party = match.groupValues[3]
+            val date = match.groupValues[4]
+            val time = match.groupValues[5]
+            val dateTime = parseDateTime(date, time)
+
+            val isIncome = message.contains("received") || message.contains("deposited")
+            val typePrefix = when {
+                message.contains("sent to") -> "Sent to"
+                message.contains("received from") -> "Received from"
+                message.contains("paid to") -> "Paid to"
+                message.contains("deposited") -> "Deposit from"
+                message.contains("withdrawn") -> "Withdrawn from"
+                else -> "Transaction with"
+            }
+
             return Transaction(
                 accountId = accountId,
-                isIncome = false,
+                isIncome = isIncome,
                 amount = amount,
                 transactionCost = cost,
-                category = "Transfer",
+                category = if (isIncome) "Income" else inferCategory(party),
                 dateTime = dateTime,
-                description = "Sent to $recipient (Ref: ${it.groupValues[1]})",
-                externalId = it.groupValues[1]
-            )
-        }
-
-        receivedRegex.find(message)?.let {
-            val amount = parseAmount(it.groupValues[2])
-            val sender = it.groupValues[3]
-            val dateTime = parseDateTime(it.groupValues[4], it.groupValues[5])
-            return Transaction(
-                accountId = accountId,
-                isIncome = true,
-                amount = amount,
-                transactionCost = cost,
-                category = "Income",
-                dateTime = dateTime,
-                description = "Received from $sender (Ref: ${it.groupValues[1]})",
-                externalId = it.groupValues[1]
-            )
-        }
-
-        paidRegex.find(message)?.let {
-            val amount = parseAmount(it.groupValues[2])
-            val recipient = it.groupValues[3]
-            val dateTime = parseDateTime(it.groupValues[4], it.groupValues[5])
-            return Transaction(
-                accountId = accountId,
-                isIncome = false,
-                amount = amount,
-                transactionCost = cost,
-                category = inferCategory(recipient),
-                dateTime = dateTime,
-                description = "Paid to $recipient (Ref: ${it.groupValues[1]})",
-                externalId = it.groupValues[1]
+                description = "$typePrefix $party (Ref: $code)",
+                externalId = code,
+                balance = balance
             )
         }
 
@@ -74,7 +74,8 @@ object MpesaParser {
     }
 
     fun parseBalance(message: String): Double? {
-        return parseAmount(balanceRegex.find(message)?.groupValues?.get(1)).takeIf { it > 0 || message.contains("balance is Ksh0.00") }
+        return balanceRegex.find(message)?.groupValues?.get(1)?.let { parseAmount(it) }
+            .takeIf { it != null && (it > 0 || message.contains("balance is Ksh0.00")) }
     }
 
     private fun parseAmount(value: String?): Double {
@@ -103,7 +104,7 @@ object MpesaParser {
             r.contains("airtel") || r.contains("safaricom") -> "Airtime"
             r.contains("supermarket") || r.contains("naivas") || r.contains("carrefour") || r.contains("quickmart") -> "Groceries"
             r.contains("restaurant") || r.contains("cafe") || r.contains("kfc") || r.contains("java") -> "Dining"
-            else -> "General"
+            else -> "Transfer"
         }
     }
 }
