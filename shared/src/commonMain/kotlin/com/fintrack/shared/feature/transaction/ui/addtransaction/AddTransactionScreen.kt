@@ -302,15 +302,11 @@ fun AddTransactionScreen(
                 .padding(bottom = paddingValues.calculateBottomPadding())
                 .padding(20.dp)
         ) {
-            SaveTransactionButton(
+            FinanceSaveButton(
                 saveState = saveState,
-                amount = amount,
-                category = category,
-                description = description,
-                selectedAccount = selectedAccount,
-                isIncome = isIncome,
+                isFormValid = amount.isNotBlank() && category != null && selectedAccount != null && description.isNotBlank(),
                 themeColor = themeColor,
-                isEditing = transactionId != null,
+                contentColor = if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White,
                 onSaveClick = { 
                     showNumpad = false
                     if (transactionId != null) {
@@ -335,7 +331,9 @@ fun AddTransactionScreen(
                             dateTime = dateTime
                         )
                     }
-                }
+                },
+                label = if (transactionId != null) "Update Transaction" else "Save Transaction",
+                successLabel = if (transactionId != null) "Updated" else "Saved"
             )
         }
 
@@ -538,47 +536,6 @@ fun DateTimeSelectionSection(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun SaveTransactionButton(
-    saveState: SaveState<Transaction>,
-    amount: String,
-    category: Category?,
-    description: String,
-    selectedAccount: Account?,
-    isIncome: Boolean,
-    themeColor: Color,
-    isEditing: Boolean = false,
-    onSaveClick: () -> Unit
-) {
-    val isFormValid = amount.isNotBlank() && category != null && selectedAccount != null && description.isNotBlank()
-    val isInProgress = saveState is SaveState.Loading
-    val isSuccess = saveState is SaveState.Success<*>
-
-    Button(
-        onClick = onSaveClick,
-        modifier = Modifier.fillMaxWidth().height(64.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isFormValid || isSuccess) themeColor else themeColor.copy(alpha = 0.5f),
-            contentColor = (if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White).let { if (isFormValid || isSuccess) it else it.copy(alpha = 0.5f) },
-            disabledContainerColor = if (isSuccess) themeColor else themeColor.copy(alpha = 0.5f),
-            disabledContentColor = if (isSuccess) (if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White) else (if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White).copy(alpha = 0.5f)
-        ),
-        enabled = !isInProgress && !isSuccess
-    ) {
-        if (isInProgress) {
-            CircularProgressIndicator(color = if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White, modifier = Modifier.size(22.dp))
-        } else if (isSuccess) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Default.CheckCircle, "Saved", tint = if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White, modifier = Modifier.size(20.dp))
-                Text(if (isEditing) "Updated" else "Saved", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-            }
-        } else {
-            Text(if (isEditing) "Update Transaction" else "Save Transaction", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         }
     }
 }

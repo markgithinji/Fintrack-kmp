@@ -122,6 +122,7 @@ import com.fintrack.shared.feature.core.ui.AnimatedNumber
 import com.fintrack.shared.feature.core.ui.FinanceAmountHeader
 import com.fintrack.shared.feature.core.ui.FinanceInputSection
 import com.fintrack.shared.feature.core.ui.FinanceNumpad
+import com.fintrack.shared.feature.core.ui.FinanceSaveButton
 import com.fintrack.shared.feature.core.ui.FinanceTypeSection
 import com.fintrack.shared.feature.core.ui.ThousandsSeparatorTransformation
 import com.fintrack.shared.feature.core.domain.SaveState
@@ -327,15 +328,17 @@ fun BudgetDetailScreen(
                 .padding(bottom = paddingValues.calculateBottomPadding())
                 .padding(20.dp)
         ) {
-            SaveBudgetButton(
+            FinanceSaveButton(
                 saveState = saveState,
-                validationState = validationState,
+                isFormValid = validationState is ValidationResult.Success,
                 themeColor = themeColor,
-                isExpense = formState.isExpense,
+                contentColor = if (formState.isExpense) Color.White else MaterialTheme.colorScheme.onTertiary,
                 onSaveClick = { 
                     showNumpad = false
                     viewModel.saveBudget() 
-                }
+                },
+                label = "Save Budget",
+                successLabel = "Saved"
             )
         }
 
@@ -659,64 +662,6 @@ fun AccountChip(
                 fontSize = 12.sp,
                 color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
             )
-        }
-    }
-}
-
-@Composable
-fun SaveBudgetButton(
-    saveState: SaveState<Budget>,
-    validationState: ValidationResult,
-    themeColor: Color,
-    isExpense: Boolean,
-    onSaveClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val isFormValid = validationState is ValidationResult.Success
-    val isInProgress = saveState is SaveState.Loading
-    val isSuccess = saveState is SaveState.Success<*>
-    val contentColor = if (isExpense) Color.White else MaterialTheme.colorScheme.onTertiary
-
-    Button(
-        onClick = onSaveClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(64.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isFormValid || isSuccess) themeColor else themeColor.copy(alpha = 0.5f),
-            contentColor = if (isFormValid || isSuccess) contentColor else contentColor.copy(alpha = 0.5f),
-            disabledContainerColor = if (isSuccess) themeColor else themeColor.copy(alpha = 0.5f),
-            disabledContentColor = if (isSuccess) contentColor else contentColor.copy(alpha = 0.5f)
-        ),
-        enabled = !isInProgress && !isSuccess
-    ) {
-        when (saveState) {
-            is SaveState.Loading -> {
-                CircularProgressIndicator(
-                    color = Color.White,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-
-            is SaveState.Success<*> -> {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = "Saved",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text("Saved", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                }
-            }
-
-            else -> {
-                Text("Save Budget", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-            }
         }
     }
 }
