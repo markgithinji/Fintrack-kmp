@@ -1,6 +1,8 @@
 package com.fintrack.shared.feature.profile
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -12,11 +14,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fintrack.shared.feature.core.data.domain.ApiException
+import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
+import com.fintrack.shared.feature.core.ui.CommonErrorState
+import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -30,8 +39,12 @@ fun ProfileScreen(
     onNavigateToEditProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
-    val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
+    val profileResult by viewModel.profileState.collectAsStateWithLifecycle()
     var showLogoutConfirmation by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.refreshProfile()
+    }
 
     if (showLogoutConfirmation) {
         ConfirmationDialog(
@@ -55,7 +68,7 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize(),
             contentPadding = PaddingValues(
-                top = topPadding + 48.dp, // Increased top space significantly
+                top = topPadding + 24.dp,
                 bottom = paddingValues.calculateBottomPadding() + 32.dp
             )
         ) {
@@ -69,10 +82,13 @@ fun ProfileScreen(
                 ) {
                     Box(contentAlignment = Alignment.BottomEnd) {
                         Surface(
-                            modifier = Modifier.size(120.dp), // Slightly larger avatar for presence
+                            modifier = Modifier
+                                .size(100.dp)
+                                .shadow(4.dp, CircleShape),
                             shape = CircleShape,
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            tonalElevation = 2.dp
+                            color = MaterialTheme.colorScheme.surface,
+                            tonalElevation = 2.dp,
+                            border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
                         ) {
                             Box(
                                 contentAlignment = Alignment.Center,
@@ -81,7 +97,7 @@ fun ProfileScreen(
                                 Icon(
                                     imageVector = Icons.Default.Person,
                                     contentDescription = null,
-                                    modifier = Modifier.size(64.dp),
+                                    modifier = Modifier.size(56.dp),
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                             }
@@ -90,40 +106,120 @@ fun ProfileScreen(
                         // Edit Icon Overlay
                         Surface(
                             modifier = Modifier
-                                .size(36.dp)
-                                .offset(x = (-4).dp, y = (-4).dp),
+                                .size(32.dp)
+                                .offset(x = (-2).dp, y = (-2).dp),
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.primary,
-                            onClick = onNavigateToEditProfile
+                            onClick = onNavigateToEditProfile,
+                            shadowElevation = 2.dp
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
                                     contentDescription = "Edit Profile",
-                                    modifier = Modifier.size(18.dp),
+                                    modifier = Modifier.size(16.dp),
                                     tint = MaterialTheme.colorScheme.onPrimary
                                 )
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(
-                        text = userProfile?.name ?: "Loading...",
-                        style = MaterialTheme.typography.headlineMedium, // Slightly larger typography
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    
-                    Text(
-                        text = userProfile?.email ?: "",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    when (val result = profileResult) {
+                        is com.fintrack.shared.feature.core.util.Result.Loading -> {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                AnimatedShimmerBox(
+                                    modifier = Modifier
+                                        .width(160.dp)
+                                        .height(26.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                )
+                                AnimatedShimmerBox(
+                                    modifier = Modifier
+                                        .width(200.dp)
+                                        .height(16.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Retrieving profile details...",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                        is com.fintrack.shared.feature.core.util.Result.Error -> {
+                            val error = result.exception
+                            val message = (error as? ApiException)?.getUserFriendlyMessage() 
+                                ?: error.message 
+                                ?: "We couldn't load your profile information right now."
+
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 16.dp),
+                                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(16.dp),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.2f))
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CloudOff,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Profile Unavailable",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                    Text(
+                                        text = message,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                    TextButton(
+                                        onClick = { viewModel.refreshProfile() },
+                                        contentPadding = PaddingValues(horizontal = 16.dp)
+                                    ) {
+                                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Try Again")
+                                    }
+                                }
+                            }
+                        }
+                        is com.fintrack.shared.feature.core.util.Result.Success -> {
+                            val user = result.data
+                            Text(
+                                text = user.name,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            
+                            Text(
+                                text = user.email,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
                 
-                Spacer(modifier = Modifier.height(48.dp)) // More space before management section
+                Spacer(modifier = Modifier.height(32.dp))
             }
 
             // Financial Management Section

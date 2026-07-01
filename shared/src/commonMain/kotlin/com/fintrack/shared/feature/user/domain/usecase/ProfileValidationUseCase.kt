@@ -6,18 +6,18 @@ class ProfileValidationUseCase {
 
     fun validateName(name: String): ValidationResult {
         return when {
-            name.isBlank() -> ValidationResult.Error("Name is required")
-            name.length < 2 -> ValidationResult.Error("Name must be at least 2 characters")
-            name.length > 50 -> ValidationResult.Error("Name must be less than 50 characters")
+            name.isBlank() -> ValidationResult.Error("Name cannot be empty.")
+            name.length < 2 -> ValidationResult.Error("Name is too short (minimum 2 characters).")
+            name.length > 50 -> ValidationResult.Error("Name is too long (maximum 50 characters).")
             else -> ValidationResult.Success
         }
     }
 
     fun validateEmail(email: String): ValidationResult {
         return when {
-            email.isBlank() -> ValidationResult.Error("Email is required")
-            !isValidEmail(email) -> ValidationResult.Error("Invalid email format")
-            email.length > 100 -> ValidationResult.Error("Email must be less than 100 characters")
+            email.isBlank() -> ValidationResult.Error("Email address is required.")
+            !isValidEmail(email) -> ValidationResult.Error("Please enter a valid email address.")
+            email.length > 100 -> ValidationResult.Error("Email is too long.")
             else -> ValidationResult.Success
         }
     }

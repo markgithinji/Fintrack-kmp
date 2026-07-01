@@ -1,5 +1,7 @@
 package com.fintrack.shared.feature.user.data
 
+import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.safeApiCall
 import com.fintrack.shared.feature.user.domain.model.User
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
@@ -14,16 +16,24 @@ class UserRepositoryImpl(
     override fun getUserProfile(): Flow<User?> = _userProfile.asStateFlow()
 
     override suspend fun refreshProfile() {
-        try {
-            val dto = api.getUserProfile()
-            _userProfile.value = User(name = dto.name, email = dto.email)
-        } catch (e: Exception) {
-            // Handle error or rethrow
+        when (val result = safeApiCall { api.getUserProfile() }) {
+            is Result.Success -> {
+                val dto = result.data
+                _userProfile.value = User(name = dto.name, email = dto.email)
+            }
+            is Result.Error -> throw result.exception
+            is Result.Loading -> {}
         }
     }
 
     override suspend fun updateProfile(name: String, email: String) {
-        val dto = api.updateProfile(name, email)
-        _userProfile.value = User(name = dto.name, email = dto.email)
+        when (val result = safeApiCall { api.updateProfile(name, email) }) {
+            is Result.Success -> {
+                val dto = result.data
+                _userProfile.value = User(name = dto.name, email = dto.email)
+            }
+            is Result.Error -> throw result.exception
+            is Result.Loading -> {}
+        }
     }
 }

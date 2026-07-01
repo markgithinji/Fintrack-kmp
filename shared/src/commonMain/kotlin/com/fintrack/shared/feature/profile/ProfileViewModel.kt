@@ -5,12 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.logger.KMPLogger
+import com.fintrack.shared.feature.core.logger.LogTags
 import com.fintrack.shared.feature.user.domain.model.User
 import com.fintrack.shared.feature.user.domain.usecase.GetUserProfileUseCase
 import com.fintrack.shared.feature.user.domain.usecase.ProfileValidationUseCase
 import com.fintrack.shared.feature.user.domain.usecase.UpdateProfileUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -23,12 +24,8 @@ class ProfileViewModel(
     private val validationUseCase: ProfileValidationUseCase
 ) : ViewModel() {
 
-    val userProfile: StateFlow<User?> = getUserProfileUseCase()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
-        )
+    private val _profileState = MutableStateFlow<Result<User>>(Result.Loading)
+    val profileState: StateFlow<Result<User>> = _profileState.asStateFlow()
 
     private val _editState = MutableStateFlow<SaveState<Unit>>(SaveState.Idle)
     val editState: StateFlow<SaveState<Unit>> = _editState.asStateFlow()
@@ -37,12 +34,13 @@ class ProfileViewModel(
     val formState: StateFlow<ProfileFormState> = _formState.asStateFlow()
 
     init {
-        refreshProfile()
+        // Collect from the repository flow and update our Result state
         viewModelScope.launch {
-            userProfile.collect { user ->
-                user?.let {
+            getUserProfileUseCase().collect { user ->
+               if (user != null) {
+                    _profileState.value = Result.Success(user)
                     _formState.update { state ->
-                        state.copy(name = it.name, email = it.email)
+                        state.copy(name = user.name, email = user.email)
                     }
                 }
             }
@@ -64,7 +62,7 @@ class ProfileViewModel(
         val nameResult = validationUseCase.validateName(name)
         val emailResult = validationUseCase.validateEmail(email)
 
-        if (nameResult is ValidationResult.Error || emailResult is ValidationResult.Error) {
+        if ((nameResult is ValidationResult.Error) || (emailResult is ValidationResult.Error)) {
             _formState.update {
                 it.copy(
                     nameError = (nameResult as? ValidationResult.Error)?.message,
@@ -79,6 +77,7 @@ class ProfileViewModel(
             when (val result = updateProfileUseCase(name, email)) {
                 is Result.Success -> {
                     _editState.value = SaveState.Success(Unit)
+                    // Success state update is handled by the userProfile collector
                 }
                 is Result.Error -> {
                     _editState.value = SaveState.Error(result.exception)
@@ -94,7 +93,14 @@ class ProfileViewModel(
 
     fun refreshProfile() {
         viewModelScope.launch {
-            getUserProfileUseCase.refresh()
+            if (_profileState.value !is Result.Success) {
+                _profileState.value = Result.Loading
+            }
+            try {
+                getUserProfileUseCase.refresh()
+            } catch (e: Exception) {
+                _profileState.value = Result.Error(e)
+            }
         }
     }
 }
