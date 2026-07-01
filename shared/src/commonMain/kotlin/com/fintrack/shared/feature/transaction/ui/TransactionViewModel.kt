@@ -72,6 +72,9 @@ class TransactionViewModel(
     private val _selectedTransaction = MutableStateFlow<Result<Transaction>>(Result.Loading)
     val selectedTransaction: StateFlow<Result<Transaction>> = _selectedTransaction
 
+    private val _importState = MutableStateFlow<Result<Unit>?>(null)
+    val importState: StateFlow<Result<Unit>?> = _importState
+
     private var lastLoadedRecentAccountId: String? = null
 
     init {
@@ -184,7 +187,10 @@ class TransactionViewModel(
             try {
                 val result = repo.addTransaction(transaction)
                 _saveState.value = when (result) {
-                    is Result.Success -> SaveState.Success(result.data)
+                    is Result.Success -> {
+                        globalRefreshManager.triggerRefresh()
+                        SaveState.Success(result.data)
+                    }
                     is Result.Error -> SaveState.Error(result.exception)
                     is Result.Loading -> SaveState.Loading
                 }
@@ -226,7 +232,10 @@ class TransactionViewModel(
             try {
                 val result = repo.updateTransaction(id, transaction)
                 _saveState.value = when (result) {
-                    is Result.Success -> SaveState.Success(result.data)
+                    is Result.Success -> {
+                        globalRefreshManager.triggerRefresh()
+                        SaveState.Success(result.data)
+                    }
                     is Result.Error -> SaveState.Error(result.exception)
                     is Result.Loading -> SaveState.Loading
                 }
@@ -259,7 +268,10 @@ class TransactionViewModel(
             try {
                 val result = repo.addTransaction(transaction)
                 _saveState.value = when (result) {
-                    is Result.Success -> SaveState.Success(result.data)
+                    is Result.Success -> {
+                        globalRefreshManager.triggerRefresh()
+                        SaveState.Success(result.data)
+                    }
                     is Result.Error -> SaveState.Error(result.exception)
                     is Result.Loading -> SaveState.Loading
                 }
@@ -317,14 +329,29 @@ class TransactionViewModel(
     fun deleteTransaction(id: String) {
         viewModelScope.launch {
             _deleteResult.value = Result.Loading
-            _deleteResult.value = repo.deleteTransaction(id)
+            val result = repo.deleteTransaction(id)
+            _deleteResult.value = result
+            if (result is Result.Success) {
+                globalRefreshManager.triggerRefresh()
+            }
         }
     }
 
     fun importMpesaTransactions() {
         viewModelScope.launch {
-            transactionImporter.importHistory()
+            _importState.value = Result.Loading
+            try {
+                transactionImporter.importHistory()
+                _importState.value = Result.Success(Unit)
+                globalRefreshManager.triggerRefresh()
+            } catch (e: Exception) {
+                _importState.value = Result.Error(e)
+            }
         }
+    }
+
+    fun resetImportState() {
+        _importState.value = null
     }
 
     fun resetDeleteResult() {

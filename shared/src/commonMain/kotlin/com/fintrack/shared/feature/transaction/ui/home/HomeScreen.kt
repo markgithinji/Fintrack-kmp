@@ -8,17 +8,21 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
 import com.example.compose.backgroundGray
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.core.util.Result
@@ -47,8 +51,87 @@ fun HomeScreen(
     val overviewResult by statsViewModel.overview.collectAsStateWithLifecycle()
     val categoryComparisonResult by statsViewModel.categoryComparisons.collectAsStateWithLifecycle()
     val isBalanceHidden by settingsViewModel.isBalanceHidden.collectAsStateWithLifecycle()
+    val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
     
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
+
+    LaunchedEffect(importState) {
+        if (importState is Result.Success) {
+            delay(1500)
+            transactionsViewModel.resetImportState()
+        }
+    }
+
+    if (importState != null) {
+        Dialog(
+            onDismissRequest = { 
+                if (importState !is Result.Loading) transactionsViewModel.resetImportState()
+            },
+            properties = DialogProperties(
+                dismissOnBackPress = importState !is Result.Loading,
+                dismissOnClickOutside = importState !is Result.Loading
+            )
+        ) {
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 6.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    when (importState) {
+                        is Result.Loading -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(48.dp),
+                                color = MaterialTheme.colorScheme.primary,
+                                strokeWidth = 4.dp
+                            )
+                            Text(
+                                text = "Syncing M-Pesa...",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+                        is Result.Success -> {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = Color(0xFF4CAF50), // Success green
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Text(
+                                text = "Sync Complete",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+                        is Result.Error -> {
+                            Icon(
+                                imageVector = Icons.Default.Error,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Text(
+                                text = "Sync Failed",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = (importState as Result.Error).exception.message ?: "Unknown error",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            TextButton(onClick = { transactionsViewModel.resetImportState() }) {
+                                Text("Dismiss")
+                            }
+                        }
+                        else -> {}
+                    }
+                }
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         if (accountsResult is Result.Error || (accountsResult is Result.Success && (accountsResult as Result.Success).data.isEmpty())) {
