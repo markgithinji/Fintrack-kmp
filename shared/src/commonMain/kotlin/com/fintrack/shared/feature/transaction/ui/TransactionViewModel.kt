@@ -75,6 +75,9 @@ class TransactionViewModel(
     private val _importState = MutableStateFlow<Result<Unit>?>(null)
     val importState: StateFlow<Result<Unit>?> = _importState
 
+    private val _importProgress = MutableStateFlow(0f)
+    val importProgress: StateFlow<Float> = _importProgress.asStateFlow()
+
     private var lastLoadedRecentAccountId: String? = null
 
     init {
@@ -340,8 +343,11 @@ class TransactionViewModel(
     fun importMpesaTransactions() {
         viewModelScope.launch {
             _importState.value = Result.Loading
+            _importProgress.value = 0f
             try {
-                transactionImporter.importHistory()
+                transactionImporter.importHistory { progress ->
+                    _importProgress.value = progress
+                }
                 _importState.value = Result.Success(Unit)
                 globalRefreshManager.triggerRefresh()
             } catch (e: Exception) {

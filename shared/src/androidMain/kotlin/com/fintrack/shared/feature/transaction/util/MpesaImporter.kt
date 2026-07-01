@@ -20,7 +20,8 @@ class MpesaImporter(
     private val logger = KMPLogger()
 
     @OptIn(ExperimentalTime::class)
-    override suspend fun importHistory(): Unit = withContext(Dispatchers.IO) {
+    override suspend fun importHistory(onProgress: (Float) -> Unit): Unit = withContext(Dispatchers.IO) {
+        onProgress(0.05f)
         val accountsResult = accountRepository.getAccounts()
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
         val accountId = accounts.find { it.isMpesa }?.id 
@@ -40,6 +41,7 @@ class MpesaImporter(
             val transactions = mutableListOf<Transaction>()
             var latestBalance: Double? = null
             var loggedCount = 0
+            val totalMessages = it.count
 
             while (it.moveToNext()) {
                 val body = it.getString(bodyIndex)
@@ -47,7 +49,6 @@ class MpesaImporter(
                 // Log the first 500 messages to help improve the parser
                 if (loggedCount < 500) {
                     logger.debug("MPESA_PARSER_DEBUG", "Message ${loggedCount + 1}: $body")
-                    loggedCount++
                 }
 
                 // Keep the first balance we find (latest message)
@@ -59,15 +60,26 @@ class MpesaImporter(
                 if (transaction != null) {
                     transactions.add(transaction)
                 }
+                
+                loggedCount++
+                if (loggedCount % 50 == 0) {
+                    // Update progress up to 30% during scanning
+                    onProgress(0.05f + (loggedCount.toFloat() / totalMessages) * 0.25f)
+                }
             }
 
             if (transactions.isNotEmpty()) {
+                onProgress(0.3f)
                 // We reverse to send oldest first
                 val reversedTransactions = transactions.reversed()
+                val chunks = reversedTransactions.chunked(100)
+                val totalChunks = chunks.size
                 
                 // Chunk the import to avoid "Internal Server Error" (often caused by large payloads)
-                reversedTransactions.chunked(100).forEach { chunk ->
+                chunks.forEachIndexed { index, chunk ->
                     transactionRepository.importMpesaTransactions(chunk)
+                    // Update progress from 30% to 90% during upload
+                    onProgress(0.3f + ((index + 1).toFloat() / totalChunks) * 0.6f)
                 }
             }
 
@@ -85,6 +97,7 @@ class MpesaImporter(
                     }
                 }
             }
+            onProgress(1.0f)
         }
         Unit
     }
