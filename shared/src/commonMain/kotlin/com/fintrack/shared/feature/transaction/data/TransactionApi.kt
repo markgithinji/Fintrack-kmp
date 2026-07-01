@@ -48,6 +48,20 @@ class TransactionApi(
         return response.result
     }
 
+    suspend fun addTransactions(requests: List<CreateTransactionRequest>): Unit {
+        client.post("$baseUrl/transactions/batch") {
+            contentType(ContentType.Application.Json)
+            setBody(requests)
+        }
+    }
+
+    suspend fun importMpesaTransactions(requests: List<CreateTransactionRequest>): Unit {
+        client.post("$baseUrl/transactions/mpesa") {
+            contentType(ContentType.Application.Json)
+            setBody(requests)
+        }
+    }
+
     suspend fun getTransaction(id: String): TransactionDto {
         val response: ApiResponse<TransactionDto> = client.get("$baseUrl/transactions/$id").body()
         return response.result

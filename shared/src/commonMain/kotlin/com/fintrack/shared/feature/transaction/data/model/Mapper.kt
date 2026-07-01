@@ -13,7 +13,8 @@ fun TransactionDto.toDomain(): Transaction =
         transactionCost = transactionCost,
         category = category,
         dateTime = dateTime,
-        description = description
+        description = description,
+        externalId = externalId
     )
 
 @OptIn(ExperimentalTime::class)
@@ -25,6 +26,7 @@ fun Transaction.toCreateRequest(): CreateTransactionRequest {
         transactionCost = this.transactionCost,
         category = this.category,
         dateTime = this.dateTime,
-        description = this.description
+        description = this.description,
+        externalId = this.externalId
     )
 }

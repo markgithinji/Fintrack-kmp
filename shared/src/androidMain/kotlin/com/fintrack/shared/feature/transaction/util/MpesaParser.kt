@@ -13,16 +13,17 @@ object MpesaParser {
     private val receivedRegex = """([A-Z0-9]{10}) Confirmed\. You have received Ksh([\d,]+\.\d{2}) from (.*) on (\d{1,2}/\d{1,2}/\d{2}) at (\d{1,2}:\d{2} [AP]M)\.""".toRegex()
     private val paidRegex = """([A-Z0-9]{10}) Confirmed\. Ksh([\d,]+\.\d{2}) paid to (.*) on (\d{1,2}/\d{1,2}/\d{2}) at (\d{1,2}:\d{2} [AP]M)\.""".toRegex()
     private val costRegex = """Transaction cost, Ksh([\d,]+\.\d{2})""".toRegex()
+    private val balanceRegex = """New M-PESA balance is Ksh([\d,]+\.\d{2})""".toRegex()
 
     private val dateFormat = SimpleDateFormat("dd/MM/yy h:mm a", Locale.ENGLISH)
 
     fun parse(message: String, accountId: String = "mpesa"): Transaction? {
         if (!message.contains("Confirmed") || !message.contains("Ksh")) return null
 
-        val cost = costRegex.find(message)?.groupValues?.get(1)?.replace(",", "")?.toDoubleOrNull() ?: 0.0
+        val cost = parseAmount(costRegex.find(message)?.groupValues?.get(1))
 
         sentRegex.find(message)?.let {
-            val amount = it.groupValues[2].replace(",", "").toDouble()
+            val amount = parseAmount(it.groupValues[2])
             val recipient = it.groupValues[3]
             val dateTime = parseDateTime(it.groupValues[4], it.groupValues[5])
             return Transaction(
@@ -33,11 +34,12 @@ object MpesaParser {
                 category = "Transfer",
                 dateTime = dateTime,
                 description = "Sent to $recipient (Ref: ${it.groupValues[1]})",
+                externalId = it.groupValues[1]
             )
         }
 
         receivedRegex.find(message)?.let {
-            val amount = it.groupValues[2].replace(",", "").toDouble()
+            val amount = parseAmount(it.groupValues[2])
             val sender = it.groupValues[3]
             val dateTime = parseDateTime(it.groupValues[4], it.groupValues[5])
             return Transaction(
@@ -48,11 +50,12 @@ object MpesaParser {
                 category = "Income",
                 dateTime = dateTime,
                 description = "Received from $sender (Ref: ${it.groupValues[1]})",
+                externalId = it.groupValues[1]
             )
         }
 
         paidRegex.find(message)?.let {
-            val amount = it.groupValues[2].replace(",", "").toDouble()
+            val amount = parseAmount(it.groupValues[2])
             val recipient = it.groupValues[3]
             val dateTime = parseDateTime(it.groupValues[4], it.groupValues[5])
             return Transaction(
@@ -63,10 +66,19 @@ object MpesaParser {
                 category = inferCategory(recipient),
                 dateTime = dateTime,
                 description = "Paid to $recipient (Ref: ${it.groupValues[1]})",
+                externalId = it.groupValues[1]
             )
         }
 
         return null
+    }
+
+    fun parseBalance(message: String): Double? {
+        return parseAmount(balanceRegex.find(message)?.groupValues?.get(1)).takeIf { it > 0 || message.contains("balance is Ksh0.00") }
+    }
+
+    private fun parseAmount(value: String?): Double {
+        return value?.replace(",", "")?.toDoubleOrNull() ?: 0.0
     }
 
     private fun parseDateTime(date: String, time: String): Instant {

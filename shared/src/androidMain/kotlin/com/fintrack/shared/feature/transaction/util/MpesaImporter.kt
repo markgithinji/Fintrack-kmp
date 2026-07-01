@@ -7,6 +7,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -15,6 +16,7 @@ class MpesaImporter(
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository
 ) : TransactionImporter {
+    @OptIn(ExperimentalTime::class)
     override suspend fun importHistory(): Unit = withContext(Dispatchers.IO) {
         val accountsResult = accountRepository.getAccounts()
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
@@ -22,11 +24,6 @@ class MpesaImporter(
             ?: accounts.find { it.name.lowercase() == "mpesa" }?.id 
             ?: "mpesa"
 
-        // Fetch existing transactions to avoid duplicates
-        val existingTransactionsResult = transactionRepository.getAllTransactions()
-        val existingDescriptions = (existingTransactionsResult as? Result.Success)?.data
-            ?.map { it.description }?.toSet() ?: emptySet()
-        
         val cursor = context.contentResolver.query(
             Telephony.Sms.Inbox.CONTENT_URI,
             arrayOf(Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS),
@@ -38,15 +35,48 @@ class MpesaImporter(
         cursor?.use {
             val bodyIndex = it.getColumnIndex(Telephony.Sms.Inbox.BODY)
             val transactions = mutableListOf<Transaction>()
+            var latestBalance: Double? = null
+
             while (it.moveToNext()) {
                 val body = it.getString(bodyIndex)
+                
+                // Keep the first balance we find (latest message)
+                if (latestBalance == null) {
+                    latestBalance = MpesaParser.parseBalance(body)
+                }
+
                 val transaction = MpesaParser.parse(body, accountId)
-                if (transaction != null && !existingDescriptions.contains(transaction.description)) {
+                if (transaction != null) {
                     transactions.add(transaction)
                 }
             }
+
             if (transactions.isNotEmpty()) {
-                transactionRepository.addTransactions(transactions)
+                transactionRepository.importMpesaTransactions(transactions)
+            }
+
+            // Correct account balance using an adjustment transaction if there's a discrepancy
+            if (latestBalance != null) {
+                val accountResult = accountRepository.getAccountById(accountId)
+                if (accountResult is Result.Success) {
+                    val account = accountResult.data
+                    val currentAppBalance = account.balance ?: 0.0
+                    val discrepancy = latestBalance - currentAppBalance
+                    
+                    if (discrepancy != 0.0) {
+                        transactionRepository.addTransaction(
+                            Transaction(
+                                accountId = accountId,
+                                isIncome = discrepancy > 0,
+                                amount = kotlin.math.abs(discrepancy),
+                                transactionCost = 0.0,
+                                category = "General",
+                                dateTime = kotlin.time.Clock.System.now(),
+                                description = "M-Pesa Balance Adjustment"
+                            )
+                        )
+                    }
+                }
             }
         }
         Unit

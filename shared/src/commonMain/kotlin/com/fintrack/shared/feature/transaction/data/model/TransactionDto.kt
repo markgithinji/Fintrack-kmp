@@ -13,5 +13,6 @@ data class TransactionDto @OptIn(ExperimentalTime::class) constructor(
     val transactionCost: Double = 0.0,
     val category: String,
     val dateTime: Instant,
-    val description: String? = null
+    val description: String? = null,
+    val externalId: String? = null
 )

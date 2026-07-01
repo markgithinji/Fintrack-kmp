@@ -98,7 +98,7 @@ fun HomeScreen(
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = null,
-                                tint = Color(0xFF4CAF50), // Success green
+                                tint = Color(0xFF4CAF50),
                                 modifier = Modifier.size(48.dp)
                             )
                             Text(

@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.transaction.domain.model
 
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -14,7 +13,8 @@ data class Transaction @OptIn(ExperimentalTime::class) constructor(
     val transactionCost: Double = 0.0,
     val category: String,
     val dateTime: Instant,
-    val description: String? = null
+    val description: String? = null,
+    val externalId: String? = null
 ) {
     /**
      * The final amount that impacts the account balance.
