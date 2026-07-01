@@ -120,6 +120,7 @@ import com.fintrack.shared.feature.core.data.domain.ApiException
 import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.ui.AnimatedNumber
 import com.fintrack.shared.feature.core.ui.FinanceAmountHeader
+import com.fintrack.shared.feature.core.ui.FinanceCategorySelection
 import com.fintrack.shared.feature.core.ui.FinanceInputSection
 import com.fintrack.shared.feature.core.ui.FinanceNumpad
 import com.fintrack.shared.feature.core.ui.FinanceSaveButton
@@ -137,7 +138,6 @@ import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.navigation.AppBarState
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
-import com.fintrack.shared.feature.transaction.ui.addtransaction.CategoryChip
 import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
@@ -303,11 +303,13 @@ fun BudgetDetailScreen(
                             onRetry = { accountsViewModel.reloadAccounts() }
                         )
 
-                        CategorySelectionSection(
-                            isExpense = formState.isExpense,
-                            selectedCategories = formState.selectedCategories,
+                        FinanceCategorySelection(
+                            label = "Categories",
                             categories = allCategories,
-                            onCategoryChange = { viewModel.setCategories(it) }
+                            selectedCategories = formState.selectedCategories,
+                            onCategorySelectionChange = { viewModel.setCategories(it) },
+                            isExpense = formState.isExpense,
+                            multiSelect = true
                         )
 
                         PeriodSelectionSection(
@@ -662,72 +664,6 @@ fun AccountChip(
                 fontSize = 12.sp,
                 color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
             )
-        }
-    }
-}
-
-@Composable
-fun CategorySelectionSection(
-    isExpense: Boolean,
-    selectedCategories: Set<Category>,
-    categories: List<Category>,
-    onCategoryChange: (Set<Category>) -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Categories", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp)
-        ) {
-            LazyHorizontalStaggeredGrid(
-                rows = StaggeredGridCells.Adaptive(48.dp),
-                horizontalItemSpacing = 8.dp,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(vertical = 8.dp)
-            ) {
-                val filteredCategories = categories.filter { it.isExpense == isExpense }
-
-                item {
-                    val allSelected = selectedCategories.size == filteredCategories.size
-                    CategoryChip(
-                        text = "All",
-                        icon = Icons.Default.SelectAll,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        selected = allSelected,
-                        onClick = {
-                            val newSelection = if (allSelected) {
-                                emptySet()
-                            } else {
-                                filteredCategories.toSet()
-                            }
-                            onCategoryChange(newSelection)
-                        }
-                    )
-                }
-
-                items(filteredCategories.size) { index ->
-                    val cat = filteredCategories[index]
-                    val selected = selectedCategories.contains(cat)
-                    CategoryChip(
-                        text = cat.name,
-                        icon = cat.toIcon(),
-                        color = cat.toColor(),
-                        selected = selected,
-                        onClick = {
-                            val newSelection =
-                                if (selected) selectedCategories - cat else selectedCategories + cat
-                            onCategoryChange(newSelection)
-                        }
-                    )
-                }
-            }
         }
     }
 }

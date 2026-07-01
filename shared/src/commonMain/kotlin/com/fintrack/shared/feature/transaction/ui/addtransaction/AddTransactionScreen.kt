@@ -237,11 +237,13 @@ fun AddTransactionScreen(
                     onRetry = { accountsViewModel.reloadAccounts() }
                 )
 
-                CategorySelectionSection(
-                    isIncome = isIncome,
-                    selectedCategory = category,
+                FinanceCategorySelection(
+                    label = "Category",
                     categories = allCategories,
-                    onCategorySelected = { transactionsViewModel.onCategoryChange(it) }
+                    selectedCategories = category?.let { setOf(it) } ?: emptySet(),
+                    onCategorySelectionChange = { transactionsViewModel.onCategoryChange(it.firstOrNull()) },
+                    isExpense = !isIncome,
+                    multiSelect = false
                 )
 
                 FinanceInputSection(
@@ -447,54 +449,6 @@ fun TransactionCostSection(
                 }
                 Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-        }
-    }
-}
-
-@Composable
-fun CategorySelectionSection(isIncome: Boolean, selectedCategory: Category?, categories: List<Category>, onCategorySelected: (Category?) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Category", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
-            modifier = Modifier.fillMaxWidth().height(180.dp)
-        ) {
-            LazyHorizontalStaggeredGrid(
-                rows = StaggeredGridCells.Adaptive(48.dp),
-                horizontalItemSpacing = 8.dp,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp),
-                modifier = Modifier.fillMaxSize().padding(vertical = 8.dp)
-            ) {
-                val filteredCategories = categories.filter { it.isExpense == !isIncome }
-                items(filteredCategories.size) { index ->
-                    val cat = filteredCategories[index]
-                    val selected = selectedCategory == cat
-                    CategoryChip(text = cat.name, icon = cat.toIcon(), color = cat.toColor(), selected = selected, onClick = { onCategorySelected(if (selected) null else cat) })
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun CategoryChip(text: String, icon: ImageVector, color: Color, selected: Boolean, onClick: () -> Unit) {
-    val animatedBgColor by animateColorAsState(targetValue = if (selected) color else MaterialTheme.colorScheme.surface, animationSpec = tween(300))
-    val animatedContentColor by animateColorAsState(targetValue = if (selected) (if (Category.incomeCategories.any { it.name == text }) MaterialTheme.colorScheme.onTertiary else Color.White) else color, animationSpec = tween(300))
-    val animatedTextColor by animateColorAsState(targetValue = if (selected) (if (Category.incomeCategories.any { it.name == text }) MaterialTheme.colorScheme.onTertiary else Color.White) else MaterialTheme.colorScheme.onSurface, animationSpec = tween(300))
-
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(14.dp),
-        color = animatedBgColor,
-        border = BorderStroke(width = 1.dp, color = if (selected) color else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
-        modifier = Modifier.graphicsLayer { scaleX = if (selected) 1.05f else 1f; scaleY = if (selected) 1.05f else 1f }
-    ) {
-        Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Icon(icon, null, tint = animatedContentColor, modifier = Modifier.size(18.dp))
-            Text(text, color = animatedTextColor, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
