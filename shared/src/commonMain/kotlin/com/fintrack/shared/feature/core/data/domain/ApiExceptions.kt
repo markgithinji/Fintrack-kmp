@@ -21,6 +21,8 @@ sealed class ApiException(open val details: String) : Exception(details) {
 
 enum class AuthErrorType {
     INVALID_CREDENTIALS,
+    USER_NOT_FOUND,
+    INVALID_PASSWORD,
     USER_ALREADY_EXISTS,
     WEAK_PASSWORD,
     SESSION_EXPIRED,
@@ -31,6 +33,8 @@ enum class AuthErrorType {
 fun ApiException.getUserFriendlyMessage(): String = when (this) {
     is ApiException.Auth -> when (type) {
         AuthErrorType.INVALID_CREDENTIALS -> "The email or password you entered is incorrect."
+        AuthErrorType.USER_NOT_FOUND -> "No account found with this email."
+        AuthErrorType.INVALID_PASSWORD -> "The password you entered is incorrect."
         AuthErrorType.USER_ALREADY_EXISTS -> "An account with this email already exists."
         AuthErrorType.WEAK_PASSWORD -> "Your password is too weak. Try a stronger one."
         AuthErrorType.SESSION_EXPIRED -> "Your session has expired. Please log in again."

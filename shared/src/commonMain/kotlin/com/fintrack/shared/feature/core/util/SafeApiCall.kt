@@ -134,6 +134,8 @@ private suspend fun handleClientException(e: ClientRequestException): ApiExcepti
 private fun mapToAuthException(message: String, errorCode: String): ApiException.Auth? {
     val type = when (errorCode) {
         "INVALID_CREDENTIALS" -> AuthErrorType.INVALID_CREDENTIALS
+        "USER_NOT_FOUND" -> AuthErrorType.USER_NOT_FOUND
+        "INVALID_PASSWORD" -> AuthErrorType.INVALID_PASSWORD
         "USER_ALREADY_EXISTS" -> AuthErrorType.USER_ALREADY_EXISTS
         "WEAK_PASSWORD" -> AuthErrorType.WEAK_PASSWORD
         "SESSION_EXPIRED" -> AuthErrorType.SESSION_EXPIRED
