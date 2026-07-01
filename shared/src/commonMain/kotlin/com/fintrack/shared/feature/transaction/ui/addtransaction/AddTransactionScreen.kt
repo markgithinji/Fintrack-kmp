@@ -244,9 +244,13 @@ fun AddTransactionScreen(
                     onCategorySelected = { transactionsViewModel.onCategoryChange(it) }
                 )
 
-                DescriptionInputSection(
-                    description = description,
-                    onDescriptionChange = { transactionsViewModel.onDescriptionChange(it) },
+                FinanceInputSection(
+                    label = "Description",
+                    value = description,
+                    onValueChange = { transactionsViewModel.onDescriptionChange(it) },
+                    placeholder = "Enter description",
+                    icon = Icons.AutoMirrored.Filled.Notes,
+                    singleLine = false,
                     onFocus = { showNumpad = false }
                 )
 
@@ -498,39 +502,11 @@ fun CategoryChip(text: String, icon: ImageVector, color: Color, selected: Boolea
 }
 
 @Composable
-fun DescriptionInputSection(description: String, onDescriptionChange: (String) -> Unit, onFocus: () -> Unit = {}) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Description", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            TextField(
-                value = description,
-                onValueChange = onDescriptionChange,
-                placeholder = { Text("Enter description") },
-                singleLine = false,
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth().onFocusChanged { if (it.isFocused) onFocus() },
-                leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                    cursorColor = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            )
-        }
-    }
-}
-
-@Composable
-fun DateTimeSelectionSection(dateTime: LocalDateTime, onDateClicked: () -> Unit, onTimeClicked: () -> Unit) {
+fun DateTimeSelectionSection(
+    dateTime: LocalDateTime,
+    onDateClicked: () -> Unit,
+    onTimeClicked: () -> Unit
+) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Date & Time", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(

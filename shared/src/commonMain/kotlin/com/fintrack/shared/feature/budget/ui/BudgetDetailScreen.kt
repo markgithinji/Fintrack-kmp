@@ -120,6 +120,7 @@ import com.fintrack.shared.feature.core.data.domain.ApiException
 import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.ui.AnimatedNumber
 import com.fintrack.shared.feature.core.ui.FinanceAmountHeader
+import com.fintrack.shared.feature.core.ui.FinanceInputSection
 import com.fintrack.shared.feature.core.ui.FinanceNumpad
 import com.fintrack.shared.feature.core.ui.FinanceTypeSection
 import com.fintrack.shared.feature.core.ui.ThousandsSeparatorTransformation
@@ -285,9 +286,12 @@ fun BudgetDetailScreen(
                             onTypeChange = { viewModel.setIsExpense(!it) }
                         )
 
-                        BudgetNameSection(
-                            name = formState.name,
-                            onNameChange = { viewModel.setName(it) },
+                        FinanceInputSection(
+                            label = "Budget Name",
+                            value = formState.name,
+                            onValueChange = { viewModel.setName(it) },
+                            placeholder = "Enter budget name",
+                            icon = Icons.Default.Edit,
                             onFocus = { showNumpad = false }
                         )
 
@@ -713,51 +717,6 @@ fun SaveBudgetButton(
             else -> {
                 Text("Save Budget", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
             }
-        }
-    }
-}
-
-@Composable
-fun BudgetNameSection(
-    name: String,
-    onNameChange: (String) -> Unit,
-    onFocus: () -> Unit = {}
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Budget Name", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            TextField(
-                value = name,
-                onValueChange = onNameChange,
-                placeholder = { Text("Enter budget name") },
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onFocusChanged { if (it.isFocused) onFocus() },
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.Edit,
-                        null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
-                },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                    cursorColor = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            )
         }
     }
 }
