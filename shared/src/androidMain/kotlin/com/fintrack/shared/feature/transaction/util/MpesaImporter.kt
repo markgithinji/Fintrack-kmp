@@ -8,7 +8,6 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -80,20 +79,9 @@ class MpesaImporter(
                     val currentAppBalance = account.balance ?: 0.0
                     val discrepancy = latestBalance - currentAppBalance
                     
-                    if (kotlin.math.abs(discrepancy) > 0.01) { // Use a small epsilon for double comparison
-                        transactionRepository.addTransaction(
-                            Transaction(
-                                accountId = accountId,
-                                isIncome = discrepancy > 0,
-                                amount = kotlin.math.abs(discrepancy),
-                                transactionCost = 0.0,
-                                category = "General",
-                                // Use 1s ago to avoid future date validation issues with backend clock skew
-                                dateTime = kotlin.time.Clock.System.now().minus(1.seconds),
-                                description = "M-Pesa Balance Adjustment",
-                                balance = latestBalance // Critical: set the balance here!
-                            )
-                        )
+                    if (kotlin.math.abs(discrepancy) > 0.01) {
+                        // Silent update: Update the account balance directly instead of creating an adjustment transaction
+                        accountRepository.addOrUpdateAccount(account.copy(balance = latestBalance))
                     }
                 }
             }

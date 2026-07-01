@@ -4,12 +4,14 @@ import com.fintrack.shared.feature.account.domain.model.Account
 
 fun Account.toCreateRequest(): CreateAccountRequest = CreateAccountRequest(
     name = this.name,
-    isMpesa = this.isMpesa
+    isMpesa = this.isMpesa,
+    balance = this.balance
 )
 
 fun Account.toUpdateRequest(): UpdateAccountRequest = UpdateAccountRequest(
     name = this.name,
-    isMpesa = this.isMpesa
+    isMpesa = this.isMpesa,
+    balance = this.balance
 )
 
 fun AccountDto.toDomain(): Account = Account(
