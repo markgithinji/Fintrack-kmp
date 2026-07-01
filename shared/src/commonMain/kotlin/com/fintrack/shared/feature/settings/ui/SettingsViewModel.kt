@@ -16,6 +16,7 @@ import com.fintrack.shared.feature.auth.domain.usecase.ChangePasswordUseCase
 import com.fintrack.shared.feature.auth.domain.usecase.ChangePasswordValidationUseCase
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
+import com.fintrack.shared.feature.user.domain.usecase.DeleteAccountUseCase
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalTime
@@ -28,6 +29,7 @@ class SettingsViewModel(
     private val notificationService: NotificationService,
     private val changePasswordUseCase: ChangePasswordUseCase,
     private val validationUseCase: ChangePasswordValidationUseCase,
+    private val deleteAccountUseCase: DeleteAccountUseCase,
 ) : ViewModel() {
 
     val theme: StateFlow<AppTheme> = settingsDataSource.theme
@@ -266,6 +268,47 @@ class SettingsViewModel(
 
     fun resetClearDataState() {
         _clearDataState.value = SaveState.Idle
+    }
+
+    private val _deleteAccountState = MutableStateFlow<SaveState<Unit>>(SaveState.Idle)
+    val deleteAccountState: StateFlow<SaveState<Unit>> = _deleteAccountState.asStateFlow()
+
+    fun deleteAccount() {
+        viewModelScope.launch {
+            val authResult = biometricAuthenticator.authenticate(
+                title = "Delete Account",
+                subtitle = "This will permanently delete your account and all data"
+            )
+
+            when (authResult) {
+                is BiometricResult.Success -> {
+                    _deleteAccountState.value = SaveState.Loading
+                    val result = deleteAccountUseCase()
+                    if (result is Result.Error) {
+                        _deleteAccountState.value = SaveState.Error(result.exception)
+                        _error.value = "Failed to delete account"
+                    } else {
+                        _deleteAccountState.value = SaveState.Success(Unit)
+                    }
+                }
+                is BiometricResult.Error -> {
+                    _error.value = authResult.message
+                }
+                BiometricResult.NotAvailable -> {
+                    _deleteAccountState.value = SaveState.Loading
+                    val result = deleteAccountUseCase()
+                    if (result is Result.Error) {
+                        _deleteAccountState.value = SaveState.Error(result.exception)
+                    } else {
+                        _deleteAccountState.value = SaveState.Success(Unit)
+                    }
+                }
+            }
+        }
+    }
+
+    fun resetDeleteAccountState() {
+        _deleteAccountState.value = SaveState.Idle
     }
 
     fun clearError() {

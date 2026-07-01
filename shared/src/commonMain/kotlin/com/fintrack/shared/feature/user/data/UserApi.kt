@@ -4,6 +4,7 @@ import com.fintrack.shared.feature.core.data.domain.ApiResponse
 import com.fintrack.shared.feature.user.data.model.UserDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -25,5 +26,9 @@ class UserApi(
             setBody(UserDto(name = name, email = email))
         }.body()
         return response.result
+    }
+
+    suspend fun deleteUser() {
+        client.delete("$baseUrl/users/me")
     }
 }

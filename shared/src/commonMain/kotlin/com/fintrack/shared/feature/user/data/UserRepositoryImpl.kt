@@ -36,4 +36,9 @@ class UserRepositoryImpl(
             is Result.Loading -> {}
         }
     }
+
+    override suspend fun deleteAccount(): Result<Unit> = safeApiCall {
+        api.deleteUser()
+        _userProfile.value = null
+    }
 }

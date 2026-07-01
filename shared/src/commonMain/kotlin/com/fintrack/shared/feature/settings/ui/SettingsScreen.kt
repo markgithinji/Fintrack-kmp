@@ -56,12 +56,14 @@ fun SettingsScreen(
     val changePasswordFormState by viewModel.changePasswordFormState.collectAsStateWithLifecycle()
     val changePasswordState by viewModel.changePasswordState.collectAsStateWithLifecycle()
     val clearDataState by viewModel.clearDataState.collectAsStateWithLifecycle()
+    val deleteAccountState by viewModel.deleteAccountState.collectAsStateWithLifecycle()
     
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showTimeFormatDialog by remember { mutableStateOf(false) }
     var showTimePickerDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var showDeleteAccountDialog by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
@@ -230,6 +232,21 @@ fun SettingsScreen(
                             iconTint = MaterialTheme.colorScheme.error,
                             onClick = { showDeleteConfirmDialog = true }
                         )
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+
+                        SettingsItem(
+                            title = "Delete Account",
+                            subtitle = "Permanently delete your account",
+                            icon = Icons.Default.PersonRemove,
+                            iconContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f),
+                            iconTint = MaterialTheme.colorScheme.error,
+                            onClick = { showDeleteAccountDialog = true }
+                        )
                     }
                     
                     SettingsSection(title = "About") {
@@ -339,6 +356,27 @@ fun SettingsScreen(
             onDismiss = {
                 showDeleteConfirmDialog = false
                 viewModel.resetClearDataState()
+            }
+        )
+    }
+
+    if (showDeleteAccountDialog) {
+        ConfirmationDialog(
+            title = "Delete Account",
+            message = "Are you sure you want to delete your account? This will permanently remove all your data, including accounts, transactions, and budgets. This action cannot be undone.",
+            confirmLabel = "Delete Forever",
+            isDestructive = true,
+            isLoading = deleteAccountState is SaveState.Loading,
+            isSuccess = deleteAccountState is SaveState.Success,
+            successTitle = "Account Deleted",
+            successMessage = "Your account and all associated data have been permanently deleted.",
+            autoDismiss = false,
+            onConfirm = {
+                viewModel.deleteAccount()
+            },
+            onDismiss = {
+                showDeleteAccountDialog = false
+                viewModel.resetDeleteAccountState()
             }
         )
     }

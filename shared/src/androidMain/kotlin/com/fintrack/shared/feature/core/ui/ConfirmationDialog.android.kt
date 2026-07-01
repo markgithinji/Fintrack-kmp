@@ -94,26 +94,10 @@ actual fun ConfirmationDialog(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                Row(
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (!isSuccess) {
-                        TextButton(
-                            onClick = onDismiss,
-                            enabled = !isLoading,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text(
-                                text = cancelLabel,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
-
                     Button(
                         onClick = {
                             if (isSuccess) {
@@ -127,7 +111,7 @@ actual fun ConfirmationDialog(
                         },
                         enabled = !isLoading,
                         modifier = Modifier
-                            .weight(1f)
+                            .fillMaxWidth()
                             .height(48.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
@@ -147,7 +131,25 @@ actual fun ConfirmationDialog(
                         } else {
                             Text(
                                 text = if (isSuccess) "Close" else confirmLabel,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1
+                            )
+                        }
+                    }
+
+                    if (!isSuccess) {
+                        TextButton(
+                            onClick = onDismiss,
+                            enabled = !isLoading,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = cancelLabel,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1
                             )
                         }
                     }
