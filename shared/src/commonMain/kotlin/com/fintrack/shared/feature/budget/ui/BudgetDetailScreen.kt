@@ -170,6 +170,7 @@ fun BudgetDetailScreen(
     val formState by viewModel.formState.collectAsStateWithLifecycle()
     val allCategories by viewModel.categories.collectAsStateWithLifecycle()
     val validationState by viewModel.validationState.collectAsStateWithLifecycle()
+    val validationError by viewModel.validationError.collectAsStateWithLifecycle()
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
 
     var showNumpad by remember { mutableStateOf(false) }
@@ -412,6 +413,17 @@ fun BudgetDetailScreen(
                     .padding(bottom = paddingValues.calculateBottomPadding() + 84.dp)
             )
         }
+
+        if (validationError != null) {
+            MaterialToast(
+                message = validationError!!,
+                isError = true,
+                onDismiss = { viewModel.clearValidationError() },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = paddingValues.calculateBottomPadding() + 84.dp)
+            )
+        }
     }
 }
 
@@ -604,15 +616,11 @@ private fun computeInitialFormState(
         BudgetFormState(
             name = "",
             amount = "",
-            selectedCategories = if (firstExpenseCategory != null) {
-                setOf(firstExpenseCategory)
-            } else {
-                emptySet()
-            },
+            selectedCategories = emptySet(),
             isExpense = true,
             startDate = today,
             endDate = today.plus(DatePeriod(months = 1)),
-            selectedAccount = accountsData.firstOrNull()
+            selectedAccount = null
         )
     } else {
         when (selectedBudgetResult) {
@@ -837,6 +845,7 @@ fun SaveBudgetButton(
     val isFormValid = validationState is ValidationResult.Success
     val isInProgress = saveState is SaveState.Loading
     val isSuccess = saveState is SaveState.Success<*>
+    val contentColor = if (isExpense) Color.White else MaterialTheme.colorScheme.onTertiary
 
     Button(
         onClick = onSaveClick,
@@ -845,13 +854,12 @@ fun SaveBudgetButton(
             .height(64.dp),
         shape = RoundedCornerShape(24.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = themeColor,
-            contentColor = if (isExpense) Color.White else MaterialTheme.colorScheme.onTertiary,
+            containerColor = if (isFormValid || isSuccess) themeColor else themeColor.copy(alpha = 0.5f),
+            contentColor = if (isFormValid || isSuccess) contentColor else contentColor.copy(alpha = 0.5f),
             disabledContainerColor = if (isSuccess) themeColor else themeColor.copy(alpha = 0.5f),
-            disabledContentColor = if (isSuccess) Color.White else Color.White.copy(alpha = 0.5f)
+            disabledContentColor = if (isSuccess) contentColor else contentColor.copy(alpha = 0.5f)
         ),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-        enabled = !isInProgress && !isSuccess && isFormValid
+        enabled = !isInProgress && !isSuccess
     ) {
         when (saveState) {
             is SaveState.Loading -> {

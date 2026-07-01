@@ -56,6 +56,9 @@ class BudgetViewModel(
     private val _selectedBudget = MutableStateFlow<Result<BudgetWithStatus>>(Result.Loading)
     val selectedBudget: StateFlow<Result<BudgetWithStatus>> = _selectedBudget
 
+    private val _validationError = MutableStateFlow<String?>(null)
+    val validationError: StateFlow<String?> = _validationError
+
     private val _formState = MutableStateFlow(BudgetFormState())
     val formState: StateFlow<BudgetFormState> = _formState
 
@@ -178,11 +181,12 @@ class BudgetViewModel(
         // Handle validation result with when statement
         when (validation) {
             is ValidationResult.Error -> {
-                _saveState.value = SaveState.Error(IllegalArgumentException(validation.message))
+                _validationError.value = validation.message
                 return
             }
 
             is ValidationResult.Success -> {
+                _validationError.value = null
                 // Continue with saving
                 viewModelScope.launch {
                     _saveState.value = SaveState.Loading
@@ -233,5 +237,9 @@ class BudgetViewModel(
 
     fun resetDeleteResult() {
         _deleteResult.value = null
+    }
+
+    fun clearValidationError() {
+        _validationError.value = null
     }
 }

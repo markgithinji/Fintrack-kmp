@@ -682,7 +682,6 @@ fun SaveTransactionButton(
             disabledContainerColor = if (isSuccess) themeColor else themeColor.copy(alpha = 0.5f),
             disabledContentColor = if (isSuccess) (if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White) else (if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White).copy(alpha = 0.5f)
         ),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),
         enabled = !isInProgress && !isSuccess
     ) {
         if (isInProgress) {
