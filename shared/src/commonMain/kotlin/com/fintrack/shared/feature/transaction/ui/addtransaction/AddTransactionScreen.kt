@@ -57,16 +57,18 @@ import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import kotlinx.coroutines.delay
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlin.time.ExperimentalTime
 
 enum class NumpadTarget {
     Amount, TransactionCost
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class, ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class, ExperimentalTime::class)
 @Composable
 fun AddTransactionScreen(
     transactionId: String? = null,
@@ -95,9 +97,7 @@ fun AddTransactionScreen(
 
     var isIncome by remember { mutableStateOf(false) }
     var dateTime by remember {
-        mutableStateOf(
-            Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-        )
+        mutableStateOf(Clock.System.now())
     }
 
     var showDatePicker by remember { mutableStateOf(false) }
@@ -257,7 +257,7 @@ fun AddTransactionScreen(
                 )
 
                 DateTimeSelectionSection(
-                    dateTime = dateTime,
+                    dateTime = dateTime.toLocalDateTime(TimeZone.currentSystemDefault()),
                     onDateClicked = { showDatePicker = true },
                     onTimeClicked = { showTimePicker = true }
                 )
@@ -373,10 +373,11 @@ fun AddTransactionScreen(
         }
 
         if (showDatePicker) {
+            val localDateTime = dateTime.toLocalDateTime(TimeZone.currentSystemDefault())
             FintrackDatePickerDialog(
-                initialDate = dateTime.date,
+                initialDate = localDateTime.date,
                 onDateSelected = { selectedDate ->
-                    dateTime = LocalDateTime(date = selectedDate, time = dateTime.time)
+                    dateTime = LocalDateTime(date = selectedDate, time = localDateTime.time).toInstant(TimeZone.currentSystemDefault())
                     showDatePicker = false
                 },
                 onDismiss = { showDatePicker = false }
@@ -384,10 +385,11 @@ fun AddTransactionScreen(
         }
 
         if (showTimePicker) {
+            val localDateTime = dateTime.toLocalDateTime(TimeZone.currentSystemDefault())
             FintrackTimePickerDialog(
-                initialTime = dateTime.time,
+                initialTime = localDateTime.time,
                 onTimeSelected = { selectedTime ->
-                    dateTime = LocalDateTime(date = dateTime.date, time = selectedTime)
+                    dateTime = LocalDateTime(date = localDateTime.date, time = selectedTime).toInstant(TimeZone.currentSystemDefault())
                     showTimePicker = false
                 },
                 onDismiss = { showTimePicker = false }

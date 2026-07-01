@@ -43,8 +43,11 @@ import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalTime::class)
 @Composable
 fun TransactionItem(
     transaction: Transaction,
@@ -57,7 +60,7 @@ fun TransactionItem(
         isExpense = !transaction.isIncome
     )
     val amountColor = if (transaction.isIncome) GreenIncome else PinkExpense
-    val formattedDate = transaction.dateTime.date.formatAsShortDate()
+    val formattedDate = transaction.dateTime.toLocalDateTime(TimeZone.currentSystemDefault()).date.formatAsShortDate()
     val sharedTransitionScope = LocalSharedTransitionScope.current
 
     Card(

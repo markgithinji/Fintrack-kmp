@@ -26,9 +26,10 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDateTime
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
-@OptIn(FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalTime::class)
 class TransactionViewModel(
     private val repo: TransactionRepository,
     private val validateTransactionUseCase: ValidateTransactionUseCase,
@@ -158,7 +159,7 @@ class TransactionViewModel(
         category: Category?,
         description: String,
         selectedAccount: Account?,
-        dateTime: LocalDateTime
+        dateTime: Instant
     ) {
         // Validate first
         if (!validateTransaction(amount, transactionCost, description, category, selectedAccount)) {
@@ -201,7 +202,7 @@ class TransactionViewModel(
         category: Category?,
         description: String,
         selectedAccount: Account?,
-        dateTime: LocalDateTime
+        dateTime: Instant
     ) {
         // Validate first
         if (!validateTransaction(amount, transactionCost, description, category, selectedAccount)) {

@@ -1,10 +1,13 @@
 package com.fintrack.shared.feature.transaction.util
 
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
-import kotlinx.datetime.LocalDateTime
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+@OptIn(ExperimentalTime::class)
 object MpesaParser {
     private val sentRegex = """([A-Z0-9]{10}) Confirmed\. Ksh([\d,]+\.\d{2}) sent to (.*) on (\d{1,2}/\d{1,2}/\d{2}) at (\d{1,2}:\d{2} [AP]M)\.""".toRegex()
     private val receivedRegex = """([A-Z0-9]{10}) Confirmed\. You have received Ksh([\d,]+\.\d{2}) from (.*) on (\d{1,2}/\d{1,2}/\d{2}) at (\d{1,2}:\d{2} [AP]M)\.""".toRegex()
@@ -29,7 +32,7 @@ object MpesaParser {
                 transactionCost = cost,
                 category = "Transfer",
                 dateTime = dateTime,
-                description = "Sent to $recipient (Ref: ${it.groupValues[1]})"
+                description = "Sent to $recipient (Ref: ${it.groupValues[1]})",
             )
         }
 
@@ -44,7 +47,7 @@ object MpesaParser {
                 transactionCost = cost,
                 category = "Income",
                 dateTime = dateTime,
-                description = "Received from $sender (Ref: ${it.groupValues[1]})"
+                description = "Received from $sender (Ref: ${it.groupValues[1]})",
             )
         }
 
@@ -59,39 +62,24 @@ object MpesaParser {
                 transactionCost = cost,
                 category = inferCategory(recipient),
                 dateTime = dateTime,
-                description = "Paid to $recipient (Ref: ${it.groupValues[1]})"
+                description = "Paid to $recipient (Ref: ${it.groupValues[1]})",
             )
         }
 
         return null
     }
 
-    private fun parseDateTime(date: String, time: String): LocalDateTime {
+    private fun parseDateTime(date: String, time: String): Instant {
         return try {
             val dateStr = "$date $time"
             val parsedDate = dateFormat.parse(dateStr)
-            val cal = java.util.Calendar.getInstance()
             if (parsedDate != null) {
-                cal.time = parsedDate
-                LocalDateTime(
-                    cal.get(java.util.Calendar.YEAR),
-                    cal.get(java.util.Calendar.MONTH) + 1,
-                    cal.get(java.util.Calendar.DAY_OF_MONTH),
-                    cal.get(java.util.Calendar.HOUR_OF_DAY),
-                    cal.get(java.util.Calendar.MINUTE)
-                )
+                Instant.fromEpochMilliseconds(parsedDate.time)
             } else {
-                throw Exception("Parse failed")
+                Clock.System.now()
             }
-        } catch (e: Exception) {
-            val now = java.util.Calendar.getInstance()
-            LocalDateTime(
-                now.get(java.util.Calendar.YEAR),
-                now.get(java.util.Calendar.MONTH) + 1,
-                now.get(java.util.Calendar.DAY_OF_MONTH),
-                now.get(java.util.Calendar.HOUR_OF_DAY),
-                now.get(java.util.Calendar.MINUTE)
-            )
+        } catch (_: Exception) {
+            Clock.System.now()
         }
     }
 

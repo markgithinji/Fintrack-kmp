@@ -35,7 +35,10 @@ import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -72,7 +75,7 @@ fun TransactionListScreen(
     )
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalTime::class)
 @Composable
 private fun TransactionListContent(
     transactionCounts: Result<TransactionCountSummary>,
@@ -156,12 +159,16 @@ private fun TransactionListContent(
                         val transaction = transactions[index]
                         
                         if (transaction != null) {
+                            val timeZone = TimeZone.currentSystemDefault()
+                            val transactionDate = transaction.dateTime.toLocalDateTime(timeZone).date
+                            
                             // Show date header if it's the first item or the date has changed
-                            val showHeader = index == 0 || (index > 0 && transactions[index - 1]?.dateTime?.date != transaction.dateTime.date)
+                            val prevTransaction = if (index > 0) transactions[index - 1] else null
+                            val showHeader = index == 0 || (prevTransaction != null && prevTransaction.dateTime.toLocalDateTime(timeZone).date != transactionDate)
                             
                             if (showHeader) {
                                 DateHeader(
-                                    dateString = transaction.dateTime.date.formatAsHeaderDate(),
+                                    dateString = transactionDate.formatAsHeaderDate(),
                                     modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
                                 )
                             }
