@@ -99,12 +99,13 @@ fun SettingsScreen(
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(paddingValues)
-                    .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(bottom = 24.dp)
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    top = innerPadding.calculateTopPadding() + paddingValues.calculateTopPadding(),
+                    bottom = innerPadding.calculateBottomPadding() + paddingValues.calculateBottomPadding() + 24.dp,
+                    start = 16.dp,
+                    end = 16.dp
+                )
             ) {
                 item {
                     SettingsSection(title = "General") {
@@ -834,7 +835,11 @@ fun SettingsSection(
         Card(
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            ),
+            border = BorderStroke(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
             ),
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -852,7 +857,7 @@ fun SettingsItem(
     title: String,
     subtitle: String,
     icon: ImageVector,
-    iconContainerColor: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+    iconContainerColor: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
     iconTint: Color = MaterialTheme.colorScheme.primary,
     onClick: () -> Unit
 ) {
@@ -929,7 +934,7 @@ fun SettingsToggleItem(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
