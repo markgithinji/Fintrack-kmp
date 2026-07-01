@@ -121,6 +121,7 @@ import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.ui.AnimatedNumber
 import com.fintrack.shared.feature.core.ui.FinanceAmountHeader
 import com.fintrack.shared.feature.core.ui.FinanceNumpad
+import com.fintrack.shared.feature.core.ui.FinanceTypeSection
 import com.fintrack.shared.feature.core.ui.ThousandsSeparatorTransformation
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
@@ -135,7 +136,6 @@ import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.navigation.AppBarState
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.transaction.ui.addtransaction.CategoryChip
-import com.fintrack.shared.feature.transaction.ui.addtransaction.TypeToggleButton
 import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
@@ -280,10 +280,9 @@ fun BudgetDetailScreen(
                             .padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
-                        BudgetTypeSection(
-                            isExpense = formState.isExpense,
-                            onExpenseChange = { viewModel.setIsExpense(it) },
-                            themeColor = themeColor
+                        FinanceTypeSection(
+                            isIncome = !formState.isExpense,
+                            onTypeChange = { viewModel.setIsExpense(!it) }
                         )
 
                         BudgetNameSection(
@@ -715,37 +714,6 @@ fun SaveBudgetButton(
                 Text("Save Budget", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
             }
         }
-    }
-}
-
-@Composable
-fun BudgetTypeSection(
-    isExpense: Boolean,
-    onExpenseChange: (Boolean) -> Unit,
-    themeColor: Color
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        TypeToggleButton(
-            text = "Expense",
-            isSelected = isExpense,
-            selectedColor = PinkExpense,
-            modifier = Modifier.weight(1f),
-            onClick = { onExpenseChange(true) }
-        )
-        TypeToggleButton(
-            text = "Income",
-            isSelected = !isExpense,
-            selectedColor = GreenIncome,
-            modifier = Modifier.weight(1f),
-            onClick = { onExpenseChange(false) }
-        )
     }
 }
 

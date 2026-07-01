@@ -217,10 +217,9 @@ fun AddTransactionScreen(
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                TransactionTypeSection(
+                FinanceTypeSection(
                     isIncome = isIncome,
-                    onIncomeChange = { isIncome = it },
-                    themeColor = themeColor
+                    onTypeChange = { isIncome = it }
                 )
 
                 TransactionCostSection(
@@ -418,35 +417,10 @@ fun AddTransactionScreen(
 }
 
 @Composable
-fun TransactionTypeSection(
-    isIncome: Boolean,
-    onIncomeChange: (Boolean) -> Unit,
-    themeColor: Color
+fun TransactionCostSection(
+    cost: String,
+    onClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)).padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        TypeToggleButton(text = "Expense", isSelected = !isIncome, selectedColor = PinkExpense, modifier = Modifier.weight(1f), onClick = { onIncomeChange(false) })
-        TypeToggleButton(text = "Income", isSelected = isIncome, selectedColor = GreenIncome, modifier = Modifier.weight(1f), onClick = { onIncomeChange(true) })
-    }
-}
-
-@Composable
-fun TypeToggleButton(text: String, isSelected: Boolean, selectedColor: Color, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    val backgroundColor by animateColorAsState(targetValue = if (isSelected) selectedColor else Color.Transparent, animationSpec = tween(300))
-    val contentColor by animateColorAsState(targetValue = if (isSelected) (if (text.lowercase() == "income") MaterialTheme.colorScheme.onTertiary else Color.White) else MaterialTheme.colorScheme.onSurfaceVariant, animationSpec = tween(300))
-
-    Box(
-        modifier = modifier.height(48.dp).clip(RoundedCornerShape(16.dp)).background(backgroundColor).clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = text, color = contentColor, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, fontSize = 15.sp)
-    }
-}
-
-@Composable
-fun TransactionCostSection(cost: String, onClick: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Transaction Cost", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
@@ -469,7 +443,7 @@ fun TransactionCostSection(cost: String, onClick: () -> Unit) {
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
-                Text(LocalCurrency.current.symbol, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
