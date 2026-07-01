@@ -88,7 +88,40 @@ fun RegisterScreen(
     val focusManager = LocalFocusManager.current
     val nameFocusRequester = remember { FocusRequester() }
 
-    // Toast message state
+    // Validation state
+    var mostRecentValidationError by remember { mutableStateOf<String?>(null) }
+    
+    // Track which fields have been interacted with to avoid showing errors on initial load
+    var nameTouched by remember { mutableStateOf(false) }
+    var emailTouched by remember { mutableStateOf(false) }
+    var passwordTouched by remember { mutableStateOf(false) }
+    var confirmPasswordTouched by remember { mutableStateOf(false) }
+
+    // Consolidate validation errors for single display
+    val validationErrorMessage = remember(registerFormState, mostRecentValidationError) {
+        val allErrors = listOfNotNull(
+            registerFormState.nameError,
+            registerFormState.emailError,
+            registerFormState.passwordError,
+            registerFormState.confirmPasswordError
+        )
+        
+        if (allErrors.isEmpty()) {
+            null
+        } else if (allErrors.contains(mostRecentValidationError)) {
+            mostRecentValidationError
+        } else {
+            allErrors.firstOrNull()
+        }
+    }
+
+    // Update most recent error when form state errors change
+    LaunchedEffect(registerFormState.nameError) { registerFormState.nameError?.let { mostRecentValidationError = it } }
+    LaunchedEffect(registerFormState.emailError) { registerFormState.emailError?.let { mostRecentValidationError = it } }
+    LaunchedEffect(registerFormState.passwordError) { registerFormState.passwordError?.let { mostRecentValidationError = it } }
+    LaunchedEffect(registerFormState.confirmPasswordError) { registerFormState.confirmPasswordError?.let { mostRecentValidationError = it } }
+
+    // Toast message state (for server errors)
     var toastMessage by remember { mutableStateOf<String?>(null) }
 
     var passwordVisible by remember { mutableStateOf(value = false) }
@@ -188,7 +221,11 @@ fun RegisterScreen(
                 imeAction = ImeAction.Next,
                 colorScheme = colorScheme,
                 isError = registerFormState.nameError != null,
-                errorMessage = registerFormState.nameError,
+                errorMessage = null, // Shown consolidated below
+                onFocusChanged = { isFocused ->
+                    if (isFocused) nameTouched = true
+                    if (!isFocused && nameTouched) viewModel.validateName()
+                },
                 contentType = ContentType.PersonFullName,
                 modifier = Modifier.focusRequester(nameFocusRequester)
             )
@@ -204,7 +241,11 @@ fun RegisterScreen(
                 imeAction = ImeAction.Next,
                 colorScheme = colorScheme,
                 isError = registerFormState.emailError != null,
-                errorMessage = registerFormState.emailError,
+                errorMessage = null, // Shown consolidated below
+                onFocusChanged = { isFocused ->
+                    if (isFocused) emailTouched = true
+                    if (!isFocused && emailTouched) viewModel.validateEmail()
+                },
                 contentType = ContentType.EmailAddress
             )
 
@@ -222,7 +263,11 @@ fun RegisterScreen(
                 onPasswordToggle = { passwordVisible = !passwordVisible },
                 colorScheme = colorScheme,
                 isError = registerFormState.passwordError != null,
-                errorMessage = registerFormState.passwordError,
+                errorMessage = null, // Shown consolidated below
+                onFocusChanged = { isFocused ->
+                    if (isFocused) passwordTouched = true
+                    if (!isFocused && passwordTouched) viewModel.validatePassword()
+                },
                 contentType = ContentType.NewPassword
             )
 
@@ -238,7 +283,14 @@ fun RegisterScreen(
                 keyboardActions = KeyboardActions(
                     onDone = {
                         focusManager.clearFocus()
-                        if (registerFormState.isFormValid) viewModel.register()
+                        if (registerFormState.isFormValid) {
+                            viewModel.register()
+                        } else {
+                            viewModel.validateName()
+                            viewModel.validateEmail()
+                            viewModel.validatePassword()
+                            viewModel.validateConfirmPassword()
+                        }
                     }
                 ),
                 isPassword = true,
@@ -246,11 +298,42 @@ fun RegisterScreen(
                 onPasswordToggle = { confirmPasswordVisible = !confirmPasswordVisible },
                 colorScheme = colorScheme,
                 isError = registerFormState.confirmPasswordError != null,
-                errorMessage = registerFormState.confirmPasswordError,
+                errorMessage = null, // Shown consolidated below
+                onFocusChanged = { isFocused ->
+                    if (isFocused) confirmPasswordTouched = true
+                    if (!isFocused && confirmPasswordTouched) viewModel.validateConfirmPassword()
+                },
                 contentType = ContentType.NewPassword
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            // 3. Inline Validation Error
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(32.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Column {
+                    AnimatedVisibility(
+                        visible = validationErrorMessage != null,
+                        enter = fadeIn() + slideInVertically { it / 2 },
+                        exit = fadeOut()
+                    ) {
+                        Text(
+                            text = validationErrorMessage ?: "",
+                            color = colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Start,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             // 4. Register Button
             val isRegistering = registerState is AuthState.Loading
@@ -259,7 +342,15 @@ fun RegisterScreen(
             Button(
                 onClick = {
                     focusManager.clearFocus()
-                    viewModel.register()
+                    // If form is not valid, trigger all validations to show the errors
+                    if (!registerFormState.isFormValid) {
+                        viewModel.validateName()
+                        viewModel.validateEmail()
+                        viewModel.validatePassword()
+                        viewModel.validateConfirmPassword()
+                    } else {
+                        viewModel.register()
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -276,7 +367,7 @@ fun RegisterScreen(
                     disabledContainerColor = if (isSuccess) AuthGold else colorScheme.primary.copy(alpha = 0.5f),
                     disabledContentColor = if (isSuccess) colorScheme.onSecondary else colorScheme.onPrimary.copy(alpha = 0.7f)
                 ),
-                enabled = registerFormState.isFormValid && !isRegistering && !isSuccess
+                enabled = !isRegistering && !isSuccess
             ) {
                 when (registerState) {
                     is AuthState.Loading -> {
