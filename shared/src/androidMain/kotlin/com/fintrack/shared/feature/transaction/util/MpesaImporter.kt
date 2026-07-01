@@ -3,6 +3,7 @@ package com.fintrack.shared.feature.transaction.util
 import android.content.Context
 import android.provider.Telephony
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
+import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
@@ -17,6 +18,8 @@ class MpesaImporter(
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository
 ) : TransactionImporter {
+    private val logger = KMPLogger()
+
     @OptIn(ExperimentalTime::class)
     override suspend fun importHistory(): Unit = withContext(Dispatchers.IO) {
         val accountsResult = accountRepository.getAccounts()
@@ -37,10 +40,17 @@ class MpesaImporter(
             val bodyIndex = it.getColumnIndex(Telephony.Sms.Inbox.BODY)
             val transactions = mutableListOf<Transaction>()
             var latestBalance: Double? = null
+            var loggedCount = 0
 
             while (it.moveToNext()) {
                 val body = it.getString(bodyIndex)
                 
+                // Log the first 500 messages to help improve the parser
+                if (loggedCount < 500) {
+                    logger.debug("MPESA_PARSER_DEBUG", "Message ${loggedCount + 1}: $body")
+                    loggedCount++
+                }
+
                 // Keep the first balance we find (latest message)
                 if (latestBalance == null) {
                     latestBalance = MpesaParser.parseBalance(body)
@@ -53,8 +63,13 @@ class MpesaImporter(
             }
 
             if (transactions.isNotEmpty()) {
-                // We reverse to send oldest first, though importMpesaTransactions handles it on backend usually
-                transactionRepository.importMpesaTransactions(transactions.reversed())
+                // We reverse to send oldest first
+                val reversedTransactions = transactions.reversed()
+                
+                // Chunk the import to avoid "Internal Server Error" (often caused by large payloads)
+                reversedTransactions.chunked(100).forEach { chunk ->
+                    transactionRepository.importMpesaTransactions(chunk)
+                }
             }
 
             // Correct account balance using an adjustment transaction if there's a discrepancy

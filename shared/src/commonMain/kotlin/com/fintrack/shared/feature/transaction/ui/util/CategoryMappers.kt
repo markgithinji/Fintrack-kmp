@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.transaction.ui.util
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Build
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Subscriptions
 import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -49,6 +51,8 @@ fun Category.toIcon(): ImageVector = when (this.iconName ?: this.name) {
     "ShoppingBag", "Groceries" -> Icons.Default.ShoppingBag
     "Shield", "Insurance" -> Icons.Default.Shield
     "Restaurant", "Dining Out" -> Icons.Default.Restaurant
+    "VolunteerActivism", "Charity" -> Icons.Default.VolunteerActivism
+    "AccountBalanceWallet", "Loans" -> Icons.Default.AccountBalanceWallet
     "Lightbulb", "Utilities" -> Icons.Default.Lightbulb
     "Pets" -> Icons.Default.Pets
     "FitnessCenter", "Fitness" -> Icons.Default.FitnessCenter
@@ -80,6 +84,8 @@ fun Category.toColor(): Color = when (this.iconName ?: this.name) {
     "ShoppingBag", "Groceries" -> Color(0xFF8BC34A)
     "Shield", "Insurance" -> Color(0xFF78909C)
     "Restaurant", "Dining Out" -> Color(0xFFF06292)
+    "VolunteerActivism", "Charity" -> Color(0xFFE91E63)
+    "AccountBalanceWallet", "Loans" -> Color(0xFF795548)
     "Lightbulb", "Utilities" -> Color(0xFFFFD54F)
     "Pets" -> Color(0xFF8D6E63)
     "FitnessCenter", "Fitness" -> Color(0xFF4DB6AC)
