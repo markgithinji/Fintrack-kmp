@@ -53,15 +53,12 @@ fun CategoryManagementScreen(
         }
     ) { innerPadding ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(innerPadding)
+            modifier = Modifier.fillMaxSize()
         ) {
             when {
                 state.error != null && state.categories.isEmpty() -> {
                     CommonErrorState(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().padding(top = innerPadding.calculateTopPadding() + paddingValues.calculateTopPadding()),
                         title = "Category Error",
                         errorMessage = state.error,
                         onRetry = {
@@ -81,7 +78,12 @@ fun CategoryManagementScreen(
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 16.dp),
+                        contentPadding = PaddingValues(
+                            start = 16.dp, 
+                            end = 16.dp, 
+                            top = innerPadding.calculateTopPadding() + paddingValues.calculateTopPadding() - 4.dp, 
+                            bottom = innerPadding.calculateBottomPadding() + paddingValues.calculateBottomPadding() + 16.dp
+                        ),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -90,7 +92,7 @@ fun CategoryManagementScreen(
                                 text = "Expenses",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                                modifier = Modifier.padding(top = 0.dp, bottom = 4.dp)
                             )
                         }
                         items(state.categories.filter { it.isExpense }) { category ->
@@ -149,21 +151,25 @@ fun CategoryItem(
     onDelete: () -> Unit
 ) {
     Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+        ),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(28.dp)
+                    .size(32.dp)
                     .background(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        RoundedCornerShape(6.dp)
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                        RoundedCornerShape(8.dp)
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -171,26 +177,27 @@ fun CategoryItem(
                     imageVector = category.toIcon(),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(18.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(10.dp))
             Text(
                 text = category.name,
                 modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
                 maxLines = 1
             )
             if (!category.isDefault) {
                 IconButton(
                     onClick = onDelete,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(28.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Delete",
-                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f),
-                        modifier = Modifier.size(14.dp)
+                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }

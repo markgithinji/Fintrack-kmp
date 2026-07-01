@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.account.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -96,11 +97,7 @@ fun AccountsScreen(
             }
         }
     ) { innerPadding ->
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-            .padding(innerPadding)
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
@@ -108,7 +105,8 @@ fun AccountsScreen(
                     LinearProgressIndicator(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(top = innerPadding.calculateTopPadding() + paddingValues.calculateTopPadding())
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -122,6 +120,8 @@ fun AccountsScreen(
                     is Result.Success -> {
                         AccountList(
                             accounts = state.data,
+                            topPadding = innerPadding.calculateTopPadding() + paddingValues.calculateTopPadding() - 4.dp,
+                            bottomPadding = innerPadding.calculateBottomPadding() + paddingValues.calculateBottomPadding(),
                             onDeleteAccount = { viewModel.removeAccount(it.id) },
                             onEditAccount = { 
                                 if (!isOperating) {
@@ -172,24 +172,28 @@ fun AccountsScreen(
 @Composable
 fun AccountList(
     accounts: List<Account>,
+    topPadding: androidx.compose.ui.unit.Dp = 0.dp,
+    bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
     onDeleteAccount: (Account) -> Unit,
     onEditAccount: (Account) -> Unit
 ) {
     if (accounts.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.fillMaxSize().padding(top = topPadding), contentAlignment = Alignment.Center) {
             Text("No accounts added yet.")
         }
     } else {
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 80.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp, 
+                end = 16.dp, 
+                top = topPadding, 
+                bottom = bottomPadding + 80.dp
+            ),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item(span = { GridItemSpan(2) }) {
-                Spacer(modifier = Modifier.height(8.dp))
-            }
             items(accounts) { account ->
                 AccountItem(
                     account = account,
@@ -212,7 +216,11 @@ fun AccountItem(
     Surface(
         onClick = onEdit,
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+        ),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
