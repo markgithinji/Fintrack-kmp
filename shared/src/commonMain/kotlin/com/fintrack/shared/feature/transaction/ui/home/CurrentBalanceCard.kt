@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -280,7 +281,7 @@ private fun CurrentBalanceSuccessState(
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    imageVector = Icons.Default.SwapHoriz, // Should use a better sync icon
+                                    imageVector = Icons.Default.Sync,
                                     contentDescription = "Sync M-Pesa",
                                     tint = MaterialTheme.colorScheme.onPrimary,
                                     modifier = Modifier.size(14.dp)

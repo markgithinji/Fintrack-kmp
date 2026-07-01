@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Subscriptions
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material.icons.filled.Work
@@ -65,6 +66,7 @@ fun Category.toIcon(): ImageVector = when (this.iconName ?: this.name) {
     "AttachMoney", "Salary", "Income" -> Icons.Default.AttachMoney
     "Work", "Freelance" -> Icons.Default.Work
     "TrendingUp", "Investments" -> Icons.Default.TrendingUp
+    "Sync", "Transfer" -> Icons.Default.Sync
     else -> Icons.Default.HelpOutline
 }
 
@@ -98,5 +100,6 @@ fun Category.toColor(): Color = when (this.iconName ?: this.name) {
     "AttachMoney", "Salary", "Income" -> Color(0xFF2E7D32)
     "Work", "Freelance" -> Color(0xFF0097A7)
     "TrendingUp", "Investments" -> Color(0xFFFFB300)
+    "Sync", "Transfer" -> Color(0xFF00796B)
     else -> Color.Gray
 }
