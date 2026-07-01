@@ -27,7 +27,7 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
         val fullMessage = messages.joinToString("") { it.displayMessageBody }
         val sender = messages.firstOrNull()?.displayOriginatingAddress
 
-        if (sender?.contains("MPESA", ignoreCase = true) == true) {
+        if (sender?.equals("MPESA", ignoreCase = true) == true) {
             val pendingResult = goAsync()
             CoroutineScope(Dispatchers.IO).launch {
                 try {

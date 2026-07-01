@@ -40,8 +40,7 @@ object MpesaParser {
     private val fulizaRepayRegex = """$CODE\s?Confirmed\.\s?Ksh\s?$AMOUNT_VAL from your M-PESA has been used to (?:fully|partially) pay your outstanding Fuliza M-PESA""".toRegex()
     
     // Auxiliary data regexes
-    private val costRegex = """Transaction cost(?:,?\s?Ksh\.?\s?)$AMOUNT_VAL""".toRegex()
-    private val balanceRegex = """(?:M-PESA balance is|balance is|balance is KSH)\s?(?:Ksh\s?)?$AMOUNT_VAL""".toRegex()
+    private val costRegex = """Transaction cost(?:,?\s?Ksh\.?\s?)$AMOUNT_VAL""".toRegex(RegexOption.IGNORE_CASE)
 
     private val dateFormat = SimpleDateFormat("d/M/yy h:mm a", Locale.ENGLISH)
 
@@ -130,8 +129,38 @@ object MpesaParser {
     )
 
     fun parseBalance(message: String): Double? {
-        val match = balanceRegex.find(message)
-        return match?.groupValues?.get(1)?.let { parseAmount(it) }
+        // 1. Look for explicit M-PESA balance (highest priority)
+        // Format examples: 
+        // "M-PESA balance is Ksh1,234.56"
+        // "New M-PESA balance is Ksh1,234.56"
+        // "M-PESA balance is Ksh. 1,234.56"
+        // "balance is KSH 1,234.56" (if clearly M-PESA)
+        val mpesaRegex = """(?:New\s+)?M-?PESA\s+balance\s+is\s+(?:Ksh\.?\s*|KSH\s*)?([\d,]+\.\d{2})""".toRegex(RegexOption.IGNORE_CASE)
+        mpesaRegex.find(message)?.let {
+            return parseAmount(it.groupValues[1])
+        }
+
+        // 2. Look for "balance is" but ONLY if it's not an M-Shwari balance
+        // We look for "balance is" and ensure "M-Shwari" or "MShwari" isn't in the immediate preceding text.
+        val genericRegex = """balance\s+is\s+(?:Ksh\.?\s*|KSH\s*)?([\d,]+\.\d{2})""".toRegex(RegexOption.IGNORE_CASE)
+        val allMatches = genericRegex.findAll(message)
+        
+        for (match in allMatches) {
+            val startIdx = match.range.first
+            // Look back to see if this balance is qualified by M-Shwari
+            val lookbackStart = maxOf(0, startIdx - 50)
+            val context = message.substring(lookbackStart, startIdx).lowercase()
+            
+            // If the balance is explicitly labeled as M-Shwari, skip it.
+            if (context.contains("m-shwari") || context.contains("mshwari")) {
+                continue
+            }
+            
+            // If we found a generic balance and it's not M-Shwari, it's likely M-PESA
+            return parseAmount(match.groupValues[1])
+        }
+
+        return null
     }
 
     private fun parseAmountFromMatch(match: MatchResult?): Double {

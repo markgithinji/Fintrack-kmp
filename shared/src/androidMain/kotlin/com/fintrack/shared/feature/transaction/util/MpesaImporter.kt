@@ -31,8 +31,8 @@ class MpesaImporter(
         val cursor = context.contentResolver.query(
             Telephony.Sms.Inbox.CONTENT_URI,
             arrayOf(Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS),
-            "${Telephony.Sms.Inbox.ADDRESS} LIKE ?",
-            arrayOf("%MPESA%"),
+            "${Telephony.Sms.Inbox.ADDRESS} = ?",
+            arrayOf("MPESA"),
             Telephony.Sms.Inbox.DEFAULT_SORT_ORDER
         )
 
