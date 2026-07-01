@@ -324,7 +324,6 @@ class TransactionViewModel(
     fun importMpesaTransactions() {
         viewModelScope.launch {
             transactionImporter.importHistory()
-            repo.triggerRefresh()
         }
     }
 

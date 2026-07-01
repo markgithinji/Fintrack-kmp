@@ -19,6 +19,8 @@ interface TransactionRepository {
 
     suspend fun addTransaction(transaction: Transaction): Result<Transaction>
 
+    suspend fun addTransactions(transactions: List<Transaction>): Result<Unit>
+
     suspend fun getTransaction(id: String): Result<Transaction>
 
     suspend fun getAllTransactions(): Result<List<Transaction>>

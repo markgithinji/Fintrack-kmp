@@ -67,6 +67,23 @@ class TransactionRepositoryImpl(
         return result
     }
 
+    override suspend fun addTransactions(transactions: List<Transaction>): Result<Unit> {
+        var anySuccess = false
+        for (transaction in transactions) {
+            val result = safeApiCall {
+                val createRequest = transaction.toCreateRequest()
+                api.addTransaction(createRequest)
+            }
+            if (result is Result.Success) {
+                anySuccess = true
+            }
+        }
+        if (anySuccess) {
+            triggerRefresh()
+        }
+        return Result.Success(Unit)
+    }
+
     override suspend fun getTransaction(id: String): Result<Transaction> =
         safeApiCall {
             api.getTransaction(id).toDomain()

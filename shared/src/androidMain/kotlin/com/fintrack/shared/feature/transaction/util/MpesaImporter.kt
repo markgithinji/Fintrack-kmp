@@ -6,6 +6,7 @@ import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
+import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -20,6 +21,11 @@ class MpesaImporter(
         val accountId = accounts.find { it.isMpesa }?.id 
             ?: accounts.find { it.name.lowercase() == "mpesa" }?.id 
             ?: "mpesa"
+
+        // Fetch existing transactions to avoid duplicates
+        val existingTransactionsResult = transactionRepository.getAllTransactions()
+        val existingDescriptions = (existingTransactionsResult as? Result.Success)?.data
+            ?.map { it.description }?.toSet() ?: emptySet()
         
         val cursor = context.contentResolver.query(
             Telephony.Sms.Inbox.CONTENT_URI,
@@ -31,12 +37,16 @@ class MpesaImporter(
 
         cursor?.use {
             val bodyIndex = it.getColumnIndex(Telephony.Sms.Inbox.BODY)
+            val transactions = mutableListOf<Transaction>()
             while (it.moveToNext()) {
                 val body = it.getString(bodyIndex)
                 val transaction = MpesaParser.parse(body, accountId)
-                if (transaction != null) {
-                    transactionRepository.addTransaction(transaction)
+                if (transaction != null && !existingDescriptions.contains(transaction.description)) {
+                    transactions.add(transaction)
                 }
+            }
+            if (transactions.isNotEmpty()) {
+                transactionRepository.addTransactions(transactions)
             }
         }
         Unit
