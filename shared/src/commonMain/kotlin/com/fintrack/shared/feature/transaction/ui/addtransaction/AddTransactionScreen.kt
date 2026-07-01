@@ -187,8 +187,9 @@ fun AddTransactionScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             with(sharedTransitionScope) {
-                AmountHeader(
+                FinanceAmountHeader(
                     amount = amount,
+                    label = if (isIncome) "Income Amount" else "Expense Amount",
                     isIncome = isIncome,
                     themeColor = themeColor,
                     paddingValues = paddingValues,
@@ -417,76 +418,11 @@ fun AddTransactionScreen(
 }
 
 @Composable
-fun AmountHeader(
-    amount: String,
+fun TransactionTypeSection(
     isIncome: Boolean,
-    themeColor: Color,
-    onToggleNumpad: (Boolean) -> Unit,
-    paddingValues: PaddingValues = PaddingValues(0.dp),
-    modifier: Modifier = Modifier
+    onIncomeChange: (Boolean) -> Unit,
+    themeColor: Color
 ) {
-    Surface(
-        color = themeColor,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(200.dp + paddingValues.calculateTopPadding())
-            .clickable { onToggleNumpad(true) },
-        shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(top = paddingValues.calculateTopPadding()).padding(bottom = 32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = if (isIncome) "Income Amount" else "Expense Amount",
-                    color = (if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White).copy(alpha = 0.8f),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = LocalCurrency.current.symbol,
-                        color = (if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White).copy(alpha = 0.7f),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 12.dp, end = 8.dp)
-                    )
-
-                    val formattedAmount = if (amount.isEmpty()) {
-                        "0"
-                    } else {
-                        val parts = amount.split(".")
-                        val integerPart = parts[0].reversed().chunked(3).joinToString(",").reversed()
-                        if (parts.size > 1) "$integerPart.${parts[1]}" else integerPart
-                    }
-                    
-                    AnimatedNumber(
-                        value = formattedAmount,
-                        style = TextStyle(
-                            color = if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White,
-                            fontSize = 48.sp,
-                            fontWeight = FontWeight.Black,
-                            textAlign = TextAlign.Start,
-                            letterSpacing = 0.sp
-                        )
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun TransactionTypeSection(isIncome: Boolean, onIncomeChange: (Boolean) -> Unit, themeColor: Color) {
     Row(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)).padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp)

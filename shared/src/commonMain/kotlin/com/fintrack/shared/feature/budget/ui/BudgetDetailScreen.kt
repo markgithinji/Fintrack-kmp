@@ -119,6 +119,7 @@ import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.data.domain.ApiException
 import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.ui.AnimatedNumber
+import com.fintrack.shared.feature.core.ui.FinanceAmountHeader
 import com.fintrack.shared.feature.core.ui.FinanceNumpad
 import com.fintrack.shared.feature.core.ui.ThousandsSeparatorTransformation
 import com.fintrack.shared.feature.core.domain.SaveState
@@ -251,13 +252,12 @@ fun BudgetDetailScreen(
             else -> {
                 Column(modifier = Modifier.fillMaxSize()) {
                     with(sharedTransitionScope) {
-                        BudgetAmountHeader(
+                        FinanceAmountHeader(
                             amount = formState.amount,
-                            onAmountChange = { viewModel.setAmount(it) },
-                            isExpense = formState.isExpense,
+                            label = if (formState.isExpense) "Expense Budget Limit" else "Income Target Limit",
+                            isIncome = !formState.isExpense,
                             themeColor = themeColor,
                             paddingValues = paddingValues,
-                            showNumpad = showNumpad,
                             onToggleNumpad = { showNumpad = it },
                             modifier = Modifier.sharedBounds(
                                 rememberSharedContentState(key = "budget_header_${budgetId ?: "new"}"),
@@ -423,179 +423,6 @@ fun BudgetDetailScreen(
                     .align(Alignment.BottomCenter)
                     .padding(bottom = paddingValues.calculateBottomPadding() + 84.dp)
             )
-        }
-    }
-}
-
-@Composable
-fun BudgetAmountHeader(
-    amount: String,
-    onAmountChange: (String) -> Unit,
-    isExpense: Boolean,
-    themeColor: Color,
-    showNumpad: Boolean,
-    onToggleNumpad: (Boolean) -> Unit,
-    paddingValues: PaddingValues = PaddingValues(0.dp),
-    modifier: Modifier = Modifier
-) {
-    val focusRequester = remember { FocusRequester() }
-
-    val amountFontSize by animateDpAsState(
-        targetValue = when {
-            amount.length >= 10 -> 32.dp
-            amount.length >= 8 -> 38.dp
-            amount.length >= 6 -> 44.dp
-            else -> 48.dp
-        }.value.dp,
-        animationSpec = spring(stiffness = Spring.StiffnessLow)
-    )
-
-    Surface(
-        color = themeColor,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(200.dp + paddingValues.calculateTopPadding())
-            .clickable(
-                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                indication = null,
-                onClick = { 
-                    onToggleNumpad(true)
-                    focusRequester.requestFocus() 
-                }
-            ),
-        shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = paddingValues.calculateTopPadding())
-                .padding(bottom = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            AnimatedContent(
-                targetState = isExpense,
-                transitionSpec = {
-                    if (targetState) {
-                        (slideInVertically { height -> height } + fadeIn()).togetherWith(
-                            slideOutVertically { height -> -height } + fadeOut())
-                    } else {
-                        (slideInVertically { height -> -height } + fadeIn()).togetherWith(
-                            slideOutVertically { height -> height } + fadeOut())
-                    }
-                }
-            ) { targetIsExpense ->
-                Text(
-                    text = if (targetIsExpense) "Expense Budget Limit" else "Income Target Limit",
-                    color = (if (targetIsExpense) Color.White else MaterialTheme.colorScheme.onTertiary).copy(alpha = 0.8f),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Increased touch target area for the amount
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-                    .clickable(
-                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                        indication = null,
-                        onClick = { 
-                            onToggleNumpad(true)
-                            focusRequester.requestFocus() 
-                        }
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .animateContentSize()
-                        .clickable(
-                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                            indication = null,
-                            onClick = { 
-                                onToggleNumpad(true)
-                                focusRequester.requestFocus() 
-                            }
-                        )
-                ) {
-                    Text(
-                        text = LocalCurrency.current.symbol,
-                        color = (if (isExpense) Color.White else MaterialTheme.colorScheme.onTertiary).copy(alpha = 0.7f),
-                        fontSize = (amountFontSize.value * 0.5f).sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = (amountFontSize.value * 0.2f).dp, end = 8.dp)
-                    )
-
-                    BasicTextField(
-                        value = amount,
-                        onValueChange = { /* Controlled by Numpad */ },
-                        readOnly = true,
-                        textStyle = TextStyle(
-                            color = Color.Transparent,
-                            fontSize = amountFontSize.value.sp,
-                            fontWeight = FontWeight.Black,
-                            textAlign = TextAlign.Start,
-                            letterSpacing = 0.sp
-                        ),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        visualTransformation = ThousandsSeparatorTransformation(),
-                        cursorBrush = SolidColor(if (isExpense) Color.White else MaterialTheme.colorScheme.onTertiary),
-                        singleLine = true,
-                        modifier = Modifier
-                            .focusRequester(focusRequester)
-                            .width(IntrinsicSize.Min)
-                            .widthIn(min = 16.dp),
-                        decorationBox = { innerTextField ->
-                            Box(contentAlignment = Alignment.CenterStart) {
-                                if (amount.isEmpty()) {
-                                    Text(
-                                        "0",
-                                        color = (if (isExpense) Color.White else MaterialTheme.colorScheme.onTertiary).copy(alpha = 0.4f),
-                                        fontSize = amountFontSize.value.sp,
-                                        fontWeight = FontWeight.Black
-                                    )
-                                } else {
-                                    val parts = amount.split(".")
-                                    val integerPart = parts[0].reversed().chunked(3).joinToString(",").reversed()
-                                    val formattedAmount = if (parts.size > 1) "$integerPart.${parts[1]}" else integerPart
-
-                                    AnimatedNumber(
-                                        value = formattedAmount,
-                                        style = TextStyle(
-                                            color = if (isExpense) Color.White else MaterialTheme.colorScheme.onTertiary,
-                                            fontSize = amountFontSize.value.sp,
-                                            fontWeight = FontWeight.Black,
-                                            textAlign = TextAlign.Start,
-                                            letterSpacing = 0.sp
-                                        )
-                                    )
-                                }
-                                innerTextField()
-                                
-                                // Overlay to capture clicks specifically on the amount text area
-                                Box(
-                                    modifier = Modifier
-                                        .matchParentSize()
-                                        .clickable(
-                                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                                            indication = null,
-                                            onClick = { 
-                                                onToggleNumpad(true)
-                                                focusRequester.requestFocus() 
-                                            }
-                                        )
-                                )
-                            }
-                        }
-                    )
-                }
-            }
         }
     }
 }
