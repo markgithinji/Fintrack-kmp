@@ -16,11 +16,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
@@ -31,6 +34,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -43,6 +47,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -423,11 +429,17 @@ fun PeriodSelector(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+            modifier = Modifier
+                .width(170.dp)
+                .background(MaterialTheme.colorScheme.surface)
+                .heightIn(max = 320.dp)
         ) {
-            // TimeSpan Tabs inside Dropdown
+            // TimeSpan Tabs inside Dropdown (Fixed at top)
             Row(
-                modifier = Modifier.padding(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 TimeSpan.entries.forEach { span ->
@@ -438,6 +450,7 @@ fun PeriodSelector(
                     }
                     Box(
                         modifier = Modifier
+                            .weight(1f)
                             .clip(RoundedCornerShape(8.dp))
                             .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
                             .clickable {
@@ -447,30 +460,63 @@ fun PeriodSelector(
                                     TimeSpan.YEAR -> availableYears.firstOrNull()?.let { onPeriodSelected(Period.Year(it)) }
                                 }
                             }
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = span.displayName,
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )
                     }
                 }
             }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
             
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { 
-                        Text(
-                            text = formatPeriodCode(option, currentType), 
-                            style = MaterialTheme.typography.bodySmall 
-                        ) 
-                    },
-                    onClick = {
-                        onSelected(option)
-                        expanded = false
+            val scrollState = rememberScrollState()
+            val scrollbarColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+
+            // Scrollable options
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 250.dp)
+                    .drawWithContent {
+                        drawContent()
+                        if (scrollState.maxValue > 0) {
+                            val viewPortHeight = size.height
+                            val contentHeight = viewPortHeight + scrollState.maxValue
+                            val scrollOffset = scrollState.value.toFloat()
+                            
+                            val knobHeight = (viewPortHeight / contentHeight) * viewPortHeight
+                            val knobStart = (scrollOffset / contentHeight) * viewPortHeight
+                            
+                            drawRoundRect(
+                                color = scrollbarColor,
+                                topLeft = Offset(size.width - 6.dp.toPx(), knobStart),
+                                size = Size(4.dp.toPx(), knobHeight),
+                                cornerRadius = CornerRadius(2.dp.toPx(), 2.dp.toPx())
+                            )
+                        }
                     }
-                )
+                    .verticalScroll(scrollState)
+            ) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { 
+                            Text(
+                                text = formatPeriodCode(option, currentType), 
+                                style = MaterialTheme.typography.bodySmall 
+                            ) 
+                        },
+                        onClick = {
+                            onSelected(option)
+                            expanded = false
+                        }
+                    )
+                }
             }
         }
     }
