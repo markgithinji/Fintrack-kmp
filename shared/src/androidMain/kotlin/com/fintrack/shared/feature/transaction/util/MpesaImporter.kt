@@ -50,8 +50,8 @@ class MpesaImporter(
                 val timestamp = it.getLong(dateIndex)
                 val smsInstant = Instant.fromEpochMilliseconds(timestamp)
                 
-                // Log the first 500 messages to help improve the parser
-                if (loggedCount < 500) {
+                // Log the most recent 9000 messages to help improve the parser
+                if (loggedCount < 9000) {
                     logger.debug("MPESA_PARSER_DEBUG", "Message ${loggedCount + 1}: $body")
                 }
 
@@ -63,6 +63,10 @@ class MpesaImporter(
                 val transaction = MpesaParser.parse(body, accountId, smsInstant)
                 if (transaction != null) {
                     transactions.add(transaction)
+                } else {
+                    if (body.contains("Confirmed", ignoreCase = true)) {
+                        logger.debug("MPESA_PARSER_ERROR", "Failed to parse: $body")
+                    }
                 }
                 
                 loggedCount++
