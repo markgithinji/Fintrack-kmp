@@ -49,11 +49,11 @@ class MpesaImporter(
                 val body = it.getString(bodyIndex)
                 val timestamp = it.getLong(dateIndex)
                 val smsInstant = Instant.fromEpochMilliseconds(timestamp)
-                
-                // Log the most recent 9000 messages to help improve the parser
-                if (loggedCount < 9000) {
-                    logger.debug("MPESA_PARSER_DEBUG", "Message ${loggedCount + 1}: $body")
-                }
+
+                // Log messages 1000 to 4000 to help improve the parser (skipping first 1000 already reviewed)
+//                if (loggedCount in 1000 until 4000) {
+//                    logger.debug("MPESA_PARSER_DEBUG", "Message ${loggedCount + 1}: $body")
+//                }
 
                 // Keep the first balance we find (most recent message)
                 if (latestBalance == null) {
@@ -63,10 +63,6 @@ class MpesaImporter(
                 val transaction = MpesaParser.parse(body, accountId, smsInstant)
                 if (transaction != null) {
                     transactions.add(transaction)
-                } else {
-                    if (body.contains("Confirmed", ignoreCase = true)) {
-                        logger.debug("MPESA_PARSER_ERROR", "Failed to parse: $body")
-                    }
                 }
                 
                 loggedCount++
