@@ -143,7 +143,7 @@ class StatisticsViewModel(
         }
     }
 
-    private var lastAvailablePeriodsAccountId: String? = "uninitialized"
+    private var lastAvailablePeriodsAccountId: String? = null
     fun loadAvailablePeriods(accountId: String? = null, force: Boolean = false) {
         if (!force && lastAvailablePeriodsAccountId == accountId && (_availableWeeks.value.isNotEmpty() || _availableMonths.value.isNotEmpty() || _availableYears.value.isNotEmpty())) {
             // Already populated, just ensure distribution is ready
