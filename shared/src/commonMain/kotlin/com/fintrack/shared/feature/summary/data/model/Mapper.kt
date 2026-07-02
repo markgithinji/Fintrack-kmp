@@ -61,11 +61,12 @@ fun DaySummaryDto.toDomain() = DaySummary(
 
 // Category comparison
 fun CategoryComparisonDto.toDomain() = CategoryComparison(
-    period = period,
     category = category,
     currentTotal = currentTotal,
     previousTotal = previousTotal,
-    changePercentage = changePercentage
+    changePercentage = changePercentage,
+    weeklyChangePercentage = weeklyChangePercentage,
+    weeklyCurrentTotal = weeklyCurrentTotal
 )
 
 // Available Weeks

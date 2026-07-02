@@ -35,7 +35,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.core.util.formatToSinglePrecision
@@ -90,10 +89,15 @@ fun CategoryComparisonCard(
                     if (categoryComparisonResult.data.isEmpty()) {
                         CategoryComparisonEmptyState()
                     } else {
-                        categoryComparisonResult.data.forEachIndexed { index, comparison ->
+                        // Sort so "Transaction Cost" is at the bottom if multiple items exist
+                        val sortedData = categoryComparisonResult.data.sortedBy { 
+                            it.category == "Transaction Cost" 
+                        }
+                        
+                        sortedData.forEachIndexed { index, comparison ->
                             CategoryComparisonItem(
                                 comparison = comparison,
-                                isLast = index == categoryComparisonResult.data.lastIndex
+                                isLast = index == sortedData.lastIndex
                             )
                         }
                     }
@@ -116,28 +120,13 @@ private fun CategoryComparisonItem(
     val bgColor = category.toColor().copy(alpha = 0.15f)
     val iconTint = category.toColor()
 
-    val positive = comparison.changePercentage >= 0
-    val arrowIcon = if (positive)
-        Icons.AutoMirrored.Outlined.TrendingUp
-    else
-        Icons.AutoMirrored.Outlined.TrendingDown
-
-    val changeColor = if (positive)
-        MaterialTheme.colorScheme.primary
-    else
-        MaterialTheme.colorScheme.error
-
-    val periodLabel = when (comparison.period.lowercase()) {
-        "weekly" -> "week"
-        "monthly" -> "month"
-        "yearly" -> "year"
-        else -> comparison.period
-    }
-
-    val changeText = if (positive) {
-        "${comparison.changePercentage.formatToSinglePrecision()}% more than last $periodLabel"
+    // Monthly Trend (Primary)
+    val monthlyPositive = comparison.changePercentage >= 0
+    val monthlyChangeColor = if (monthlyPositive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+    val monthlyChangeText = if (monthlyPositive) {
+        "${comparison.changePercentage.formatToSinglePrecision()}% more than last month"
     } else {
-        "${(comparison.changePercentage * -1).formatToSinglePrecision()}% less than last $periodLabel"
+        "${(comparison.changePercentage * -1).formatToSinglePrecision()}% less than last month"
     }
 
     Column(
@@ -177,7 +166,7 @@ private fun CategoryComparisonItem(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = comparison.category,
+                        text = if (comparison.category == "Transaction Cost") "Transaction Fees" else comparison.category,
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
@@ -194,33 +183,26 @@ private fun CategoryComparisonItem(
                     )
                 }
 
-                // Change indicator
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = changeColor.copy(alpha = 0.1f)
-                    ),
-                    elevation = CardDefaults.cardElevation(0.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = arrowIcon,
-                            contentDescription = if (positive) "Increase" else "Decrease",
-                            tint = changeColor,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+                // Change indicators
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    // Monthly Badge
+                    TrendBadge(text = monthlyChangeText, color = monthlyChangeColor)
+                    
+                    // Weekly Context (If available)
+                    comparison.weeklyChangePercentage?.let { weeklyChange ->
+                        val weeklyPositive = weeklyChange >= 0
+                        val weeklyColor = if (weeklyPositive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                        val weeklyText = if (weeklyPositive) {
+                            "${weeklyChange.formatToSinglePrecision()}% more than last week"
+                        } else {
+                            "${(weeklyChange * -1).formatToSinglePrecision()}% less than last week"
+                        }
+                        
                         Text(
-                            text = changeText,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = changeColor,
-                            maxLines = 2,
-                            lineHeight = 14.sp
+                            text = "Weekly: $weeklyText",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = weeklyColor.copy(alpha = 0.8f),
+                            modifier = Modifier.padding(start = 4.dp)
                         )
                     }
                 }
@@ -232,6 +214,44 @@ private fun CategoryComparisonItem(
                 modifier = Modifier.padding(top = 12.dp),
                 thickness = 1.dp,
                 color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun TrendBadge(text: String, color: Color) {
+    val isPositive = !text.contains("less")
+    val arrowIcon = if (isPositive)
+        Icons.AutoMirrored.Outlined.TrendingUp
+    else
+        Icons.AutoMirrored.Outlined.TrendingDown
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = color.copy(alpha = 0.1f)
+        ),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = arrowIcon,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(14.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelSmall,
+                color = color,
+                maxLines = 1
             )
         }
     }
