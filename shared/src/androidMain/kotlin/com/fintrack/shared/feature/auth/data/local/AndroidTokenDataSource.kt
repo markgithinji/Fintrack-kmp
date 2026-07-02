@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import androidx.core.content.edit
+import android.content.SharedPreferences
 
 class AndroidTokenDataSource(
     private val context: Context
@@ -16,16 +17,33 @@ class AndroidTokenDataSource(
     private val _accessTokenFlow = MutableStateFlow<String?>(null)
     private val _refreshTokenFlow = MutableStateFlow<String?>(null)
 
-    private val encryptedPrefs by lazy {
-        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+    private val encryptedPrefs by lazy { createEncryptedPrefs() }
 
-        EncryptedSharedPreferences.create(
-            "encrypted_auth_data",
-            masterKeyAlias,
-            context,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+    private fun createEncryptedPrefs(): SharedPreferences {
+        val fileName = "encrypted_auth_data"
+        return try {
+            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+
+            EncryptedSharedPreferences.create(
+                fileName,
+                masterKeyAlias,
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            // If creation fails (due to key corruption or other issues), clear the corrupted preferences and retry
+            context.deleteSharedPreferences(fileName)
+            
+            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            EncryptedSharedPreferences.create(
+                fileName,
+                masterKeyAlias,
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        }
     }
 
     init {
