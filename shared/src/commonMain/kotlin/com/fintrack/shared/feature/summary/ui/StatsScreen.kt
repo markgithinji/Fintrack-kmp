@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,7 +39,6 @@ import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.TabType
-import com.fintrack.shared.feature.transaction.ui.home.IncomeExpensesOverview
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -63,7 +61,6 @@ fun StatisticsScreen(
 
     LaunchedEffect(Unit) {
         viewModel.loadAvailablePeriods()
-        viewModel.loadHighlights()
     }
 
     Column(

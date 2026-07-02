@@ -93,13 +93,17 @@ class StatisticsViewModel(
         )
 
     private var lastHighlightsAccountId: String? = null
-    fun loadHighlights(accountId: String? = null, force: Boolean = false) {
-        if (!force && _highlights.value is Result.Success && lastHighlightsAccountId == accountId) return
+    private var lastHighlightsPeriod: String? = null
+    fun loadHighlights(accountId: String? = null, period: String? = null, force: Boolean = false) {
+        if (!force && _highlights.value is Result.Success && 
+            lastHighlightsAccountId == accountId && 
+            lastHighlightsPeriod == period) return
 
         viewModelScope.launch {
             _highlights.value = Result.Loading
             lastHighlightsAccountId = accountId
-            _highlights.value = repo.getHighlightsSummary(accountId)
+            lastHighlightsPeriod = period
+            _highlights.value = repo.getHighlightsSummary(accountId, period)
         }
     }
 
@@ -184,7 +188,6 @@ class StatisticsViewModel(
 
                 // Load BOTH income and expense data for the initial period
                 reloadDistributionForCurrentSelection(accountId, force = force)
-
             } catch (e: Exception) {
                 _availableWeeks.value = emptyList()
                 _availableMonths.value = emptyList()
@@ -237,6 +240,7 @@ class StatisticsViewModel(
             // Load BOTH income and expense data for this period
             loadDistribution(periodCode, TransactionType.Income, accountId = accountId, force = force)
             loadDistribution(periodCode, TransactionType.Expense, accountId = accountId, force = force)
+            loadHighlights(accountId = accountId, period = periodCode, force = force)
         } else {
             // Clear distributions if no period is selected (e.g., after data deletion)
             lastIncomeDistributionParams = null
@@ -260,16 +264,30 @@ class StatisticsViewModel(
 
     private var lastTransactionCountsAccountId: String? = null
     private var lastTransactionCountsIsIncome: Boolean? = null
-    fun loadTransactionCounts(accountId: String, isIncome: Boolean? = null, force: Boolean = false) {
-        if (!force && _transactionCounts.value is Result.Success && 
-            lastTransactionCountsAccountId == accountId && 
-            lastTransactionCountsIsIncome == isIncome) return
+    private var lastTransactionCountsStart: String? = null
+    private var lastTransactionCountsEnd: String? = null
+
+    fun loadTransactionCounts(
+        accountId: String,
+        isIncome: Boolean? = null,
+        start: String? = null,
+        end: String? = null,
+        force: Boolean = false
+    ) {
+        if (!force && _transactionCounts.value is Result.Success &&
+            lastTransactionCountsAccountId == accountId &&
+            lastTransactionCountsIsIncome == isIncome &&
+            lastTransactionCountsStart == start &&
+            lastTransactionCountsEnd == end
+        ) return
 
         viewModelScope.launch {
             _transactionCounts.value = Result.Loading
             lastTransactionCountsAccountId = accountId
             lastTransactionCountsIsIncome = isIncome
-            _transactionCounts.value = repo.getTransactionCounts(accountId, isIncome)
+            lastTransactionCountsStart = start
+            lastTransactionCountsEnd = end
+            _transactionCounts.value = repo.getTransactionCounts(accountId, isIncome, start, end)
         }
     }
 }

@@ -28,6 +28,7 @@ data class Category(
         val Pets = Category("pets", "Pets", true, "Pets", true)
         val Fitness = Category("fitness", "Fitness", true, "FitnessCenter", true)
         val Maintenance = Category("maintenance", "Maintenance", true, "Build", true)
+        val TransactionCost = Category("transaction_cost", "Transaction Cost", true, "Receipt", true)
         val MiscExpense = Category("misc_expense", "Misc", true, "HelpOutline", true)
 
         // --- Income categories ---
@@ -45,7 +46,7 @@ data class Category(
             Food, Transport, Shopping, Health, Bills,
             Entertainment, Education, GiftsExpense, Travel,
             PersonalCare, Subscriptions, Rent, Groceries,
-            Insurance, DiningOut, Utilities, Pets, Fitness, Maintenance, MiscExpense,
+            Insurance, DiningOut, Utilities, Pets, Fitness, Maintenance, TransactionCost, MiscExpense,
             Salary, Freelance, Investments, GiftsIncome, Bonus, Rental, Dividends, Interest, OtherIncome
         )
 

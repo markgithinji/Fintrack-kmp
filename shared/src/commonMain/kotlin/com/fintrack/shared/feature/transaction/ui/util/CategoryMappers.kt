@@ -58,6 +58,7 @@ fun Category.toIcon(): ImageVector = when (this.iconName ?: this.name) {
     "Pets" -> Icons.Default.Pets
     "FitnessCenter", "Fitness" -> Icons.Default.FitnessCenter
     "Build", "Maintenance" -> Icons.Default.Build
+    "Transaction Cost" -> Icons.Default.Receipt
     "Paid", "Bonus" -> Icons.Default.Paid
     "RealEstateAgent", "Rental" -> Icons.Default.RealEstateAgent
     "Analytics", "Dividends" -> Icons.Default.Analytics
@@ -92,6 +93,7 @@ fun Category.toColor(): Color = when (this.iconName ?: this.name) {
     "Pets" -> Color(0xFF8D6E63)
     "FitnessCenter", "Fitness" -> Color(0xFF4DB6AC)
     "Build", "Maintenance" -> Color(0xFF90A4AE)
+    "Transaction Cost" -> Color(0xFF607D8B)
     "Paid", "Bonus" -> Color(0xFF66BB6A)
     "RealEstateAgent", "Rental" -> Color(0xFF5C6BC0)
     "Analytics", "Dividends" -> Color(0xFF26A69A)

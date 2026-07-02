@@ -27,8 +27,12 @@ fun HighlightsDto.toDomain(): Highlights =
 
 fun HighlightsSummaryDto.toDomain(): StatisticsSummary =
     StatisticsSummary(
+        income = income,
+        expense = expense,
+        balance = balance,
         incomeHighlights = incomeHighlights.toDomain(),
-        expenseHighlights = expenseHighlights.toDomain()
+        expenseHighlights = expenseHighlights.toDomain(),
+        totalTransactionCost = totalTransactionCost
     )
 
 // --- Distribution Summary ---
@@ -38,6 +42,7 @@ fun CategorySummaryDto.toDomain(): CategorySummary =
 fun DistributionSummaryDto.toDomain(): DistributionSummary =
     DistributionSummary(
         period = period,
+        totalTransactionCost = totalTransactionCost,
         incomeCategories = incomeCategories.map { it.toDomain() },
         expenseCategories = expenseCategories.map { it.toDomain() }
     )
@@ -76,6 +81,7 @@ fun AvailableYearsDto.toDomain() = AvailableYears(years)
 fun TransactionCountSummaryDto.toDomain() = TransactionCountSummary(
     totalIncomeTransactions = totalIncomeTransactions,
     totalExpenseTransactions = totalExpenseTransactions,
-    totalTransactions = totalTransactions
+    totalTransactions = totalTransactions,
+    totalTransactionCost = totalTransactionCost
 )
 

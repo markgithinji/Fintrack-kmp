@@ -147,16 +147,22 @@ fun CategoryTotalsCardWithTabs(
                         }
 
                         is Result.Success -> {
-                            val categories = when (tabType) {
+                            val baseCategories = when (tabType) {
                                 is TabType.Income -> result.data.incomeCategories
                                 is TabType.Expense -> result.data.expenseCategories
                             }
 
-                            if (categories.isEmpty()) {
+                            if (baseCategories.isEmpty() && (tabType !is TabType.Expense || result.data.totalTransactionCost <= 0.0)) {
                                 EmptyDistributionState()
                             } else {
-                                val categorySums = categories.map { it.category to it.total.toFloat() }
-                                val totalAmount = categories.sumOf { it.total }.toFloat()
+                                val categorySums = mutableListOf<Pair<String, Float>>()
+                                categorySums.addAll(baseCategories.map { it.category to it.total.toFloat() })
+
+                                if (tabType is TabType.Expense && result.data.totalTransactionCost > 0) {
+                                    categorySums.add("Transaction Cost" to result.data.totalTransactionCost.toFloat())
+                                }
+
+                                val totalAmount = categorySums.sumOf { it.second.toDouble() }.toFloat()
 
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     DonutChartSection(categorySums, totalAmount)
@@ -261,7 +267,8 @@ fun LoadingDonutChartSection() {
             LoadingInteractiveDonutWithText(
                 mockSegments = mockSegments,
                 mockTotal = mockTotal,
-                segmentColors = SegmentColors
+                segmentColors = SegmentColors,
+                chartSize = 250.dp
             )
         }
     }
@@ -273,7 +280,7 @@ fun LoadingInteractiveDonutWithText(
     mockTotal: Float,
     segmentColors: List<Color>,
     modifier: Modifier = Modifier,
-    chartSize: Dp = 200.dp
+    chartSize: Dp = 250.dp
 ) {
     Box(modifier = modifier.size(chartSize), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -309,8 +316,13 @@ fun LoadingInteractiveDonutWithText(
 
 @Composable
 fun LoadingCategoryList() {
-    Column(modifier = Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        repeat(3) {
+    Column(
+        modifier = Modifier
+            .padding(top = 16.dp)
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        repeat(5) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AnimatedShimmerBox(modifier = Modifier.size(12.dp).clip(CircleShape))
                 Spacer(Modifier.width(12.dp))

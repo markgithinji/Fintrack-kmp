@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 
 
@@ -166,6 +167,16 @@ private fun TransactionCountSuccessState(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            if (counts.totalTransactionCost > 0) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Total Fees: ${counts.totalTransactionCost.toCurrencyString()}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = themeColor.copy(alpha = 0.8f),
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
     }
 }

@@ -18,9 +18,12 @@ class SummaryRepositoryImpl(
     private val api: SummaryApi
 ) : SummaryRepository {
 
-    override suspend fun getHighlightsSummary(accountId: String?): Result<StatisticsSummary> =
+    override suspend fun getHighlightsSummary(
+        accountId: String?,
+        period: String?
+    ): Result<StatisticsSummary> =
         safeApiCall {
-            api.getHighlightsSummary(accountId).toDomain()
+            api.getHighlightsSummary(accountId, period).toDomain()
         }
 
     override suspend fun getDistributionSummary(
@@ -61,8 +64,10 @@ class SummaryRepositoryImpl(
 
     override suspend fun getTransactionCounts(
         accountId: String,
-        isIncome: Boolean?
+        isIncome: Boolean?,
+        start: String?,
+        end: String?
     ): Result<TransactionCountSummary> = safeApiCall {
-        api.getTransactionCounts(accountId, isIncome).toDomain()
+        api.getTransactionCounts(accountId, isIncome, start, end).toDomain()
     }
 }

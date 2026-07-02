@@ -11,7 +11,10 @@ import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 
 interface SummaryRepository {
-    suspend fun getHighlightsSummary(accountId: String?): Result<StatisticsSummary>
+    suspend fun getHighlightsSummary(
+        accountId: String?,
+        period: String? = null
+    ): Result<StatisticsSummary>
     suspend fun getDistributionSummary(
         weekOrMonthCode: String,
         type: String?,
@@ -26,6 +29,8 @@ interface SummaryRepository {
     suspend fun getCategoryComparisons(accountId: String?): Result<List<CategoryComparison>>
     suspend fun getTransactionCounts(
         accountId: String,
-        isIncome: Boolean? = null
+        isIncome: Boolean? = null,
+        start: String? = null,
+        end: String? = null
     ): Result<TransactionCountSummary>
 }

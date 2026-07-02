@@ -18,10 +18,14 @@ class SummaryApi(
     private val client: HttpClient,
     private val baseUrl: String
 ) {
-    suspend fun getHighlightsSummary(accountId: String? = null): HighlightsSummaryDto {
+    suspend fun getHighlightsSummary(
+        accountId: String? = null,
+        period: String? = null
+    ): HighlightsSummaryDto {
         val response: ApiResponse<HighlightsSummaryDto> =
             client.get("$baseUrl/transactions/summary/highlights") {
                 accountId?.let { parameter("accountId", it) }
+                period?.let { parameter("period", it) }
             }.body()
         return response.result
     }
@@ -86,12 +90,16 @@ class SummaryApi(
 
     suspend fun getTransactionCounts(
         accountId: String,
-        isIncome: Boolean? = null
+        isIncome: Boolean? = null,
+        start: String? = null,
+        end: String? = null
     ): TransactionCountSummaryDto {
         val response: ApiResponse<TransactionCountSummaryDto> =
             client.get("$baseUrl/transactions/summary/counts") {
                 parameter("accountId", accountId)
                 isIncome?.let { parameter("isIncome", it) }
+                start?.let { parameter("start", it) }
+                end?.let { parameter("end", it) }
             }.body()
         return response.result
     }
