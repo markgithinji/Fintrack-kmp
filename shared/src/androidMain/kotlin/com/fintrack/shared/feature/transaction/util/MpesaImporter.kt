@@ -8,6 +8,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import kotlin.time.Instant
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -30,14 +31,15 @@ class MpesaImporter(
 
         val cursor = context.contentResolver.query(
             Telephony.Sms.Inbox.CONTENT_URI,
-            arrayOf(Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS),
+            arrayOf(Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS, Telephony.Sms.Inbox.DATE),
             "${Telephony.Sms.Inbox.ADDRESS} = ?",
             arrayOf("MPESA"),
-            Telephony.Sms.Inbox.DEFAULT_SORT_ORDER
+            "${Telephony.Sms.Inbox.DATE} DESC"
         )
 
         cursor?.use {
             val bodyIndex = it.getColumnIndex(Telephony.Sms.Inbox.BODY)
+            val dateIndex = it.getColumnIndex(Telephony.Sms.Inbox.DATE)
             val transactions = mutableListOf<Transaction>()
             var latestBalance: Double? = null
             var loggedCount = 0
@@ -45,18 +47,20 @@ class MpesaImporter(
 
             while (it.moveToNext()) {
                 val body = it.getString(bodyIndex)
+                val timestamp = it.getLong(dateIndex)
+                val smsInstant = Instant.fromEpochMilliseconds(timestamp)
                 
                 // Log the first 500 messages to help improve the parser
                 if (loggedCount < 500) {
                     logger.debug("MPESA_PARSER_DEBUG", "Message ${loggedCount + 1}: $body")
                 }
 
-                // Keep the first balance we find (latest message)
+                // Keep the first balance we find (most recent message)
                 if (latestBalance == null) {
                     latestBalance = MpesaParser.parseBalance(body)
                 }
 
-                val transaction = MpesaParser.parse(body, accountId)
+                val transaction = MpesaParser.parse(body, accountId, smsInstant)
                 if (transaction != null) {
                     transactions.add(transaction)
                 }

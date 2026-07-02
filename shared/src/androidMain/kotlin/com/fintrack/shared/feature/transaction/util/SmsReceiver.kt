@@ -14,12 +14,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import kotlin.time.ExperimentalTime
 
 class SmsReceiver : BroadcastReceiver(), KoinComponent {
     private val transactionRepository: TransactionRepository by inject()
     private val accountRepository: AccountRepository by inject()
     private val settingsDataSource: SettingsDataSource by inject()
 
+    @OptIn(ExperimentalTime::class)
     override fun onReceive(context: Context?, intent: Intent?) {
         if (intent?.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
 

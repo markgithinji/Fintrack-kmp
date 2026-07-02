@@ -44,7 +44,7 @@ object MpesaParser {
 
     private val dateFormat = SimpleDateFormat("d/M/yy h:mm a", Locale.ENGLISH)
 
-    fun parse(message: String, accountId: String = "mpesa"): Transaction? {
+    fun parse(message: String, accountId: String = "mpesa", smsTimestamp: Instant? = null): Transaction? {
         if (!message.contains("Confirmed")) return null
 
         val cost = parseAmountFromMatch(costRegex.find(message))
@@ -57,33 +57,33 @@ object MpesaParser {
             val time = it.groupValues[3]
             val amount = parseAmount(it.groupValues[4])
             val party = it.groupValues[5].trim().removeSuffix(".")
-            return createTransactionModel(code, amount, cost, balance, "Transport", parseDateTime(date, time), "Withdrawn from $party", accountId, false)
+            return createTransactionModel(code, amount, cost, balance, "Transport", parseDateTime(date, time, smsTimestamp), "Withdrawn from $party", accountId, false)
         }
 
         // M-Shwari / Bank Transfers
-        shwariFromRegex.find(message)?.let { return createFromMatch(it, true, "Transferred from", "Loans", accountId, cost, balance) }
-        shwariToRegex.find(message)?.let { return createFromMatch(it, false, "Transferred to", "Loans", accountId, cost, balance) }
+        shwariFromRegex.find(message)?.let { return createFromMatch(it, true, "Transferred from", "Loans", accountId, cost, balance, smsTimestamp) }
+        shwariToRegex.find(message)?.let { return createFromMatch(it, false, "Transferred to", "Loans", accountId, cost, balance, smsTimestamp) }
         
         // Loans
         loanApprovedRegex.find(message)?.let { 
             val amount = parseAmount(it.groupValues[2])
-            return createTransactionModel(it.groupValues[1], amount, cost, balance, "Loans", Clock.System.now(), "M-Shwari Loan Approved", accountId, true)
+            return createTransactionModel(it.groupValues[1], amount, cost, balance, "Loans", smsTimestamp ?: Clock.System.now(), "M-Shwari Loan Approved", accountId, true)
         }
-        loanRepayRegex.find(message)?.let { return createFromMatch(it, false, "Loan Repaid from", "Loans", accountId, cost, balance) }
+        loanRepayRegex.find(message)?.let { return createFromMatch(it, false, "Loan Repaid from", "Loans", accountId, cost, balance, smsTimestamp) }
         
         // Fuliza
         fulizaRepayRegex.find(message)?.let {
             val code = it.groupValues[1]
             val amount = parseAmount(it.groupValues[2])
-            return createTransactionModel(code, amount, cost, balance, "Loans", Clock.System.now(), "Fuliza M-PESA Repayment", accountId, false)
+            return createTransactionModel(code, amount, cost, balance, "Loans", smsTimestamp ?: Clock.System.now(), "Fuliza M-PESA Repayment", accountId, false)
         }
 
         // Standard transactions
-        sentRegex.find(message)?.let { return createFromMatch(it, false, "Sent to", null, accountId, cost, balance) }
-        receivedRegex.find(message)?.let { return createFromMatch(it, true, "Received from", "Income", accountId, cost, balance) }
-        paidRegex.find(message)?.let { return createFromMatch(it, false, "Paid to", null, accountId, cost, balance) }
-        depositRegex.find(message)?.let { return createFromMatch(it, true, "Deposit from", "Income", accountId, cost, balance) }
-        withdrawRegex.find(message)?.let { return createFromMatch(it, false, "Withdrawn from", "Transport", accountId, cost, balance) }
+        sentRegex.find(message)?.let { return createFromMatch(it, false, "Sent to", null, accountId, cost, balance, smsTimestamp) }
+        receivedRegex.find(message)?.let { return createFromMatch(it, true, "Received from", "Income", accountId, cost, balance, smsTimestamp) }
+        paidRegex.find(message)?.let { return createFromMatch(it, false, "Paid to", null, accountId, cost, balance, smsTimestamp) }
+        depositRegex.find(message)?.let { return createFromMatch(it, true, "Deposit from", "Income", accountId, cost, balance, smsTimestamp) }
+        withdrawRegex.find(message)?.let { return createFromMatch(it, false, "Withdrawn from", "Transport", accountId, cost, balance, smsTimestamp) }
 
         return null
     }
@@ -95,7 +95,8 @@ object MpesaParser {
         fixedCategory: String?,
         accountId: String,
         cost: Double,
-        balance: Double?
+        balance: Double?,
+        smsTimestamp: Instant? = null
     ): Transaction {
         val code = match.groupValues[1]
         val amount = parseAmount(match.groupValues[2])
@@ -103,7 +104,7 @@ object MpesaParser {
         val date = if (match.groupValues.size > 4) match.groupValues[4] else ""
         val time = if (match.groupValues.size > 5) match.groupValues[5] else ""
         
-        return createTransactionModel(code, amount, cost, balance, fixedCategory ?: inferCategory(party), parseDateTime(date, time), "$prefix $party", accountId, isIncome)
+        return createTransactionModel(code, amount, cost, balance, fixedCategory ?: inferCategory(party), parseDateTime(date, time, smsTimestamp), "$prefix $party", accountId, isIncome)
     }
 
     private fun createTransactionModel(
@@ -171,18 +172,26 @@ object MpesaParser {
         return value?.replace(",", "")?.toDoubleOrNull() ?: 0.0
     }
 
-    private fun parseDateTime(date: String, time: String): Instant {
-        if (date.isBlank() || time.isBlank()) return Clock.System.now()
+    private fun parseDateTime(date: String, time: String, smsTimestamp: Instant? = null): Instant {
+        if (date.isBlank() || time.isBlank()) return smsTimestamp ?: Clock.System.now()
         return try {
             val dateStr = "$date $time"
             val parsedDate = dateFormat.parse(dateStr)
             if (parsedDate != null) {
-                Instant.fromEpochMilliseconds(parsedDate.time)
+                val parsedInstant = Instant.fromEpochMilliseconds(parsedDate.time)
+                
+                // Use arrival time seconds/millis if within the same minute as the text
+                if (smsTimestamp != null) {
+                    val diff = kotlin.math.abs(parsedInstant.toEpochMilliseconds() - smsTimestamp.toEpochMilliseconds())
+                    if (diff < 60000) smsTimestamp else parsedInstant
+                } else {
+                    parsedInstant
+                }
             } else {
-                Clock.System.now()
+                smsTimestamp ?: Clock.System.now()
             }
         } catch (_: Exception) {
-            Clock.System.now()
+            smsTimestamp ?: Clock.System.now()
         }
     }
 
