@@ -13,6 +13,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import kotlinx.datetime.LocalTime
 import java.util.Calendar
 
@@ -64,6 +65,53 @@ class AndroidNotificationService(
             Log.i(TAG, "Notification displayed successfully")
         } catch (e: SecurityException) {
             Log.e(TAG, "Failed to show notification: ${e.message}")
+        }
+    }
+
+    override fun showTransactionNotification(transaction: Transaction) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+
+        // We use a different ID for transaction notifications to avoid overwriting reminders
+        // In a real app, we might want to use a separate channel too
+        
+        // We need the MainActivity class. Since we are in androidMain of shared module, 
+        // we might not have direct access to MainActivity class if it's in androidApp module.
+        // But we can use the class name string.
+        val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("transactionId", transaction.id)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            transaction.id.hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val amountStr = transaction.amount.toString()
+        val type = if (transaction.isIncome) "received" else "spent"
+        val title = "New Transaction Detected"
+        val content = "Ksh $amountStr $type for ${transaction.category}. Tap to change category."
+
+        val builder = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(title)
+            .setContentText(content)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+
+        try {
+            with(NotificationManagerCompat.from(context)) {
+                notify(transaction.id.hashCode(), builder.build())
+            }
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Failed to show transaction notification: ${e.message}")
         }
     }
 

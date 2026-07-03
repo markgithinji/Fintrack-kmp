@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.settings.domain.util
 
+import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import kotlinx.datetime.LocalTime
 import platform.UserNotifications.*
 import platform.Foundation.*
@@ -22,6 +23,28 @@ class IOSNotificationService : NotificationService {
         UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
             if (error != null) {
                 println("Error showing immediate notification: ${error.localizedDescription}")
+            }
+        }
+    }
+
+    override fun showTransactionNotification(transaction: Transaction) {
+        val content = UNMutableNotificationContent().apply {
+            setTitle("New Transaction Detected")
+            val type = if (transaction.isIncome) "received" else "spent"
+            setBody("Ksh ${transaction.amount} $type for ${transaction.category}. Tap to change.")
+            setSound(UNNotificationSound.defaultSound)
+            setUserInfo(mapOf("transactionId" to transaction.id))
+        }
+
+        val request = UNNotificationRequest.requestWithIdentifier(
+            identifier = "transaction_${transaction.id}",
+            content = content,
+            trigger = null
+        )
+
+        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
+            if (error != null) {
+                println("Error showing transaction notification: ${error.localizedDescription}")
             }
         }
     }

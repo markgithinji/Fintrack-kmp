@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -19,11 +20,14 @@ import com.fintrack.shared.ui.theme.FinanceTrackerTheme
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    initialTransactionId: String? = null,
+    onTransactionIdConsumed: () -> Unit = {},
+) {
     val settingsViewModel: SettingsViewModel = koinViewModel()
     val appTheme by settingsViewModel.theme.collectAsStateWithLifecycle()
     
-    val isDarkTheme = when(appTheme) {
+    val isDarkTheme = when (appTheme) {
         AppTheme.LIGHT -> false
         AppTheme.DARK -> true
         AppTheme.SYSTEM -> isSystemInDarkTheme()
@@ -32,7 +36,7 @@ fun MainScreen() {
     FinanceTrackerTheme(darkTheme = isDarkTheme) {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
+            color = MaterialTheme.colorScheme.background,
         ) {
             CurrencyProvider {
                 val authViewModel: AuthViewModel = koinViewModel()
@@ -45,11 +49,20 @@ fun MainScreen() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
+                // Handle initial navigation (e.g., from notifications)
+                LaunchedEffect(initialTransactionId, authStatusState) {
+                    val auth = authStatusState
+                    if (initialTransactionId != null && auth is AuthState.Success && auth.data == true) {
+                        navController.navigate(Screen.AddTransaction.createRoute(initialTransactionId))
+                        onTransactionIdConsumed()
+                    }
+                }
+
                 AuthOrchestrator(
                     authStatus = authStatusState,
                     currentRoute = currentRoute,
                     navController = navController,
-                    authViewModel = authViewModel
+                    authViewModel = authViewModel,
                 )
             }
         }
