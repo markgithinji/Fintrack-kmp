@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.TrendingUp
@@ -165,8 +166,8 @@ private fun SuccessContent(
                 modifier = Modifier.weight(1f),
                 title = "Daily Avg",
                 value = highlights.averagePerDay.toCurrencyString(),
-                subValue = if (isIncome) "Trend Up" else "Trend Down",
-                icon = if (isIncome) Icons.Default.TrendingUp else Icons.Default.TrendingDown,
+                subValue = if (isIncome) "Avg. Income" else "Avg. Expense",
+                icon = Icons.AutoMirrored.Filled.ShowChart,
                 color = SegmentColor2
             )
         }
