@@ -46,6 +46,7 @@ fun SettingsScreen(
     val currentTimeFormat by viewModel.timeFormat.collectAsStateWithLifecycle()
     val isBalanceHidden by viewModel.isBalanceHidden.collectAsStateWithLifecycle()
     val isReminderEnabled by viewModel.isReminderEnabled.collectAsStateWithLifecycle()
+    val isMpesaListenerEnabled by viewModel.isMpesaListenerEnabled.collectAsStateWithLifecycle()
     val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsStateWithLifecycle()
     val reminderTime by viewModel.reminderTime.collectAsStateWithLifecycle()
     val showPermissionRequest by viewModel.showPermissionRequest.collectAsStateWithLifecycle()
@@ -185,6 +186,20 @@ fun SettingsScreen(
                                 onClick = { showTimePickerDialog = true }
                             )
                         }
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+
+                        SettingsToggleItem(
+                            title = "M-Pesa Auto-tracking",
+                            subtitle = "Automatically log M-Pesa SMS",
+                            icon = Icons.Default.Sms,
+                            checked = isMpesaListenerEnabled,
+                            onCheckedChange = { viewModel.setMpesaListenerEnabled(it) }
+                        )
                     }
 
                     SettingsSection(title = "Security") {

@@ -95,6 +95,13 @@ class SettingsViewModel(
             initialValue = null
         )
 
+    val isMpesaListenerEnabled: StateFlow<Boolean> = settingsDataSource.isMpesaListenerEnabled
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = true
+        )
+
     private val _exportResult = MutableStateFlow<String?>(null)
     val exportResult: StateFlow<String?> = _exportResult.asStateFlow()
 
@@ -184,6 +191,12 @@ class SettingsViewModel(
     fun setMpesaAccountId(accountId: String?) {
         viewModelScope.launch {
             settingsDataSource.setMpesaAccountId(accountId)
+        }
+    }
+
+    fun setMpesaListenerEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsDataSource.setMpesaListenerEnabled(enabled)
         }
     }
 

@@ -25,6 +25,7 @@ class AndroidSettingsDataSource(
     private val _reminderTimeFlow = MutableStateFlow(LocalTime(20, 0))
     private val _mpesaSimSlotFlow = MutableStateFlow<Int?>(null)
     private val _mpesaAccountIdFlow = MutableStateFlow<String?>(null)
+    private val _mpesaListenerFlow = MutableStateFlow(true)
 
     init {
         val themeName = prefs.getString("app_theme", AppTheme.SYSTEM.name)
@@ -53,6 +54,9 @@ class AndroidSettingsDataSource(
 
         val mpesaAccountId = prefs.getString("mpesa_account_id", null)
         _mpesaAccountIdFlow.update { mpesaAccountId }
+
+        val mpesaListenerEnabled = prefs.getBoolean("mpesa_listener_enabled", true)
+        _mpesaListenerFlow.update { mpesaListenerEnabled }
     }
 
     override val theme: Flow<AppTheme> = _themeFlow
@@ -142,5 +146,14 @@ class AndroidSettingsDataSource(
             }
         }
         _mpesaAccountIdFlow.value = accountId
+    }
+
+    override val isMpesaListenerEnabled: Flow<Boolean> = _mpesaListenerFlow
+
+    override suspend fun setMpesaListenerEnabled(enabled: Boolean) {
+        prefs.edit(commit = true) {
+            putBoolean("mpesa_listener_enabled", enabled)
+        }
+        _mpesaListenerFlow.value = enabled
     }
 }

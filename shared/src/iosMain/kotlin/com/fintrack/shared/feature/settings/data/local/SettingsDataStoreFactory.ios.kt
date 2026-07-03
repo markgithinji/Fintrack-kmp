@@ -20,6 +20,7 @@ class IOSSettingsDataSource : SettingsDataSource {
     private val _reminderTimeFlow = MutableStateFlow(LocalTime(20, 0))
     private val _mpesaSimSlotFlow = MutableStateFlow<Int?>(null)
     private val _mpesaAccountIdFlow = MutableStateFlow<String?>(null)
+    private val _mpesaListenerFlow = MutableStateFlow(true)
 
     init {
         val themeName = userDefaults.stringForKey("app_theme") ?: AppTheme.SYSTEM.name
@@ -48,6 +49,9 @@ class IOSSettingsDataSource : SettingsDataSource {
 
         val mpesaAccountId = userDefaults.stringForKey("mpesa_account_id")
         _mpesaAccountIdFlow.value = mpesaAccountId
+
+        val mpesaListenerEnabled = if (userDefaults.objectForKey("mpesa_listener_enabled") != null) userDefaults.boolForKey("mpesa_listener_enabled") else true
+        _mpesaListenerFlow.value = mpesaListenerEnabled
     }
 
     override val theme: Flow<AppTheme> = _themeFlow
@@ -118,7 +122,14 @@ class IOSSettingsDataSource : SettingsDataSource {
         } else {
             userDefaults.setObject(accountId, "mpesa_account_id")
         }
-        _mpesaAccountIdFlow.value = accountId
+        _mpesaAccountIdFlow.value = mpesaAccountId
+    }
+
+    override val isMpesaListenerEnabled: Flow<Boolean> = _mpesaListenerFlow
+
+    override suspend fun setMpesaListenerEnabled(enabled: Boolean) {
+        userDefaults.setBool(enabled, "mpesa_listener_enabled")
+        _mpesaListenerFlow.value = enabled
     }
 }
 

@@ -7,6 +7,7 @@ import android.provider.Telephony
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
+import com.fintrack.shared.feature.settings.domain.util.NotificationService
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +21,7 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
     private val transactionRepository: TransactionRepository by inject()
     private val accountRepository: AccountRepository by inject()
     private val settingsDataSource: SettingsDataSource by inject()
+    private val notificationService: NotificationService by inject()
 
     @OptIn(ExperimentalTime::class)
     override fun onReceive(context: Context?, intent: Intent?) {
@@ -33,6 +35,9 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
             val pendingResult = goAsync()
             CoroutineScope(Dispatchers.IO).launch {
                 try {
+                    val isEnabled = settingsDataSource.isMpesaListenerEnabled.first()
+                    if (!isEnabled) return@launch
+
                     val mpesaSimSlot = settingsDataSource.mpesaSimSlot.first()
                     
                     val accountsResult = accountRepository.getAccounts()
@@ -41,13 +46,12 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                         ?: accounts.find { it.name.lowercase() == "mpesa" }?.id 
                         ?: "mpesa"
                     
-                    // Note: In a real app, you'd map subscription ID from intent to slot index
-                    // For now, if mpesaSimSlot is null, we process from any SIM.
-                    // If it's set, we should ideally verify it here.
-                    
                     val transaction = MpesaParser.parse(fullMessage, mpesaAccountId)
                     if (transaction != null) {
-                        transactionRepository.addTransaction(transaction)
+                        val result = transactionRepository.addTransaction(transaction)
+                        if (result is Result.Success) {
+                            notificationService.showTransactionNotification(result.data)
+                        }
                     }
                 } catch (_: Exception) {
                     // Silently fail or log

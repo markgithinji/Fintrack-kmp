@@ -33,4 +33,7 @@ interface SettingsDataSource {
 
     val mpesaAccountId: Flow<String?>
     suspend fun setMpesaAccountId(accountId: String?)
+
+    val isMpesaListenerEnabled: Flow<Boolean>
+    suspend fun setMpesaListenerEnabled(enabled: Boolean)
 }
