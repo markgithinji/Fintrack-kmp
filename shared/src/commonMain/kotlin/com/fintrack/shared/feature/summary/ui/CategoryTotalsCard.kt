@@ -84,6 +84,8 @@ import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 
+import androidx.compose.runtime.saveable.rememberSaveable
+
 @Composable
 fun CategoryTotalsCardWithTabs(
     tabType: TabType,
@@ -98,7 +100,11 @@ fun CategoryTotalsCardWithTabs(
     onPeriodSelected: (Period) -> Unit = {},
     onCategoryClick: (String) -> Unit = {}
 ) {
-    var selectedIndex by remember(period, tabType) { mutableStateOf(-1) }
+    // Use rememberSaveable to maintain selection across navigation
+    // Reset selection only when period or tab type changes
+    var selectedIndex by rememberSaveable(period.toString(), tabType.toString()) { 
+        mutableStateOf(-1) 
+    }
 
     Card(
         modifier = Modifier
@@ -114,9 +120,7 @@ fun CategoryTotalsCardWithTabs(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp)
-                .pointerInput(period, tabType) {
-                    detectTapGestures { selectedIndex = -1 }
-                }
+                // Remove tap-to-deselect to maintain selection state
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -148,7 +152,7 @@ fun CategoryTotalsCardWithTabs(
                 animationSpec = tween(durationMillis = 300),
                 label = "ChartContentFade"
             ) { result ->
-                key(period, tabType) {
+                key(period.getDateRange()?.first ?: period.toString(), tabType) {
                     Box(modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 450.dp)

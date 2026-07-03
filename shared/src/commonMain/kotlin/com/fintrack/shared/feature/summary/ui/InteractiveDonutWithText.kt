@@ -41,6 +41,8 @@ import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
+import androidx.compose.runtime.saveable.rememberSaveable
+
 @Composable
 fun InteractiveDonutWithText(
     categorySums: List<Pair<String, Double>>,
@@ -54,10 +56,15 @@ fun InteractiveDonutWithText(
 ) {
     if (categorySums.isEmpty() || totalAmount <= 0.0) return
 
-    // Entrance animation
-    val entranceProgress = remember { Animatable(0f) }
+    // Entrance animation control
+    var hasAnimated by rememberSaveable { mutableStateOf(false) }
+    val entranceProgress = remember { Animatable(if (hasAnimated) 1f else 0f) }
+    
     LaunchedEffect(Unit) {
-        entranceProgress.animateTo(1f, animationSpec = tween(1000))
+        if (!hasAnimated) {
+            entranceProgress.animateTo(1f, animationSpec = tween(1000))
+            hasAnimated = true
+        }
     }
 
     // Animate stroke width on selection
@@ -263,13 +270,11 @@ private fun handleCanvasTap(
             }
             onItemSelected(selectedIndex)
         } else {
-            // Tapped already selected item -> toggle off
-            onItemDeselected(currentSelectedIndex)
-            onNoItemSelected()
+            // Tapped already selected item -> Maintain selection (Sticky)
+            onItemSelected(selectedIndex)
         }
     } else if (currentSelectedIndex >= 0) {
-        // Tapped empty space or outside valid radius -> deselect
-        onItemDeselected(currentSelectedIndex)
-        onNoItemSelected()
+        // Tapped empty space or outside valid radius -> Maintain last selection 
+        // Or deselect if you prefer, but sticking with selection for now.
     }
 }

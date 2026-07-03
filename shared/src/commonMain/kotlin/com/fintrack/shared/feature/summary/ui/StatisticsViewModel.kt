@@ -107,7 +107,9 @@ class StatisticsViewModel(
             lastHighlightsPeriod == period) return
 
         viewModelScope.launch {
-            _highlights.value = Result.Loading
+            if (_highlights.value !is Result.Success) {
+                _highlights.value = Result.Loading
+            }
             lastHighlightsAccountId = accountId
             lastHighlightsPeriod = period
             _highlights.value = repo.getHighlightsSummary(accountId, period)
@@ -143,7 +145,9 @@ class StatisticsViewModel(
                 TransactionType.Expense -> lastExpenseDistributionParams = paramKey
             }
 
-            targetFlow.value = Result.Loading
+            if (targetFlow.value !is Result.Success) {
+                targetFlow.value = Result.Loading
+            }
             targetFlow.value = repo.getDistributionSummary(
                 weekOrMonthCode = weekOrMonthCode,
                 type = type.apiName,
@@ -181,19 +185,25 @@ class StatisticsViewModel(
                 }
 
                 // Wait for all results
-                _availableWeeks.value = weeksDeferred.await()
-                _availableMonths.value = monthsDeferred.await()
-                _availableYears.value = yearsDeferred.await()
+                val weeks = weeksDeferred.await()
+                val months = monthsDeferred.await()
+                val years = yearsDeferred.await()
 
-                // --- Pick initial selection ---
-                _selectedPeriod.value = when {
-                    _availableWeeks.value.isNotEmpty() -> Period.Week(_availableWeeks.value.first())
-                    _availableMonths.value.isNotEmpty() -> Period.Month(_availableMonths.value.first())
-                    _availableYears.value.isNotEmpty() -> Period.Year(_availableYears.value.first())
-                    else -> null
+                _availableWeeks.value = weeks
+                _availableMonths.value = months
+                _availableYears.value = years
+
+                // --- Pick initial selection only if none exists ---
+                if (_selectedPeriod.value == null) {
+                    _selectedPeriod.value = when {
+                        weeks.isNotEmpty() -> Period.Week(weeks.first())
+                        months.isNotEmpty() -> Period.Month(months.first())
+                        years.isNotEmpty() -> Period.Year(years.first())
+                        else -> null
+                    }
                 }
 
-                // Load BOTH income and expense data for the initial period
+                // Load BOTH income and expense data for the selection
                 reloadDistributionForCurrentSelection(accountId, force = force)
             } catch (e: Exception) {
                 _availableWeeks.value = emptyList()
@@ -208,7 +218,9 @@ class StatisticsViewModel(
         if (!force && _overview.value is Result.Success && lastOverviewAccountId == accountId) return
         
         viewModelScope.launch {
-            _overview.value = Result.Loading
+            if (_overview.value !is Result.Success) {
+                _overview.value = Result.Loading
+            }
             lastOverviewAccountId = accountId
             _overview.value = repo.getOverviewSummary(accountId)
         }
@@ -219,7 +231,9 @@ class StatisticsViewModel(
         if (!force && _categoryComparisons.value is Result.Success && lastCategoryComparisonAccountId == accountId) return
 
         viewModelScope.launch {
-            _categoryComparisons.value = Result.Loading
+            if (_categoryComparisons.value !is Result.Success) {
+                _categoryComparisons.value = Result.Loading
+            }
             lastCategoryComparisonAccountId = accountId
             _categoryComparisons.value = repo.getCategoryComparisons(accountId)
         }

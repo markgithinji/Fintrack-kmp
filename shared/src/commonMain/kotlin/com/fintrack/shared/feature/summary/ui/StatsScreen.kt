@@ -65,10 +65,6 @@ fun StatisticsScreen(
         getDefaultPeriod(availableWeeks, availableMonths, availableYears)
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.loadAvailablePeriods()
-    }
-
     LaunchedEffect(selectedAccountResult) {
         val accountId = (selectedAccountResult as? Result.Success)?.data?.id
         viewModel.loadAvailablePeriods(accountId)
