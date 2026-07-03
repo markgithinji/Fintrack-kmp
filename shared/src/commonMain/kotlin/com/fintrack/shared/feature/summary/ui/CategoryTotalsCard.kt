@@ -152,7 +152,7 @@ fun CategoryTotalsCardWithTabs(
                             is Result.Loading -> {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     LoadingDonutChartSection()
-                                    Spacer(Modifier.height(32.dp))
+                                    Spacer(Modifier.height(16.dp))
                                     LoadingCategoryList()
                                 }
                             }
@@ -192,7 +192,7 @@ fun CategoryTotalsCardWithTabs(
                                             selectedIndex = selectedIndex,
                                             onSelectedIndexChange = { selectedIndex = it }
                                         )
-                                        Spacer(Modifier.height(32.dp))
+                                        Spacer(Modifier.height(16.dp))
                                         CategoryList(
                                             categories = categorySums,
                                             totalAmount = totalAmount,
@@ -347,13 +347,15 @@ fun LoadingInteractiveDonutWithText(
 fun LoadingCategoryList() {
     Column(
         modifier = Modifier
-            .padding(top = 16.dp)
+            .padding(top = 8.dp)
             .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         repeat(4) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp, horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AnimatedShimmerBox(modifier = Modifier.size(10.dp).clip(CircleShape))
@@ -385,7 +387,7 @@ fun CategoryList(
         topCategories.add("Others" to othersTotal)
     }
 
-    Column(modifier = Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(modifier = Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         topCategories.forEachIndexed { index, (categoryName, amount) ->
             val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
             val color = if (index < 4) segmentColors[index % segmentColors.size] else segmentColors.last()
