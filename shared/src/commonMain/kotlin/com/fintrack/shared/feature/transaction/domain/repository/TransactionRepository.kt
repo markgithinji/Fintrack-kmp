@@ -14,7 +14,11 @@ interface TransactionRepository {
         afterDateTime: String? = null,
         afterId: String? = null,
         accountId: String? = null,
-        isIncome: Boolean? = null
+        isIncome: Boolean? = null,
+        category: String? = null,
+        startDate: String? = null,
+        endDate: String? = null,
+        hasTransactionCost: Boolean? = null
     ): Result<Pair<List<Transaction>, String?>>
 
     suspend fun addTransaction(transaction: Transaction): Result<Transaction>
@@ -35,7 +39,11 @@ interface TransactionRepository {
 
     fun getTransactionsPagingFlow(
         accountId: String?,
-        isIncome: Boolean? = null
+        isIncome: Boolean? = null,
+        category: String? = null,
+        startDate: String? = null,
+        endDate: String? = null,
+        hasTransactionCost: Boolean? = null
     ): Flow<PagingData<Transaction>>
 
     suspend fun triggerRefresh()

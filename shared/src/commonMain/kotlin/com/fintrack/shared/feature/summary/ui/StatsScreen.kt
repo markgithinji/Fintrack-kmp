@@ -41,10 +41,15 @@ import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.TabType
 import org.koin.compose.viewmodel.koinViewModel
 
+import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.account.ui.AccountsViewModel
+
 @Composable
 fun StatisticsScreen(
     viewModel: StatisticsViewModel = koinViewModel(),
-    paddingValues: PaddingValues = PaddingValues(0.dp)
+    accountsViewModel: AccountsViewModel = koinViewModel(),
+    paddingValues: PaddingValues = PaddingValues(0.dp),
+    onCategoryClick: (category: String, isIncome: Boolean, startDate: String?, endDate: String?, accountId: String?) -> Unit = { _, _, _, _, _ -> }
 ) {
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
     val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle()
@@ -53,6 +58,7 @@ fun StatisticsScreen(
     val availableYears by viewModel.availableYears.collectAsStateWithLifecycle()
     val highlights by viewModel.highlights.collectAsStateWithLifecycle()
     val distributionResult by viewModel.distribution.collectAsStateWithLifecycle()
+    val selectedAccountResult by accountsViewModel.selectedAccount.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
 
     val safePeriod = selectedPeriod ?: remember(availableWeeks, availableMonths, availableYears) {
@@ -61,6 +67,13 @@ fun StatisticsScreen(
 
     LaunchedEffect(Unit) {
         viewModel.loadAvailablePeriods()
+    }
+
+    LaunchedEffect(selectedAccountResult) {
+        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+        viewModel.loadAvailablePeriods(accountId)
+        viewModel.loadOverview(accountId)
+        viewModel.loadCategoryComparisons(accountId)
     }
 
     Column(
@@ -112,7 +125,18 @@ fun StatisticsScreen(
                     onWeekSelected = { week -> viewModel.onPeriodChanged(Period.Week(week)) },
                     onMonthSelected = { month -> viewModel.onPeriodChanged(Period.Month(month)) },
                     onYearSelected = { year -> viewModel.onPeriodChanged(Period.Year(year)) },
-                    onPeriodSelected = { period -> viewModel.onPeriodChanged(period) }
+                    onPeriodSelected = { period -> viewModel.onPeriodChanged(period) },
+                    onCategoryClick = { category ->
+                        val dateRange = safePeriod.getDateRange()
+                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                        onCategoryClick(
+                            category,
+                            selectedTab is TabType.Income,
+                            dateRange?.first,
+                            dateRange?.second,
+                            accountId
+                        )
+                    }
                 )
             }
         }

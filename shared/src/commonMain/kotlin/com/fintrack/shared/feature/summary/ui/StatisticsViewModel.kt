@@ -36,7 +36,14 @@ class StatisticsViewModel(
                 loadCategoryComparisons(lastCategoryComparisonAccountId, force = true)
                 
                 lastTransactionCountsAccountId?.let { accountId ->
-                    loadTransactionCounts(accountId, lastTransactionCountsIsIncome, force = true)
+                    loadTransactionCounts(
+                        accountId = accountId,
+                        isIncome = lastTransactionCountsIsIncome,
+                        category = lastTransactionCountsCategory,
+                        start = lastTransactionCountsStart,
+                        end = lastTransactionCountsEnd,
+                        force = true
+                    )
                 }
             }
         }
@@ -264,30 +271,38 @@ class StatisticsViewModel(
 
     private var lastTransactionCountsAccountId: String? = null
     private var lastTransactionCountsIsIncome: Boolean? = null
+    private var lastTransactionCountsCategory: String? = null
     private var lastTransactionCountsStart: String? = null
     private var lastTransactionCountsEnd: String? = null
+    private var lastTransactionCountsHasCost: Boolean? = null
 
     fun loadTransactionCounts(
         accountId: String,
         isIncome: Boolean? = null,
+        category: String? = null,
         start: String? = null,
         end: String? = null,
+        hasCost: Boolean? = null,
         force: Boolean = false
     ) {
         if (!force && _transactionCounts.value is Result.Success &&
             lastTransactionCountsAccountId == accountId &&
             lastTransactionCountsIsIncome == isIncome &&
+            lastTransactionCountsCategory == category &&
             lastTransactionCountsStart == start &&
-            lastTransactionCountsEnd == end
+            lastTransactionCountsEnd == end &&
+            lastTransactionCountsHasCost == hasCost
         ) return
 
         viewModelScope.launch {
             _transactionCounts.value = Result.Loading
             lastTransactionCountsAccountId = accountId
             lastTransactionCountsIsIncome = isIncome
+            lastTransactionCountsCategory = category
             lastTransactionCountsStart = start
             lastTransactionCountsEnd = end
-            _transactionCounts.value = repo.getTransactionCounts(accountId, isIncome, start, end)
+            lastTransactionCountsHasCost = hasCost
+            _transactionCounts.value = repo.getTransactionCounts(accountId, isIncome, category, start, end, hasCost)
         }
     }
 }

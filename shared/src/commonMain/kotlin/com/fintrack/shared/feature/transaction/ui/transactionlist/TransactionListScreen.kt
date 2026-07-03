@@ -43,8 +43,12 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun TransactionListScreen(
-    accountId: String,
+    accountId: String? = null,
     isIncome: Boolean? = null,
+    category: String? = null,
+    startDate: String? = null,
+    endDate: String? = null,
+    hasTransactionCost: Boolean? = null,
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onEditTransaction: (String) -> Unit,
@@ -55,18 +59,33 @@ fun TransactionListScreen(
     val listState = rememberLazyListState()
     val sharedTransitionScope = LocalSharedTransitionScope.current
 
-    val transactions = remember(accountId, isIncome) {
-        transactionsViewModel.getTransactionsPagingData(accountId, isIncome)
+    val transactions = remember(accountId, isIncome, category, startDate, endDate, hasTransactionCost) {
+        transactionsViewModel.getTransactionsPagingData(
+            accountId = accountId,
+            isIncome = isIncome,
+            category = category,
+            startDate = startDate,
+            endDate = endDate,
+            hasTransactionCost = hasTransactionCost
+        )
     }.collectAsLazyPagingItems()
 
-    LaunchedEffect(accountId, isIncome) {
-        statisticsViewModel.loadTransactionCounts(accountId, isIncome)
+    LaunchedEffect(accountId, isIncome, category, startDate, endDate, hasTransactionCost) {
+        statisticsViewModel.loadTransactionCounts(
+            accountId = accountId ?: "",
+            isIncome = isIncome,
+            category = category,
+            start = startDate,
+            end = endDate,
+            hasCost = hasTransactionCost
+        )
     }
 
     TransactionListContent(
         transactionCounts = transactionCounts,
         transactions = transactions,
         isIncome = isIncome,
+        hasTransactionCost = hasTransactionCost,
         listState = listState,
         paddingValues = paddingValues,
         animatedVisibilityScope = animatedVisibilityScope,
@@ -81,6 +100,7 @@ private fun TransactionListContent(
     transactionCounts: Result<TransactionCountSummary>,
     transactions: LazyPagingItems<Transaction>,
     isIncome: Boolean?,
+    hasTransactionCost: Boolean? = null,
     listState: androidx.compose.foundation.lazy.LazyListState,
     paddingValues: PaddingValues,
     animatedVisibilityScope: AnimatedVisibilityScope,
@@ -120,7 +140,8 @@ private fun TransactionListContent(
         item(key = "header_card") {
             TransactionCountHeaderCard(
                 transactionCounts = transactionCounts,
-                isIncome = isIncome
+                isIncome = isIncome,
+                hasTransactionCost = hasTransactionCost
             )
         }
 

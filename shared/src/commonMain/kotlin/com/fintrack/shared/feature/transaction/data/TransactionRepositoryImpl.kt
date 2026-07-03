@@ -39,7 +39,11 @@ class TransactionRepositoryImpl(
         afterDateTime: String?,
         afterId: String?,
         accountId: String?,
-        isIncome: Boolean?
+        isIncome: Boolean?,
+        category: String?,
+        startDate: String?,
+        endDate: String?,
+        hasTransactionCost: Boolean?
     ): Result<Pair<List<Transaction>, String?>> =
         safeApiCall {
             val paginated = api.getTransactions(
@@ -49,7 +53,11 @@ class TransactionRepositoryImpl(
                 afterDateTime = afterDateTime,
                 afterId = afterId,
                 accountId = accountId,
-                isIncome = isIncome
+                isIncome = isIncome,
+                category = category,
+                startDate = startDate,
+                endDate = endDate,
+                hasTransactionCost = hasTransactionCost
             )
             val transactions = paginated.data.map { it.toDomain() }
             transactions to paginated.nextCursor
@@ -134,13 +142,21 @@ class TransactionRepositoryImpl(
 
     override fun getTransactionsPagingFlow(
         accountId: String?,
-        isIncome: Boolean?
+        isIncome: Boolean?,
+        category: String?,
+        startDate: String?,
+        endDate: String?,
+        hasTransactionCost: Boolean?
     ): Flow<PagingData<Transaction>> {
         return createPager {
             TransactionPagingSource(
                 repo = this,
                 accountId = accountId,
-                isIncome = isIncome
+                isIncome = isIncome,
+                category = category,
+                startDate = startDate,
+                endDate = endDate,
+                hasTransactionCost = hasTransactionCost
             )
         }
     }

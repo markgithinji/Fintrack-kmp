@@ -95,7 +95,8 @@ fun CategoryTotalsCardWithTabs(
     onWeekSelected: (String) -> Unit = {},
     onMonthSelected: (String) -> Unit = {},
     onYearSelected: (String) -> Unit = {},
-    onPeriodSelected: (Period) -> Unit = {}
+    onPeriodSelected: (Period) -> Unit = {},
+    onCategoryClick: (String) -> Unit = {}
 ) {
     var selectedIndex by remember(period, tabType) { mutableStateOf(-1) }
 
@@ -202,6 +203,7 @@ fun CategoryTotalsCardWithTabs(
                                             totalAmount = totalAmount,
                                             selectedIndex = selectedIndex,
                                             onSelectedIndexChange = { selectedIndex = it },
+                                            onCategoryClick = onCategoryClick,
                                             segmentColors = SegmentColors
                                         )
                                     }
@@ -382,6 +384,7 @@ fun CategoryList(
     totalAmount: Float,
     selectedIndex: Int,
     onSelectedIndexChange: (Int) -> Unit,
+    onCategoryClick: (String) -> Unit = {},
     segmentColors: List<Color>
 ) {
     val sortedCategorySums = categories.sortedByDescending { it.second }
@@ -391,7 +394,7 @@ fun CategoryList(
         topCategories.add("Others" to othersTotal)
     }
 
-    Column(modifier = Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(modifier = Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         topCategories.forEachIndexed { index, (categoryName, amount) ->
             val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
             val color = if (index < 4) segmentColors[index % segmentColors.size] else segmentColors.last()
@@ -403,9 +406,10 @@ fun CategoryList(
                     .clip(RoundedCornerShape(12.dp))
                     .background(if (isSelected) color.copy(alpha = 0.1f) else Color.Transparent)
                     .clickable {
-                        if (isSelected) onSelectedIndexChange(-1) else onSelectedIndexChange(index)
+                        onSelectedIndexChange(index)
+                        onCategoryClick(categoryName)
                     }
-                    .padding(vertical = 8.dp, horizontal = 12.dp),
+                    .padding(vertical = 6.dp, horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(

@@ -315,12 +315,23 @@ class TransactionViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getTransactionsPagingData(
         accountId: String?,
-        isIncome: Boolean? = null
+        isIncome: Boolean? = null,
+        category: String? = null,
+        startDate: String? = null,
+        endDate: String? = null,
+        hasTransactionCost: Boolean? = null
     ): Flow<PagingData<Transaction>> {
         return repo.refreshSignal
             .onStart { emit(Unit) }
             .flatMapLatest {
-                repo.getTransactionsPagingFlow(accountId, isIncome)
+                repo.getTransactionsPagingFlow(
+                    accountId = accountId,
+                    isIncome = isIncome,
+                    category = category,
+                    startDate = startDate,
+                    endDate = endDate,
+                    hasTransactionCost = hasTransactionCost
+                )
             }
             .cachedIn(viewModelScope)
     }

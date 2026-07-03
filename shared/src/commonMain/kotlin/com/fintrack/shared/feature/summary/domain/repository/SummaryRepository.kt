@@ -30,7 +30,9 @@ interface SummaryRepository {
     suspend fun getTransactionCounts(
         accountId: String,
         isIncome: Boolean? = null,
+        category: String? = null,
         start: String? = null,
-        end: String? = null
+        end: String? = null,
+        hasTransactionCost: Boolean? = null
     ): Result<TransactionCountSummary>
 }

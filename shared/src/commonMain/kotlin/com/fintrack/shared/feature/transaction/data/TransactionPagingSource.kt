@@ -9,7 +9,11 @@ import com.fintrack.shared.feature.core.util.Result
 class TransactionPagingSource(
     private val repo: TransactionRepository,
     private val accountId: String?,
-    private val isIncome: Boolean? = null
+    private val isIncome: Boolean? = null,
+    private val category: String? = null,
+    private val startDate: String? = null,
+    private val endDate: String? = null,
+    private val hasTransactionCost: Boolean? = null
 ) : PagingSource<String, Transaction>() {
 
     override suspend fun load(params: LoadParams<String>): LoadResult<String, Transaction> {
@@ -25,7 +29,11 @@ class TransactionPagingSource(
                 afterDateTime = afterDateTime,
                 afterId = afterId,
                 accountId = accountId,
-                isIncome = isIncome
+                isIncome = isIncome,
+                category = category,
+                startDate = startDate,
+                endDate = endDate,
+                hasTransactionCost = hasTransactionCost
             )
 
             when (result) {

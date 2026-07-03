@@ -192,7 +192,22 @@ fun AppNavigation(
                     LaunchedEffect(Unit) {
                         onUpdateAppBarState(AppBarState(title = "Statistics"))
                     }
-                    StatisticsScreen(paddingValues = paddingValues)
+                    StatisticsScreen(
+                        paddingValues = paddingValues,
+                        onCategoryClick = { category, isIncome, startDate, endDate, accountId ->
+                            val isTransactionCost = category == "Transaction Cost"
+                            navController.navigate(
+                                Screen.TransactionList.createRoute(
+                                    accountId = accountId,
+                                    isIncome = if (isTransactionCost) null else isIncome,
+                                    category = if (isTransactionCost) null else category,
+                                    startDate = startDate,
+                                    endDate = endDate,
+                                    hasTransactionCost = if (isTransactionCost) true else null
+                                )
+                            )
+                        }
+                    )
                 }
 
                 composable(Screen.Budget.route) {
@@ -372,10 +387,34 @@ fun AppNavigation(
                 }
 
                 composable(
-                    route = "transaction_list/{accountId}?isIncome={isIncome}",
+                    route = Screen.TransactionList.route,
                     arguments = listOf(
-                        navArgument("accountId") { type = NavType.StringType },
+                        navArgument("accountId") {
+                            type = NavType.StringType
+                            defaultValue = null
+                            nullable = true
+                        },
                         navArgument("isIncome") {
+                            type = NavType.StringType
+                            defaultValue = null
+                            nullable = true
+                        },
+                        navArgument("category") {
+                            type = NavType.StringType
+                            defaultValue = null
+                            nullable = true
+                        },
+                        navArgument("startDate") {
+                            type = NavType.StringType
+                            defaultValue = null
+                            nullable = true
+                        },
+                        navArgument("endDate") {
+                            type = NavType.StringType
+                            defaultValue = null
+                            nullable = true
+                        },
+                        navArgument("hasTransactionCost") {
                             type = NavType.StringType
                             defaultValue = null
                             nullable = true
@@ -384,19 +423,35 @@ fun AppNavigation(
                 ) { backStackEntry ->
                     val accountId = backStackEntry.arguments?.read {
                         if (contains("accountId")) getString("accountId") else null
-                    } ?: return@composable
+                    }
                     val isIncomeStr = backStackEntry.arguments?.read {
                         if (contains("isIncome")) getString("isIncome") else null
                     }
                     val isIncome: Boolean? = isIncomeStr?.toBooleanStrictOrNull()
+                    
+                    val category = backStackEntry.arguments?.read {
+                        if (contains("category")) getString("category") else null
+                    }
+                    val startDate = backStackEntry.arguments?.read {
+                        if (contains("startDate")) getString("startDate") else null
+                    }
+                    val endDate = backStackEntry.arguments?.read {
+                        if (contains("endDate")) getString("endDate") else null
+                    }
+                    val hasTransactionCostStr = backStackEntry.arguments?.read {
+                        if (contains("hasTransactionCost")) getString("hasTransactionCost") else null
+                    }
+                    val hasTransactionCost: Boolean? = hasTransactionCostStr?.toBooleanStrictOrNull()
 
                     LaunchedEffect(Unit) {
                         onUpdateAppBarState(
                             AppBarState(
-                                title = when (isIncome) {
-                                    true -> "Income Transactions"
-                                    false -> "Expense Transactions"
-                                    null -> "All Transactions"
+                                title = when {
+                                    hasTransactionCost == true -> "Transaction Fees"
+                                    category != null -> category
+                                    isIncome == true -> "Income Transactions"
+                                    isIncome == false -> "Expense Transactions"
+                                    else -> "All Transactions"
                                 },
                                 showBackButton = true,
                                 onBack = { navController.popBackStack() }
@@ -407,6 +462,10 @@ fun AppNavigation(
                     TransactionListScreen(
                         accountId = accountId, 
                         isIncome = isIncome,
+                        category = category,
+                        startDate = startDate,
+                        endDate = endDate,
+                        hasTransactionCost = hasTransactionCost,
                         paddingValues = paddingValues,
                         animatedVisibilityScope = this,
                         onEditTransaction = { transactionId ->

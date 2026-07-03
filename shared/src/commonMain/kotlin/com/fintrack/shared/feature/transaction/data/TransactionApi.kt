@@ -26,7 +26,11 @@ class TransactionApi(
         afterDateTime: String? = null,
         afterId: String? = null,
         accountId: String? = null,
-        isIncome: Boolean? = null
+        isIncome: Boolean? = null,
+        category: String? = null,
+        startDate: String? = null,
+        endDate: String? = null,
+        hasTransactionCost: Boolean? = null
     ): PaginatedTransactionDto {
         val response: ApiResponse<PaginatedTransactionDto> = client.get("$baseUrl/transactions") {
             parameter("limit", limit)
@@ -36,6 +40,10 @@ class TransactionApi(
             afterId?.let { parameter("afterId", it) }
             accountId?.let { parameter("accountId", it) }
             isIncome?.let { parameter("isIncome", it) }
+            category?.let { parameter("category", it) }
+            startDate?.let { parameter("start", it) }
+            endDate?.let { parameter("end", it) }
+            hasTransactionCost?.let { parameter("hasCost", it) }
         }.body()
         return response.result
     }

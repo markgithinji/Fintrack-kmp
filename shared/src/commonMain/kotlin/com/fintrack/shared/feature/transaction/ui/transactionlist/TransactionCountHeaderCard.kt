@@ -41,7 +41,8 @@ import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 @Composable
 fun TransactionCountHeaderCard(
     transactionCounts: Result<TransactionCountSummary>,
-    isIncome: Boolean?
+    isIncome: Boolean?,
+    hasTransactionCost: Boolean? = null
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -56,7 +57,8 @@ fun TransactionCountHeaderCard(
             is Result.Error -> TransactionCountErrorState()
             is Result.Success -> TransactionCountSuccessState(
                 counts = transactionCounts.data,
-                isIncome = isIncome
+                isIncome = isIncome,
+                hasTransactionCost = hasTransactionCost
             )
         }
     }
@@ -112,12 +114,14 @@ private fun TransactionCountErrorState() {
 @Composable
 private fun TransactionCountSuccessState(
     counts: TransactionCountSummary,
-    isIncome: Boolean?
+    isIncome: Boolean?,
+    hasTransactionCost: Boolean? = null
 ) {
-    val themeColor = when (isIncome) {
-        true -> GreenIncome
-        false -> PinkExpense
-        null -> MaterialTheme.colorScheme.primary
+    val themeColor = when {
+        hasTransactionCost == true -> MaterialTheme.colorScheme.tertiary
+        isIncome == true -> GreenIncome
+        isIncome == false -> PinkExpense
+        else -> MaterialTheme.colorScheme.primary
     }
 
     Row(
@@ -144,21 +148,23 @@ private fun TransactionCountSuccessState(
 
         Column {
             Text(
-                text = when (isIncome) {
-                    true -> "Income Overview"
-                    false -> "Expense Overview"
-                    null -> "All Transactions"
+                text = when {
+                    hasTransactionCost == true -> "Transaction Fees"
+                    isIncome == true -> "Income Overview"
+                    isIncome == false -> "Expense Overview"
+                    else -> "All Transactions"
                 },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             
-            val countText = remember(counts, isIncome) {
-                when (isIncome) {
-                    true -> "${counts.totalIncomeTransactions} total items"
-                    false -> "${counts.totalExpenseTransactions} total items"
-                    null -> "${counts.totalTransactions} total items"
+            val countText = remember(counts, isIncome, hasTransactionCost) {
+                when {
+                    hasTransactionCost == true -> "${counts.totalTransactions} transactions with fees"
+                    isIncome == true -> "${counts.totalIncomeTransactions} total items"
+                    isIncome == false -> "${counts.totalExpenseTransactions} total items"
+                    else -> "${counts.totalTransactions} total items"
                 }
             }
 

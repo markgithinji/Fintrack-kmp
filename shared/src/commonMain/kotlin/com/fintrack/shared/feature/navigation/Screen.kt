@@ -26,13 +26,23 @@ sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Register : Screen("register")
 
-    object TransactionList : Screen("transaction_list/{accountId}?isIncome={isIncome}") {
-        fun createRoute(accountId: String, isIncome: Boolean? = null): String {
-            return if (isIncome == null) {
-                "transaction_list/$accountId"
-            } else {
-                "transaction_list/$accountId?isIncome=$isIncome"
-            }
+    object TransactionList : Screen("transaction_list?accountId={accountId}&isIncome={isIncome}&category={category}&startDate={startDate}&endDate={endDate}&hasTransactionCost={hasTransactionCost}") {
+        fun createRoute(
+            accountId: String? = null,
+            isIncome: Boolean? = null,
+            category: String? = null,
+            startDate: String? = null,
+            endDate: String? = null,
+            hasTransactionCost: Boolean? = null
+        ): String {
+            val builder = StringBuilder("transaction_list?")
+            accountId?.let { builder.append("accountId=$it&") }
+            isIncome?.let { builder.append("isIncome=$it&") }
+            category?.let { builder.append("category=$it&") }
+            startDate?.let { builder.append("startDate=$it&") }
+            endDate?.let { builder.append("endDate=$it&") }
+            hasTransactionCost?.let { builder.append("hasTransactionCost=$it&") }
+            return builder.toString().removeSuffix("&").removeSuffix("?")
         }
     }
 }

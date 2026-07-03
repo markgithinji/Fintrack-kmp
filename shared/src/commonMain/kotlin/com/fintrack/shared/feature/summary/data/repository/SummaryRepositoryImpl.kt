@@ -65,9 +65,11 @@ class SummaryRepositoryImpl(
     override suspend fun getTransactionCounts(
         accountId: String,
         isIncome: Boolean?,
+        category: String?,
         start: String?,
-        end: String?
+        end: String?,
+        hasTransactionCost: Boolean?
     ): Result<TransactionCountSummary> = safeApiCall {
-        api.getTransactionCounts(accountId, isIncome, start, end).toDomain()
+        api.getTransactionCounts(accountId, isIncome, category, start, end, hasTransactionCost).toDomain()
     }
 }

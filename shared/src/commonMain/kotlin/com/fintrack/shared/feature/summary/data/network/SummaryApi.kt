@@ -91,15 +91,19 @@ class SummaryApi(
     suspend fun getTransactionCounts(
         accountId: String,
         isIncome: Boolean? = null,
+        category: String? = null,
         start: String? = null,
-        end: String? = null
+        end: String? = null,
+        hasTransactionCost: Boolean? = null
     ): TransactionCountSummaryDto {
         val response: ApiResponse<TransactionCountSummaryDto> =
             client.get("$baseUrl/transactions/summary/counts") {
                 parameter("accountId", accountId)
                 isIncome?.let { parameter("isIncome", it) }
+                category?.let { parameter("category", it) }
                 start?.let { parameter("start", it) }
                 end?.let { parameter("end", it) }
+                hasTransactionCost?.let { parameter("hasCost", it) }
             }.body()
         return response.result
     }
