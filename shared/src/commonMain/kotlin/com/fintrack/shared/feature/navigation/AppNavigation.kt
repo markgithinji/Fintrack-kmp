@@ -194,6 +194,7 @@ fun AppNavigation(
                     }
                     StatisticsScreen(
                         paddingValues = paddingValues,
+                        animatedVisibilityScope = this,
                         onCategoryClick = { category, isIncome, startDate, endDate, accountId ->
                             val isTransactionCost = category == "Transaction Cost"
                             navController.navigate(

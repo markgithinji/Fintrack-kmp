@@ -235,8 +235,9 @@ private fun handleCanvasTap(
     val distance = sqrt(dx * dx + dy * dy)
     val tapAngle = (atan2(dy, dx) * 180f / PI.toFloat() + 360f) % 360f
 
-    // Generous radius check: Donut is roughly between 40% and 110% of available radius.
-    val isDistanceValid = distance > center.x * 0.4f && distance < center.x * 1.1f
+    // Widened radius check: Donut segments are easier to hit.
+    // Inner hole is smaller (0.2x), and outside reach is larger (1.5x).
+    val isDistanceValid = distance > center.x * 0.2f && distance < center.x * 1.5f
 
     var selectedIndex = -1
     var minDistanceToCenter = Float.MAX_VALUE

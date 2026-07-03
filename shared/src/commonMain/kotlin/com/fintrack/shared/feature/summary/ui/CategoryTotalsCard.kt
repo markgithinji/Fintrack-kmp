@@ -41,6 +41,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -86,6 +87,12 @@ import kotlinx.datetime.plus
 
 import androidx.compose.runtime.saveable.rememberSaveable
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
+import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
+
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun CategoryTotalsCardWithTabs(
     tabType: TabType,
@@ -94,6 +101,7 @@ fun CategoryTotalsCardWithTabs(
     availableWeeks: List<String> = emptyList(),
     availableMonths: List<String> = emptyList(),
     availableYears: List<String> = emptyList(),
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onWeekSelected: (String) -> Unit = {},
     onMonthSelected: (String) -> Unit = {},
     onYearSelected: (String) -> Unit = {},
@@ -210,7 +218,8 @@ fun CategoryTotalsCardWithTabs(
                                             selectedIndex = selectedIndex,
                                             onSelectedIndexChange = { selectedIndex = it },
                                             onCategoryClick = onCategoryClick,
-                                            segmentColors = SegmentColors
+                                            segmentColors = SegmentColors,
+                                            animatedVisibilityScope = animatedVisibilityScope
                                         )
                                     }
                                 }
@@ -384,6 +393,7 @@ fun LoadingCategoryList() {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun CategoryList(
     categories: List<Pair<String, Float>>,
@@ -391,8 +401,10 @@ fun CategoryList(
     selectedIndex: Int,
     onSelectedIndexChange: (Int) -> Unit,
     onCategoryClick: (String) -> Unit = {},
-    segmentColors: List<Color>
+    segmentColors: List<Color>,
+    animatedVisibilityScope: AnimatedVisibilityScope
 ) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
     val sortedCategorySums = categories.sortedByDescending { it.second }
     val topCategoriesList = sortedCategorySums.take(4).toList()
     val remainingCategories = sortedCategorySums.drop(4)
@@ -403,56 +415,92 @@ fun CategoryList(
         displayCategories.add("Others" to othersTotal)
     }
 
-    Column(modifier = Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    Column(modifier = Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         displayCategories.forEachIndexed { index, (categoryName, amount) ->
             val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
             val color = if (index < 4) segmentColors[index % segmentColors.size] else segmentColors.last()
             val isSelected = selectedIndex == index
 
-            Row(
+            Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (isSelected) color.copy(alpha = 0.1f) else Color.Transparent)
-                    .clickable {
-                        onSelectedIndexChange(index)
-                        
-                        val categoryFilter = if (categoryName == "Others") {
-                            remainingCategories.joinToString(",") { it.first }
-                        } else {
-                            categoryName
-                        }
-                        onCategoryClick(categoryFilter)
+                    .then(
+                        if (sharedTransitionScope != null) {
+                            with(sharedTransitionScope) {
+                                Modifier.sharedBounds(
+                                    rememberSharedContentState(key = "header_card_$categoryName"),
+                                    animatedVisibilityScope = animatedVisibilityScope,
+                                    clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp))
+                                )
+                            }
+                        } else Modifier
+                    ),
+                shape = RoundedCornerShape(12.dp),
+                color = if (isSelected) color.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                onClick = {
+                    onSelectedIndexChange(index)
+                    
+                    val categoryFilter = if (categoryName == "Others") {
+                        remainingCategories.joinToString(",") { it.first }
+                    } else {
+                        categoryName
                     }
-                    .padding(vertical = 6.dp, horizontal = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                    onCategoryClick(categoryFilter)
+                }
             ) {
-                Box(
+                Row(
                     modifier = Modifier
-                        .size(10.dp)
-                        .background(color, CircleShape)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
+                        .padding(vertical = 10.dp, horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .background(color, CircleShape)
+                            .then(
+                                if (sharedTransitionScope != null) {
+                                    with(sharedTransitionScope) {
+                                        Modifier.sharedElement(
+                                            rememberSharedContentState(key = "category_icon_$categoryName"),
+                                            animatedVisibilityScope = animatedVisibilityScope
+                                        )
+                                    }
+                                } else Modifier
+                            )
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
 
-                Text(
-                    text = categoryName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
-
-                Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = amount.toDouble().toCurrencyString(),
+                        text = categoryName,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier
+                            .weight(1f)
+                            .then(
+                                if (sharedTransitionScope != null) {
+                                    with(sharedTransitionScope) {
+                                        Modifier.sharedElement(
+                                            rememberSharedContentState(key = "category_name_$categoryName"),
+                                            animatedVisibilityScope = animatedVisibilityScope
+                                        )
+                                    }
+                                } else Modifier
+                            )
                     )
-                    Text(
-                        text = "$percent%",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = color
-                    )
+
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = amount.toDouble().toCurrencyString(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "$percent%",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = color
+                        )
+                    }
                 }
             }
         }

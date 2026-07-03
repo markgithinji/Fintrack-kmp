@@ -44,11 +44,16 @@ import org.koin.compose.viewmodel.koinViewModel
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun StatisticsScreen(
     viewModel: StatisticsViewModel = koinViewModel(),
     accountsViewModel: AccountsViewModel = koinViewModel(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onCategoryClick: (category: String, isIncome: Boolean, startDate: String?, endDate: String?, accountId: String?) -> Unit = { _, _, _, _, _ -> }
 ) {
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
@@ -118,6 +123,7 @@ fun StatisticsScreen(
                     availableWeeks = availableWeeks,
                     availableMonths = availableMonths,
                     availableYears = availableYears,
+                    animatedVisibilityScope = animatedVisibilityScope,
                     onWeekSelected = { week -> viewModel.onPeriodChanged(Period.Week(week)) },
                     onMonthSelected = { month -> viewModel.onPeriodChanged(Period.Month(month)) },
                     onYearSelected = { year -> viewModel.onPeriodChanged(Period.Year(year)) },

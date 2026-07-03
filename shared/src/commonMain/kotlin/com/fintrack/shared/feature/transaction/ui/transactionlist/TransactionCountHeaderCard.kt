@@ -1,5 +1,8 @@
 package com.fintrack.shared.feature.transaction.ui.transactionlist
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,14 +41,19 @@ import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun TransactionCountHeaderCard(
     transactionCounts: Result<TransactionCountSummary>,
     isIncome: Boolean?,
-    hasTransactionCost: Boolean? = null
+    hasTransactionCost: Boolean? = null,
+    categoryName: String? = null,
+    modifier: Modifier = Modifier,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    sharedTransitionScope: SharedTransitionScope? = null
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -58,7 +66,10 @@ fun TransactionCountHeaderCard(
             is Result.Success -> TransactionCountSuccessState(
                 counts = transactionCounts.data,
                 isIncome = isIncome,
-                hasTransactionCost = hasTransactionCost
+                hasTransactionCost = hasTransactionCost,
+                categoryName = categoryName,
+                animatedVisibilityScope = animatedVisibilityScope,
+                sharedTransitionScope = sharedTransitionScope
             )
         }
     }
@@ -111,17 +122,25 @@ private fun TransactionCountErrorState() {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun TransactionCountSuccessState(
     counts: TransactionCountSummary,
     isIncome: Boolean?,
-    hasTransactionCost: Boolean? = null
+    hasTransactionCost: Boolean? = null,
+    categoryName: String? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    sharedTransitionScope: SharedTransitionScope? = null
 ) {
     val themeColor = when {
         hasTransactionCost == true -> MaterialTheme.colorScheme.tertiary
         isIncome == true -> GreenIncome
         isIncome == false -> PinkExpense
         else -> MaterialTheme.colorScheme.primary
+    }
+
+    val sharedElementKey = remember(categoryName) {
+        if (categoryName?.contains(",") == true) "Others" else categoryName
     }
 
     Row(
@@ -135,7 +154,17 @@ private fun TransactionCountSuccessState(
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(themeColor.copy(alpha = 0.1f)),
+                .background(themeColor.copy(alpha = 0.1f))
+                .then(
+                    if (sharedTransitionScope != null && animatedVisibilityScope != null && sharedElementKey != null) {
+                        with(sharedTransitionScope) {
+                            Modifier.sharedElement(
+                                rememberSharedContentState(key = "category_icon_$sharedElementKey"),
+                                animatedVisibilityScope = animatedVisibilityScope
+                            )
+                        }
+                    } else Modifier
+                ),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -150,13 +179,22 @@ private fun TransactionCountSuccessState(
             Text(
                 text = when {
                     hasTransactionCost == true -> "Transaction Fees"
+                    categoryName != null -> if (categoryName.contains(",")) "Other Categories" else categoryName
                     isIncome == true -> "Income Overview"
                     isIncome == false -> "Expense Overview"
                     else -> "All Transactions"
                 },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = if (sharedTransitionScope != null && animatedVisibilityScope != null && sharedElementKey != null) {
+                    with(sharedTransitionScope) {
+                        Modifier.sharedElement(
+                            rememberSharedContentState(key = "category_name_$sharedElementKey"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                    }
+                } else Modifier
             )
             
             val countText = remember(counts, isIncome, hasTransactionCost) {

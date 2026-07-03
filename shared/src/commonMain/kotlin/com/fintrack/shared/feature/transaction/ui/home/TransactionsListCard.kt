@@ -75,9 +75,10 @@ fun TransactionsListCard(
             .then(
                 if (sharedTransitionScope != null) {
                     with(sharedTransitionScope) {
-                        Modifier.sharedElement(
+                        Modifier.sharedBounds(
                             sharedContentState = rememberSharedContentState(key = "all_transactions_card"),
-                            animatedVisibilityScope = animatedVisibilityScope
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(24.dp))
                         )
                     }
                 } else Modifier

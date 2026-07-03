@@ -161,9 +161,10 @@ fun InfoCard(
             .then(
                 if (sharedTransitionScope != null) {
                     with(sharedTransitionScope) {
-                        Modifier.sharedElement(
+                        Modifier.sharedBounds(
                             sharedContentState = rememberSharedContentState(key = if (isIncomeCard) "income_card" else "expense_card"),
-                            animatedVisibilityScope = animatedVisibilityScope
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(16.dp))
                         )
                     }
                 } else Modifier
