@@ -8,7 +8,12 @@ import androidx.compose.ui.Modifier
 
 
 @Composable
-fun DonutChartSection(categorySums: List<Pair<String, Float>>, totalAmount: Float) {
+fun DonutChartSection(
+    categorySums: List<Pair<String, Float>>,
+    totalAmount: Float,
+    selectedIndex: Int,
+    onSelectedIndexChange: (Int) -> Unit
+) {
     if (categorySums.isEmpty() || totalAmount <= 0f) return
 
     val sortedForChart = categorySums.sortedByDescending { it.second }
@@ -29,6 +34,8 @@ fun DonutChartSection(categorySums: List<Pair<String, Float>>, totalAmount: Floa
         InteractiveDonutWithText(
             categorySums = chartData,
             totalAmount = totalAmount.toDouble(),
+            selectedIndex = selectedIndex,
+            onSelectedIndexChange = onSelectedIndexChange,
             segmentColors = chartColors
         )
     }

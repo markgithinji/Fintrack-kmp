@@ -37,6 +37,7 @@ import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
@@ -44,16 +45,14 @@ import kotlin.math.sqrt
 fun InteractiveDonutWithText(
     categorySums: List<Pair<String, Double>>,
     totalAmount: Double,
+    selectedIndex: Int,
+    onSelectedIndexChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
     chartSize: Dp = 250.dp,
     gapPercentage: Float = 0.03f,
-    segmentColors: List<Color> = SegmentColors,
-    onSliceSelected: ((index: Int) -> Unit)? = null
+    segmentColors: List<Color> = SegmentColors
 ) {
     if (categorySums.isEmpty() || totalAmount <= 0.0) return
-
-    // State to track selected slice
-    var selectedIndex by remember { mutableStateOf(-1) }
 
     // Entrance animation
     val entranceProgress = remember { Animatable(0f) }
@@ -61,13 +60,10 @@ fun InteractiveDonutWithText(
         entranceProgress.animateTo(1f, animationSpec = tween(1000))
     }
 
-    // Each slice has its own DonutChartState
-    val sliceStates = categorySums.map { remember { mutableStateOf(DonutChartState()) } }
-
     // Animate stroke width on selection
-    val animatedStrokes = sliceStates.map {
+    val animatedStrokes = categorySums.mapIndexed { index, _ ->
         animateDpAsState(
-            targetValue = it.value.stroke,
+            targetValue = if (selectedIndex == index) 52.dp else 36.dp,
             animationSpec = tween(300)
         )
     }
@@ -80,38 +76,30 @@ fun InteractiveDonutWithText(
     Box(
         modifier = modifier
             .size(chartSize)
-            .scale(chartScale), 
+            .scale(chartScale)
+            .pointerInput(selectedIndex) {
+                detectTapGestures { tapOffset ->
+                    val center = Offset(size.width / 2f, size.height / 2f)
+                    val anglesList =
+                        calculateAnglesList(categorySums, totalAmount, gapPercentage)
+
+                    handleCanvasTap(
+                        center,
+                        tapOffset,
+                        anglesList,
+                        selectedIndex,
+                        onItemSelected = { index ->
+                            onSelectedIndexChange(index)
+                        },
+                        onItemDeselected = { _ -> },
+                        onNoItemSelected = { onSelectedIndexChange(-1) }
+                    )
+                }
+            }, 
         contentAlignment = Alignment.Center
     ) {
         Canvas(
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(Unit) {
-                    detectTapGestures { tapOffset ->
-                        val center = Offset(size.width / 2f, size.height / 2f)
-                        val anglesList =
-                            calculateAnglesList(categorySums, totalAmount, gapPercentage)
-
-                        handleCanvasTap(
-                            center,
-                            tapOffset,
-                            anglesList,
-                            selectedIndex,
-                            animatedStrokes.map { it.value.toPx() },
-                            onItemSelected = { index ->
-                                selectedIndex = index
-                                sliceStates[index].value =
-                                    DonutChartState(DonutChartState.State.Selected)
-                                onSliceSelected?.invoke(index)
-                            },
-                            onItemDeselected = { index ->
-                                sliceStates[index].value =
-                                    DonutChartState(DonutChartState.State.Unselected)
-                            },
-                            onNoItemSelected = { selectedIndex = -1 }
-                        )
-                    }
-                }
+            modifier = Modifier.fillMaxSize()
         ) {
             val baseStrokeWidthPx = 36.dp.toPx()
             val diameter = size.minDimension - 80.dp.toPx() // More room for selected stroke
@@ -197,19 +185,6 @@ fun InteractiveDonutWithText(
     }
 }
 
-// --- Donut slice state ---
-private class DonutChartState(
-    val state: State = State.Unselected
-) {
-    val stroke: Dp
-        get() = when (state) {
-            State.Selected -> 52.dp
-            State.Unselected -> 36.dp
-        }
-
-    enum class State { Selected, Unselected }
-}
-
 // --- Helper: calculate arcs ---
 private data class DrawingAngles(val start: Float, val sweep: Float) {
     fun isInsideAngle(angle: Float): Boolean {
@@ -244,7 +219,6 @@ private fun handleCanvasTap(
     tapOffset: Offset,
     anglesList: List<DrawingAngles>,
     currentSelectedIndex: Int,
-    currentStrokeValues: List<Float>,
     onItemSelected: (Int) -> Unit = {},
     onItemDeselected: (Int) -> Unit = {},
     onNoItemSelected: () -> Unit = {}
@@ -254,35 +228,48 @@ private fun handleCanvasTap(
     val distance = sqrt(dx * dx + dy * dy)
     val tapAngle = (atan2(dy, dx) * 180f / PI.toFloat() + 360f) % 360f
 
-    var selectedIndex = -1
-    var newDataTapped = false
+    // Generous radius check: Donut is roughly between 40% and 110% of available radius.
+    val isDistanceValid = distance > center.x * 0.4f && distance < center.x * 1.1f
 
-    anglesList.forEachIndexed { index, angle ->
-        val stroke = currentStrokeValues[index]
-        // Hit box check: between inner and outer radius
-        val outerRadius = center.x 
-        val innerRadius = center.x - stroke * 2 
-        
-        if (angle.isInsideAngle(tapAngle)) {
-            if (distance > innerRadius && distance < outerRadius) {
-                selectedIndex = index
-                newDataTapped = true
+    var selectedIndex = -1
+    var minDistanceToCenter = Float.MAX_VALUE
+
+    if (isDistanceValid) {
+        anglesList.forEachIndexed { index, angle ->
+            // Expand touch area for small slices to at least 25 degrees for easier interaction
+            val minTouchSweep = 25f
+            val expandedSweep = angle.sweep.coerceAtLeast(minTouchSweep)
+            val expansion = (expandedSweep - angle.sweep) / 2f
+            val touchArea = DrawingAngles(angle.start - expansion, expandedSweep)
+
+            if (touchArea.isInsideAngle(tapAngle)) {
+                val centerAngle = (angle.start + angle.sweep / 2f) % 360f
+                var diff = abs(tapAngle - centerAngle)
+                if (diff > 180f) diff = 360f - diff
+                
+                if (diff < minDistanceToCenter) {
+                    minDistanceToCenter = diff
+                    selectedIndex = index
+                }
             }
         }
     }
 
-    if (selectedIndex >= 0 && newDataTapped) {
+    if (selectedIndex >= 0) {
         if (currentSelectedIndex != selectedIndex) {
+            // Selected a new item
+            if (currentSelectedIndex >= 0) {
+                onItemDeselected(currentSelectedIndex)
+            }
             onItemSelected(selectedIndex)
-        }
-    }
-    
-    if (currentSelectedIndex >= 0) {
-        if (!newDataTapped || currentSelectedIndex == selectedIndex) {
+        } else {
+            // Tapped already selected item -> toggle off
             onItemDeselected(currentSelectedIndex)
             onNoItemSelected()
-        } else {
-            onItemDeselected(currentSelectedIndex)
         }
+    } else if (currentSelectedIndex >= 0) {
+        // Tapped empty space or outside valid radius -> deselect
+        onItemDeselected(currentSelectedIndex)
+        onNoItemSelected()
     }
 }

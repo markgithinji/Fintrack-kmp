@@ -7,6 +7,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,7 +55,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -92,6 +93,8 @@ fun CategoryTotalsCardWithTabs(
     onYearSelected: (String) -> Unit = {},
     onPeriodSelected: (Period) -> Unit = {}
 ) {
+    var selectedIndex by remember(period, tabType) { mutableStateOf(-1) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -106,6 +109,9 @@ fun CategoryTotalsCardWithTabs(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp)
+                .pointerInput(period, tabType) {
+                    detectTapGestures { selectedIndex = -1 }
+                }
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -176,12 +182,22 @@ fun CategoryTotalsCardWithTabs(
 
                                     val totalAmount = categorySums.sumOf { it.second.toDouble() }.toFloat()
 
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        DonutChartSection(categorySums, totalAmount)
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        DonutChartSection(
+                                            categorySums = categorySums,
+                                            totalAmount = totalAmount,
+                                            selectedIndex = selectedIndex,
+                                            onSelectedIndexChange = { selectedIndex = it }
+                                        )
                                         Spacer(Modifier.height(32.dp))
                                         CategoryList(
                                             categories = categorySums,
                                             totalAmount = totalAmount,
+                                            selectedIndex = selectedIndex,
+                                            onSelectedIndexChange = { selectedIndex = it },
                                             segmentColors = SegmentColors
                                         )
                                     }
@@ -298,7 +314,7 @@ fun LoadingInteractiveDonutWithText(
     Box(modifier = modifier.size(chartSize), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val strokeWidth = 36.dp.toPx()
-            val diameter = size.minDimension - strokeWidth
+            val diameter = size.minDimension - 80.dp.toPx() // Match final chart diameter
             var startAngle = -90f
 
             mockSegments.forEachIndexed { index, (_, amount) ->
@@ -309,7 +325,7 @@ fun LoadingInteractiveDonutWithText(
                     startAngle = startAngle,
                     sweepAngle = sweep,
                     useCenter = false,
-                    topLeft = Offset(strokeWidth / 2, strokeWidth / 2),
+                    topLeft = Offset((size.width - diameter) / 2, (size.height - diameter) / 2),
                     size = Size(diameter, diameter),
                     style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                 )
@@ -358,17 +374,32 @@ fun LoadingCategoryList() {
 fun CategoryList(
     categories: List<Pair<String, Float>>,
     totalAmount: Float,
+    selectedIndex: Int,
+    onSelectedIndexChange: (Int) -> Unit,
     segmentColors: List<Color>
 ) {
     val sortedCategorySums = categories.sortedByDescending { it.second }
+    val topCategories = sortedCategorySums.take(4).toMutableList()
+    val othersTotal = sortedCategorySums.drop(4).sumOf { it.second.toDouble() }.toFloat()
+    if (othersTotal > 0f) {
+        topCategories.add("Others" to othersTotal)
+    }
 
     Column(modifier = Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        sortedCategorySums.forEachIndexed { index, (categoryName, amount) ->
+        topCategories.forEachIndexed { index, (categoryName, amount) ->
             val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
-            val color = segmentColors[index % segmentColors.size]
+            val color = if (index < 4) segmentColors[index % segmentColors.size] else segmentColors.last()
+            val isSelected = selectedIndex == index
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (isSelected) color.copy(alpha = 0.1f) else Color.Transparent)
+                    .clickable {
+                        if (isSelected) onSelectedIndexChange(-1) else onSelectedIndexChange(index)
+                    }
+                    .padding(vertical = 8.dp, horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
