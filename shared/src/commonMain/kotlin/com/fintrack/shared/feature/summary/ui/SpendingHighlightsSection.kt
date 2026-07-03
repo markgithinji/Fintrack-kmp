@@ -84,33 +84,35 @@ fun SpendingHighlightsSection(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        Crossfade(
-            targetState = highlightsResult,
-            animationSpec = tween(durationMillis = 300)
-        ) { result ->
-            when (result) {
-                is Result.Loading -> {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            LoadingHighlightCard(modifier = Modifier.weight(1f))
-                            LoadingHighlightCard(modifier = Modifier.weight(1f))
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            LoadingHighlightCard(modifier = Modifier.weight(1f))
-                            LoadingHighlightCard(modifier = Modifier.weight(1f))
+        Box(modifier = Modifier.heightIn(min = 250.dp)) {
+            Crossfade(
+                targetState = highlightsResult,
+                animationSpec = tween(durationMillis = 300)
+            ) { result ->
+                when (result) {
+                    is Result.Loading -> {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                LoadingHighlightCard(modifier = Modifier.weight(1f))
+                                LoadingHighlightCard(modifier = Modifier.weight(1f))
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                LoadingHighlightCard(modifier = Modifier.weight(1f))
+                                LoadingHighlightCard(modifier = Modifier.weight(1f))
+                            }
                         }
                     }
-                }
 
-                is Result.Error -> {
-                    ErrorHighlightCard(
-                        message = result.exception.message ?: "Failed to load highlights",
-                        onRetry = loadHighlights
-                    )
-                }
+                    is Result.Error -> {
+                        ErrorHighlightCard(
+                            message = result.exception.message ?: "Failed to load highlights",
+                            onRetry = loadHighlights
+                        )
+                    }
 
-                is Result.Success -> {
-                    SuccessContent(tabType, result.data)
+                    is Result.Success -> {
+                        SuccessContent(tabType, result.data)
+                    }
                 }
             }
         }
@@ -260,17 +262,17 @@ fun LoadingHighlightCard(modifier: Modifier = Modifier) {
                 )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 AnimatedShimmerBox(
                     modifier = Modifier
                         .width(60.dp)
-                        .height(12.dp)
+                        .height(10.dp)
                         .clip(RoundedCornerShape(4.dp))
                 )
                 AnimatedShimmerBox(
                     modifier = Modifier
                         .width(100.dp)
-                        .height(16.dp)
+                        .height(14.dp)
                         .clip(RoundedCornerShape(4.dp))
                 )
                 AnimatedShimmerBox(

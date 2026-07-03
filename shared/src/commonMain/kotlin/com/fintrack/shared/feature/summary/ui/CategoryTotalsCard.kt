@@ -54,6 +54,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -94,7 +95,8 @@ fun CategoryTotalsCardWithTabs(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp)
+            .padding(top = 0.dp, bottom = 12.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -136,48 +138,53 @@ fun CategoryTotalsCardWithTabs(
                 label = "ChartContentFade"
             ) { result ->
                 key(period, tabType) {
-                    when (result) {
-                        is Result.Loading -> {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                LoadingDonutChartSection()
-                                Spacer(Modifier.height(32.dp))
-                                LoadingCategoryList()
-                            }
-                        }
-
-                        is Result.Error -> {
-                            ErrorState(
-                                message = result.exception.message ?: "Failed to load distribution",
-                                onRetry = { /* distribution logic doesn't have an easy retry here, but we can pass one if needed */ }
-                            )
-                        }
-
-                        is Result.Success -> {
-                            val baseCategories = when (tabType) {
-                                is TabType.Income -> result.data.incomeCategories
-                                is TabType.Expense -> result.data.expenseCategories
+                    Box(modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 450.dp)
+                    ) {
+                        when (result) {
+                            is Result.Loading -> {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    LoadingDonutChartSection()
+                                    Spacer(Modifier.height(32.dp))
+                                    LoadingCategoryList()
+                                }
                             }
 
-                            if (baseCategories.isEmpty() && (tabType !is TabType.Expense || result.data.totalTransactionCost <= 0.0)) {
-                                EmptyDistributionState()
-                            } else {
-                                val categorySums = mutableListOf<Pair<String, Float>>()
-                                categorySums.addAll(baseCategories.map { it.category to it.total.toFloat() })
+                            is Result.Error -> {
+                                ErrorState(
+                                    message = result.exception.message ?: "Failed to load distribution",
+                                    onRetry = { /* distribution logic doesn't have an easy retry here, but we can pass one if needed */ }
+                                )
+                            }
 
-                                if (tabType is TabType.Expense && result.data.totalTransactionCost > 0) {
-                                    categorySums.add("Transaction Cost" to result.data.totalTransactionCost.toFloat())
+                            is Result.Success -> {
+                                val baseCategories = when (tabType) {
+                                    is TabType.Income -> result.data.incomeCategories
+                                    is TabType.Expense -> result.data.expenseCategories
                                 }
 
-                                val totalAmount = categorySums.sumOf { it.second.toDouble() }.toFloat()
+                                if (baseCategories.isEmpty() && (tabType !is TabType.Expense || result.data.totalTransactionCost <= 0.0)) {
+                                    EmptyDistributionState()
+                                } else {
+                                    val categorySums = mutableListOf<Pair<String, Float>>()
+                                    categorySums.addAll(baseCategories.map { it.category to it.total.toFloat() })
 
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    DonutChartSection(categorySums, totalAmount)
-                                    Spacer(Modifier.height(32.dp))
-                                    CategoryList(
-                                        categories = categorySums,
-                                        totalAmount = totalAmount,
-                                        segmentColors = SegmentColors
-                                    )
+                                    if (tabType is TabType.Expense && result.data.totalTransactionCost > 0) {
+                                        categorySums.add("Transaction Cost" to result.data.totalTransactionCost.toFloat())
+                                    }
+
+                                    val totalAmount = categorySums.sumOf { it.second.toDouble() }.toFloat()
+
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        DonutChartSection(categorySums, totalAmount)
+                                        Spacer(Modifier.height(32.dp))
+                                        CategoryList(
+                                            categories = categorySums,
+                                            totalAmount = totalAmount,
+                                            segmentColors = SegmentColors
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -313,9 +320,9 @@ fun LoadingInteractiveDonutWithText(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             AnimatedShimmerBox(modifier = Modifier.size(24.dp).clip(CircleShape))
             Spacer(modifier = Modifier.height(8.dp))
-            AnimatedShimmerBox(modifier = Modifier.width(60.dp).height(12.dp))
+            AnimatedShimmerBox(modifier = Modifier.width(80.dp).height(14.dp).clip(RoundedCornerShape(4.dp)))
             Spacer(modifier = Modifier.height(4.dp))
-            AnimatedShimmerBox(modifier = Modifier.width(80.dp).height(16.dp))
+            AnimatedShimmerBox(modifier = Modifier.width(120.dp).height(24.dp).clip(RoundedCornerShape(4.dp)))
         }
     }
 }
@@ -328,13 +335,20 @@ fun LoadingCategoryList() {
             .fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        repeat(5) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                AnimatedShimmerBox(modifier = Modifier.size(12.dp).clip(CircleShape))
+        repeat(4) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AnimatedShimmerBox(modifier = Modifier.size(10.dp).clip(CircleShape))
                 Spacer(Modifier.width(12.dp))
-                AnimatedShimmerBox(modifier = Modifier.width(100.dp).height(14.dp))
+                AnimatedShimmerBox(modifier = Modifier.width(120.dp).height(14.dp).clip(RoundedCornerShape(4.dp)))
                 Spacer(Modifier.weight(1f))
-                AnimatedShimmerBox(modifier = Modifier.width(80.dp).height(14.dp))
+                Column(horizontalAlignment = Alignment.End) {
+                    AnimatedShimmerBox(modifier = Modifier.width(80.dp).height(14.dp).clip(RoundedCornerShape(4.dp)))
+                    Spacer(Modifier.height(2.dp))
+                    AnimatedShimmerBox(modifier = Modifier.width(40.dp).height(10.dp).clip(RoundedCornerShape(4.dp)))
+                }
             }
         }
     }
@@ -429,9 +443,11 @@ fun PeriodSelector(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
+            shape = RoundedCornerShape(16.dp),
             modifier = Modifier
-                .width(170.dp)
-                .background(MaterialTheme.colorScheme.surface)
+                .width(150.dp)
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
+                .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)), RoundedCornerShape(16.dp))
                 .heightIn(max = 320.dp)
         ) {
             // TimeSpan Tabs inside Dropdown (Fixed at top)
@@ -451,7 +467,7 @@ fun PeriodSelector(
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(12.dp))
                             .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
                             .clickable {
                                 when (span) {
@@ -541,7 +557,13 @@ private fun formatPeriodCode(code: String, type: TimeSpan): String {
                     val weekStart = firstMonday.plus(DatePeriod(days = (week - 1) * 7))
                     val weekEnd = weekStart.plus(DatePeriod(days = 6))
 
-                    "${weekStart.formatAsShortDate()} - ${weekEnd.formatAsShortDate()}"
+                    if (weekStart.month == weekEnd.month) {
+                        // Same month: "Jun 22 - 28, 2026"
+                        "${weekStart.formatAsShortDate()} - ${weekEnd.dayOfMonth}, $year"
+                    } else {
+                        // Different months: "Jun 29 - Jul 5, 2026"
+                        "${weekStart.formatAsShortDate()} - ${weekEnd.formatAsShortDate()}, $year"
+                    }
                 } else code
             }
             TimeSpan.MONTH -> {
