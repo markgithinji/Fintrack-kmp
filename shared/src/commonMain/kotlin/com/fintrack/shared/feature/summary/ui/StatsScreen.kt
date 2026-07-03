@@ -89,7 +89,7 @@ fun StatisticsScreen(
                 bottom = paddingValues.calculateBottomPadding() + 32.dp
             ),
             state = listState,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item { Spacer(Modifier.height(8.dp)) }
 

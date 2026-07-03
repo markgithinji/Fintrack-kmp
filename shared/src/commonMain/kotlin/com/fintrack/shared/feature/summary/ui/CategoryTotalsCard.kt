@@ -21,6 +21,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,6 +43,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -99,7 +103,7 @@ fun CategoryTotalsCardWithTabs(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .padding(top = 0.dp, bottom = 12.dp),
+            .padding(top = 8.dp, bottom = 12.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -448,11 +452,24 @@ fun PeriodSelector(
     onYearSelected: (String) -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
     val (options, selectedCode, onSelected, currentType) = when (selectedPeriod) {
         is Period.Week -> Triple(availableWeeks, selectedPeriod.code, onWeekSelected).let { it.copy(fourth = TimeSpan.WEEK) }
         is Period.Month -> Triple(availableMonths, selectedPeriod.code, onMonthSelected).let { it.copy(fourth = TimeSpan.MONTH) }
         is Period.Year -> Triple(availableYears, selectedPeriod.code, onYearSelected).let { it.copy(fourth = TimeSpan.YEAR) }
+    }
+
+    val selectedIndex = remember(options, selectedCode) {
+        options.indexOf(selectedCode).coerceAtLeast(0)
+    }
+
+    LaunchedEffect(expanded) {
+        if (expanded && selectedIndex >= 0) {
+            // DropdownMenuItem is roughly 48dp high.
+            // We use a safe estimate to scroll the selected item into view.
+            scrollState.scrollTo(selectedIndex * 120)
+        }
     }
 
     Box {
@@ -524,7 +541,6 @@ fun PeriodSelector(
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
             
-            val scrollState = rememberScrollState()
             val scrollbarColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
 
             // Scrollable options
@@ -553,13 +569,20 @@ fun PeriodSelector(
                     .verticalScroll(scrollState)
             ) {
                 options.forEach { option ->
+                    val isItemSelected = option == selectedCode
                     DropdownMenuItem(
                         text = { 
                             Text(
                                 text = formatPeriodCode(option, currentType), 
-                                style = MaterialTheme.typography.bodySmall 
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = if (isItemSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isItemSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                             ) 
                         },
+                        modifier = Modifier.background(
+                            if (isItemSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) 
+                            else Color.Transparent
+                        ),
                         onClick = {
                             onSelected(option)
                             expanded = false
