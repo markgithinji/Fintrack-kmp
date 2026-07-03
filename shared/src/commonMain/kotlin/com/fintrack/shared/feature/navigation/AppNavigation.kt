@@ -448,6 +448,7 @@ fun AppNavigation(
                             AppBarState(
                                 title = when {
                                     hasTransactionCost == true -> "Transaction Fees"
+                                    category?.contains(",") == true -> "Other Categories"
                                     category != null -> category
                                     isIncome == true -> "Income Transactions"
                                     isIncome == false -> "Expense Transactions"

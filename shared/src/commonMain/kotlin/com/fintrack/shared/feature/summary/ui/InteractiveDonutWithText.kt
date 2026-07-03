@@ -270,11 +270,13 @@ private fun handleCanvasTap(
             }
             onItemSelected(selectedIndex)
         } else {
-            // Tapped already selected item -> Maintain selection (Sticky)
-            onItemSelected(selectedIndex)
+            // Tapped already selected item -> Toggle off
+            onItemDeselected(currentSelectedIndex)
+            onNoItemSelected()
         }
     } else if (currentSelectedIndex >= 0) {
-        // Tapped empty space or outside valid radius -> Maintain last selection 
-        // Or deselect if you prefer, but sticking with selection for now.
+        // Tapped empty space or outside valid radius -> Deselect
+        onItemDeselected(currentSelectedIndex)
+        onNoItemSelected()
     }
 }

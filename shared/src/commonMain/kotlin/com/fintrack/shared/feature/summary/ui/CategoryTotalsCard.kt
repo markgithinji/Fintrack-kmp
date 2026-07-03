@@ -120,7 +120,9 @@ fun CategoryTotalsCardWithTabs(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp)
-                // Remove tap-to-deselect to maintain selection state
+                .pointerInput(period.toString(), tabType.toString()) {
+                    detectTapGestures { selectedIndex = -1 }
+                }
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -392,14 +394,17 @@ fun CategoryList(
     segmentColors: List<Color>
 ) {
     val sortedCategorySums = categories.sortedByDescending { it.second }
-    val topCategories = sortedCategorySums.take(4).toMutableList()
-    val othersTotal = sortedCategorySums.drop(4).sumOf { it.second.toDouble() }.toFloat()
+    val topCategoriesList = sortedCategorySums.take(4).toList()
+    val remainingCategories = sortedCategorySums.drop(4)
+    
+    val displayCategories = topCategoriesList.toMutableList()
+    val othersTotal = remainingCategories.sumOf { it.second.toDouble() }.toFloat()
     if (othersTotal > 0f) {
-        topCategories.add("Others" to othersTotal)
+        displayCategories.add("Others" to othersTotal)
     }
 
     Column(modifier = Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        topCategories.forEachIndexed { index, (categoryName, amount) ->
+        displayCategories.forEachIndexed { index, (categoryName, amount) ->
             val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
             val color = if (index < 4) segmentColors[index % segmentColors.size] else segmentColors.last()
             val isSelected = selectedIndex == index
@@ -411,7 +416,13 @@ fun CategoryList(
                     .background(if (isSelected) color.copy(alpha = 0.1f) else Color.Transparent)
                     .clickable {
                         onSelectedIndexChange(index)
-                        onCategoryClick(categoryName)
+                        
+                        val categoryFilter = if (categoryName == "Others") {
+                            remainingCategories.joinToString(",") { it.first }
+                        } else {
+                            categoryName
+                        }
+                        onCategoryClick(categoryFilter)
                     }
                     .padding(vertical = 6.dp, horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
