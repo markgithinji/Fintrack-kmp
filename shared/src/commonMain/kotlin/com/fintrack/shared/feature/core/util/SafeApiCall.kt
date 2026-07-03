@@ -19,7 +19,6 @@ private val logger = KMPLogger()
 suspend fun <T> safeApiCall(apiCall: suspend () -> T): Result<T> {
     return try {
         val result = apiCall()
-        logger.debug(LogTags.API, "API call completed successfully")
         Result.Success(result)
     } catch (e: Exception) {
         val domainException = convertToDomainException(e)
@@ -30,7 +29,6 @@ suspend fun <T> safeApiCall(apiCall: suspend () -> T): Result<T> {
 
 private suspend fun convertToDomainException(e: Exception): ApiException = when (e) {
     is ApiException -> {
-        logger.debug(LogTags.ERROR, "Already domain exception: ${e::class.simpleName}")
         e
     }
 
@@ -61,7 +59,6 @@ private suspend fun convertToDomainException(e: Exception): ApiException = when 
     }
 
     is CancellationException -> {
-        logger.debug(LogTags.ERROR, "Request cancelled")
         throw e
     }
 

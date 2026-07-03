@@ -10,7 +10,7 @@ class NetworkMonitorInterceptor(private val logger: KMPLogger) {
 
     fun setupNetworkMonitoring(client: HttpClient) {
         client.plugin(HttpSend.Plugin).intercept { request ->
-            logger.debug(LogTags.NETWORK, "Request: ${request.method.value} ${request.url}")
+            // logger.debug(LogTags.NETWORK, "Request: ${request.method.value} ${request.url}")
 
             val call = execute(request)
 
@@ -18,7 +18,7 @@ class NetworkMonitorInterceptor(private val logger: KMPLogger) {
             val url = call.request.url
 
             // Log incoming response
-            logger.debug(LogTags.NETWORK, "Response: $status for $url")
+            // logger.debug(LogTags.NETWORK, "Response: $status for $url")
 
             call
         }

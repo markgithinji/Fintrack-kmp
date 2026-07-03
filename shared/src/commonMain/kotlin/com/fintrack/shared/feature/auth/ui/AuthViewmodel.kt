@@ -85,25 +85,20 @@ class AuthViewModel(
     private fun observeTokenChanges() {
         viewModelScope.launch {
             tokenDataSource.accessToken.collect { token ->
-                logger.debug(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel(${hashCode()}): Token changed, new token present: ${token != null}")
                 if (token == null) {
                     val currentStatus = _authStatus.value
                     if (currentStatus != AuthState.Success(false)) {
-                        logger.info(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel(${hashCode()}): Token is null, setting status to Success(false)")
                         _authStatus.value = AuthState.Success(false)
                     }
                 } else {
                     val currentStatus = _authStatus.value
                     if (currentStatus !is AuthState.Success || !currentStatus.data) {
-                        logger.info(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel(${hashCode()}): Token detected. loginState=${_loginState.value}, registerState=${_registerState.value}")
                         
                         // If we are currently logging in or just succeeded, delay to let UI show success
                         if (_loginState.value !is AuthState.Idle || _registerState.value !is AuthState.Idle) {
-                            logger.info(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel(${hashCode()}): Delaying authStatus update (1s) for login/register transition")
                             kotlinx.coroutines.delay(1000)
                         }
 
-                        logger.info(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel(${hashCode()}): Updating authStatus to Success(true)")
                         _authStatus.value = AuthState.Success(true)
                     }
                 }
@@ -112,7 +107,6 @@ class AuthViewModel(
     }
 
     fun updateLoginEmail(email: String) {
-        println("LOGIN_DEBUG: AuthViewModel(${hashCode()}): updateLoginEmail called with: '$email'")
         val currentState = _loginFormState.value
         _loginFormState.value = currentState.copy(
             email = email,
@@ -131,7 +125,6 @@ class AuthViewModel(
     }
 
     fun updateLoginPassword(password: String) {
-        logger.debug(LogTags.AUTH, "LOGIN_DEBUG: AuthViewModel(${hashCode()}): updateLoginPassword")
         val currentState = _loginFormState.value
         _loginFormState.value = currentState.copy(
             password = password,
@@ -155,22 +148,18 @@ class AuthViewModel(
 
         _loginState.value = AuthState.Loading("Logging in...")
         viewModelScope.launch {
-            logger.debug(LogTags.AUTH, "LOGIN_DEBUG: [1] AuthViewModel: Attempting login for email: ${formState.email}")
             when (val result = repository.login(formState.email, formState.password)) {
                 is Result.Success -> {
-                    logger.info(LogTags.AUTH, "LOGIN_DEBUG: [2] AuthViewModel: Login successful for: ${formState.email}")
                     // Set login state to success to show success on button
                     _loginState.value = AuthState.Success(result.data)
                     
                     // Delay setting the global auth status to give the UI time to show success state
                     kotlinx.coroutines.delay(1000)
 
-                    logger.info(LogTags.AUTH, "LOGIN_DEBUG: [3] AuthViewModel: Setting _authStatus to Success(true)")
                     _authStatus.value = AuthState.Success(true)
                 }
 
                 is Result.Error -> {
-                    logger.error(LogTags.AUTH, "LOGIN_DEBUG: [2] Login failed for ${formState.email}: ${result.exception.message}", result.exception)
                     _loginState.value = AuthState.Error(result.exception)
                 }
 
@@ -285,11 +274,9 @@ class AuthViewModel(
 
         _registerState.value = AuthState.Loading("Creating account...")
         viewModelScope.launch {
-            logger.debug(LogTags.AUTH, "Attempting registration for email: ${formState.email}")
             when (val result =
                 repository.register(formState.name, formState.email, formState.password)) {
                 is Result.Success -> {
-                    logger.info(LogTags.AUTH, "Registration successful for: ${formState.email}")
                     // Set register state to success to show success on button
                     _registerState.value = AuthState.Success(result.data)
                     
@@ -327,7 +314,6 @@ class AuthViewModel(
             when (val result = repository.validateToken(currentToken)) {
                 is Result.Success -> {
                     if (result.data) {
-                        logger.info(LogTags.AUTH, "Token validation successful")
                         _authStatus.value = AuthState.Success(true)
                     } else {
                         logger.warning(LogTags.AUTH, "Token validation failed (invalid token). Clearing session.")
@@ -350,21 +336,11 @@ class AuthViewModel(
 
     fun logout() {
         viewModelScope.launch {
-            logger.info(LogTags.AUTH, "LOGOUT_DEBUG: [1] AuthViewModel.logout() called")
             try {
-                when (val result = repository.logout()) {
-                    is Result.Success -> {
-                        logger.info(LogTags.AUTH, "LOGOUT_DEBUG: [2] Repository logout SUCCESS")
-                    }
-                    is Result.Error -> {
-                        logger.error(LogTags.AUTH, "LOGOUT_DEBUG: [2] Repository logout ERROR: ${result.exception.message}", result.exception)
-                    }
-                    is Result.Loading -> {}
-                }
+                repository.logout()
             } catch (e: Exception) {
-                logger.error(LogTags.AUTH, "LOGOUT_DEBUG: [2] Repository logout EXCEPTION: ${e.message}", e)
+                logger.error(LogTags.AUTH, "Logout error", e)
             } finally {
-                logger.info(LogTags.AUTH, "LOGOUT_DEBUG: [3] Clearing local tokens and setting _authStatus to Success(false)")
                 tokenDataSource.clearTokens()
                 _authStatus.value = AuthState.Success(false)
                 
@@ -373,7 +349,6 @@ class AuthViewModel(
                 _registerState.value = AuthState.Idle
                 _loginFormState.value = LoginFormState()
                 _registerFormState.value = RegisterFormState()
-                logger.info(LogTags.AUTH, "LOGOUT_DEBUG: [4] AuthViewModel.logout() finished. Auth status is now: ${_authStatus.value}")
             }
         }
     }

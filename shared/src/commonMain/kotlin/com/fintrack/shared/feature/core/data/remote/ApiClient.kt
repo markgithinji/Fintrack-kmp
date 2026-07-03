@@ -44,10 +44,10 @@ class ApiClient(
             install(Logging) {
                 logger = object : Logger {
                     override fun log(message: String) {
-                        this@ApiClient.logger.debug(LogTags.NETWORK, message)
+                        // this@ApiClient.logger.debug(LogTags.NETWORK, message)
                     }
                 }
-                level = LogLevel.ALL
+                level = LogLevel.INFO
             }
 
             install(HttpTimeout) {
@@ -63,10 +63,10 @@ class ApiClient(
                         val refreshToken = tokenDataSource.refreshToken.firstOrNull()
                         
                         if (!accessToken.isNullOrBlank() && !refreshToken.isNullOrBlank()) {
-                            logger.debug(LogTags.AUTH, "Loading tokens for request: ${accessToken.take(10)}...")
+                            // logger.debug(LogTags.AUTH, "Loading tokens for request: ${accessToken.take(10)}...")
                             BearerTokens(accessToken, refreshToken)
                         } else {
-                            logger.debug(LogTags.AUTH, "No tokens available for request")
+                            // logger.debug(LogTags.AUTH, "No tokens available for request")
                             null
                         }
                     }

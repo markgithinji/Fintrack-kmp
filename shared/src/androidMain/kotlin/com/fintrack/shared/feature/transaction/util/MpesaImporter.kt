@@ -50,10 +50,10 @@ class MpesaImporter(
                 val timestamp = it.getLong(dateIndex)
                 val smsInstant = Instant.fromEpochMilliseconds(timestamp)
 
-                // Log messages 1000 to 4000 to help improve the parser (skipping first 1000 already reviewed)
-//                if (loggedCount in 1000 until 4000) {
-//                    logger.debug("MPESA_PARSER_DEBUG", "Message ${loggedCount + 1}: $body")
-//                }
+                // Log the first 500 messages to help improve the parser
+                if (loggedCount in 0 until 500) {
+                    logger.debug("MPESA_PARSER_DEBUG", "Message ${loggedCount + 1}: $body")
+                }
 
                 // Keep the first balance we find (most recent message)
                 if (latestBalance == null) {
@@ -63,6 +63,13 @@ class MpesaImporter(
                 val transaction = MpesaParser.parse(body, accountId, smsInstant)
                 if (transaction != null) {
                     transactions.add(transaction)
+                    if (loggedCount < 10) {
+                        logger.debug("MPESA_IMPORTER", "Parsed transaction: ${transaction.externalId} on ${transaction.dateTime}")
+                    }
+                } else {
+                    if (body.contains("Confirmed", ignoreCase = true)) {
+                        logger.warning("MPESA_PARSER_DEBUG", "Failed to parse 'Confirmed' message: $body")
+                    }
                 }
                 
                 loggedCount++
@@ -74,18 +81,30 @@ class MpesaImporter(
 
             if (transactions.isNotEmpty()) {
                 onProgress(0.3f)
-                // We reverse to send oldest first
-                val reversedTransactions = transactions.reversed()
-                val chunks = reversedTransactions.chunked(100)
+                // We no longer reverse. Send newest first so that even if sync is interrupted, 
+                // the user sees recent transactions.
+                val newestFirstTransactions = transactions 
+                val chunks = newestFirstTransactions.chunked(250) // Increased chunk size to speed up
                 val totalChunks = chunks.size
+                
+                logger.info("MPESA_IMPORTER", "Starting upload of ${transactions.size} transactions in $totalChunks chunks")
                 
                 // Chunk the import to avoid "Internal Server Error" (often caused by large payloads)
                 chunks.forEachIndexed { index, chunk ->
-                    transactionRepository.importMpesaTransactions(chunk)
+                    val result = transactionRepository.importMpesaTransactions(chunk)
+                    if (result is Result.Success) {
+                        if (index < 5 || index == totalChunks - 1) {
+                           logger.debug("MPESA_IMPORTER", "Successfully imported chunk ${index + 1}/$totalChunks")
+                        }
+                    } else if (result is Result.Error) {
+                        logger.error("MPESA_IMPORTER", "Failed to import chunk ${index + 1}: ${result.exception.message}")
+                    }
                     // Update progress from 30% to 90% during upload
                     onProgress(0.3f + ((index + 1).toFloat() / totalChunks) * 0.6f)
                 }
             }
+            logger.info("MPESA_IMPORTER", "Import process completed successfully")
+
 
             // Correct account balance using an adjustment transaction if there's a discrepancy
             if (latestBalance != null) {

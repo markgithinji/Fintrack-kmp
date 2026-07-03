@@ -6,6 +6,7 @@ import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.safeApiCall
+import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.transaction.data.model.toCreateRequest
 import com.fintrack.shared.feature.transaction.data.model.toDomain
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
@@ -18,6 +19,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 class TransactionRepositoryImpl(
     private val api: TransactionApi
 ) : TransactionRepository {
+
+    private val logger = KMPLogger()
 
     companion object {
         private const val PAGE_SIZE = 20
@@ -60,6 +63,12 @@ class TransactionRepositoryImpl(
                 hasTransactionCost = hasTransactionCost
             )
             val transactions = paginated.data.map { it.toDomain() }
+            if (transactions.isNotEmpty()) {
+                logger.info("TRANSACTION_REPO", "Fetched ${transactions.size} transactions from backend")
+                transactions.forEach { tx ->
+                    logger.debug("TRANSACTION_REPO", "TX: ${tx.externalId} | ${tx.amount} | ${tx.description}")
+                }
+            }
             transactions to paginated.nextCursor
         }
 
