@@ -17,6 +17,10 @@ import com.fintrack.shared.feature.auth.domain.usecase.ChangePasswordValidationU
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.user.domain.usecase.DeleteAccountUseCase
+import com.fintrack.shared.feature.user.domain.repository.UserRepository
+import com.fintrack.shared.feature.transaction.domain.repository.CategoryRepository
+import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalTime
@@ -30,7 +34,16 @@ class SettingsViewModel(
     private val changePasswordUseCase: ChangePasswordUseCase,
     private val validationUseCase: ChangePasswordValidationUseCase,
     private val deleteAccountUseCase: DeleteAccountUseCase,
+    private val userRepository: UserRepository,
+    private val categoryRepository: CategoryRepository,
+    private val globalRefreshManager: GlobalRefreshManager,
 ) : ViewModel() {
+
+    init {
+        viewModelScope.launch {
+            categoryRepository.refreshCategories()
+        }
+    }
 
     val theme: StateFlow<AppTheme> = settingsDataSource.theme
         .stateIn(
@@ -100,6 +113,31 @@ class SettingsViewModel(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = true
+        )
+
+    val trackedCategories: StateFlow<List<String>> = userRepository.getUserProfile()
+        .map { it?.trackedCategories ?: emptyList() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val allCategories: StateFlow<List<Category>> = categoryRepository.getCategories()
+        .map { categories ->
+            val expenseCategories = categories.filter { it.isExpense && it.id != "transaction_cost" }
+                .distinctBy { it.name }
+                .sortedBy { it.name }
+            
+            // Add Transaction Cost as a selectable metric at the TOP
+            val txCostVirtual = Category.TransactionCost
+            
+            listOf(txCostVirtual) + expenseCategories
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
         )
 
     private val _exportResult = MutableStateFlow<String?>(null)
@@ -383,6 +421,17 @@ class SettingsViewModel(
     fun resetChangePasswordState() {
         _changePasswordState.value = SaveState.Idle
         _changePasswordFormState.value = ChangePasswordFormState()
+    }
+
+    fun updateTrackedCategories(categories: List<String>) {
+        viewModelScope.launch {
+            try {
+                userRepository.updateTrackedCategories(categories)
+                globalRefreshManager.triggerRefresh()
+            } catch (e: Exception) {
+                _error.value = "Failed to update tracked categories: ${e.message}"
+            }
+        }
     }
 }
 

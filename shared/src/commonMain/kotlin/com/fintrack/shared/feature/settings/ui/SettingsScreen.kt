@@ -4,11 +4,15 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
@@ -30,6 +35,9 @@ import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
 import com.fintrack.shared.feature.auth.ui.common.ErrorDialog
 import com.fintrack.shared.feature.core.domain.SaveState
+import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.transaction.ui.util.toColor
+import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -53,6 +61,8 @@ fun SettingsScreen(
     val exportResult by viewModel.exportResult.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val trackedCategories by viewModel.trackedCategories.collectAsStateWithLifecycle()
+    val allCategories by viewModel.allCategories.collectAsStateWithLifecycle()
 
     val changePasswordFormState by viewModel.changePasswordFormState.collectAsStateWithLifecycle()
     val changePasswordState by viewModel.changePasswordState.collectAsStateWithLifecycle()
@@ -66,6 +76,7 @@ fun SettingsScreen(
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var showTrackedCategoriesDialog by remember { mutableStateOf(false) }
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
 
@@ -147,6 +158,19 @@ fun SettingsScreen(
                             subtitle = if (currentTimeFormat == TimeFormat.TWELVE_HOUR) "12-hour" else "24-hour",
                             icon = Icons.Default.Schedule,
                             onClick = { showTimeFormatDialog = true }
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+
+                        SettingsItem(
+                            title = "Tracked Categories",
+                            subtitle = if (trackedCategories.isEmpty()) "Automatic (Top Spending)" else trackedCategories.joinToString(", "),
+                            icon = Icons.Default.Category,
+                            onClick = { showTrackedCategoriesDialog = true }
                         )
 
                         HorizontalDivider(
@@ -281,7 +305,7 @@ fun SettingsScreen(
                         SettingsItem(
                             title = "Help & Support",
                             subtitle = "FAQ and contact us",
-                            icon = Icons.Default.HelpOutline,
+                            icon = Icons.AutoMirrored.Filled.HelpOutline,
                             onClick = { }
                         )
                     }
@@ -409,6 +433,18 @@ fun SettingsScreen(
                 viewModel.resetChangePasswordState()
             },
             onClearError = { viewModel.resetChangePasswordState() }
+        )
+    }
+
+    if (showTrackedCategoriesDialog) {
+        TrackedCategoriesSelectionDialog(
+            allCategories = allCategories,
+            selectedCategories = trackedCategories,
+            onCategoriesSelected = {
+                viewModel.updateTrackedCategories(it)
+                showTrackedCategoriesDialog = false
+            },
+            onDismiss = { showTrackedCategoriesDialog = false }
         )
     }
 
@@ -866,6 +902,215 @@ fun CurrencySelectionDialog(
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TrackedCategoriesSelectionDialog(
+    allCategories: List<Category>,
+    selectedCategories: List<String>,
+    onCategoriesSelected: (List<String>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var currentSelection by remember { mutableStateOf(selectedCategories) }
+
+    BasicAlertDialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier
+            .padding(28.dp)
+            .widthIn(max = 420.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth()
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Tracked Categories",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Select up to 2 categories to track on Home Screen",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Surface(
+                        shape = CircleShape,
+                        color = if (currentSelection.size == 2)
+                            MaterialTheme.colorScheme.primaryContainer
+                        else
+                            MaterialTheme.colorScheme.secondaryContainer,
+                        modifier = Modifier.padding(start = 12.dp)
+                    ) {
+                        Text(
+                            text = "${currentSelection.size}/2",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = if (currentSelection.size == 2)
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            else
+                                MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Sticky Reset Button
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = currentSelection.isNotEmpty(),
+                    enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
+                    exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut()
+                ) {
+                    OutlinedButton(
+                        onClick = { currentSelection = emptyList() },
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
+                    ) {
+                        Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Reset to Automatic Tracking")
+                    }
+                }
+
+                Box(modifier = Modifier.weight(1f, fill = false)) {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.heightIn(max = 400.dp)
+                    ) {
+                        items(allCategories) { category ->
+                            val isSelected = currentSelection.contains(category.name)
+
+                            Surface(
+                                onClick = {
+                                    if (isSelected) {
+                                        currentSelection = currentSelection.filter { it != category.name }
+                                    } else if (currentSelection.size < 2) {
+                                        currentSelection = currentSelection + category.name
+                                    }
+                                },
+                                shape = RoundedCornerShape(16.dp),
+                                color = if (isSelected)
+                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                border = if (isSelected)
+                                    BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                                else
+                                    null,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(
+                                                    if (isSelected)
+                                                        category.toColor().copy(alpha = 0.25f)
+                                                    else
+                                                        MaterialTheme.colorScheme.surfaceVariant
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = category.toIcon(),
+                                                contentDescription = null,
+                                                tint = if (isSelected)
+                                                    category.toColor()
+                                                else
+                                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.width(16.dp))
+
+                                        Text(
+                                            text = category.name,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                        )
+                                    }
+
+                                    Icon(
+                                        imageVector = if (isSelected)
+                                            Icons.Default.CheckCircle
+                                        else
+                                            Icons.Default.RadioButtonUnchecked,
+                                        contentDescription = if (isSelected) "Selected" else "Unselected",
+                                        tint = if (isSelected)
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.height(48.dp).padding(horizontal = 8.dp)
+                    ) {
+                        Text("Cancel")
+                    }
+                    Button(
+                        onClick = { onCategoriesSelected(currentSelection) },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.height(48.dp),
+                        contentPadding = PaddingValues(horizontal = 24.dp)
+                    ) {
+                        Text("Save Selection")
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 fun SettingsSection(

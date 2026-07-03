@@ -19,7 +19,11 @@ class UserRepositoryImpl(
         when (val result = safeApiCall { api.getUserProfile() }) {
             is Result.Success -> {
                 val dto = result.data
-                _userProfile.value = User(name = dto.name, email = dto.email)
+                _userProfile.value = User(
+                    name = dto.name,
+                    email = dto.email,
+                    trackedCategories = dto.trackedCategories
+                )
             }
             is Result.Error -> throw result.exception
             is Result.Loading -> {}
@@ -30,7 +34,26 @@ class UserRepositoryImpl(
         when (val result = safeApiCall { api.updateProfile(name, email) }) {
             is Result.Success -> {
                 val dto = result.data
-                _userProfile.value = User(name = dto.name, email = dto.email)
+                _userProfile.value = User(
+                    name = dto.name,
+                    email = dto.email,
+                    trackedCategories = dto.trackedCategories
+                )
+            }
+            is Result.Error -> throw result.exception
+            is Result.Loading -> {}
+        }
+    }
+
+    override suspend fun updateTrackedCategories(categories: List<String>) {
+        when (val result = safeApiCall { api.updateTrackedCategories(categories) }) {
+            is Result.Success -> {
+                val dto = result.data
+                _userProfile.value = User(
+                    name = dto.name,
+                    email = dto.email,
+                    trackedCategories = dto.trackedCategories
+                )
             }
             is Result.Error -> throw result.exception
             is Result.Loading -> {}

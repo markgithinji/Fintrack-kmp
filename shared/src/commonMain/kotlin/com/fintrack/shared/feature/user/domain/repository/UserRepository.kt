@@ -7,5 +7,6 @@ interface UserRepository {
     fun getUserProfile(): Flow<User?>
     suspend fun refreshProfile()
     suspend fun updateProfile(name: String, email: String)
+    suspend fun updateTrackedCategories(categories: List<String>)
     suspend fun deleteAccount(): com.fintrack.shared.feature.core.util.Result<Unit>
 }
