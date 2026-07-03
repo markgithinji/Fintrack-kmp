@@ -168,7 +168,7 @@ fun SettingsScreen(
 
                         SettingsItem(
                             title = "Tracked Categories",
-                            subtitle = if (trackedCategories.isEmpty()) "Automatic (Top Spending)" else trackedCategories.joinToString(", "),
+                            subtitle = if (trackedCategories.isEmpty()) "Automatic (Top Spending & Income)" else trackedCategories.joinToString(", "),
                             icon = Icons.Default.Category,
                             onClick = { showTrackedCategoriesDialog = true }
                         )
@@ -945,7 +945,7 @@ fun TrackedCategoriesSelectionDialog(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Select up to 2 categories to track on Home Screen",
+                            text = "Pin up to 2 categories to your dashboard. Default: Top spending & income.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
