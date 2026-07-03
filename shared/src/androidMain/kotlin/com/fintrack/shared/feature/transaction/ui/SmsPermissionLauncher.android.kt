@@ -13,13 +13,21 @@ actual fun SmsPermissionLauncher(
     onDismissTrigger: () -> Unit
 ) {
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = onResult
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { permissions ->
+            val allGranted = permissions.values.all { it }
+            onResult(allGranted)
+        }
     )
 
     LaunchedEffect(trigger) {
         if (trigger) {
-            launcher.launch(Manifest.permission.READ_SMS)
+            launcher.launch(
+                arrayOf(
+                    Manifest.permission.READ_SMS,
+                    Manifest.permission.RECEIVE_SMS
+                )
+            )
             onDismissTrigger()
         }
     }

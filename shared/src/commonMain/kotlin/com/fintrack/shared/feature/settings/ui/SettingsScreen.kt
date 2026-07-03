@@ -38,6 +38,7 @@ import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
+import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -77,6 +78,7 @@ fun SettingsScreen(
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
     var showTrackedCategoriesDialog by remember { mutableStateOf(false) }
+    var showSmsPermissionRequest by remember { mutableStateOf(false) }
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
 
@@ -89,8 +91,6 @@ fun SettingsScreen(
         } else if (changePasswordState is SaveState.Error) {
             val exception = (changePasswordState as SaveState.Error).exception
             toastMessage = (exception.message ?: "Update failed") to true
-            // We don't reset immediately so the form doesn't clear while the user is looking at the dialog
-            // But we might want to allow them to try again.
         }
     }
 
@@ -222,7 +222,13 @@ fun SettingsScreen(
                             subtitle = "Automatically log M-Pesa SMS",
                             icon = Icons.Default.Sms,
                             checked = isMpesaListenerEnabled,
-                            onCheckedChange = { viewModel.setMpesaListenerEnabled(it) }
+                            onCheckedChange = { 
+                                if (it) {
+                                    showSmsPermissionRequest = true 
+                                } else {
+                                    viewModel.setMpesaListenerEnabled(false)
+                                }
+                            }
                         )
                     }
 
@@ -376,6 +382,17 @@ fun SettingsScreen(
         trigger = showPermissionRequest,
         onResult = { viewModel.onPermissionResult(it) },
         onDismissTrigger = { viewModel.dismissPermissionRequest() }
+    )
+
+    SmsPermissionLauncher(
+        trigger = showSmsPermissionRequest,
+        onResult = { granted ->
+            if (granted) {
+                viewModel.setMpesaListenerEnabled(true)
+            }
+            showSmsPermissionRequest = false
+        },
+        onDismissTrigger = { showSmsPermissionRequest = false }
     )
 
     if (showDeleteConfirmDialog) {
