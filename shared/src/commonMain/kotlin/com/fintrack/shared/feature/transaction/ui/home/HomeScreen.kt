@@ -58,6 +58,7 @@ fun HomeScreen(
     val isBalanceHidden by settingsViewModel.isBalanceHidden.collectAsStateWithLifecycle()
     val isMpesaListenerEnabled by settingsViewModel.isMpesaListenerEnabled.collectAsStateWithLifecycle()
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
+    val importProgress by transactionsViewModel.importProgress.collectAsStateWithLifecycle()
     
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
 
@@ -65,127 +66,6 @@ fun HomeScreen(
         if (importState is Result.Success) {
             delay(1500)
             transactionsViewModel.resetImportState()
-        }
-    }
-
-    if (importState != null) {
-        Dialog(
-            onDismissRequest = { 
-                if (importState !is Result.Loading) transactionsViewModel.resetImportState()
-            },
-            properties = DialogProperties(
-                dismissOnBackPress = importState !is Result.Loading,
-                dismissOnClickOutside = importState !is Result.Loading
-            )
-        ) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth(0.85f)
-                    .wrapContentHeight(),
-                shape = RoundedCornerShape(28.dp),
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 6.dp
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    when (importState) {
-                        is Result.Loading -> {
-                            val progress by transactionsViewModel.importProgress.collectAsStateWithLifecycle()
-                            
-                            // Custom Progress Bar with Rounded Caps and NO "Stop Indicator"
-                            val animatedProgress by animateFloatAsState(
-                                targetValue = progress.coerceIn(0f, 1f),
-                                animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
-                            )
-
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(8.dp)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.primaryContainer,
-                                        shape = CircleShape
-                                    )
-                                    .clip(CircleShape)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth(animatedProgress)
-                                        .fillMaxHeight()
-                                        .background(MaterialTheme.colorScheme.primary)
-                                )
-                            }
-                            
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "Syncing M-Pesa...",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Text(
-                                    text = "${(progress * 100).toInt()}%",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                        is Result.Success -> {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                tint = Color(0xFF4CAF50),
-                                modifier = Modifier.size(48.dp)
-                            )
-                            Text(
-                                text = "Sync Complete",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                        }
-                        is Result.Error -> {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Error,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(40.dp)
-                                )
-                                Text(
-                                    text = "Sync Failed",
-                                    style = MaterialTheme.typography.titleLarge
-                                )
-                            }
-                            
-                            Text(
-                                text = (importState as Result.Error).exception.message ?: "An error occurred while syncing your transactions.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            
-                            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                                TextButton(
-                                    onClick = { transactionsViewModel.resetImportState() },
-                                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
-                                ) {
-                                    Text("Dismiss", fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        }
-                        else -> {}
-                    }
-                }
-            }
         }
     }
 
@@ -227,6 +107,8 @@ fun HomeScreen(
                 selectedAccountResult = selectedAccountResult,
                 isBalanceHidden = isBalanceHidden,
                 isMpesaAutoSyncEnabled = isMpesaListenerEnabled,
+                isSyncing = importState is Result.Loading,
+                syncProgress = importProgress,
                 onAccountSelected = { accountId -> accountsViewModel.selectAccount(accountId) },
                 onToggleBalanceVisibility = { settingsViewModel.setBalanceHidden(it) },
                 onSyncMpesa = { showSmsPermissionRequest = true },

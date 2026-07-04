@@ -1,12 +1,12 @@
 package com.fintrack.shared.feature.transaction.ui.home
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -65,6 +66,8 @@ fun CurrentBalanceCardWrapper(
     accountsResult: Result<List<Account>>,
     isBalanceHidden: Boolean,
     isMpesaAutoSyncEnabled: Boolean,
+    isSyncing: Boolean,
+    syncProgress: Float,
     onAccountSelected: (String) -> Unit,
     onToggleBalanceVisibility: (Boolean) -> Unit,
     onSyncMpesa: () -> Unit,
@@ -76,6 +79,8 @@ fun CurrentBalanceCardWrapper(
         selectedAccountResult = selectedAccountResult,
         isBalanceHidden = isBalanceHidden,
         isMpesaAutoSyncEnabled = isMpesaAutoSyncEnabled,
+        isSyncing = isSyncing,
+        syncProgress = syncProgress,
         onChangeAccountClicked = { showDialog = true },
         onToggleBalanceVisibility = onToggleBalanceVisibility,
         onSyncMpesa = onSyncMpesa,
@@ -101,6 +106,8 @@ fun CurrentBalanceCard(
     selectedAccountResult: Result<Account>,
     isBalanceHidden: Boolean,
     isMpesaAutoSyncEnabled: Boolean,
+    isSyncing: Boolean,
+    syncProgress: Float,
     onChangeAccountClicked: () -> Unit,
     onToggleBalanceVisibility: (Boolean) -> Unit,
     onSyncMpesa: () -> Unit,
@@ -137,6 +144,8 @@ fun CurrentBalanceCard(
                         isBalanceHidden = isBalanceHidden,
                         isMpesaLinked = selectedAccountResult.data.isMpesa,
                         isMpesaAutoSyncEnabled = isMpesaAutoSyncEnabled,
+                        isSyncing = isSyncing,
+                        syncProgress = syncProgress,
                         onChangeAccountClicked = onChangeAccountClicked,
                         onToggleBalanceVisibility = onToggleBalanceVisibility,
                         onSyncMpesa = onSyncMpesa
@@ -244,6 +253,8 @@ private fun CurrentBalanceSuccessState(
     isBalanceHidden: Boolean,
     isMpesaLinked: Boolean,
     isMpesaAutoSyncEnabled: Boolean,
+    isSyncing: Boolean,
+    syncProgress: Float,
     onChangeAccountClicked: () -> Unit,
     onToggleBalanceVisibility: (Boolean) -> Unit,
     onSyncMpesa: () -> Unit
@@ -276,21 +287,62 @@ private fun CurrentBalanceSuccessState(
                         fontWeight = FontWeight.Bold
                     )
                     
-                    if (isMpesaLinked && !isMpesaAutoSyncEnabled) {
+                    if (isMpesaLinked) {
                         Spacer(modifier = Modifier.width(8.dp))
-                        Surface(
-                            onClick = onSyncMpesa,
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
+                        
+                        if (isSyncing) {
+                            val infiniteTransition = rememberInfiniteTransition(label = "syncRotation")
+                            val rotation by infiniteTransition.animateFloat(
+                                initialValue = 0f,
+                                targetValue = 360f,
+                                animationSpec = infiniteRepeatable(
+                                    animation = tween(1200, easing = LinearEasing),
+                                    repeatMode = RepeatMode.Restart
+                                ),
+                                label = "rotation"
+                            )
+                            
+                            Row(
+                                modifier = Modifier
+                                    .height(24.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f))
+                                    .padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Sync,
-                                    contentDescription = "Sync M-Pesa",
+                                    contentDescription = "Syncing...",
                                     tint = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.size(14.dp)
+                                    modifier = Modifier
+                                        .size(12.dp)
+                                        .rotate(rotation)
                                 )
+                                Text(
+                                    text = "${(syncProgress * 100).toInt()}%",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                        } else if (!isMpesaAutoSyncEnabled) {
+                            Surface(
+                                onClick = onSyncMpesa,
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.Sync,
+                                        contentDescription = "Sync M-Pesa",
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
                             }
                         }
                     }
