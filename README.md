@@ -31,6 +31,7 @@ It allows users to **track income, expenses, and balances**, visualize **financi
 
 **Android UI Layer:**
 - **UI**: Jetpack Compose, Material 3
+- **Background Processing**: WorkManager (Expedited Sync)
 - **Secure Storage**: Encrypted Preferences
 - **Security**: Android Biometric Library
 
@@ -60,6 +61,7 @@ It allows users to **track income, expenses, and balances**, visualize **financi
 - **Secure Password Management**: Update your account password directly from the app with real-time validation and secure backend synchronization.
 - **Secure Authentication**: Encrypted token storage with automated token refresh and validation.
 - **Daily Reminders**: Never forget to log an expense with customizable daily push notifications scheduled via high-reliability background receivers.
+- **Smart SMS Detection (Android)**: Real-time M-Pesa transaction tracking via SMS. Provides **immediate UI notifications** upon receipt and uses **Expedited WorkManager** for guaranteed, high-priority background synchronization with the backend.
 
 ---
 
