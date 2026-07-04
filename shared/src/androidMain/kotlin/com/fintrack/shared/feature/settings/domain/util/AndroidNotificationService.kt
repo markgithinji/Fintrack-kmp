@@ -75,15 +75,10 @@ class AndroidNotificationService(
             return
         }
 
-        // We use a different ID for transaction notifications to avoid overwriting reminders
-        // In a real app, we might want to use a separate channel too
-        
-        // We need the MainActivity class. Since we are in androidMain of shared module, 
-        // we might not have direct access to MainActivity class if it's in androidApp module.
-        // But we can use the class name string.
         val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra("transactionId", transaction.id)
+            putExtra("action", "edit_transaction")
         }
 
         val pendingIntent = PendingIntent.getActivity(
@@ -93,17 +88,23 @@ class AndroidNotificationService(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val amountStr = transaction.amount.toString()
-        val type = if (transaction.isIncome) "received" else "spent"
+        val amountStr = "Ksh ${String.format(java.util.Locale.US, "%,.2f", transaction.amount)}"
+        val emoji = if (transaction.isIncome) "💰" else "💸"
+        val merchant = transaction.description?.split("(Ref:")?.get(0)?.trim() ?: transaction.category
+        
         val title = "New Transaction Detected"
-        val content = "Ksh $amountStr $type for ${transaction.category}. Tap to change category."
+        val contentText = "$emoji $amountStr at $merchant"
 
         val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(android.R.drawable.ic_dialog_info) 
             .setContentTitle(title)
-            .setContentText(content)
+            .setContentText(contentText)
+            .setStyle(NotificationCompat.BigTextStyle()
+                .setBigContentTitle(title)
+                .bigText("$emoji $amountStr detected from M-Pesa.\n\nMerchant: $merchant\nCategory: ${transaction.category}"))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
+            .addAction(0, "View Details", pendingIntent)
             .setAutoCancel(true)
 
         try {
