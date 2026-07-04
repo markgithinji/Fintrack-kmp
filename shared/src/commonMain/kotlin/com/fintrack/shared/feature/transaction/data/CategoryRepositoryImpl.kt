@@ -16,8 +16,12 @@ class CategoryRepositoryImpl(
     override fun getCategories(): Flow<List<Category>> = _categories.asStateFlow()
 
     override suspend fun refreshCategories() {
-        val dtos = api.getCategories()
-        _categories.update { dtos.map { it.toDomain() } }
+        try {
+            val dtos = api.getCategories()
+            _categories.update { dtos.map { it.toDomain() } }
+        } catch (e: Exception) {
+            // Log or handle error if needed
+        }
     }
 
     override suspend fun addCategory(name: String, isExpense: Boolean, iconName: String?): Category {

@@ -71,6 +71,7 @@ fun CurrentBalanceCardWrapper(
     onAccountSelected: (String) -> Unit,
     onToggleBalanceVisibility: (Boolean) -> Unit,
     onSyncMpesa: () -> Unit,
+    onSyncErrorClick: (String) -> Unit = {},
     onRetry: () -> Unit = {}
 ) {
     var showDialog by remember { mutableStateOf(false) }
@@ -84,6 +85,7 @@ fun CurrentBalanceCardWrapper(
         onChangeAccountClicked = { showDialog = true },
         onToggleBalanceVisibility = onToggleBalanceVisibility,
         onSyncMpesa = onSyncMpesa,
+        onSyncErrorClick = onSyncErrorClick,
         onRetry = onRetry
     )
 
@@ -111,6 +113,7 @@ fun CurrentBalanceCard(
     onChangeAccountClicked: () -> Unit,
     onToggleBalanceVisibility: (Boolean) -> Unit,
     onSyncMpesa: () -> Unit,
+    onSyncErrorClick: (String) -> Unit = {},
     onRetry: () -> Unit = {}
 ) {
     Card(
@@ -148,7 +151,8 @@ fun CurrentBalanceCard(
                         syncProgress = syncProgress,
                         onChangeAccountClicked = onChangeAccountClicked,
                         onToggleBalanceVisibility = onToggleBalanceVisibility,
-                        onSyncMpesa = onSyncMpesa
+                        onSyncMpesa = onSyncMpesa,
+                        onSyncErrorClick = onSyncErrorClick
                     )
                 }
             }
@@ -257,7 +261,8 @@ private fun CurrentBalanceSuccessState(
     syncProgress: Float,
     onChangeAccountClicked: () -> Unit,
     onToggleBalanceVisibility: (Boolean) -> Unit,
-    onSyncMpesa: () -> Unit
+    onSyncMpesa: () -> Unit,
+    onSyncErrorClick: (String) -> Unit
 ) {
     val balance = account.balance ?: 0.0
 
@@ -347,11 +352,13 @@ private fun CurrentBalanceSuccessState(
                                 }
                             }
                             is Result.Error -> {
+                                val errorMessage = (importState as Result.Error).exception.message ?: "Failed to sync transactions"
                                 Box(
                                     modifier = Modifier
                                         .size(24.dp)
                                         .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.error.copy(alpha = 0.2f)),
+                                        .background(MaterialTheme.colorScheme.error.copy(alpha = 0.2f))
+                                        .clickable { onSyncErrorClick(errorMessage) },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(

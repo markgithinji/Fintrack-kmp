@@ -10,17 +10,14 @@ class NetworkMonitorInterceptor(private val logger: KMPLogger) {
 
     fun setupNetworkMonitoring(client: HttpClient) {
         client.plugin(HttpSend.Plugin).intercept { request ->
-            // logger.debug(LogTags.NETWORK, "Request: ${request.method.value} ${request.url}")
-
-            val call = execute(request)
-
-            val status = call.response.status
-            val url = call.request.url
-
-            // Log incoming response
-            // logger.debug(LogTags.NETWORK, "Response: $status for $url")
-
-            call
+            try {
+                val call = execute(request)
+                call
+            } catch (e: Exception) {
+                // Propagate the exception so safeApiCall can catch it, 
+                // but ensure the interceptor itself doesn't cause an unhandled crash
+                throw e
+            }
         }
     }
 }

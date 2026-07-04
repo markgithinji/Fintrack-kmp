@@ -11,7 +11,6 @@ import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.RedirectResponseException
 import io.ktor.client.plugins.ServerResponseException
 import kotlinx.coroutines.CancellationException
-import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
 
 private val logger = KMPLogger()
@@ -40,44 +39,47 @@ private fun <T> summarizeResult(result: T): String {
     }
 }
 
-private suspend fun convertToDomainException(e: Exception): ApiException = when (e) {
-    is ApiException -> {
-        e
-    }
+private suspend fun convertToDomainException(e: Exception): ApiException {
+    return when (e) {
+        is ApiException -> e
 
-    is RedirectResponseException -> handleRedirectException(e)
-    is ClientRequestException -> handleClientException(e)
-    is ServerResponseException -> handleServerException(e)
+        is RedirectResponseException -> handleRedirectException(e)
+        is ClientRequestException -> handleClientException(e)
+        is ServerResponseException -> handleServerException(e)
 
-    is SerializationException -> {
-        logger.error(LogTags.ERROR, "Serialization failure", e)
-        ApiException.SerializationFailure("Failed to parse response: ${e.message}")
-    }
+        is SerializationException -> {
+            logger.error(LogTags.ERROR, "Serialization failure", e)
+            ApiException.SerializationFailure("Failed to parse response: ${e.message}")
+        }
 
-    is IOException -> {
-        val cleanMessage = e.message.cleanKtorMessage()
-        logger.warning(LogTags.NETWORK, "Network connection failed: $cleanMessage")
-        ApiException.Network(cleanMessage.ifEmpty { "Network connection failed" })
-    }
+        is HttpRequestTimeoutException -> {
+            val cleanMessage = e.message.cleanKtorMessage()
+            logger.warning(LogTags.NETWORK, "Request timeout: $cleanMessage")
+            ApiException.Network(cleanMessage.ifEmpty { "Request timeout" })
+        }
 
-    is HttpRequestTimeoutException -> {
-        val cleanMessage = e.message.cleanKtorMessage()
-        logger.warning(LogTags.NETWORK, "Request timeout: $cleanMessage")
-        ApiException.Network(cleanMessage.ifEmpty { "Request timeout" })
-    }
+        is IllegalStateException -> {
+            logger.error(LogTags.ERROR, "Invalid app state", e)
+            ApiException.InvalidState("Invalid app state: ${e.message}")
+        }
 
-    is IllegalStateException -> {
-        logger.error(LogTags.ERROR, "Invalid app state", e)
-        ApiException.InvalidState("Invalid app state: ${e.message}")
-    }
+        is CancellationException -> throw e
 
-    is CancellationException -> {
-        throw e
-    }
-
-    else -> {
-        logger.error(LogTags.ERROR, "Unknown exception type: ${e::class.simpleName}", e)
-        handleUnknownException(e)
+        else -> {
+            val className = e::class.simpleName ?: ""
+            if (className.contains("IOException") ||
+                className.contains("ConnectException") ||
+                className.contains("SocketException") ||
+                className.contains("UnknownHostException")
+            ) {
+                val cleanMessage = e.message.cleanKtorMessage()
+                logger.warning(LogTags.NETWORK, "Network connection failed ($className): $cleanMessage")
+                ApiException.Network(cleanMessage.ifEmpty { "Network connection failed" })
+            } else {
+                logger.error(LogTags.ERROR, "Unknown exception type: $className", e)
+                handleUnknownException(e)
+            }
+        }
     }
 }
 
@@ -104,7 +106,11 @@ private suspend fun handleClientException(e: ClientRequestException): ApiExcepti
     val errorCode = errorResponse?.errorCode
 
     if (errorResponse == null) {
-        val rawBody = try { e.response.body<String>() } catch (ex: Exception) { "unavailable" }
+        val rawBody = try {
+            e.response.body<String>()
+        } catch (ex: Exception) {
+            "unavailable"
+        }
         logger.warning(LogTags.ERROR, "Client error $statusCode: Failed to parse ErrorResponse. Raw body: $rawBody")
     } else {
         logger.warning(LogTags.ERROR, "Client error: $statusCode - $message (Code: $errorCode)")
@@ -122,14 +128,13 @@ private suspend fun handleClientException(e: ClientRequestException): ApiExcepti
             if (errorCode != null) {
                 mapToAuthException(message, errorCode) ?: ApiException.Auth(message, AuthErrorType.UNAUTHORIZED)
             } else {
-                // If no specific error code, default to a generic auth error or credentials error
                 ApiException.Auth(message, AuthErrorType.INVALID_CREDENTIALS)
             }
         }
         403 -> ApiException.Forbidden("Access denied: $message")
         404 -> ApiException.NotFound("Resource not found: $message")
         409 -> {
-             if (errorCode != null) {
+            if (errorCode != null) {
                 mapToAuthException(message, errorCode) ?: ApiException.ClientError(message, statusCode)
             } else {
                 ApiException.ClientError(message, statusCode)
@@ -174,6 +179,5 @@ private fun handleUnknownException(e: Exception): ApiException {
 
 private fun String?.cleanKtorMessage(): String {
     if (this == null) return ""
-    // Remove Ktor-style metadata like [url=..., connect_timeout=...]
     return this.substringBefore("[").trim()
 }

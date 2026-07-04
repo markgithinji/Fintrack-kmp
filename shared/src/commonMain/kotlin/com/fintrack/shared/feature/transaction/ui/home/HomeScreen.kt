@@ -60,6 +60,7 @@ fun HomeScreen(
     val importProgress by transactionsViewModel.importProgress.collectAsStateWithLifecycle()
     
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
+    var syncErrorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(importState) {
         if (importState is Result.Success) {
@@ -88,76 +89,90 @@ fun HomeScreen(
         }
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(
-            start = 16.dp,
-            top = paddingValues.calculateTopPadding() + 16.dp,
-            end = 16.dp,
-            bottom = paddingValues.calculateBottomPadding() + 16.dp
-        ),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            CurrentBalanceCardWrapper(
-                accountsResult = accountsResult,
-                selectedAccountResult = selectedAccountResult,
-                isBalanceHidden = isBalanceHidden,
-                isMpesaAutoSyncEnabled = isMpesaListenerEnabled,
-                importState = importState,
-                syncProgress = importProgress,
-                onAccountSelected = { accountId -> accountsViewModel.selectAccount(accountId) },
-                onToggleBalanceVisibility = { settingsViewModel.setBalanceHidden(it) },
-                onSyncMpesa = { showSmsPermissionRequest = true },
-                onRetry = { 
-                    accountsViewModel.reloadAccounts(force = true)
-                }
-            )
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                top = paddingValues.calculateTopPadding() + 16.dp,
+                end = 16.dp,
+                bottom = paddingValues.calculateBottomPadding() + 16.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                CurrentBalanceCardWrapper(
+                    accountsResult = accountsResult,
+                    selectedAccountResult = selectedAccountResult,
+                    isBalanceHidden = isBalanceHidden,
+                    isMpesaAutoSyncEnabled = isMpesaListenerEnabled,
+                    importState = importState,
+                    syncProgress = importProgress,
+                    onAccountSelected = { accountId -> accountsViewModel.selectAccount(accountId) },
+                    onToggleBalanceVisibility = { settingsViewModel.setBalanceHidden(it) },
+                    onSyncMpesa = { showSmsPermissionRequest = true },
+                    onSyncErrorClick = { message -> syncErrorMessage = message },
+                    onRetry = {
+                        accountsViewModel.reloadAccounts(force = true)
+                    }
+                )
+            }
+
+            item {
+                IncomeExpenseCards(
+                    accountResult = selectedAccountResult,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    onCardClick = { isIncome ->
+                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                        accountId?.let { onCardClick(it, isIncome) }
+                    }
+                )
+            }
+
+            item { IncomeExpensesOverview(overviewResult) }
+            item {
+                CategoryComparisonCard(
+                    categoryComparisonResult = categoryComparisonResult,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            item {
+                TransactionsListCard(
+                    transactionsResult = transactionsResult,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    onViewAllClick = {
+                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                        accountId?.let { onCardClick(it, null) }
+                    },
+                    onTransactionClick = { transaction ->
+                        transaction.id?.let { id -> onEditTransaction(id) }
+                    }
+                )
+            }
         }
 
-        item {
-            IncomeExpenseCards(
-                accountResult = selectedAccountResult,
-                animatedVisibilityScope = animatedVisibilityScope,
-                onCardClick = { isIncome ->
-                    val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-                    accountId?.let { onCardClick(it, isIncome) }
+        SmsPermissionLauncher(
+            trigger = showSmsPermissionRequest,
+            onResult = { granted ->
+                if (granted) {
+                    transactionsViewModel.importMpesaTransactions()
                 }
-            )
-        }
+                showSmsPermissionRequest = false
+            },
+            onDismissTrigger = { showSmsPermissionRequest = false }
+        )
 
-        item { IncomeExpensesOverview(overviewResult) }
-        item {
-            CategoryComparisonCard(
-                categoryComparisonResult = categoryComparisonResult,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-        item {
-            TransactionsListCard(
-                transactionsResult = transactionsResult,
-                animatedVisibilityScope = animatedVisibilityScope,
-                onViewAllClick = {
-                    val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-                    accountId?.let { onCardClick(it, null) }
-                },
-                onTransactionClick = { transaction ->
-                    transaction.id?.let { id -> onEditTransaction(id) }
-                }
+        syncErrorMessage?.let { message ->
+            com.fintrack.shared.feature.core.ui.MaterialToast(
+                message = message,
+                isError = true,
+                onDismiss = { syncErrorMessage = null },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = paddingValues.calculateBottomPadding() + 16.dp)
             )
         }
     }
-
-    SmsPermissionLauncher(
-        trigger = showSmsPermissionRequest,
-        onResult = { granted ->
-            if (granted) {
-                transactionsViewModel.importMpesaTransactions()
-            }
-            showSmsPermissionRequest = false
-        },
-        onDismissTrigger = { showSmsPermissionRequest = false }
-    )
 }

@@ -31,6 +31,7 @@ fun MaterialToast(
     message: String,
     isError: Boolean = false,
     onDismiss: () -> Unit = {},
+    alignment: Alignment = Alignment.BottomCenter,
     modifier: Modifier = Modifier
 ) {
     var showToast by remember(message) { mutableStateOf(true) }
@@ -49,7 +50,7 @@ fun MaterialToast(
         ) {
             Surface(
                 modifier = Modifier
-                    .align(Alignment.Center)
+                    .align(alignment)
                     .shadow(8.dp, RoundedCornerShape(8.dp)),
                 color = if (isError) MaterialTheme.colorScheme.error
                 else MaterialTheme.colorScheme.primary,

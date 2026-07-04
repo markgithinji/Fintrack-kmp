@@ -44,7 +44,11 @@ class SettingsViewModel(
 
     init {
         viewModelScope.launch {
-            categoryRepository.refreshCategories()
+            try {
+                categoryRepository.refreshCategories()
+            } catch (e: Exception) {
+                // Silently fail or log, handled by UI flow
+            }
         }
         viewModelScope.launch {
             val result = accountRepository.getAccounts()
