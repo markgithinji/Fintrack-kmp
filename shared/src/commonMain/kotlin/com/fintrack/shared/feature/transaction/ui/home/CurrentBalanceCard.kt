@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.transaction.ui.home
 
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -291,120 +292,153 @@ private fun CurrentBalanceSuccessState(
                         color = MaterialTheme.colorScheme.onPrimary,
                         fontWeight = FontWeight.Bold
                     )
-                    
-                    if (isMpesaLinked) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        
-                        when (importState) {
-                            is Result.Loading -> {
-                                val infiniteTransition = rememberInfiniteTransition(label = "syncRotation")
-                                val rotation by infiniteTransition.animateFloat(
-                                    initialValue = 0f,
-                                    targetValue = 360f,
-                                    animationSpec = infiniteRepeatable(
-                                        animation = tween(1200, easing = LinearEasing),
-                                        repeatMode = RepeatMode.Restart
-                                    ),
-                                    label = "rotation"
-                                )
-                                
-                                Row(
-                                    modifier = Modifier
-                                        .height(24.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f))
-                                        .padding(horizontal = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Sync,
-                                        contentDescription = "Syncing...",
-                                        tint = MaterialTheme.colorScheme.onPrimary,
-                                        modifier = Modifier
-                                            .size(12.dp)
-                                            .rotate(rotation)
-                                    )
-                                    Text(
-                                        text = "${(syncProgress * 100).toInt()}%",
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold
-                                        ),
-                                        color = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                }
-                            }
-                            is Result.Success -> {
-                                Box(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFF4CAF50).copy(alpha = 0.2f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Sync Complete",
-                                        tint = Color(0xFF4CAF50),
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                }
-                            }
-                            is Result.Error -> {
-                                val errorMessage = (importState as Result.Error).exception.message ?: "Failed to sync transactions"
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(24.dp)
-                                            .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.error.copy(alpha = 0.2f))
-                                            .clickable { onSyncErrorClick(errorMessage) },
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.ErrorOutline,
-                                            contentDescription = "Sync Failed",
-                                            tint = MaterialTheme.colorScheme.error,
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                    }
 
-                                    Surface(
-                                        onClick = onSyncMpesa,
-                                        shape = CircleShape,
-                                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
-                                        modifier = Modifier.size(24.dp)
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
+                    AnimatedVisibility(
+                        visible = isMpesaLinked,
+                        enter = fadeIn() + expandHorizontally(),
+                        exit = fadeOut() + shrinkHorizontally()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            AnimatedContent(
+                                targetState = importState,
+                                transitionSpec = {
+                                    fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 0.8f) togetherWith
+                                            fadeOut(animationSpec = tween(200)) + scaleOut(targetScale = 0.8f)
+                                },
+                                label = "syncStateAnimation"
+                            ) { targetState ->
+                                when (targetState) {
+                                    is Result.Loading -> {
+                                        val infiniteTransition =
+                                            rememberInfiniteTransition(label = "syncRotation")
+                                        val rotation by infiniteTransition.animateFloat(
+                                            initialValue = 0f,
+                                            targetValue = 360f,
+                                            animationSpec = infiniteRepeatable(
+                                                animation = tween(1200, easing = LinearEasing),
+                                                repeatMode = RepeatMode.Restart
+                                            ),
+                                            label = "rotation"
+                                        )
+
+                                        Row(
+                                            modifier = Modifier
+                                                .height(24.dp)
+                                                .clip(CircleShape)
+                                                .background(
+                                                    MaterialTheme.colorScheme.onPrimary.copy(
+                                                        alpha = 0.15f
+                                                    )
+                                                )
+                                                .padding(horizontal = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
                                             Icon(
                                                 imageVector = Icons.Default.Sync,
-                                                contentDescription = "Retry Sync",
+                                                contentDescription = "Syncing...",
                                                 tint = MaterialTheme.colorScheme.onPrimary,
+                                                modifier = Modifier
+                                                    .size(12.dp)
+                                                    .rotate(rotation)
+                                            )
+                                            Text(
+                                                text = "${(syncProgress * 100).toInt()}%",
+                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                ),
+                                                color = MaterialTheme.colorScheme.onPrimary
+                                            )
+                                        }
+                                    }
+
+                                    is Result.Success -> {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(24.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFF4CAF50).copy(alpha = 0.2f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Sync Complete",
+                                                tint = Color(0xFF4CAF50),
                                                 modifier = Modifier.size(14.dp)
                                             )
                                         }
                                     }
-                                }
-                            }
-                            null -> {
-                                if (!isMpesaAutoSyncEnabled) {
-                                    Surface(
-                                        onClick = onSyncMpesa,
-                                        shape = CircleShape,
-                                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
-                                        modifier = Modifier.size(24.dp)
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                imageVector = Icons.Default.Sync,
-                                                contentDescription = "Sync M-Pesa",
-                                                tint = MaterialTheme.colorScheme.onPrimary,
-                                                modifier = Modifier.size(14.dp)
-                                            )
+
+                                    is Result.Error -> {
+                                        val errorMessage =
+                                            (targetState as Result.Error).exception.message
+                                                ?: "Failed to sync transactions"
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(24.dp)
+                                                    .clip(CircleShape)
+                                                    .background(
+                                                        MaterialTheme.colorScheme.error.copy(
+                                                            alpha = 0.2f
+                                                        )
+                                                    )
+                                                    .clickable { onSyncErrorClick(errorMessage) },
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.ErrorOutline,
+                                                    contentDescription = "Sync Failed",
+                                                    tint = MaterialTheme.colorScheme.error,
+                                                    modifier = Modifier.size(14.dp)
+                                                )
+                                            }
+
+                                            Surface(
+                                                onClick = onSyncMpesa,
+                                                shape = CircleShape,
+                                                color = MaterialTheme.colorScheme.onPrimary.copy(
+                                                    alpha = 0.15f
+                                                ),
+                                                modifier = Modifier.size(24.dp)
+                                            ) {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Sync,
+                                                        contentDescription = "Retry Sync",
+                                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    null -> {
+                                        if (!isMpesaAutoSyncEnabled) {
+                                            Surface(
+                                                onClick = onSyncMpesa,
+                                                shape = CircleShape,
+                                                color = MaterialTheme.colorScheme.onPrimary.copy(
+                                                    alpha = 0.15f
+                                                ),
+                                                modifier = Modifier.size(24.dp)
+                                            ) {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Sync,
+                                                        contentDescription = "Sync M-Pesa",
+                                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -420,13 +454,22 @@ private fun CurrentBalanceSuccessState(
                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
                         modifier = Modifier.size(36.dp)
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = if (isBalanceHidden) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (isBalanceHidden) "Show Balance" else "Hide Balance",
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(18.dp)
-                            )
+                        AnimatedContent(
+                            targetState = isBalanceHidden,
+                            transitionSpec = {
+                                fadeIn(animationSpec = tween(200)) + scaleIn(initialScale = 0.8f) togetherWith
+                                        fadeOut(animationSpec = tween(200)) + scaleOut(targetScale = 0.8f)
+                            },
+                            label = "balanceVisibilityAnimation"
+                        ) { hidden ->
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                Icon(
+                                    imageVector = if (hidden) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = if (hidden) "Show Balance" else "Hide Balance",
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         }
                     }
 
