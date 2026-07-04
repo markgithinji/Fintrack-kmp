@@ -32,6 +32,7 @@ import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
+import com.fintrack.shared.feature.summary.domain.model.DaySummary
 import com.fintrack.shared.feature.core.util.shortDayName
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import kotlinx.datetime.LocalDate
@@ -186,12 +187,8 @@ private fun OverviewSuccessState(
             ) { period ->
                 when (period) {
                     OverviewPeriod.Weekly -> {
-                        val weeklyData = overview.weeklyOverview.map {
-                            val dayName = LocalDate.parse(it.date).shortDayName()
-                            dayName to (it.income to it.expense)
-                        }
                         BarChart(
-                            data = weeklyData,
+                            data = overview.weeklyOverview,
                             modifier = Modifier
                                 .fillMaxHeight()
                         )
@@ -283,18 +280,15 @@ private fun OverviewHeader(
 
 @Composable
 fun BarChart(
-    data: List<Pair<String, Pair<Double, Double>>>,
+    data: List<DaySummary>,
     modifier: Modifier = Modifier
 ) {
     val totalBarHeight = 180.dp
     val barWidth = 16.dp
     val density = LocalDensity.current
-    val weekDays = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-    val fullData = weekDays.map { day ->
-        data.find { it.first == day } ?: (day to (0.0 to 0.0))
-    }
-
-    val maxTotal = fullData.maxOfOrNull { it.second.first + it.second.second } ?: 1.0
+    
+    // Ensure we have 7 bars even if data is partial
+    val maxTotal = (data.maxOfOrNull { it.income + it.expense } ?: 1.0) * 1.2
     val totalBarHeightPx = with(density) { totalBarHeight.toPx() }
 
     var selectedAmount by remember { mutableStateOf<Double?>(null) }
@@ -327,7 +321,15 @@ fun BarChart(
                     val step = maxTotal / levels
                     for (i in levels downTo 0) {
                         val value = step * i
-                        val text = if (value >= 1000) "${(value / 1000).toInt()}k" else value.toInt().toString()
+                        val text = when {
+                            value >= 1000 -> {
+                                val kValue = value / 1000.0
+                                if (kValue >= 100) "${kValue.toInt()}k"
+                                else if (kValue % 1.0 == 0.0) "${kValue.toInt()}k"
+                                else "${(kValue * 10).toInt() / 10.0}k"
+                            }
+                            else -> value.toInt().toString()
+                        }
                         Text(
                             text = text,
                             style = MaterialTheme.typography.labelSmall,
@@ -344,36 +346,31 @@ fun BarChart(
                         .weight(1f)
                         .height(totalBarHeight)
                         .onGloballyPositioned { barsWidth = it.size.width.toFloat() }
-                        .pointerInput(fullData, maxTotal) {
+                        .pointerInput(data, maxTotal) {
                             detectTapGestures { offset ->
-                                if (barsWidth <= 0) return@detectTapGestures
+                                if (barsWidth <= 0 || data.isEmpty()) return@detectTapGestures
                                 
-                                val barAreaWidth = barsWidth / 7f
-                                val index = (offset.x / barAreaWidth).toInt().coerceIn(0, 6)
-                                val values = fullData[index].second
+                                val barAreaWidth = barsWidth / data.size.toFloat()
+                                val index = (offset.x / barAreaWidth).toInt().coerceIn(0, data.size - 1)
+                                val day = data[index]
                                 
-                                val incomeH = (values.first / maxTotal).toFloat() * totalBarHeightPx
-                                val expenseH = (values.second / maxTotal).toFloat() * totalBarHeightPx
+                                val incomeH = (day.income / maxTotal).toFloat() * totalBarHeightPx
+                                val expenseH = (day.expense / maxTotal).toFloat() * totalBarHeightPx
                                 
                                 val incomeTop = totalBarHeightPx - incomeH
                                 val expenseTop = incomeTop - expenseH
                                 
-                                // Increased hit-test sensitivity: allows touching anywhere in the bar's column
-                                // instead of just the narrow 16.dp bar width.
-                                val isWithinBarX = true 
-
-                                if (isWithinBarX) {
-                                    if (offset.y in (expenseTop - 10.dp.toPx())..incomeTop) {
-                                        selectedAmount = values.second
-                                        selectedColor = PinkExpense
-                                        touchOffset = offset
-                                    } else if (offset.y in incomeTop..(totalBarHeightPx + 10.dp.toPx())) {
-                                        selectedAmount = values.first
-                                        selectedColor = GreenIncome
-                                        touchOffset = offset
-                                    } else {
-                                        selectedAmount = null
-                                    }
+                                // Increased hit-test sensitivity
+                                if (offset.y in (expenseTop - 10.dp.toPx())..incomeTop) {
+                                    selectedAmount = day.expense
+                                    selectedColor = PinkExpense
+                                    touchOffset = offset
+                                } else if (offset.y in incomeTop..(totalBarHeightPx + 10.dp.toPx())) {
+                                    selectedAmount = day.income
+                                    selectedColor = GreenIncome
+                                    touchOffset = offset
+                                } else {
+                                    selectedAmount = null
                                 }
                             }
                         }
@@ -384,9 +381,9 @@ fun BarChart(
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.Bottom
                     ) {
-                        fullData.forEach { (label, values) ->
-                            val incomeHeightFraction = (values.first / maxTotal).toFloat()
-                            val expenseHeightFraction = (values.second / maxTotal).toFloat()
+                        data.forEach { day ->
+                            val incomeHeightFraction = (day.income / maxTotal).toFloat()
+                            val expenseHeightFraction = (day.expense / maxTotal).toFloat()
 
                             Box(
                                 modifier = Modifier
@@ -417,7 +414,7 @@ fun BarChart(
                         }
                     }
 
-                    // Popup Overlay (Floating Layer - Absolutely positioned within Chart Area)
+                    // Popup Overlay
                     androidx.compose.animation.AnimatedVisibility(
                         visible = selectedAmount != null,
                         enter = fadeIn() + scaleIn(),
@@ -453,9 +450,10 @@ fun BarChart(
                 modifier = Modifier.fillMaxWidth().padding(start = 36.dp), // Match chart area start offset
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                weekDays.forEach { day ->
+                data.forEach { day ->
+                    val dateLabel = day.date.split("-").last()
                     Text(
-                        text = day,
+                        text = dateLabel,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

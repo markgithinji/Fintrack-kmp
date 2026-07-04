@@ -118,7 +118,15 @@ fun CustomLineChart(
                         strokeWidth = 1.dp.toPx()
                     )
 
-                    val label = if (value >= 1000) "${(value / 1000).toInt()}k" else value.toInt().toString()
+                    val label = when {
+                        value >= 1000 -> {
+                            val kValue = value / 1000.0
+                            if (kValue >= 100) "${kValue.toInt()}k"
+                            else if (kValue % 1.0 == 0.0) "${kValue.toInt()}k"
+                            else "${(kValue * 10).toInt() / 10.0}k"
+                        }
+                        else -> value.toInt().toString()
+                    }
                     val textLayoutResult = textMeasurer.measure(label, labelStyle)
                     drawText(
                         textLayoutResult = textLayoutResult,
