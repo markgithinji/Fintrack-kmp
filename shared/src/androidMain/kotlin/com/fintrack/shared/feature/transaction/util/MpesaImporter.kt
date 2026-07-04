@@ -89,6 +89,9 @@ class MpesaImporter(
                 
                 logger.info("MPESA_IMPORTER", "Starting upload of ${transactions.size} transactions in $totalChunks chunks")
                 
+                var failedBatchCount = 0
+                var lastErrorMessage: String? = null
+
                 // Chunk the import to avoid "Internal Server Error" (often caused by large payloads)
                 chunks.forEachIndexed { index, chunk ->
                     val result = transactionRepository.importMpesaTransactions(chunk)
@@ -97,10 +100,18 @@ class MpesaImporter(
                            logger.debug("MPESA_IMPORTER", "Successfully imported chunk ${index + 1}/$totalChunks")
                         }
                     } else if (result is Result.Error) {
-                        logger.error("MPESA_IMPORTER", "Failed to import chunk ${index + 1}: ${result.exception.message}")
+                        failedBatchCount++
+                        lastErrorMessage = result.exception.message
+                        logger.error("MPESA_IMPORTER", "Failed to import chunk ${index + 1}: $lastErrorMessage")
                     }
                     // Update progress from 30% to 90% during upload
                     onProgress(0.3f + ((index + 1).toFloat() / totalChunks) * 0.6f)
+                }
+
+                if (failedBatchCount > 0) {
+                    val summary = "Failed to sync $failedBatchCount out of $totalChunks batches. Last error: $lastErrorMessage"
+                    logger.error("MPESA_IMPORTER", summary, null)
+                    throw Exception(summary)
                 }
             }
             logger.info("MPESA_IMPORTER", "Import process completed successfully")

@@ -21,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -107,7 +106,7 @@ fun HomeScreen(
                 selectedAccountResult = selectedAccountResult,
                 isBalanceHidden = isBalanceHidden,
                 isMpesaAutoSyncEnabled = isMpesaListenerEnabled,
-                isSyncing = importState is Result.Loading,
+                importState = importState,
                 syncProgress = importProgress,
                 onAccountSelected = { accountId -> accountsViewModel.selectAccount(accountId) },
                 onToggleBalanceVisibility = { settingsViewModel.setBalanceHidden(it) },
@@ -157,6 +156,7 @@ fun HomeScreen(
             if (granted) {
                 transactionsViewModel.importMpesaTransactions()
             }
+            showSmsPermissionRequest = false
         },
         onDismissTrigger = { showSmsPermissionRequest = false }
     )
