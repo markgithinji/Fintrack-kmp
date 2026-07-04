@@ -45,7 +45,7 @@ import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.core.util.formatAsShortDate
+import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.transaction.domain.model.Category
@@ -355,7 +355,7 @@ fun TransactionRow(
             Spacer(modifier = Modifier.height(2.dp))
 
             Text(
-                text = transaction.dateTime.toLocalDateTime(TimeZone.currentSystemDefault()).date.formatAsShortDate(),
+                text = transaction.dateTime.toLocalDateTime(TimeZone.currentSystemDefault()).date.formatAsShortDateWithYear(),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

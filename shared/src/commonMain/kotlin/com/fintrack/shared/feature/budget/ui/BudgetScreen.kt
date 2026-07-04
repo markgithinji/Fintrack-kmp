@@ -47,7 +47,7 @@ import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.core.util.formatAsShortDate
+import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
@@ -395,7 +395,7 @@ fun BudgetItem(
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "${budget.startDate.formatAsShortDate()} - ${budget.endDate.formatAsShortDate()}",
+                        text = "${budget.startDate.formatAsShortDateWithYear()} - ${budget.endDate.formatAsShortDateWithYear()}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

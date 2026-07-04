@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
-import com.fintrack.shared.feature.core.util.formatAsShortDate
+import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.transaction.domain.model.Category
@@ -60,7 +60,7 @@ fun TransactionItem(
         isExpense = !transaction.isIncome
     )
     val amountColor = if (transaction.isIncome) GreenIncome else PinkExpense
-    val formattedDate = transaction.dateTime.toLocalDateTime(TimeZone.currentSystemDefault()).date.formatAsShortDate()
+    val formattedDate = transaction.dateTime.toLocalDateTime(TimeZone.currentSystemDefault()).date.formatAsShortDateWithYear()
     val sharedTransitionScope = LocalSharedTransitionScope.current
 
     Card(

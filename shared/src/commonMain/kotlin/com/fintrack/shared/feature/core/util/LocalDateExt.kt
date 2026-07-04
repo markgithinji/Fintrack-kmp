@@ -64,5 +64,5 @@ fun LocalDate.formatAsHeaderDate(): String {
         Month.NOVEMBER -> "November"
         Month.DECEMBER -> "December"
     }
-    return "$dayName, $monthName ${this.dayOfMonth}"
+    return "$dayName, $monthName ${this.dayOfMonth}, ${this.year}"
 }
