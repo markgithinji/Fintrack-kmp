@@ -30,8 +30,9 @@ class IOSNotificationService : NotificationService {
     override fun showTransactionNotification(transaction: Transaction) {
         val content = UNMutableNotificationContent().apply {
             setTitle("New Transaction Detected")
+            val emoji = if (transaction.isIncome) "💰" else "💸"
             val type = if (transaction.isIncome) "received" else "spent"
-            setBody("Ksh ${transaction.amount} $type for ${transaction.category}. Tap to change.")
+            setBody("$emoji Ksh ${transaction.amount} $type for ${transaction.category}. Tap to change.")
             setSound(UNNotificationSound.defaultSound)
             setUserInfo(mapOf("transactionId" to transaction.id))
         }

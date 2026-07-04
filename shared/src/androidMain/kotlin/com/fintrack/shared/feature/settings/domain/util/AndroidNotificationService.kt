@@ -13,6 +13,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.fintrack.shared.R
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import kotlinx.datetime.LocalTime
 import java.util.Calendar
@@ -94,9 +95,11 @@ class AndroidNotificationService(
         
         val title = "New Transaction Detected"
         val contentText = "$emoji $amountStr at $merchant"
+        
+        val iconRes = if (transaction.isIncome) R.drawable.ic_notification_income else R.drawable.ic_notification_expense
 
         val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info) 
+            .setSmallIcon(iconRes)
             .setContentTitle(title)
             .setContentText(contentText)
             .setStyle(NotificationCompat.BigTextStyle()

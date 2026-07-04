@@ -6,6 +6,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import androidx.work.Data
+import com.fintrack.shared.R
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.util.NotificationService
@@ -25,7 +26,7 @@ class TransactionSyncWorker(
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
         val notification = NotificationCompat.Builder(context, "transaction_reminders")
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification_sync)
             .setContentTitle("Syncing Transaction")
             .setContentText("Updating your records...")
             .setPriority(NotificationCompat.PRIORITY_LOW)
