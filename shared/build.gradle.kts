@@ -36,6 +36,7 @@ kotlin {
             implementation(libs.androidx.security.crypto.ktx)
             implementation(libs.koin.android)
             implementation(libs.androidx.paging.runtime)
+            implementation(libs.androidx.work.runtime.ktx)
         }
         commonMain.dependencies {
             implementation(compose.runtime)

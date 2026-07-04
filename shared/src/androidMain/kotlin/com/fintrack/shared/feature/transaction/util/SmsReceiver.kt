@@ -4,6 +4,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
@@ -14,12 +20,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.time.ExperimentalTime
 
 class SmsReceiver : BroadcastReceiver(), KoinComponent {
-    private val transactionRepository: TransactionRepository by inject()
     private val accountRepository: AccountRepository by inject()
     private val settingsDataSource: SettingsDataSource by inject()
     private val notificationService: NotificationService by inject()
@@ -27,7 +34,7 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
 
     @OptIn(ExperimentalTime::class)
     override fun onReceive(context: Context?, intent: Intent?) {
-        if (intent?.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
+        if (intent?.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION || context == null) return
 
         val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
         if (messages.isNullOrEmpty()) return
@@ -59,14 +66,26 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                     
                     val transaction = MpesaParser.parse(fullMessage, mpesaAccountId)
                     if (transaction != null) {
-                        logger.info("SmsReceiver", "Parsed M-Pesa transaction: ${transaction.externalId}")
-                        val result = transactionRepository.addTransaction(transaction)
-                        if (result is Result.Success) {
-                            logger.info("SmsReceiver", "Successfully added transaction: ${transaction.externalId}")
-                            notificationService.showTransactionNotification(result.data)
-                        } else if (result is Result.Error) {
-                            logger.error("SmsReceiver", "Failed to add transaction: ${result.exception.message}")
-                        }
+                        // Show notification immediately so the user knows we caught it
+                        notificationService.showTransactionNotification(transaction)
+
+                        logger.info("SmsReceiver", "Scheduling sync for M-Pesa transaction: ${transaction.externalId}")
+                        
+                        val workData = workDataOf(
+                            TransactionSyncWorker.KEY_TRANSACTION_JSON to Json.encodeToString(transaction)
+                        )
+
+                        val constraints = Constraints.Builder()
+                            .setRequiredNetworkType(NetworkType.CONNECTED)
+                            .build()
+
+                        val syncRequest = OneTimeWorkRequestBuilder<TransactionSyncWorker>()
+                            .setConstraints(constraints)
+                            .setInputData(workData)
+                            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                            .build()
+
+                        WorkManager.getInstance(context).enqueue(syncRequest)
                     } else {
                         logger.warning("SmsReceiver", "Failed to parse M-Pesa message: $fullMessage")
                     }
