@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
+import com.fintrack.shared.feature.settings.domain.util.format
+import com.fintrack.shared.feature.settings.ui.LocalTimeFormat
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.transaction.domain.model.Category
@@ -60,7 +62,9 @@ fun TransactionItem(
         isExpense = !transaction.isIncome
     )
     val amountColor = if (transaction.isIncome) GreenIncome else PinkExpense
-    val formattedDate = transaction.dateTime.toLocalDateTime(TimeZone.currentSystemDefault()).date.formatAsShortDateWithYear()
+    val timeFormat = LocalTimeFormat.current
+    val localDateTime = transaction.dateTime.toLocalDateTime(TimeZone.currentSystemDefault())
+    val formattedTime = localDateTime.time.format(timeFormat)
     val sharedTransitionScope = LocalSharedTransitionScope.current
 
     Card(
@@ -126,11 +130,11 @@ fun TransactionItem(
                         overflow = TextOverflow.Ellipsis
                     )
                     
-                    val detailText = remember(transaction.description, formattedDate) {
+                    val detailText = remember(transaction.description, formattedTime) {
                         if (!transaction.description.isNullOrBlank()) {
                             transaction.description
                         } else {
-                            formattedDate
+                            formattedTime
                         }
                     }
 
@@ -182,7 +186,7 @@ fun TransactionItem(
                 if (!transaction.description.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = formattedDate,
+                        text = formattedTime,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

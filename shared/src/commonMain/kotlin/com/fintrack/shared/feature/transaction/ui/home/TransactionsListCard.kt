@@ -46,6 +46,8 @@ import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
+import com.fintrack.shared.feature.settings.domain.util.format
+import com.fintrack.shared.feature.settings.ui.LocalTimeFormat
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.transaction.domain.model.Category
@@ -291,6 +293,9 @@ fun TransactionRow(
     val category = Category.fromName(transaction.category, isExpense = !transaction.isIncome)
     val isExpense = !transaction.isIncome
     val amountColor = if (isExpense) PinkExpense else GreenIncome
+    val timeFormat = LocalTimeFormat.current
+    val localDateTime = transaction.dateTime.toLocalDateTime(TimeZone.currentSystemDefault())
+    val formattedTime = localDateTime.time.format(timeFormat)
 
     Row(
         modifier = modifier
@@ -355,7 +360,7 @@ fun TransactionRow(
             Spacer(modifier = Modifier.height(2.dp))
 
             Text(
-                text = transaction.dateTime.toLocalDateTime(TimeZone.currentSystemDefault()).date.formatAsShortDateWithYear(),
+                text = formattedTime,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
