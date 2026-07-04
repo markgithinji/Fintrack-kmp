@@ -19,11 +19,24 @@ private val logger = KMPLogger()
 suspend fun <T> safeApiCall(apiCall: suspend () -> T): Result<T> {
     return try {
         val result = apiCall()
+        logger.debug(LogTags.API, "API call successful. Result: ${summarizeResult(result)}")
         Result.Success(result)
     } catch (e: Exception) {
         val domainException = convertToDomainException(e)
         logger.error(LogTags.API, "API call failed: ${domainException.details}", e)
         Result.Error(domainException)
+    }
+}
+
+private fun <T> summarizeResult(result: T): String {
+    return when (result) {
+        is List<*> -> "List(size=${result.size})"
+        is Pair<*, *> -> {
+            val first = result.first
+            if (first is List<*>) "Pair(List(size=${first.size}), ${result.second})"
+            else result.toString()
+        }
+        else -> result.toString()
     }
 }
 
