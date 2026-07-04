@@ -9,4 +9,5 @@ interface NotificationService {
     fun cancelDailyReminder()
     fun requestPermission(callback: (Boolean) -> Unit)
     fun showTransactionNotification(transaction: Transaction)
+    fun showBudgetAlertNotification(budgetName: String, threshold: Int)
 }

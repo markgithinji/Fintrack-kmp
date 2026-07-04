@@ -36,4 +36,13 @@ interface SettingsDataSource {
 
     val isMpesaListenerEnabled: Flow<Boolean>
     suspend fun setMpesaListenerEnabled(enabled: Boolean)
+
+    val budgetAlertsEnabled: Flow<Boolean>
+    suspend fun setBudgetAlertsEnabled(enabled: Boolean)
+
+    val budgetAlertThresholds: Flow<Set<Int>>
+    suspend fun setBudgetAlertThresholds(thresholds: Set<Int>)
+
+    val alertBudgetId: Flow<String?>
+    suspend fun setAlertBudgetId(budgetId: String?)
 }

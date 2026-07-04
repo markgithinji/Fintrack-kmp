@@ -44,6 +44,8 @@ import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
 import com.fintrack.shared.feature.auth.ui.common.ErrorDialog
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
+import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
@@ -66,6 +68,10 @@ fun SettingsScreen(
     val isReminderEnabled by viewModel.isReminderEnabled.collectAsStateWithLifecycle()
     val isMpesaListenerEnabled by viewModel.isMpesaListenerEnabled.collectAsStateWithLifecycle()
     val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsStateWithLifecycle()
+    val budgetAlertsEnabled by viewModel.budgetAlertsEnabled.collectAsStateWithLifecycle()
+    val budgetAlertThresholds by viewModel.budgetAlertThresholds.collectAsStateWithLifecycle()
+    val alertBudgetId by viewModel.alertBudgetId.collectAsStateWithLifecycle()
+    val budgetsResult by viewModel.budgets.collectAsStateWithLifecycle()
     val reminderTime by viewModel.reminderTime.collectAsStateWithLifecycle()
     val showPermissionRequest by viewModel.showPermissionRequest.collectAsStateWithLifecycle()
     val exportResult by viewModel.exportResult.collectAsStateWithLifecycle()
@@ -90,6 +96,8 @@ fun SettingsScreen(
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
     var showTrackedCategoriesDialog by remember { mutableStateOf(false) }
+    var showBudgetSelectionDialog by remember { mutableStateOf(false) }
+    var showThresholdDialog by remember { mutableStateOf(false) }
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
@@ -242,6 +250,47 @@ fun SettingsScreen(
                                 }
                             }
                         )
+                    }
+
+                    SettingsSection(title = "Budget Alerts") {
+                        SettingsToggleItem(
+                            title = "Budget Threshold Alerts",
+                            subtitle = "Notify when spending reaches certain levels",
+                            icon = Icons.Default.TrendingUp,
+                            checked = budgetAlertsEnabled,
+                            onCheckedChange = { viewModel.setBudgetAlertsEnabled(it) }
+                        )
+
+                        if (budgetAlertsEnabled) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                thickness = 0.5.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            )
+                            
+                            val budgets = (budgetsResult as? Result.Success)?.data ?: emptyList()
+                            val selectedBudget = budgets.find { it.budget.id == alertBudgetId }
+                            
+                            SettingsItem(
+                                title = "Monitored Budget",
+                                subtitle = selectedBudget?.budget?.name ?: "Select a budget",
+                                icon = Icons.Default.AccountBalanceWallet,
+                                onClick = { showBudgetSelectionDialog = true }
+                            )
+
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                thickness = 0.5.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            )
+
+                            SettingsItem(
+                                title = "Alert Thresholds",
+                                subtitle = if (budgetAlertThresholds.isEmpty()) "None" else budgetAlertThresholds.sorted().joinToString("% ") { it.toString() } + "%",
+                                icon = Icons.Default.NotificationsActive,
+                                onClick = { showThresholdDialog = true }
+                            )
+                        }
                     }
 
                     SettingsSection(title = "Security") {
@@ -502,6 +551,28 @@ fun SettingsScreen(
                 showTrackedCategoriesDialog = false
             },
             onDismiss = { showTrackedCategoriesDialog = false }
+        )
+    }
+
+    if (showBudgetSelectionDialog) {
+        BudgetSelectionDialog(
+            budgets = (budgetsResult as? Result.Success)?.data ?: emptyList(),
+            selectedBudgetId = alertBudgetId,
+            onBudgetSelected = {
+                viewModel.setAlertBudgetId(it)
+                showBudgetSelectionDialog = false
+            },
+            onDismiss = { showBudgetSelectionDialog = false }
+        )
+    }
+
+    if (showThresholdDialog) {
+        BudgetThresholdDialog(
+            selectedThresholds = budgetAlertThresholds,
+            onThresholdsChanged = {
+                viewModel.setBudgetAlertThresholds(it)
+            },
+            onDismiss = { showThresholdDialog = false }
         )
     }
 
@@ -1318,6 +1389,209 @@ fun AccountSelectionDialog(
                     ) {
                         Text("Continue")
                     }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BudgetSelectionDialog(
+    budgets: List<BudgetWithStatus>,
+    selectedBudgetId: String?,
+    onBudgetSelected: (String?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    BasicAlertDialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier
+            .padding(28.dp)
+            .widthIn(max = 400.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Text(
+                    text = "Select Budget to Track",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                if (budgets.isEmpty()) {
+                    Text(
+                        text = "No budgets found. Create one in the Budgets screen.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 24.dp)
+                    )
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.heightIn(max = 300.dp)
+                    ) {
+                        items(budgets) { item ->
+                            val isSelected = item.budget.id == selectedBudgetId
+                            
+                            Surface(
+                                onClick = { onBudgetSelected(item.budget.id) },
+                                shape = RoundedCornerShape(16.dp),
+                                color = if (isSelected) 
+                                    MaterialTheme.colorScheme.primaryContainer 
+                                else 
+                                    Color.Transparent,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column {
+                                        Text(
+                                            text = item.budget.name,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = item.budget.categories.joinToString { it.name },
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                        )
+                                    }
+
+                                    if (isSelected) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Selected",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = { onBudgetSelected(null) }) {
+                        Text("Clear")
+                    }
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancel")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BudgetThresholdDialog(
+    selectedThresholds: Set<Int>,
+    onThresholdsChanged: (Set<Int>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val thresholds = listOf(50, 80, 100)
+
+    BasicAlertDialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier
+            .padding(28.dp)
+            .widthIn(max = 400.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Text(
+                    text = "Select Alert Thresholds",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    thresholds.forEach { threshold ->
+                        val isSelected = selectedThresholds.contains(threshold)
+                        
+                        Surface(
+                            onClick = {
+                                if (isSelected) {
+                                    onThresholdsChanged(selectedThresholds - threshold)
+                                } else {
+                                    onThresholdsChanged(selectedThresholds + threshold)
+                                }
+                            },
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected) 
+                                MaterialTheme.colorScheme.primaryContainer 
+                            else 
+                                Color.Transparent,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "$threshold%",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+
+                                Checkbox(
+                                    checked = isSelected,
+                                    onCheckedChange = {
+                                        if (it) {
+                                            onThresholdsChanged(selectedThresholds + threshold)
+                                        } else {
+                                            onThresholdsChanged(selectedThresholds - threshold)
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Done")
                 }
             }
         }

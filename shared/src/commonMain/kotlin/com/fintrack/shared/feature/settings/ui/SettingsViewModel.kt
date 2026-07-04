@@ -19,6 +19,8 @@ import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.user.domain.usecase.DeleteAccountUseCase
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
 import com.fintrack.shared.feature.transaction.domain.repository.CategoryRepository
+import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
+import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
@@ -39,6 +41,7 @@ class SettingsViewModel(
     private val userRepository: UserRepository,
     private val categoryRepository: CategoryRepository,
     private val accountRepository: AccountRepository,
+    private val budgetRepository: BudgetRepository,
     private val globalRefreshManager: GlobalRefreshManager,
 ) : ViewModel() {
 
@@ -56,7 +59,17 @@ class SettingsViewModel(
                 _accounts.value = result.data
             }
         }
+        viewModelScope.launch {
+            budgetRepository.getBudgets(forceRefresh = true)
+        }
     }
+
+    val budgets: StateFlow<Result<List<BudgetWithStatus>>> = budgetRepository.budgets
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = Result.Loading
+        )
 
     val theme: StateFlow<AppTheme> = settingsDataSource.theme
         .stateIn(
@@ -126,6 +139,27 @@ class SettingsViewModel(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = true
+        )
+
+    val budgetAlertsEnabled: StateFlow<Boolean> = settingsDataSource.budgetAlertsEnabled
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
+
+    val budgetAlertThresholds: StateFlow<Set<Int>> = settingsDataSource.budgetAlertThresholds
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = setOf(50, 80, 100)
+        )
+
+    val alertBudgetId: StateFlow<String?> = settingsDataSource.alertBudgetId
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
         )
 
     val trackedCategories: StateFlow<List<String>> = userRepository.getUserProfile()
@@ -254,6 +288,24 @@ class SettingsViewModel(
     fun setMpesaListenerEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsDataSource.setMpesaListenerEnabled(enabled)
+        }
+    }
+
+    fun setBudgetAlertsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsDataSource.setBudgetAlertsEnabled(enabled)
+        }
+    }
+
+    fun setBudgetAlertThresholds(thresholds: Set<Int>) {
+        viewModelScope.launch {
+            settingsDataSource.setBudgetAlertThresholds(thresholds)
+        }
+    }
+
+    fun setAlertBudgetId(budgetId: String?) {
+        viewModelScope.launch {
+            settingsDataSource.setAlertBudgetId(budgetId)
         }
     }
 

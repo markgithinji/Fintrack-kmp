@@ -12,5 +12,5 @@ val settingsModule = module {
     single { createBiometricAuthenticator() }
     single { createNotificationService() }
     single { ClearAllUserDataUseCase(get(), get(), get()) }
-    factory { SettingsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { SettingsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
 }

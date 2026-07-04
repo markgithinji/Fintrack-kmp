@@ -119,6 +119,32 @@ class AndroidNotificationService(
         }
     }
 
+    override fun showBudgetAlertNotification(budgetName: String, threshold: Int) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+
+        val title = "Budget Alert: $budgetName"
+        val contentText = "You've reached $threshold% of your budget limit."
+        
+        val builder = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setContentTitle(title)
+            .setContentText(contentText)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+
+        try {
+            with(NotificationManagerCompat.from(context)) {
+                notify(budgetName.hashCode() + threshold, builder.build())
+            }
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Failed to show budget alert notification: ${e.message}")
+        }
+    }
+
     override fun scheduleDailyReminder(time: LocalTime?) {
         val reminderTime = time ?: LocalTime(20, 0)
         Log.d(TAG, "Scheduling reminder for ${reminderTime}")

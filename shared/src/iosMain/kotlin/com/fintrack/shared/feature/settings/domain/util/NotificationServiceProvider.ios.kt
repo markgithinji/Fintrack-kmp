@@ -50,6 +50,26 @@ class IOSNotificationService : NotificationService {
         }
     }
 
+    override fun showBudgetAlertNotification(budgetName: String, threshold: Int) {
+        val content = UNMutableNotificationContent().apply {
+            setTitle("Budget Alert: $budgetName")
+            setBody("You've reached $threshold% of your budget limit.")
+            setSound(UNNotificationSound.defaultSound)
+        }
+
+        val request = UNNotificationRequest.requestWithIdentifier(
+            identifier = "budget_alert_${budgetName}_$threshold",
+            content = content,
+            trigger = null
+        )
+
+        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
+            if (error != null) {
+                println("Error showing budget alert notification: ${error.localizedDescription}")
+            }
+        }
+    }
+
     override fun scheduleDailyReminder(time: LocalTime?) {
         val reminderTime = time ?: LocalTime(20, 0)
         
