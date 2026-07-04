@@ -26,6 +26,9 @@ class IOSSettingsDataSource : SettingsDataSource {
     private val _alertBudgetIdFlow = MutableStateFlow<String?>(null)
     private val _billReminderEnabledFlow = MutableStateFlow(false)
     private val _billReminderDaysBeforeFlow = MutableStateFlow(2)
+    private val _dailySummaryEnabledFlow = MutableStateFlow(false)
+    private val _weeklySummaryEnabledFlow = MutableStateFlow(false)
+    private val _summaryNotificationTimeFlow = MutableStateFlow(LocalTime(8, 0))
 
     init {
         val themeName = userDefaults.stringForKey("app_theme") ?: AppTheme.SYSTEM.name
@@ -72,6 +75,15 @@ class IOSSettingsDataSource : SettingsDataSource {
 
         val billReminderDaysBefore = if (userDefaults.objectForKey("bill_reminder_days_before") != null) userDefaults.integerForKey("bill_reminder_days_before").toInt() else 2
         _billReminderDaysBeforeFlow.value = billReminderDaysBefore
+
+        val dailySummaryEnabled = userDefaults.boolForKey("daily_summary_enabled")
+        _dailySummaryEnabledFlow.value = dailySummaryEnabled
+
+        val weeklySummaryEnabled = userDefaults.boolForKey("weekly_summary_enabled")
+        _weeklySummaryEnabledFlow.value = weeklySummaryEnabled
+
+        val summaryTimeStr = userDefaults.stringForKey("summary_notification_time") ?: "08:00"
+        _summaryNotificationTimeFlow.value = LocalTime.parse(summaryTimeStr)
     }
 
     override val theme: Flow<AppTheme> = _themeFlow
@@ -189,6 +201,27 @@ class IOSSettingsDataSource : SettingsDataSource {
     override suspend fun setBillReminderDaysBefore(days: Int) {
         userDefaults.setInteger(days.toLong(), "bill_reminder_days_before")
         _billReminderDaysBeforeFlow.value = days
+    }
+
+    override val isDailySummaryEnabled: Flow<Boolean> = _dailySummaryEnabledFlow
+
+    override suspend fun setDailySummaryEnabled(enabled: Boolean) {
+        userDefaults.setBool(enabled, "daily_summary_enabled")
+        _dailySummaryEnabledFlow.value = enabled
+    }
+
+    override val isWeeklySummaryEnabled: Flow<Boolean> = _weeklySummaryEnabledFlow
+
+    override suspend fun setWeeklySummaryEnabled(enabled: Boolean) {
+        userDefaults.setBool(enabled, "weekly_summary_enabled")
+        _weeklySummaryEnabledFlow.value = enabled
+    }
+
+    override val summaryNotificationTime: Flow<LocalTime> = _summaryNotificationTimeFlow
+
+    override suspend fun setSummaryNotificationTime(time: LocalTime) {
+        userDefaults.setObject(time.toString(), "summary_notification_time")
+        _summaryNotificationTimeFlow.value = time
     }
 }
 

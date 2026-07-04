@@ -13,4 +13,7 @@ interface NotificationService {
     fun showBudgetAlertNotification(budgetName: String, threshold: Int)
     fun showBillReminderNotification(billName: String, amount: Double)
     fun scheduleBillReminder(billName: String, amount: Double, dueDate: LocalDate, daysBefore: Int)
+    fun showSummaryNotification(title: String, content: String)
+    fun scheduleSummaryNotification(time: LocalTime)
+    fun cancelSummaryNotification()
 }

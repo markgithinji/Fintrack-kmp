@@ -51,4 +51,13 @@ interface SettingsDataSource {
 
     val billReminderDaysBefore: Flow<Int>
     suspend fun setBillReminderDaysBefore(days: Int)
+
+    val isDailySummaryEnabled: Flow<Boolean>
+    suspend fun setDailySummaryEnabled(enabled: Boolean)
+
+    val isWeeklySummaryEnabled: Flow<Boolean>
+    suspend fun setWeeklySummaryEnabled(enabled: Boolean)
+
+    val summaryNotificationTime: Flow<LocalTime>
+    suspend fun setSummaryNotificationTime(time: LocalTime)
 }

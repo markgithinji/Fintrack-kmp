@@ -50,7 +50,9 @@ It allows users to **track income, expenses, and balances**, visualize **financi
 ## 💡 Core Features
 
 - **Multi-Account Management**: Track balances across checking, savings, credit cards, and cash
-- **Smart Budget Planning**: Set monthly budgets with category-wise limits and spending alerts
+- **Smart Budget Planning**: Set monthly budgets with category-wise limits. Includes **real-time threshold alerts** (50%, 80%, 100%) to keep your spending in check.
+- **Automated Bill Reminders**: Intelligent backend engine that detects recurring subscriptions and bills from your history and automatically schedules local reminders before they are due.
+- **Daily & Weekly Summaries**: Stay informed with scheduled push notifications summarizing your previous day's or week's total spending, helping you maintain financial awareness.
 - **Income & Expense Tracking**: Monitor cash flow with daily, weekly, and monthly period views
 - **Category-based Analytics**: Visual breakdown of spending by categories (food, transportation, entertainment, etc.)
 - **Interactive Charts**: Beautiful visualizations for spending patterns, income trends, and budget compliance
@@ -101,6 +103,7 @@ This app connects to the [Fintrack Ktor Backend](https://github.com/markgithinji
 - **RESTful API** for all financial operations
 - **JWT Authentication** with secure token management
 - **PostgreSQL Database** for data persistence
+- **Smart Recurring Engine**: Automated pattern detection for recurring payments and bill prediction.
 - **Real-time synchronization** across devices
 - **Financial analytics** and reporting endpoints
 

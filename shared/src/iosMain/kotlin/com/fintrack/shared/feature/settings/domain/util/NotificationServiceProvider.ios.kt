@@ -128,6 +128,62 @@ class IOSNotificationService : NotificationService {
         }
     }
 
+    override fun showSummaryNotification(title: String, content: String) {
+        val notificationContent = UNMutableNotificationContent().apply {
+            setTitle(title)
+            setBody(content)
+            setSound(UNNotificationSound.defaultSound)
+        }
+
+        val request = UNNotificationRequest.requestWithIdentifier(
+            identifier = "spending_summary",
+            content = notificationContent,
+            trigger = null
+        )
+
+        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
+            if (error != null) {
+                println("Error showing summary notification: ${error.localizedDescription}")
+            }
+        }
+    }
+
+    override fun scheduleSummaryNotification(time: LocalTime) {
+        val content = UNMutableNotificationContent().apply {
+            setTitle("Spending Summary")
+            setBody("Check out your spending summary!")
+            setSound(UNNotificationSound.defaultSound)
+        }
+
+        val dateComponents = NSDateComponents().apply {
+            setHour(time.hour.toLong())
+            setMinute(time.minute.toLong())
+        }
+
+        val trigger = UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
+            dateComponents = dateComponents,
+            repeats = true
+        )
+
+        val request = UNNotificationRequest.requestWithIdentifier(
+            identifier = "scheduled_summary",
+            content = content,
+            trigger = trigger
+        )
+
+        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
+            if (error != null) {
+                println("Error scheduling summary notification: ${error.localizedDescription}")
+            }
+        }
+    }
+
+    override fun cancelSummaryNotification() {
+        UNUserNotificationCenter.currentNotificationCenter().removePendingNotificationRequestsWithIdentifiers(
+            listOf("scheduled_summary")
+        )
+    }
+
     override fun scheduleDailyReminder(time: LocalTime?) {
         val reminderTime = time ?: LocalTime(20, 0)
         

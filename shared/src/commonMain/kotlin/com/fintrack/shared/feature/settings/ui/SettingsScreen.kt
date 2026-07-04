@@ -73,6 +73,9 @@ fun SettingsScreen(
     val alertBudgetId by viewModel.alertBudgetId.collectAsStateWithLifecycle()
     val isBillReminderEnabled by viewModel.isBillReminderEnabled.collectAsStateWithLifecycle()
     val billReminderDaysBefore by viewModel.billReminderDaysBefore.collectAsStateWithLifecycle()
+    val isDailySummaryEnabled by viewModel.isDailySummaryEnabled.collectAsStateWithLifecycle()
+    val isWeeklySummaryEnabled by viewModel.isWeeklySummaryEnabled.collectAsStateWithLifecycle()
+    val summaryNotificationTime by viewModel.summaryNotificationTime.collectAsStateWithLifecycle()
     val budgetsResult by viewModel.budgets.collectAsStateWithLifecycle()
     val reminderTime by viewModel.reminderTime.collectAsStateWithLifecycle()
     val showPermissionRequest by viewModel.showPermissionRequest.collectAsStateWithLifecycle()
@@ -100,6 +103,7 @@ fun SettingsScreen(
     var showTrackedCategoriesDialog by remember { mutableStateOf(false) }
     var showBudgetSelectionDialog by remember { mutableStateOf(false) }
     var showThresholdDialog by remember { mutableStateOf(false) }
+    var showSummaryTimePickerDialog by remember { mutableStateOf(false) }
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
@@ -212,8 +216,8 @@ fun SettingsScreen(
 
                     SettingsSection(title = "Notifications") {
                         SettingsToggleItem(
-                            title = "Daily Reminders",
-                            subtitle = "Never forget to log expenses",
+                            title = "Daily Logging Nudge",
+                            subtitle = "Reminder to log your transactions for the day",
                             icon = Icons.Default.Notifications,
                             checked = isReminderEnabled,
                             onCheckedChange = { viewModel.setReminderEnabled(it) }
@@ -226,7 +230,7 @@ fun SettingsScreen(
                                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                             )
                             SettingsItem(
-                                title = "Reminder Time",
+                                title = "Nudge Time",
                                 subtitle = reminderTime.format(currentTimeFormat),
                                 icon = Icons.Default.Schedule,
                                 onClick = { showTimePickerDialog = true }
@@ -256,8 +260,8 @@ fun SettingsScreen(
 
                     SettingsSection(title = "Budget Alerts") {
                         SettingsToggleItem(
-                            title = "Budget Threshold Alerts",
-                            subtitle = "Notify when spending reaches certain levels",
+                            title = "Threshold Alerts",
+                            subtitle = "Notify when spending reaches 50%, 80%, or 100% of limit",
                             icon = Icons.Default.TrendingUp,
                             checked = budgetAlertsEnabled,
                             onCheckedChange = { viewModel.setBudgetAlertsEnabled(it) }
@@ -287,7 +291,7 @@ fun SettingsScreen(
                             )
 
                             SettingsItem(
-                                title = "Alert Thresholds",
+                                title = "Active Thresholds",
                                 subtitle = if (budgetAlertThresholds.isEmpty()) "None" else budgetAlertThresholds.sorted().joinToString("% ") { it.toString() } + "%",
                                 icon = Icons.Default.NotificationsActive,
                                 onClick = { showThresholdDialog = true }
@@ -297,8 +301,8 @@ fun SettingsScreen(
 
                     SettingsSection(title = "Upcoming Bills") {
                         SettingsToggleItem(
-                            title = "Bill Reminders",
-                            subtitle = "Get notified before bills are due",
+                            title = "Smart Bill Reminders",
+                            subtitle = "Get notified before recurring payments are due",
                             icon = Icons.Default.ReceiptLong,
                             checked = isBillReminderEnabled,
                             onCheckedChange = { viewModel.setBillReminderEnabled(it) }
@@ -312,12 +316,66 @@ fun SettingsScreen(
                             )
                             
                             SettingsItem(
-                                title = "Reminder Timing",
+                                title = "Advance Notice",
                                 subtitle = "$billReminderDaysBefore days before due date",
                                 icon = Icons.Default.EventRepeat,
                                 onClick = { /* Show a picker or dialog for days */ }
                             )
                         }
+
+                        Text(
+                            text = "Fintrack automatically detects your recurring bills and subscriptions from your history to provide timely reminders.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            lineHeight = 16.sp
+                        )
+                    }
+
+                    SettingsSection(title = "Summaries") {
+                        SettingsToggleItem(
+                            title = "Daily Spending Summary",
+                            subtitle = "Summary of yesterday's total spending",
+                            icon = Icons.Default.Today,
+                            checked = isDailySummaryEnabled,
+                            onCheckedChange = { viewModel.setDailySummaryEnabled(it) }
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                        )
+
+                        SettingsToggleItem(
+                            title = "Weekly Spending Summary",
+                            subtitle = "Total spending for the past week (every Sunday)",
+                            icon = Icons.Default.DateRange,
+                            checked = isWeeklySummaryEnabled,
+                            onCheckedChange = { viewModel.setWeeklySummaryEnabled(it) }
+                        )
+
+                        if (isDailySummaryEnabled || isWeeklySummaryEnabled) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                thickness = 0.5.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            )
+                            SettingsItem(
+                                title = "Notification Time",
+                                subtitle = summaryNotificationTime.format(currentTimeFormat),
+                                icon = Icons.Default.Schedule,
+                                onClick = { showSummaryTimePickerDialog = true }
+                            )
+                        }
+
+                        Text(
+                            text = "Fintrack automatically detects your recurring bills and subscriptions from your history to provide timely reminders.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            lineHeight = 16.sp
+                        )
                     }
 
                     SettingsSection(title = "Security") {
@@ -452,6 +510,18 @@ fun SettingsScreen(
                 showTimePickerDialog = false
             },
             onDismiss = { showTimePickerDialog = false }
+        )
+    }
+
+    if (showSummaryTimePickerDialog) {
+        FintrackTimePickerDialog(
+            initialTime = summaryNotificationTime,
+            timeFormat = currentTimeFormat,
+            onTimeSelected = {
+                viewModel.setSummaryNotificationTime(it)
+                showSummaryTimePickerDialog = false
+            },
+            onDismiss = { showSummaryTimePickerDialog = false }
         )
     }
 
@@ -1321,6 +1391,14 @@ fun AccountSelectionDialog(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
+
+                        Text(
+                            text = "Fintrack automatically detects your recurring bills and subscriptions from your history to provide timely reminders.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            lineHeight = 16.sp
+                        )
                     }
                 }
 

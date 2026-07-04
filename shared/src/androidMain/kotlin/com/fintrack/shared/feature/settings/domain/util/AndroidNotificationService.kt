@@ -219,6 +219,81 @@ class AndroidNotificationService(
         }
     }
 
+    override fun showSummaryNotification(title: String, content: String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+
+        val builder = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(title)
+            .setContentText(content)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+
+        try {
+            with(NotificationManagerCompat.from(context)) {
+                notify(title.hashCode(), builder.build())
+            }
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Failed to show summary notification: ${e.message}")
+        }
+    }
+
+    override fun scheduleSummaryNotification(time: LocalTime) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, ReminderReceiver::class.java).apply {
+            action = "com.fintrack.shared.ACTION_SHOW_SUMMARY"
+        }
+        
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            2,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, time.hour)
+            set(Calendar.MINUTE, time.minute)
+            set(Calendar.SECOND, 0)
+            
+            if (before(Calendar.getInstance())) {
+                add(Calendar.DATE, 1)
+            }
+        }
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+                } else {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+                }
+            } else {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+            }
+        } catch (e: SecurityException) {
+            alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+        }
+    }
+
+    override fun cancelSummaryNotification() {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, ReminderReceiver::class.java).apply {
+            action = "com.fintrack.shared.ACTION_SHOW_SUMMARY"
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            2,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
+    }
+
     override fun scheduleDailyReminder(time: LocalTime?) {
         val reminderTime = time ?: LocalTime(20, 0)
         Log.d(TAG, "Scheduling reminder for ${reminderTime}")

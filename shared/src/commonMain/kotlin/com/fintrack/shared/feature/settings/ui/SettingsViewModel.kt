@@ -176,6 +176,27 @@ class SettingsViewModel(
             initialValue = 2
         )
 
+    val isDailySummaryEnabled: StateFlow<Boolean> = settingsDataSource.isDailySummaryEnabled
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
+
+    val isWeeklySummaryEnabled: StateFlow<Boolean> = settingsDataSource.isWeeklySummaryEnabled
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
+
+    val summaryNotificationTime: StateFlow<LocalTime> = settingsDataSource.summaryNotificationTime
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = LocalTime(8, 0)
+        )
+
     val trackedCategories: StateFlow<List<String>> = userRepository.getUserProfile()
         .map { it?.trackedCategories ?: emptyList() }
         .stateIn(
@@ -332,6 +353,39 @@ class SettingsViewModel(
     fun setBillReminderDaysBefore(days: Int) {
         viewModelScope.launch {
             settingsDataSource.setBillReminderDaysBefore(days)
+        }
+    }
+
+    fun setDailySummaryEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsDataSource.setDailySummaryEnabled(enabled)
+            updateSummaryScheduling()
+        }
+    }
+
+    fun setWeeklySummaryEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsDataSource.setWeeklySummaryEnabled(enabled)
+            updateSummaryScheduling()
+        }
+    }
+
+    fun setSummaryNotificationTime(time: LocalTime) {
+        viewModelScope.launch {
+            settingsDataSource.setSummaryNotificationTime(time)
+            updateSummaryScheduling()
+        }
+    }
+
+    private suspend fun updateSummaryScheduling() {
+        val daily = settingsDataSource.isDailySummaryEnabled.first()
+        val weekly = settingsDataSource.isWeeklySummaryEnabled.first()
+        val time = settingsDataSource.summaryNotificationTime.first()
+
+        if (daily || weekly) {
+            notificationService.scheduleSummaryNotification(time)
+        } else {
+            notificationService.cancelSummaryNotification()
         }
     }
 
