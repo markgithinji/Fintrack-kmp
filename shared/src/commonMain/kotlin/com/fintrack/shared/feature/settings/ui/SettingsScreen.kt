@@ -65,6 +65,7 @@ fun SettingsScreen(
     val currentTheme by viewModel.theme.collectAsStateWithLifecycle()
     val currentTimeFormat by viewModel.timeFormat.collectAsStateWithLifecycle()
     val isBalanceHidden by viewModel.isBalanceHidden.collectAsStateWithLifecycle()
+    val showDecimals by viewModel.showDecimals.collectAsStateWithLifecycle()
     val isReminderEnabled by viewModel.isReminderEnabled.collectAsStateWithLifecycle()
     val isMpesaListenerEnabled by viewModel.isMpesaListenerEnabled.collectAsStateWithLifecycle()
     val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsStateWithLifecycle()
@@ -211,6 +212,20 @@ fun SettingsScreen(
                             icon = Icons.Default.VisibilityOff,
                             checked = isBalanceHidden,
                             onCheckedChange = { viewModel.setBalanceHidden(it) }
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                        )
+
+                        SettingsToggleItem(
+                            title = "Show Decimals",
+                            subtitle = if (showDecimals) "Show cents (e.g. .00)" else "Clean whole numbers only",
+                            icon = Icons.Default.Pin,
+                            checked = showDecimals,
+                            onCheckedChange = { viewModel.setShowDecimals(it) }
                         )
                     }
 

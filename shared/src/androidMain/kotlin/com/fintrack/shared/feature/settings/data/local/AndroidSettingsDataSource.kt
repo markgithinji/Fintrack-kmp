@@ -34,6 +34,7 @@ class AndroidSettingsDataSource(
     private val _dailySummaryEnabledFlow = MutableStateFlow(false)
     private val _weeklySummaryEnabledFlow = MutableStateFlow(false)
     private val _summaryNotificationTimeFlow = MutableStateFlow(LocalTime(8, 0))
+    private val _showDecimalsFlow = MutableStateFlow(true)
 
     init {
         val themeName = prefs.getString("app_theme", AppTheme.SYSTEM.name)
@@ -89,6 +90,9 @@ class AndroidSettingsDataSource(
 
         val summaryTimeStr = prefs.getString("summary_notification_time", "08:00") ?: "08:00"
         _summaryNotificationTimeFlow.update { LocalTime.parse(summaryTimeStr) }
+
+        val showDecimals = prefs.getBoolean("show_decimals", true)
+        _showDecimalsFlow.update { showDecimals }
     }
 
     override val theme: Flow<AppTheme> = _themeFlow
@@ -263,5 +267,14 @@ class AndroidSettingsDataSource(
             putString("summary_notification_time", time.toString())
         }
         _summaryNotificationTimeFlow.value = time
+    }
+
+    override val showDecimals: Flow<Boolean> = _showDecimalsFlow
+
+    override suspend fun setShowDecimals(show: Boolean) {
+        prefs.edit(commit = true) {
+            putBoolean("show_decimals", show)
+        }
+        _showDecimalsFlow.value = show
     }
 }

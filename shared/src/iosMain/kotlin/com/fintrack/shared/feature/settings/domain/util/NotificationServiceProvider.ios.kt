@@ -1,6 +1,10 @@
 package com.fintrack.shared.feature.settings.domain.util
 
+import com.fintrack.shared.feature.core.util.formatToAmount
+import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.DateTimeUnit
@@ -8,7 +12,9 @@ import kotlinx.datetime.minus
 import platform.UserNotifications.*
 import platform.Foundation.*
 
-class IOSNotificationService : NotificationService {
+class IOSNotificationService(
+    private val settingsDataSource: SettingsDataSource
+) : NotificationService {
     
     override fun showReminderNotification() {
         val content = UNMutableNotificationContent().apply {
@@ -31,11 +37,14 @@ class IOSNotificationService : NotificationService {
     }
 
     override fun showTransactionNotification(transaction: Transaction) {
+        val showDecimals = runBlocking { settingsDataSource.showDecimals.first() }
+        val amountStr = transaction.amount.formatToAmount(showDecimals = showDecimals)
+
         val content = UNMutableNotificationContent().apply {
             setTitle("New Transaction Detected")
             val emoji = if (transaction.isIncome) "💰" else "💸"
             val type = if (transaction.isIncome) "received" else "spent"
-            setBody("$emoji Ksh ${transaction.amount} $type for ${transaction.category}. Tap to change.")
+            setBody("$emoji Ksh $amountStr $type for ${transaction.category}. Tap to change.")
             setSound(UNNotificationSound.defaultSound)
             setUserInfo(mapOf("transactionId" to transaction.id))
         }
@@ -74,9 +83,12 @@ class IOSNotificationService : NotificationService {
     }
 
     override fun showBillReminderNotification(billName: String, amount: Double) {
+        val showDecimals = runBlocking { settingsDataSource.showDecimals.first() }
+        val amountStr = amount.formatToAmount(showDecimals = showDecimals)
+        
         val content = UNMutableNotificationContent().apply {
             setTitle("Upcoming Bill: $billName")
-            setBody("Your bill of Ksh $amount is due soon.")
+            setBody("Your bill of Ksh $amountStr is due soon.")
             setSound(UNNotificationSound.defaultSound)
         }
 
@@ -235,6 +247,6 @@ class IOSNotificationService : NotificationService {
     }
 }
 
-actual fun createNotificationService(): NotificationService {
-    return IOSNotificationService()
+actual fun createNotificationService(settingsDataSource: SettingsDataSource): NotificationService {
+    return IOSNotificationService(settingsDataSource)
 }

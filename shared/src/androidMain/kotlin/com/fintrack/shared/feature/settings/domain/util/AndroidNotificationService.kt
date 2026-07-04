@@ -14,7 +14,10 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.fintrack.shared.R
+import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.DateTimeUnit
@@ -22,7 +25,8 @@ import kotlinx.datetime.minus
 import java.util.Calendar
 
 class AndroidNotificationService(
-    private val context: Context
+    private val context: Context,
+    private val settingsDataSource: SettingsDataSource
 ) : NotificationService {
 
     private val channelId = "transaction_reminders"
@@ -92,7 +96,10 @@ class AndroidNotificationService(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val amountStr = "Ksh ${String.format(java.util.Locale.US, "%,.2f", transaction.amount)}"
+        val showDecimals = runBlocking { settingsDataSource.showDecimals.first() }
+        val format = if (showDecimals) "%,.2f" else "%,.0f"
+
+        val amountStr = "Ksh ${String.format(java.util.Locale.US, format, transaction.amount)}"
         val emoji = if (transaction.isIncome) "💰" else "💸"
         val merchant = transaction.description?.split("(Ref:")?.get(0)?.trim() ?: transaction.category
         
@@ -155,7 +162,10 @@ class AndroidNotificationService(
             return
         }
 
-        val amountStr = "Ksh ${String.format(java.util.Locale.US, "%,.2f", amount)}"
+        val showDecimals = runBlocking { settingsDataSource.showDecimals.first() }
+        val format = if (showDecimals) "%,.2f" else "%,.0f"
+
+        val amountStr = "Ksh ${String.format(java.util.Locale.US, format, amount)}"
         val title = "Upcoming Bill: $billName"
         val contentText = "Your bill of $amountStr is due soon."
         

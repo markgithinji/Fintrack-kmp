@@ -11,13 +11,14 @@ import org.koin.compose.viewmodel.koinViewModel
 
 val LocalCurrency = compositionLocalOf { Currency.KES }
 val LocalPrivacyMode = compositionLocalOf { false }
+val LocalShowDecimals = compositionLocalOf { true }
 
 @Composable
 fun Double.toCurrencyString(): String {
     if (LocalPrivacyMode.current) {
         return "${LocalCurrency.current.symbol} ****"
     }
-    return this.formatToCurrency(LocalCurrency.current.symbol)
+    return this.formatToCurrency(LocalCurrency.current.symbol, showDecimals = LocalShowDecimals.current)
 }
 
 @Composable
@@ -27,10 +28,12 @@ fun CurrencyProvider(
 ) {
     val currency by viewModel.currency.collectAsStateWithLifecycle()
     val isBalanceHidden by viewModel.isBalanceHidden.collectAsStateWithLifecycle()
+    val showDecimals by viewModel.showDecimals.collectAsStateWithLifecycle()
 
     CompositionLocalProvider(
         LocalCurrency provides currency,
-        LocalPrivacyMode provides isBalanceHidden
+        LocalPrivacyMode provides isBalanceHidden,
+        LocalShowDecimals provides showDecimals
     ) {
         content()
     }

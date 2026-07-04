@@ -60,4 +60,7 @@ interface SettingsDataSource {
 
     val summaryNotificationTime: Flow<LocalTime>
     suspend fun setSummaryNotificationTime(time: LocalTime)
+
+    val showDecimals: Flow<Boolean>
+    suspend fun setShowDecimals(show: Boolean)
 }

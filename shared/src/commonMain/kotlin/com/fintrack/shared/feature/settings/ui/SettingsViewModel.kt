@@ -197,6 +197,13 @@ class SettingsViewModel(
             initialValue = LocalTime(8, 0)
         )
 
+    val showDecimals: StateFlow<Boolean> = settingsDataSource.showDecimals
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = true
+        )
+
     val trackedCategories: StateFlow<List<String>> = userRepository.getUserProfile()
         .map { it?.trackedCategories ?: emptyList() }
         .stateIn(
@@ -374,6 +381,12 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsDataSource.setSummaryNotificationTime(time)
             updateSummaryScheduling()
+        }
+    }
+
+    fun setShowDecimals(show: Boolean) {
+        viewModelScope.launch {
+            settingsDataSource.setShowDecimals(show)
         }
     }
 

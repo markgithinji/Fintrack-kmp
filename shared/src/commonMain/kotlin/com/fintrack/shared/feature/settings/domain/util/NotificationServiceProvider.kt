@@ -1,3 +1,5 @@
 package com.fintrack.shared.feature.settings.domain.util
 
-expect fun createNotificationService(): NotificationService
+import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
+
+expect fun createNotificationService(settingsDataSource: SettingsDataSource): NotificationService

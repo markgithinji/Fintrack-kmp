@@ -10,8 +10,8 @@ fun Double.formatToSinglePrecision(): String {
     }
 }
 
-fun Double.formatToCurrency(symbol: String = "KSh"): String {
-    return "$symbol ${this.formatToAmount(showDecimals = false)}"
+fun Double.formatToCurrency(symbol: String = "KSh", showDecimals: Boolean = false): String {
+    return "$symbol ${this.formatToAmount(showDecimals = showDecimals)}"
 }
 
 fun Double.formatToAmount(showDecimals: Boolean = false): String {

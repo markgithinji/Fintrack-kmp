@@ -71,12 +71,15 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
         val dailyEnabled = settingsDataSource.isDailySummaryEnabled.first()
         val weeklyEnabled = settingsDataSource.isWeeklySummaryEnabled.first()
         val time = settingsDataSource.summaryNotificationTime.first()
+        val showDecimals = settingsDataSource.showDecimals.first()
+
+        val format = if (showDecimals) "%,.2f" else "%,.0f"
 
         if (dailyEnabled) {
             val yesterdaySpending = getSpendingForYesterday()
             notificationService.showSummaryNotification(
                 title = "Daily Spending Summary",
-                content = "You spent Ksh ${String.format(java.util.Locale.US, "%,.2f", yesterdaySpending)} yesterday."
+                content = "You spent Ksh ${String.format(java.util.Locale.US, format, yesterdaySpending)} yesterday."
             )
         }
 
@@ -85,7 +88,7 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
             val weeklySpending = getSpendingForLastWeek()
             notificationService.showSummaryNotification(
                 title = "Weekly Spending Summary",
-                content = "You spent Ksh ${String.format(java.util.Locale.US, "%,.2f", weeklySpending)} this past week."
+                content = "You spent Ksh ${String.format(java.util.Locale.US, format, weeklySpending)} this past week."
             )
         }
 

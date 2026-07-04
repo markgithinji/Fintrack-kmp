@@ -29,6 +29,7 @@ class IOSSettingsDataSource : SettingsDataSource {
     private val _dailySummaryEnabledFlow = MutableStateFlow(false)
     private val _weeklySummaryEnabledFlow = MutableStateFlow(false)
     private val _summaryNotificationTimeFlow = MutableStateFlow(LocalTime(8, 0))
+    private val _showDecimalsFlow = MutableStateFlow(true)
 
     init {
         val themeName = userDefaults.stringForKey("app_theme") ?: AppTheme.SYSTEM.name
@@ -84,6 +85,9 @@ class IOSSettingsDataSource : SettingsDataSource {
 
         val summaryTimeStr = userDefaults.stringForKey("summary_notification_time") ?: "08:00"
         _summaryNotificationTimeFlow.value = LocalTime.parse(summaryTimeStr)
+
+        val showDecimals = if (userDefaults.objectForKey("show_decimals") != null) userDefaults.boolForKey("show_decimals") else true
+        _showDecimalsFlow.value = showDecimals
     }
 
     override val theme: Flow<AppTheme> = _themeFlow
@@ -222,6 +226,13 @@ class IOSSettingsDataSource : SettingsDataSource {
     override suspend fun setSummaryNotificationTime(time: LocalTime) {
         userDefaults.setObject(time.toString(), "summary_notification_time")
         _summaryNotificationTimeFlow.value = time
+    }
+
+    override val showDecimals: Flow<Boolean> = _showDecimalsFlow
+
+    override suspend fun setShowDecimals(show: Boolean) {
+        userDefaults.setBool(show, "show_decimals")
+        _showDecimalsFlow.value = show
     }
 }
 
