@@ -194,7 +194,6 @@ private fun OverviewSuccessState(
                             data = weeklyData,
                             modifier = Modifier
                                 .fillMaxHeight()
-                                .padding(horizontal = 16.dp)
                         )
                     }
 
@@ -313,14 +312,14 @@ fun BarChart(
                 onClick = { selectedAmount = null }
             )
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxWidth().padding(end = 16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Bottom
             ) {
                 // Y-axis labels
                 Column(
-                    modifier = Modifier.width(40.dp).height(totalBarHeight),
+                    modifier = Modifier.width(28.dp).height(totalBarHeight),
                     verticalArrangement = Arrangement.SpaceBetween,
                     horizontalAlignment = Alignment.End
                 ) {
@@ -451,7 +450,7 @@ fun BarChart(
 
             // Day labels aligned to bars
             Row(
-                modifier = Modifier.fillMaxWidth().padding(start = 48.dp), // Match chart area start offset
+                modifier = Modifier.fillMaxWidth().padding(start = 36.dp), // Match chart area start offset
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
                 weekDays.forEach { day ->

@@ -25,7 +25,7 @@ fun LoadingBarChart() {
         modifier = Modifier
             .fillMaxWidth()
             .height(240.dp)
-            .padding(16.dp)
+            .padding(end = 16.dp)
     ) {
         // Y-axis placeholder
         Row(
@@ -35,6 +35,7 @@ fun LoadingBarChart() {
             // Y-axis labels
             Column(
                 modifier = Modifier
+                    .width(28.dp)
                     .height(180.dp)
                     .padding(end = 8.dp),
                 verticalArrangement = Arrangement.SpaceBetween
@@ -82,7 +83,7 @@ fun LoadingLineChart() {
         modifier = Modifier
             .fillMaxWidth()
             .height(240.dp)
-            .padding(16.dp)
+            .padding(end = 16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
@@ -91,8 +92,9 @@ fun LoadingLineChart() {
             // Y-axis labels
             Column(
                 modifier = Modifier
+                    .width(28.dp)
                     .height(180.dp)
-                    .padding(end = 12.dp),
+                    .padding(end = 8.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 repeat(5) {
@@ -163,10 +165,10 @@ fun LoadingLineChart() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 42.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(start = 36.dp),
+            horizontalArrangement = Arrangement.SpaceAround
         ) {
-            repeat(6) {
+            repeat(7) {
                 AnimatedShimmerBox(
                     modifier = Modifier
                         .width(20.dp)
