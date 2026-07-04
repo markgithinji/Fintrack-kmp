@@ -31,12 +31,15 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
@@ -136,11 +139,15 @@ fun CustomLineChart(
             }
 
             // --- Scrollable Area ---
+            val scrollState = rememberScrollState()
+            var viewportWidth by remember { mutableStateOf(0f) }
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 36.dp)
-                    .horizontalScroll(rememberScrollState())
+                    .onGloballyPositioned { viewportWidth = it.size.width.toFloat() }
+                    .horizontalScroll(scrollState)
             ) {
                 Box(
                     modifier = Modifier
@@ -256,53 +263,68 @@ fun CustomLineChart(
                             drawCircle(PinkExpense, radius = 4.dp.toPx(), center = Offset(x, yExpense))
                         }
                     }
+                }
+            }
 
-                    // Tooltip
-                    AnimatedVisibility(
-                        visible = selectedDay != null,
-                        enter = fadeIn() + scaleIn(),
-                        exit = fadeOut() + scaleOut(),
-                        modifier = Modifier.offset {
-                            val xOffset = (touchOffset.x - 60.dp.toPx()).toInt()
-                            val yOffset = (touchOffset.y - 90.dp.toPx()).toInt().coerceAtLeast(0)
-                            IntOffset(xOffset, yOffset)
-                        }
+            // Tooltip (Outside scrollable area to allow Y-axis overlap)
+            var tooltipSize by remember { mutableStateOf(IntSize.Zero) }
+            val isTooltipVisible = selectedDay != null && (touchOffset.x >= scrollState.value && touchOffset.x <= scrollState.value + viewportWidth)
+
+            AnimatedVisibility(
+                visible = isTooltipVisible,
+                enter = fadeIn() + scaleIn(),
+                exit = fadeOut() + scaleOut(),
+                modifier = Modifier.offset {
+                    val startPaddingPx = 36.dp.toPx()
+                    val xInViewport = touchOffset.x - scrollState.value
+                    val xOffset = (startPaddingPx + xInViewport - tooltipSize.width / 2)
+                        .coerceIn(0f, (viewportWidth + startPaddingPx - tooltipSize.width).coerceAtLeast(0f))
+                    
+                    val chartHeightPx = 200.dp.toPx()
+                    val yOffset = if (touchOffset.y - tooltipSize.height - 12.dp.toPx() < 0) {
+                        (touchOffset.y + 12.dp.toPx()).coerceAtMost(chartHeightPx - tooltipSize.height)
+                    } else {
+                        touchOffset.y - tooltipSize.height - 12.dp.toPx()
+                    }
+                    
+                    IntOffset(xOffset.toInt(), yOffset.toInt())
+                }
+            ) {
+                selectedDay?.let { day ->
+                    Surface(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(12.dp),
+                        shadowElevation = 8.dp,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        modifier = Modifier
+                            .widthIn(min = 120.dp)
+                            .onSizeChanged { tooltipSize = it }
                     ) {
-                        selectedDay?.let { day ->
-                            Surface(
-                                color = MaterialTheme.colorScheme.surface,
-                                shape = RoundedCornerShape(12.dp),
-                                shadowElevation = 8.dp,
-                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                                modifier = Modifier.widthIn(min = 120.dp)
-                            ) {
-                                Column(modifier = Modifier.padding(8.dp)) {
-                                    Text(
-                                        text = try { LocalDate.parse(day.date).shortDayName() + ", " + day.date.split("-").last() } catch(_: Exception) { day.date },
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Spacer(Modifier.height(4.dp))
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Box(Modifier.size(6.dp).background(GreenIncome, CircleShape))
-                                        Text(
-                                            text = " " + day.income.toCurrencyString(),
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = GreenIncome
-                                        )
-                                    }
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Box(Modifier.size(6.dp).background(PinkExpense, CircleShape))
-                                        Text(
-                                            text = " " + day.expense.toCurrencyString(),
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = PinkExpense
-                                        )
-                                    }
-                                }
+                        Column(modifier = Modifier.padding(8.dp)) {
+                            Text(
+                                text = try { LocalDate.parse(day.date).shortDayName() + ", " + day.date.split("-").last() } catch(_: Exception) { day.date },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.size(6.dp).background(GreenIncome, CircleShape))
+                                Text(
+                                    text = " " + day.income.toCurrencyString(),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = GreenIncome
+                                )
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.size(6.dp).background(PinkExpense, CircleShape))
+                                Text(
+                                    text = " " + day.expense.toCurrencyString(),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PinkExpense
+                                )
                             }
                         }
                     }
