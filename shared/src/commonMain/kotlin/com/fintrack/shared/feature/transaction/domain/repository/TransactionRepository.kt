@@ -35,7 +35,7 @@ interface TransactionRepository {
 
     suspend fun deleteTransaction(id: String): Result<Unit>
 
-    suspend fun deleteAllTransactions(): Result<Unit>
+    suspend fun deleteAllTransactions(accountIds: List<String>? = null): Result<Unit>
 
     fun getTransactionsPagingFlow(
         accountId: String?,

@@ -139,9 +139,9 @@ class TransactionRepositoryImpl(
         return result
     }
 
-    override suspend fun deleteAllTransactions(): Result<Unit> {
+    override suspend fun deleteAllTransactions(accountIds: List<String>?): Result<Unit> {
         val result = safeApiCall {
-            api.deleteAllTransactions()
+            api.deleteAllTransactions(accountIds)
         }
         if (result is Result.Success) {
             triggerRefresh()

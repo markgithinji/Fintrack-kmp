@@ -56,6 +56,7 @@ fun HomeScreen(
     val overviewResult by statsViewModel.overview.collectAsStateWithLifecycle()
     val categoryComparisonResult by statsViewModel.categoryComparisons.collectAsStateWithLifecycle()
     val isBalanceHidden by settingsViewModel.isBalanceHidden.collectAsStateWithLifecycle()
+    val isMpesaListenerEnabled by settingsViewModel.isMpesaListenerEnabled.collectAsStateWithLifecycle()
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
     
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
@@ -192,6 +193,11 @@ fun HomeScreen(
         if (accountsResult is Result.Error || (accountsResult is Result.Success && (accountsResult as Result.Success).data.isEmpty())) {
             accountsViewModel.reloadAccounts(force = true)
         }
+        
+        // Auto-sync M-Pesa if enabled
+        if (isMpesaListenerEnabled) {
+            transactionsViewModel.autoSyncMpesaTransactions()
+        }
     }
 
     LaunchedEffect(selectedAccountResult) {
@@ -220,6 +226,7 @@ fun HomeScreen(
                 accountsResult = accountsResult,
                 selectedAccountResult = selectedAccountResult,
                 isBalanceHidden = isBalanceHidden,
+                isMpesaAutoSyncEnabled = isMpesaListenerEnabled,
                 onAccountSelected = { accountId -> accountsViewModel.selectAccount(accountId) },
                 onToggleBalanceVisibility = { settingsViewModel.setBalanceHidden(it) },
                 onSyncMpesa = { showSmsPermissionRequest = true },

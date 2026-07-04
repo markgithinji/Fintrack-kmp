@@ -1,7 +1,14 @@
 package com.fintrack.shared.feature.settings.ui
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.window.Dialog
+import com.fintrack.shared.feature.account.domain.model.Account
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -23,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
@@ -42,6 +50,7 @@ import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,6 +73,8 @@ fun SettingsScreen(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val trackedCategories by viewModel.trackedCategories.collectAsStateWithLifecycle()
     val allCategories by viewModel.allCategories.collectAsStateWithLifecycle()
+    val accounts by viewModel.accounts.collectAsStateWithLifecycle()
+    val selectedAccountIds by viewModel.selectedAccountIdsForReset.collectAsStateWithLifecycle()
 
     val changePasswordFormState by viewModel.changePasswordFormState.collectAsStateWithLifecycle()
     val changePasswordState by viewModel.changePasswordState.collectAsStateWithLifecycle()
@@ -74,6 +85,7 @@ fun SettingsScreen(
     var showThemeDialog by remember { mutableStateOf(false) }
     var showTimeFormatDialog by remember { mutableStateOf(false) }
     var showTimePickerDialog by remember { mutableStateOf(false) }
+    var showAccountSelectionDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
@@ -137,7 +149,7 @@ fun SettingsScreen(
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                         )
 
                         SettingsItem(
@@ -150,7 +162,7 @@ fun SettingsScreen(
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                         )
 
                         SettingsItem(
@@ -163,7 +175,7 @@ fun SettingsScreen(
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                         )
 
                         SettingsItem(
@@ -176,7 +188,7 @@ fun SettingsScreen(
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                         )
 
                         SettingsToggleItem(
@@ -214,7 +226,7 @@ fun SettingsScreen(
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                         )
 
                         SettingsToggleItem(
@@ -244,7 +256,7 @@ fun SettingsScreen(
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                         )
 
                         SettingsItem(
@@ -266,22 +278,22 @@ fun SettingsScreen(
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                         )
 
                         SettingsItem(
                             title = "Reset Data",
-                            subtitle = "Permanently delete all records",
+                            subtitle = "Permanently delete records for selected accounts",
                             icon = Icons.Default.DeleteForever,
                             iconContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f),
                             iconTint = MaterialTheme.colorScheme.error,
-                            onClick = { showDeleteConfirmDialog = true }
+                            onClick = { showAccountSelectionDialog = true }
                         )
 
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                         )
 
                         SettingsItem(
@@ -305,7 +317,7 @@ fun SettingsScreen(
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                         )
                         
                         SettingsItem(
@@ -396,22 +408,50 @@ fun SettingsScreen(
     )
 
     if (showDeleteConfirmDialog) {
+        val selectedAccountNames = accounts.filter { it.id in selectedAccountIds }.joinToString { it.name }
+        val message = if (selectedAccountIds.isEmpty()) {
+            "Are you sure you want to delete ALL transactions and budgets across ALL accounts? This action cannot be undone."
+        } else {
+            "Are you sure you want to delete all transactions and budgets for the following accounts: $selectedAccountNames? This action cannot be undone."
+        }
+
         ConfirmationDialog(
-            title = "Clear All Transactions",
-            message = "Are you sure you want to delete all transactions? This action cannot be undone.",
-            confirmLabel = "Clear All",
+            title = "Clear Data",
+            message = message,
+            confirmLabel = "Clear Data",
             isDestructive = true,
             isLoading = clearDataState is SaveState.Loading,
             isSuccess = clearDataState is SaveState.Success,
             successTitle = "Data Cleared",
-            successMessage = "All transactions and budgets have been successfully deleted.",
+            successMessage = "Transactions and budgets for selected accounts have been successfully deleted.",
             autoDismiss = false,
             onConfirm = {
-                viewModel.clearAllTransactions()
+                viewModel.clearTransactions()
             },
             onDismiss = {
                 showDeleteConfirmDialog = false
                 viewModel.resetClearDataState()
+                if (clearDataState is SaveState.Success) {
+                    viewModel.clearAccountSelectionForReset()
+                }
+            }
+        )
+    }
+
+    if (showAccountSelectionDialog) {
+        AccountSelectionDialog(
+            accounts = accounts,
+            selectedAccountIds = selectedAccountIds,
+            onAccountToggle = viewModel::toggleAccountSelectionForReset,
+            onSelectAll = viewModel::selectAllAccountsForReset,
+            onClearSelection = viewModel::clearAccountSelectionForReset,
+            onConfirm = {
+                showAccountSelectionDialog = false
+                showDeleteConfirmDialog = true
+            },
+            onDismiss = {
+                showAccountSelectionDialog = false
+                viewModel.clearAccountSelectionForReset()
             }
         )
     }
@@ -508,6 +548,7 @@ fun ChangePasswordDialog(
                 modifier = Modifier
                     .padding(24.dp)
                     .fillMaxWidth()
+                    .animateContentSize()
             ) {
                 Text(
                     text = "Change Password",
@@ -946,6 +987,7 @@ fun TrackedCategoriesSelectionDialog(
                 modifier = Modifier
                     .padding(24.dp)
                     .fillMaxWidth()
+                    .animateContentSize()
             ) {
                 // Header
                 Row(
@@ -1129,6 +1171,159 @@ fun TrackedCategoriesSelectionDialog(
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AccountSelectionDialog(
+    accounts: List<Account>,
+    selectedAccountIds: Set<String>,
+    onAccountToggle: (String) -> Unit,
+    onSelectAll: () -> Unit,
+    onClearSelection: () -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    BasicAlertDialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier
+            .padding(28.dp)
+            .widthIn(max = 420.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Select Accounts",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    
+                    if (accounts.isNotEmpty()) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                        ) {
+                            Text(
+                                text = "${selectedAccountIds.size}/${accounts.size}",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Choose the accounts from which you want to delete all transactions and budgets.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onSelectAll) {
+                        Text("Select All", style = MaterialTheme.typography.labelLarge)
+                    }
+                    Box(modifier = Modifier.width(1.dp).height(16.dp).background(MaterialTheme.colorScheme.outlineVariant))
+                    TextButton(onClick = onClearSelection) {
+                        Text("Clear", style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+
+                Box(modifier = Modifier.heightIn(min = 200.dp, max = 340.dp)) {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(vertical = 4.dp)
+                    ) {
+                        items(accounts, key = { it.id }) { account ->
+                            val isSelected = selectedAccountIds.contains(account.id)
+                            Surface(
+                                onClick = { onAccountToggle(account.id) },
+                                shape = RoundedCornerShape(16.dp),
+                                color = if (isSelected)
+                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                border = if (isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = isSelected,
+                                        onCheckedChange = { onAccountToggle(account.id) },
+                                        colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column {
+                                        Text(
+                                            text = account.name,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = if (account.isMpesa) "M-Pesa" else "Standard Account",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.height(48.dp)
+                    ) {
+                        Text("Cancel")
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Button(
+                        onClick = onConfirm,
+                        enabled = selectedAccountIds.isNotEmpty(),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.height(48.dp),
+                        contentPadding = PaddingValues(horizontal = 24.dp)
+                    ) {
+                        Text("Continue")
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun SettingsSection(
     title: String,
@@ -1138,24 +1333,21 @@ fun SettingsSection(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(bottom = 4.dp)
+            .padding(bottom = 16.dp)
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 4.dp)
+            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
         )
         Card(
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                containerColor = MaterialTheme.colorScheme.surface
             ),
-            border = BorderStroke(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
-            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
@@ -1172,7 +1364,7 @@ fun SettingsItem(
     title: String,
     subtitle: String,
     icon: ImageVector,
-    iconContainerColor: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+    iconContainerColor: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
     iconTint: Color = MaterialTheme.colorScheme.primary,
     onClick: () -> Unit
 ) {
@@ -1249,7 +1441,7 @@ fun SettingsToggleItem(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(

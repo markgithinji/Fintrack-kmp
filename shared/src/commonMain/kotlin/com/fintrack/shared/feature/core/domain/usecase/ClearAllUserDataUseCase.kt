@@ -10,13 +10,13 @@ class ClearAllUserDataUseCase(
     private val budgetRepository: BudgetRepository,
     private val globalRefreshManager: GlobalRefreshManager
 ) {
-    suspend operator fun invoke(): Result<Unit> {
+    suspend operator fun invoke(accountIds: List<String>? = null): Result<Unit> {
         // Clear transactions
-        val transactionResult = transactionRepository.deleteAllTransactions()
+        val transactionResult = transactionRepository.deleteAllTransactions(accountIds)
         if (transactionResult is Result.Error) return transactionResult
 
         // Clear budgets
-        val budgetResult = budgetRepository.deleteAllBudgets()
+        val budgetResult = budgetRepository.deleteAllBudgets(accountIds)
         if (budgetResult is Result.Error) return budgetResult
 
         // Trigger global refresh to update all screens

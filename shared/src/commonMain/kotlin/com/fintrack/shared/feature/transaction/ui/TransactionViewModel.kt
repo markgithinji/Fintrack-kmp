@@ -78,6 +78,7 @@ class TransactionViewModel(
     private val _importProgress = MutableStateFlow(0f)
     val importProgress: StateFlow<Float> = _importProgress.asStateFlow()
 
+    private var hasAutoSynced = false
     private var lastLoadedRecentAccountId: String? = null
 
     init {
@@ -352,6 +353,8 @@ class TransactionViewModel(
     }
 
     fun importMpesaTransactions() {
+        if (_importState.value is Result.Loading) return
+
         viewModelScope.launch {
             _importState.value = Result.Loading
             _importProgress.value = 0f
@@ -364,6 +367,13 @@ class TransactionViewModel(
             } catch (e: Exception) {
                 _importState.value = Result.Error(e)
             }
+        }
+    }
+
+    fun autoSyncMpesaTransactions() {
+        if (!hasAutoSynced) {
+            hasAutoSynced = true
+            importMpesaTransactions()
         }
     }
 

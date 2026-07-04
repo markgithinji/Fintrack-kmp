@@ -67,9 +67,9 @@ class BudgetRepositoryImpl(
         return result
     }
 
-    override suspend fun deleteAllBudgets(): Result<Unit> {
+    override suspend fun deleteAllBudgets(accountIds: List<String>?): Result<Unit> {
         val result = safeApiCall {
-            api.deleteAllBudgets()
+            api.deleteAllBudgets(accountIds)
         }
         if (result is Result.Success) {
             getBudgets(forceRefresh = true)

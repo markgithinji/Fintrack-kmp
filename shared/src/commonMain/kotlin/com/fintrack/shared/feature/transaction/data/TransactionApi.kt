@@ -87,7 +87,9 @@ class TransactionApi(
         client.delete("$baseUrl/transactions/$id")
     }
 
-    suspend fun deleteAllTransactions() {
-        client.delete("$baseUrl/transactions/clear")
+    suspend fun deleteAllTransactions(accountIds: List<String>? = null) {
+        client.delete("$baseUrl/transactions/clear") {
+            accountIds?.forEach { parameter("accountId", it) }
+        }
     }
 }

@@ -64,6 +64,7 @@ fun CurrentBalanceCardWrapper(
     selectedAccountResult: Result<Account>,
     accountsResult: Result<List<Account>>,
     isBalanceHidden: Boolean,
+    isMpesaAutoSyncEnabled: Boolean,
     onAccountSelected: (String) -> Unit,
     onToggleBalanceVisibility: (Boolean) -> Unit,
     onSyncMpesa: () -> Unit,
@@ -74,6 +75,7 @@ fun CurrentBalanceCardWrapper(
     CurrentBalanceCard(
         selectedAccountResult = selectedAccountResult,
         isBalanceHidden = isBalanceHidden,
+        isMpesaAutoSyncEnabled = isMpesaAutoSyncEnabled,
         onChangeAccountClicked = { showDialog = true },
         onToggleBalanceVisibility = onToggleBalanceVisibility,
         onSyncMpesa = onSyncMpesa,
@@ -98,6 +100,7 @@ fun CurrentBalanceCardWrapper(
 fun CurrentBalanceCard(
     selectedAccountResult: Result<Account>,
     isBalanceHidden: Boolean,
+    isMpesaAutoSyncEnabled: Boolean,
     onChangeAccountClicked: () -> Unit,
     onToggleBalanceVisibility: (Boolean) -> Unit,
     onSyncMpesa: () -> Unit,
@@ -133,6 +136,7 @@ fun CurrentBalanceCard(
                         account = selectedAccountResult.data,
                         isBalanceHidden = isBalanceHidden,
                         isMpesaLinked = selectedAccountResult.data.isMpesa,
+                        isMpesaAutoSyncEnabled = isMpesaAutoSyncEnabled,
                         onChangeAccountClicked = onChangeAccountClicked,
                         onToggleBalanceVisibility = onToggleBalanceVisibility,
                         onSyncMpesa = onSyncMpesa
@@ -239,6 +243,7 @@ private fun CurrentBalanceSuccessState(
     account: Account,
     isBalanceHidden: Boolean,
     isMpesaLinked: Boolean,
+    isMpesaAutoSyncEnabled: Boolean,
     onChangeAccountClicked: () -> Unit,
     onToggleBalanceVisibility: (Boolean) -> Unit,
     onSyncMpesa: () -> Unit
@@ -271,7 +276,7 @@ private fun CurrentBalanceSuccessState(
                         fontWeight = FontWeight.Bold
                     )
                     
-                    if (isMpesaLinked) {
+                    if (isMpesaLinked && !isMpesaAutoSyncEnabled) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Surface(
                             onClick = onSyncMpesa,
