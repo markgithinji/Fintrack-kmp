@@ -353,20 +353,41 @@ private fun CurrentBalanceSuccessState(
                             }
                             is Result.Error -> {
                                 val errorMessage = (importState as Result.Error).exception.message ?: "Failed to sync transactions"
-                                Box(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.error.copy(alpha = 0.2f))
-                                        .clickable { onSyncErrorClick(errorMessage) },
-                                    contentAlignment = Alignment.Center
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.ErrorOutline,
-                                        contentDescription = "Sync Failed",
-                                        tint = MaterialTheme.colorScheme.error,
-                                        modifier = Modifier.size(14.dp)
-                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.error.copy(alpha = 0.2f))
+                                            .clickable { onSyncErrorClick(errorMessage) },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.ErrorOutline,
+                                            contentDescription = "Sync Failed",
+                                            tint = MaterialTheme.colorScheme.error,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+
+                                    Surface(
+                                        onClick = onSyncMpesa,
+                                        shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = Icons.Default.Sync,
+                                                contentDescription = "Retry Sync",
+                                                tint = MaterialTheme.colorScheme.onPrimary,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                             null -> {
