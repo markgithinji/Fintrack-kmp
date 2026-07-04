@@ -29,6 +29,8 @@ class AndroidSettingsDataSource(
     private val _budgetAlertsEnabledFlow = MutableStateFlow(false)
     private val _budgetAlertThresholdsFlow = MutableStateFlow(setOf(50, 80, 100))
     private val _alertBudgetIdFlow = MutableStateFlow<String?>(null)
+    private val _billReminderEnabledFlow = MutableStateFlow(false)
+    private val _billReminderDaysBeforeFlow = MutableStateFlow(2)
 
     init {
         val themeName = prefs.getString("app_theme", AppTheme.SYSTEM.name)
@@ -69,6 +71,12 @@ class AndroidSettingsDataSource(
 
         val alertBudgetId = prefs.getString("alert_budget_id", null)
         _alertBudgetIdFlow.update { alertBudgetId }
+
+        val billReminderEnabled = prefs.getBoolean("bill_reminder_enabled", false)
+        _billReminderEnabledFlow.update { billReminderEnabled }
+
+        val billReminderDaysBefore = prefs.getInt("bill_reminder_days_before", 2)
+        _billReminderDaysBeforeFlow.update { billReminderDaysBefore }
     }
 
     override val theme: Flow<AppTheme> = _themeFlow
@@ -198,5 +206,23 @@ class AndroidSettingsDataSource(
             }
         }
         _alertBudgetIdFlow.value = budgetId
+    }
+
+    override val isBillReminderEnabled: Flow<Boolean> = _billReminderEnabledFlow
+
+    override suspend fun setBillReminderEnabled(enabled: Boolean) {
+        prefs.edit(commit = true) {
+            putBoolean("bill_reminder_enabled", enabled)
+        }
+        _billReminderEnabledFlow.value = enabled
+    }
+
+    override val billReminderDaysBefore: Flow<Int> = _billReminderDaysBeforeFlow
+
+    override suspend fun setBillReminderDaysBefore(days: Int) {
+        prefs.edit(commit = true) {
+            putInt("bill_reminder_days_before", days)
+        }
+        _billReminderDaysBeforeFlow.value = days
     }
 }

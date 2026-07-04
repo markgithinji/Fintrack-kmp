@@ -8,6 +8,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.safeApiCall
 import com.fintrack.shared.feature.transaction.data.model.toCreateRequest
 import com.fintrack.shared.feature.transaction.data.model.toDomain
+import com.fintrack.shared.feature.transaction.domain.model.RecurringBill
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
@@ -138,6 +139,10 @@ class TransactionRepositoryImpl(
             triggerRefresh()
         }
         return result
+    }
+
+    override suspend fun getRecurringBills(): Result<List<RecurringBill>> = safeApiCall {
+        api.getRecurringBills()
     }
 
     override fun getTransactionsPagingFlow(

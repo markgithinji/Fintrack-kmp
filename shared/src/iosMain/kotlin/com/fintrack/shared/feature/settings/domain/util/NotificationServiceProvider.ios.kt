@@ -2,6 +2,9 @@ package com.fintrack.shared.feature.settings.domain.util
 
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.minus
 import platform.UserNotifications.*
 import platform.Foundation.*
 
@@ -66,6 +69,61 @@ class IOSNotificationService : NotificationService {
         UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
             if (error != null) {
                 println("Error showing budget alert notification: ${error.localizedDescription}")
+            }
+        }
+    }
+
+    override fun showBillReminderNotification(billName: String, amount: Double) {
+        val content = UNMutableNotificationContent().apply {
+            setTitle("Upcoming Bill: $billName")
+            setBody("Your bill of Ksh $amount is due soon.")
+            setSound(UNNotificationSound.defaultSound)
+        }
+
+        val request = UNNotificationRequest.requestWithIdentifier(
+            identifier = "bill_reminder_$billName",
+            content = content,
+            trigger = null
+        )
+
+        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
+            if (error != null) {
+                println("Error showing bill reminder notification: ${error.localizedDescription}")
+            }
+        }
+    }
+
+    override fun scheduleBillReminder(billName: String, amount: Double, dueDate: LocalDate, daysBefore: Int) {
+        val reminderDate = dueDate.minus(daysBefore, DateTimeUnit.DAY)
+        
+        val content = UNMutableNotificationContent().apply {
+            setTitle("Upcoming Bill: $billName")
+            setBody("Your bill of Ksh $amount is due soon.")
+            setSound(UNNotificationSound.defaultSound)
+        }
+
+        val dateComponents = NSDateComponents().apply {
+            setYear(reminderDate.year.toLong())
+            setMonth((reminderDate.month.ordinal + 1).toLong())
+            setDay(reminderDate.dayOfMonth.toLong())
+            setHour(9)
+            setMinute(0)
+        }
+
+        val trigger = UNCalendarNotificationTrigger.triggerWithDateMatchingComponents(
+            dateComponents = dateComponents,
+            repeats = false
+        )
+
+        val request = UNNotificationRequest.requestWithIdentifier(
+            identifier = "bill_reminder_$billName",
+            content = content,
+            trigger = trigger
+        )
+
+        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
+            if (error != null) {
+                println("Error scheduling bill reminder: ${error.localizedDescription}")
             }
         }
     }

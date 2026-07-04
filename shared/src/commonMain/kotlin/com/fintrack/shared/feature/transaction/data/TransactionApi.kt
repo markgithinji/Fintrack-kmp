@@ -4,6 +4,7 @@ import com.fintrack.shared.feature.core.data.domain.ApiResponse
 import com.fintrack.shared.feature.core.data.domain.PaginatedTransactionDto
 import com.fintrack.shared.feature.transaction.data.model.CreateTransactionRequest
 import com.fintrack.shared.feature.transaction.data.model.TransactionDto
+import com.fintrack.shared.feature.transaction.domain.model.RecurringBill
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
@@ -91,5 +92,10 @@ class TransactionApi(
         client.delete("$baseUrl/transactions/clear") {
             accountIds?.forEach { parameter("accountId", it) }
         }
+    }
+
+    suspend fun getRecurringBills(): List<RecurringBill> {
+        val response: ApiResponse<List<RecurringBill>> = client.get("$baseUrl/transactions/recurring/detect").body()
+        return response.result
     }
 }

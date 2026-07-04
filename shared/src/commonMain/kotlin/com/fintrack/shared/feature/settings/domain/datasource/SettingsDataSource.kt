@@ -45,4 +45,10 @@ interface SettingsDataSource {
 
     val alertBudgetId: Flow<String?>
     suspend fun setAlertBudgetId(budgetId: String?)
+
+    val isBillReminderEnabled: Flow<Boolean>
+    suspend fun setBillReminderEnabled(enabled: Boolean)
+
+    val billReminderDaysBefore: Flow<Int>
+    suspend fun setBillReminderDaysBefore(days: Int)
 }

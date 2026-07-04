@@ -32,6 +32,11 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
                         // Re-schedule for next day
                         notificationService.scheduleDailyReminder(time)
                     }
+                    "com.fintrack.shared.ACTION_SHOW_BILL_REMINDER" -> {
+                        val billName = intent.getStringExtra("billName") ?: "Bill"
+                        val amount = intent.getDoubleExtra("amount", 0.0)
+                        notificationService.showBillReminderNotification(billName, amount)
+                    }
                     Intent.ACTION_BOOT_COMPLETED -> {
                         // Restore alarm after reboot
                         notificationService.scheduleDailyReminder(time)

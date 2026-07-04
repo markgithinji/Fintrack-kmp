@@ -71,6 +71,8 @@ fun SettingsScreen(
     val budgetAlertsEnabled by viewModel.budgetAlertsEnabled.collectAsStateWithLifecycle()
     val budgetAlertThresholds by viewModel.budgetAlertThresholds.collectAsStateWithLifecycle()
     val alertBudgetId by viewModel.alertBudgetId.collectAsStateWithLifecycle()
+    val isBillReminderEnabled by viewModel.isBillReminderEnabled.collectAsStateWithLifecycle()
+    val billReminderDaysBefore by viewModel.billReminderDaysBefore.collectAsStateWithLifecycle()
     val budgetsResult by viewModel.budgets.collectAsStateWithLifecycle()
     val reminderTime by viewModel.reminderTime.collectAsStateWithLifecycle()
     val showPermissionRequest by viewModel.showPermissionRequest.collectAsStateWithLifecycle()
@@ -289,6 +291,31 @@ fun SettingsScreen(
                                 subtitle = if (budgetAlertThresholds.isEmpty()) "None" else budgetAlertThresholds.sorted().joinToString("% ") { it.toString() } + "%",
                                 icon = Icons.Default.NotificationsActive,
                                 onClick = { showThresholdDialog = true }
+                            )
+                        }
+                    }
+
+                    SettingsSection(title = "Upcoming Bills") {
+                        SettingsToggleItem(
+                            title = "Bill Reminders",
+                            subtitle = "Get notified before bills are due",
+                            icon = Icons.Default.ReceiptLong,
+                            checked = isBillReminderEnabled,
+                            onCheckedChange = { viewModel.setBillReminderEnabled(it) }
+                        )
+
+                        if (isBillReminderEnabled) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                thickness = 0.5.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            )
+                            
+                            SettingsItem(
+                                title = "Reminder Timing",
+                                subtitle = "$billReminderDaysBefore days before due date",
+                                icon = Icons.Default.EventRepeat,
+                                onClick = { /* Show a picker or dialog for days */ }
                             )
                         }
                     }

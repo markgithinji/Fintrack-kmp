@@ -3,6 +3,7 @@ package com.fintrack.shared.feature.transaction.domain.repository
 import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.transaction.domain.model.RecurringBill
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import kotlinx.coroutines.flow.Flow
 
@@ -36,6 +37,8 @@ interface TransactionRepository {
     suspend fun deleteTransaction(id: String): Result<Unit>
 
     suspend fun deleteAllTransactions(accountIds: List<String>? = null): Result<Unit>
+
+    suspend fun getRecurringBills(): Result<List<RecurringBill>>
 
     fun getTransactionsPagingFlow(
         accountId: String?,

@@ -162,6 +162,20 @@ class SettingsViewModel(
             initialValue = null
         )
 
+    val isBillReminderEnabled: StateFlow<Boolean> = settingsDataSource.isBillReminderEnabled
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
+
+    val billReminderDaysBefore: StateFlow<Int> = settingsDataSource.billReminderDaysBefore
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 2
+        )
+
     val trackedCategories: StateFlow<List<String>> = userRepository.getUserProfile()
         .map { it?.trackedCategories ?: emptyList() }
         .stateIn(
@@ -306,6 +320,18 @@ class SettingsViewModel(
     fun setAlertBudgetId(budgetId: String?) {
         viewModelScope.launch {
             settingsDataSource.setAlertBudgetId(budgetId)
+        }
+    }
+
+    fun setBillReminderEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsDataSource.setBillReminderEnabled(enabled)
+        }
+    }
+
+    fun setBillReminderDaysBefore(days: Int) {
+        viewModelScope.launch {
+            settingsDataSource.setBillReminderDaysBefore(days)
         }
     }
 

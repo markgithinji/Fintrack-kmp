@@ -16,6 +16,9 @@ import androidx.core.content.ContextCompat
 import com.fintrack.shared.R
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.minus
 import java.util.Calendar
 
 class AndroidNotificationService(
@@ -142,6 +145,77 @@ class AndroidNotificationService(
             }
         } catch (e: SecurityException) {
             Log.e(TAG, "Failed to show budget alert notification: ${e.message}")
+        }
+    }
+
+    override fun showBillReminderNotification(billName: String, amount: Double) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+
+        val amountStr = "Ksh ${String.format(java.util.Locale.US, "%,.2f", amount)}"
+        val title = "Upcoming Bill: $billName"
+        val contentText = "Your bill of $amountStr is due soon."
+        
+        val builder = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(title)
+            .setContentText(contentText)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+
+        try {
+            with(NotificationManagerCompat.from(context)) {
+                notify(billName.hashCode(), builder.build())
+            }
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Failed to show bill reminder notification: ${e.message}")
+        }
+    }
+
+    override fun scheduleBillReminder(billName: String, amount: Double, dueDate: LocalDate, daysBefore: Int) {
+        val reminderDate = dueDate.minus(daysBefore, DateTimeUnit.DAY)
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.YEAR, reminderDate.year)
+            set(Calendar.MONTH, reminderDate.month.ordinal)
+            set(Calendar.DAY_OF_MONTH, reminderDate.dayOfMonth)
+            set(Calendar.HOUR_OF_DAY, 9) // 9 AM
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+        }
+
+        if (calendar.before(Calendar.getInstance())) return
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, ReminderReceiver::class.java).apply {
+            action = "com.fintrack.shared.ACTION_SHOW_BILL_REMINDER"
+            putExtra("billName", billName)
+            putExtra("amount", amount)
+        }
+        
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            billName.hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+                } else {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+                }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+            } else {
+                alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+            }
+        } catch (e: SecurityException) {
+            alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
         }
     }
 

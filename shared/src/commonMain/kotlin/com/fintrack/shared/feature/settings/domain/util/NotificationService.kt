@@ -2,6 +2,7 @@ package com.fintrack.shared.feature.settings.domain.util
 
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.LocalDate
 
 interface NotificationService {
     fun showReminderNotification()
@@ -10,4 +11,6 @@ interface NotificationService {
     fun requestPermission(callback: (Boolean) -> Unit)
     fun showTransactionNotification(transaction: Transaction)
     fun showBudgetAlertNotification(budgetName: String, threshold: Int)
+    fun showBillReminderNotification(billName: String, amount: Double)
+    fun scheduleBillReminder(billName: String, amount: Double, dueDate: LocalDate, daysBefore: Int)
 }
