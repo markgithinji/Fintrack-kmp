@@ -1,5 +1,11 @@
 package com.fintrack.shared.feature.profile
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,6 +33,7 @@ import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
+import com.fintrack.shared.feature.core.util.Result
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -74,152 +81,160 @@ fun ProfileScreen(
         ) {
             item {
                 // Profile Header Section
-                Column(
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 ) {
-                    Box(contentAlignment = Alignment.BottomEnd) {
-                        Surface(
-                            modifier = Modifier
-                                .size(100.dp)
-                                .shadow(4.dp, CircleShape),
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.surface,
-                            tonalElevation = 2.dp,
-                            border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                        ) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(56.dp),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                        
-                        // Edit Icon Overlay
-                        Surface(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .offset(x = (-2).dp, y = (-2).dp),
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary,
-                            onClick = onNavigateToEditProfile,
-                            shadowElevation = 2.dp
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = "Edit Profile",
-                                    modifier = Modifier.size(16.dp),
-                                    tint = MaterialTheme.colorScheme.onPrimary
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    when (val result = profileResult) {
-                        is com.fintrack.shared.feature.core.util.Result.Loading -> {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                AnimatedShimmerBox(
-                                    modifier = Modifier
-                                        .width(160.dp)
-                                        .height(26.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                )
-                                AnimatedShimmerBox(
-                                    modifier = Modifier
-                                        .width(200.dp)
-                                        .height(16.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Retrieving profile details...",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                                )
-                            }
-                        }
-                        is com.fintrack.shared.feature.core.util.Result.Error -> {
-                            val error = result.exception
-                            val message = (error as? ApiException)?.getUserFriendlyMessage() 
-                                ?: error.message 
-                                ?: "We couldn't load your profile information right now."
-
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 20.dp, horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(contentAlignment = Alignment.BottomEnd) {
                             Surface(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 16.dp),
-                                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f),
-                                shape = RoundedCornerShape(16.dp),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.2f))
+                                    .size(90.dp)
+                                    .padding(4.dp),
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
                             ) {
-                                Column(
-                                    modifier = Modifier.padding(16.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.CloudOff,
+                                        imageVector = Icons.Default.Person,
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.error,
-                                        modifier = Modifier.size(32.dp)
+                                        modifier = Modifier.size(48.dp),
+                                        tint = MaterialTheme.colorScheme.primary
                                     )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = "Profile Unavailable",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.error
+                                }
+                            }
+
+                            // Edit Icon Overlay
+                            Surface(
+                                modifier = Modifier
+                                    .size(30.dp)
+                                    .offset(x = (-2).dp, y = (-2).dp),
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primary,
+                                onClick = onNavigateToEditProfile,
+                                shadowElevation = 3.dp
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Edit Profile",
+                                        modifier = Modifier.size(14.dp),
+                                        tint = MaterialTheme.colorScheme.onPrimary
                                     )
-                                    Text(
-                                        text = message,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                    )
-                                    TextButton(
-                                        onClick = { viewModel.refreshProfile() },
-                                        contentPadding = PaddingValues(horizontal = 16.dp)
-                                    ) {
-                                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Try Again")
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Fixed height container for text details to prevent layout shifts
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp), // Slightly more compact fixed height
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AnimatedContent(
+                                targetState = profileResult,
+                                transitionSpec = {
+                                    fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)) togetherWith
+                                            fadeOut(animationSpec = spring(stiffness = Spring.StiffnessLow))
+                                },
+                                label = "ProfileDetails"
+                            ) { state ->
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    when (state) {
+                                        is Result.Loading -> {
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                AnimatedShimmerBox(
+                                                    modifier = Modifier
+                                                        .width(140.dp)
+                                                        .height(24.dp)
+                                                        .clip(RoundedCornerShape(8.dp))
+                                                )
+                                                AnimatedShimmerBox(
+                                                    modifier = Modifier
+                                                        .width(180.dp)
+                                                        .height(16.dp)
+                                                        .clip(RoundedCornerShape(8.dp))
+                                                )
+                                            }
+                                        }
+
+                                        is Result.Error -> {
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                                            ) {
+                                                Text(
+                                                    text = "Connection Error",
+                                                    style = MaterialTheme.typography.titleSmall,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.error
+                                                )
+                                                TextButton(
+                                                    onClick = { viewModel.refreshProfile() },
+                                                    modifier = Modifier.height(28.dp),
+                                                    contentPadding = PaddingValues(horizontal = 12.dp)
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.Refresh,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(12.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text("Try Again", style = MaterialTheme.typography.labelSmall)
+                                                }
+                                            }
+                                        }
+
+                                        is Result.Success -> {
+                                            val user = state.data
+                                            Text(
+                                                text = user.name,
+                                                style = MaterialTheme.typography.titleLarge,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                textAlign = TextAlign.Center
+                                            )
+
+                                            Text(
+                                                text = user.email,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
-                        is com.fintrack.shared.feature.core.util.Result.Success -> {
-                            val user = result.data
-                            Text(
-                                text = user.name,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            
-                            Text(
-                                text = user.email,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(32.dp))
+
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
             // Financial Management Section
@@ -253,34 +268,13 @@ fun ProfileScreen(
             }
 
             item {
-                Spacer(modifier = Modifier.height(64.dp))
-                
-                // Logout Button
-                Button(
+                ProfileOptionItem(
+                    title = "Log Out",
+                    icon = Icons.AutoMirrored.Filled.Logout,
+                    description = "Securely sign out of your account",
                     onClick = { showLogoutConfirmation = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .height(56.dp),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
-                        contentColor = MaterialTheme.colorScheme.error
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(0.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Logout, 
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = "Log Out", 
-                        style = MaterialTheme.typography.titleMedium, 
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                    isDanger = true
+                )
             }
         }
     }
@@ -304,14 +298,18 @@ private fun ProfileOptionItem(
     title: String,
     icon: ImageVector,
     description: String,
+    isDanger: Boolean = false,
     onClick: () -> Unit
 ) {
+    val contentColor = if (isDanger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    val containerColor = if (isDanger) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         onClick = onClick
     ) {
@@ -324,14 +322,14 @@ private fun ProfileOptionItem(
             Surface(
                 modifier = Modifier.size(48.dp),
                 shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                color = contentColor.copy(alpha = 0.08f)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
                         modifier = Modifier.size(22.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = contentColor
                     )
                 }
             }
@@ -343,21 +341,23 @@ private fun ProfileOptionItem(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = if (isDanger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (isDanger) MaterialTheme.colorScheme.error.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-            )
+            if (!isDanger) {
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                )
+            }
         }
     }
 }

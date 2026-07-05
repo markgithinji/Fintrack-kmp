@@ -24,13 +24,19 @@ class ProfileViewModel(
     private val validationUseCase: ProfileValidationUseCase
 ) : ViewModel() {
 
-    private val _profileState = MutableStateFlow<Result<User>>(Result.Loading)
+    private val _profileState = MutableStateFlow<Result<User>>(
+        getUserProfileUseCase().value?.let { Result.Success(it) } ?: Result.Loading
+    )
     val profileState: StateFlow<Result<User>> = _profileState.asStateFlow()
 
     private val _editState = MutableStateFlow<SaveState<Unit>>(SaveState.Idle)
     val editState: StateFlow<SaveState<Unit>> = _editState.asStateFlow()
 
-    private val _formState = MutableStateFlow(ProfileFormState())
+    private val _formState = MutableStateFlow(
+        getUserProfileUseCase().value?.let { 
+            ProfileFormState(name = it.name, email = it.email) 
+        } ?: ProfileFormState()
+    )
     val formState: StateFlow<ProfileFormState> = _formState.asStateFlow()
 
     init {
