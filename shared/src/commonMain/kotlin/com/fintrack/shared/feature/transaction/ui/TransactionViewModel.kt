@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
@@ -83,15 +84,12 @@ class TransactionViewModel(
 
     init {
         viewModelScope.launch {
-            globalRefreshManager.refreshEvent.collect {
-                repo.triggerRefresh()
-                refreshCategories()
-            }
-        }
-        viewModelScope.launch {
-            repo.refreshSignal.collectLatest {
-                lastLoadedRecentAccountId?.let { loadRecentTransactions(it, force = true) }
-            }
+            merge(globalRefreshManager.refreshEvent, repo.refreshSignal)
+                .debounce(500)
+                .collect {
+                    lastLoadedRecentAccountId?.let { loadRecentTransactions(it, force = true) }
+                    refreshCategories()
+                }
         }
         viewModelScope.launch {
             getCategoriesUseCase().collect {

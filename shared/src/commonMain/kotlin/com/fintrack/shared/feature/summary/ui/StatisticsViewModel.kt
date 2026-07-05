@@ -14,39 +14,47 @@ import com.fintrack.shared.feature.summary.domain.model.TabType
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.domain.model.TransactionType
 import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
+import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+@OptIn(FlowPreview::class)
 class StatisticsViewModel(
     private val repo: SummaryRepository,
+    private val transactionRepo: TransactionRepository,
     private val globalRefreshManager: GlobalRefreshManager
 ) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            globalRefreshManager.refreshEvent.collect {
-                // Force reload all data when global refresh is triggered
-                loadHighlights(lastHighlightsAccountId, force = true)
-                loadAvailablePeriods(lastAvailablePeriodsAccountId, force = true)
-                loadOverview(lastOverviewAccountId, force = true)
-                loadCategoryComparisons(lastCategoryComparisonAccountId, force = true)
-                
-                lastTransactionCountsAccountId?.let { accountId ->
-                    loadTransactionCounts(
-                        accountId = accountId,
-                        isIncome = lastTransactionCountsIsIncome,
-                        category = lastTransactionCountsCategory,
-                        start = lastTransactionCountsStart,
-                        end = lastTransactionCountsEnd,
-                        force = true
-                    )
+            merge(globalRefreshManager.refreshEvent, transactionRepo.refreshSignal)
+                .debounce(500)
+                .collect {
+                    // Force reload all data when global refresh is triggered
+                    loadHighlights(lastHighlightsAccountId, force = true)
+                    loadAvailablePeriods(lastAvailablePeriodsAccountId, force = true)
+                    loadOverview(lastOverviewAccountId, force = true)
+                    loadCategoryComparisons(lastCategoryComparisonAccountId, force = true)
+                    
+                    lastTransactionCountsAccountId?.let { accountId ->
+                        loadTransactionCounts(
+                            accountId = accountId,
+                            isIncome = lastTransactionCountsIsIncome,
+                            category = lastTransactionCountsCategory,
+                            start = lastTransactionCountsStart,
+                            end = lastTransactionCountsEnd,
+                            force = true
+                        )
+                    }
                 }
-            }
         }
     }
 

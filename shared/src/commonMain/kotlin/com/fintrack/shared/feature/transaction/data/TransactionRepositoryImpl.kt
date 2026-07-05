@@ -64,24 +64,24 @@ class TransactionRepositoryImpl(
             transactions to paginated.nextCursor
         }
 
-    override suspend fun addTransaction(transaction: Transaction): Result<Transaction> {
+    override suspend fun addTransaction(transaction: Transaction, triggerRefresh: Boolean): Result<Transaction> {
         val result = safeApiCall {
             val createRequest = transaction.toCreateRequest()
             val dto = api.addTransaction(createRequest)
             dto.toDomain()
         }
-        if (result is Result.Success) {
+        if (result is Result.Success && triggerRefresh) {
             triggerRefresh()
         }
         return result
     }
 
-    override suspend fun addTransactions(transactions: List<Transaction>): Result<Unit> {
+    override suspend fun addTransactions(transactions: List<Transaction>, triggerRefresh: Boolean): Result<Unit> {
         val result = safeApiCall {
             val requests = transactions.map { it.toCreateRequest() }
             api.addTransactions(requests)
         }
-        if (result is Result.Success) {
+        if (result is Result.Success && triggerRefresh) {
             triggerRefresh()
         }
         return result

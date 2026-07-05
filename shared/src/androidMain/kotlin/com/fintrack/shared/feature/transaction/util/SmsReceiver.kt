@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
 import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
@@ -24,6 +25,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import java.util.concurrent.TimeUnit
 import kotlin.time.ExperimentalTime
 
 class SmsReceiver : BroadcastReceiver(), KoinComponent {
@@ -86,6 +88,17 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                             .build()
 
                         WorkManager.getInstance(context).enqueue(syncRequest)
+
+                        // Schedule a debounced refresh
+                        val refreshRequest = OneTimeWorkRequestBuilder<RefreshWorker>()
+                            .setInitialDelay(2, TimeUnit.SECONDS)
+                            .build()
+
+                        WorkManager.getInstance(context).enqueueUniqueWork(
+                            RefreshWorker.UNIQUE_WORK_NAME,
+                            ExistingWorkPolicy.REPLACE,
+                            refreshRequest
+                        )
                     } else {
                         logger.warning("SmsReceiver", "Failed to parse M-Pesa message: $fullMessage")
                     }

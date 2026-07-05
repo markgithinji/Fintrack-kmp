@@ -42,7 +42,7 @@ class TransactionSyncWorker(
             val transaction = Json.decodeFromString<Transaction>(transactionJson)
             logger.info("TransactionSyncWorker", "Syncing transaction: ${transaction.externalId}")
             
-            val result = transactionRepository.addTransaction(transaction)
+            val result = transactionRepository.addTransaction(transaction, triggerRefresh = false)
             
             if (result is com.fintrack.shared.feature.core.util.Result.Success) {
                 logger.info("TransactionSyncWorker", "Successfully synced: ${transaction.externalId}")
