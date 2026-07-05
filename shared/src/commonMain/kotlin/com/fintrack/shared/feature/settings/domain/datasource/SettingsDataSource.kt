@@ -4,63 +4,64 @@ import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.datetime.LocalTime
 
 interface SettingsDataSource {
-    val theme: Flow<AppTheme>
+    val theme: StateFlow<AppTheme>
     suspend fun setTheme(theme: AppTheme)
 
-    val timeFormat: Flow<TimeFormat>
+    val timeFormat: StateFlow<TimeFormat>
     suspend fun setTimeFormat(format: TimeFormat)
 
-    val currency: Flow<Currency>
+    val currency: StateFlow<Currency>
     suspend fun setCurrency(currency: Currency)
 
-    val isBiometricEnabled: Flow<Boolean>
+    val isBiometricEnabled: StateFlow<Boolean>
     suspend fun setBiometricEnabled(enabled: Boolean)
 
-    val isBalanceHidden: Flow<Boolean>
+    val isBalanceHidden: StateFlow<Boolean>
     suspend fun setBalanceHidden(hidden: Boolean)
 
-    val isReminderEnabled: Flow<Boolean>
+    val isReminderEnabled: StateFlow<Boolean>
     suspend fun setReminderEnabled(enabled: Boolean)
 
-    val reminderTime: Flow<LocalTime>
+    val reminderTime: StateFlow<LocalTime>
     suspend fun setReminderTime(time: LocalTime)
 
-    val mpesaSimSlot: Flow<Int?>
+    val mpesaSimSlot: StateFlow<Int?>
     suspend fun setMpesaSimSlot(slot: Int?)
 
-    val mpesaAccountId: Flow<String?>
+    val mpesaAccountId: StateFlow<String?>
     suspend fun setMpesaAccountId(accountId: String?)
 
-    val isMpesaListenerEnabled: Flow<Boolean>
+    val isMpesaListenerEnabled: StateFlow<Boolean>
     suspend fun setMpesaListenerEnabled(enabled: Boolean)
 
-    val budgetAlertsEnabled: Flow<Boolean>
+    val budgetAlertsEnabled: StateFlow<Boolean>
     suspend fun setBudgetAlertsEnabled(enabled: Boolean)
 
-    val budgetAlertThresholds: Flow<Set<Int>>
+    val budgetAlertThresholds: StateFlow<Set<Int>>
     suspend fun setBudgetAlertThresholds(thresholds: Set<Int>)
 
-    val alertBudgetId: Flow<String?>
+    val alertBudgetId: StateFlow<String?>
     suspend fun setAlertBudgetId(budgetId: String?)
 
-    val isBillReminderEnabled: Flow<Boolean>
+    val isBillReminderEnabled: StateFlow<Boolean>
     suspend fun setBillReminderEnabled(enabled: Boolean)
 
-    val billReminderDaysBefore: Flow<Int>
+    val billReminderDaysBefore: StateFlow<Int>
     suspend fun setBillReminderDaysBefore(days: Int)
 
-    val isDailySummaryEnabled: Flow<Boolean>
+    val isDailySummaryEnabled: StateFlow<Boolean>
     suspend fun setDailySummaryEnabled(enabled: Boolean)
 
-    val isWeeklySummaryEnabled: Flow<Boolean>
+    val isWeeklySummaryEnabled: StateFlow<Boolean>
     suspend fun setWeeklySummaryEnabled(enabled: Boolean)
 
-    val summaryNotificationTime: Flow<LocalTime>
+    val summaryNotificationTime: StateFlow<LocalTime>
     suspend fun setSummaryNotificationTime(time: LocalTime)
 
-    val showDecimals: Flow<Boolean>
+    val showDecimals: StateFlow<Boolean>
     suspend fun setShowDecimals(show: Boolean)
 }

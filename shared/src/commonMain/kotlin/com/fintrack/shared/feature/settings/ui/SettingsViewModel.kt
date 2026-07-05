@@ -60,7 +60,7 @@ class SettingsViewModel(
             }
         }
         viewModelScope.launch {
-            budgetRepository.getBudgets(forceRefresh = true)
+            budgetRepository.getBudgets(forceRefresh = false)
         }
     }
 
@@ -68,140 +68,140 @@ class SettingsViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = Result.Loading
+            initialValue = budgetRepository.budgets.value
         )
 
     val theme: StateFlow<AppTheme> = settingsDataSource.theme
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = AppTheme.SYSTEM
+            initialValue = settingsDataSource.theme.value
         )
 
     val timeFormat: StateFlow<TimeFormat> = settingsDataSource.timeFormat
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = TimeFormat.TWENTY_FOUR_HOUR
+            initialValue = settingsDataSource.timeFormat.value
         )
 
     val currency: StateFlow<Currency> = settingsDataSource.currency
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = Currency.KES
+            initialValue = settingsDataSource.currency.value
         )
 
     val isBalanceHidden: StateFlow<Boolean> = settingsDataSource.isBalanceHidden
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false
+            initialValue = settingsDataSource.isBalanceHidden.value
         )
 
     val isReminderEnabled: StateFlow<Boolean> = settingsDataSource.isReminderEnabled
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false
+            initialValue = settingsDataSource.isReminderEnabled.value
         )
 
     val isBiometricEnabled: StateFlow<Boolean> = settingsDataSource.isBiometricEnabled
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false
+            initialValue = settingsDataSource.isBiometricEnabled.value
         )
 
     val reminderTime: StateFlow<LocalTime> = settingsDataSource.reminderTime
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = LocalTime(20, 0)
+            initialValue = settingsDataSource.reminderTime.value
         )
 
     val mpesaSimSlot: StateFlow<Int?> = settingsDataSource.mpesaSimSlot
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
+            initialValue = settingsDataSource.mpesaSimSlot.value
         )
 
     val mpesaAccountId: StateFlow<String?> = settingsDataSource.mpesaAccountId
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
+            initialValue = settingsDataSource.mpesaAccountId.value
         )
 
     val isMpesaListenerEnabled: StateFlow<Boolean> = settingsDataSource.isMpesaListenerEnabled
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = true
+            initialValue = settingsDataSource.isMpesaListenerEnabled.value
         )
 
     val budgetAlertsEnabled: StateFlow<Boolean> = settingsDataSource.budgetAlertsEnabled
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false
+            initialValue = settingsDataSource.budgetAlertsEnabled.value
         )
 
     val budgetAlertThresholds: StateFlow<Set<Int>> = settingsDataSource.budgetAlertThresholds
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = setOf(50, 80, 100)
+            initialValue = settingsDataSource.budgetAlertThresholds.value
         )
 
     val alertBudgetId: StateFlow<String?> = settingsDataSource.alertBudgetId
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
+            initialValue = settingsDataSource.alertBudgetId.value
         )
 
     val isBillReminderEnabled: StateFlow<Boolean> = settingsDataSource.isBillReminderEnabled
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false
+            initialValue = settingsDataSource.isBillReminderEnabled.value
         )
 
     val billReminderDaysBefore: StateFlow<Int> = settingsDataSource.billReminderDaysBefore
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = 2
+            initialValue = settingsDataSource.billReminderDaysBefore.value
         )
 
     val isDailySummaryEnabled: StateFlow<Boolean> = settingsDataSource.isDailySummaryEnabled
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false
+            initialValue = settingsDataSource.isDailySummaryEnabled.value
         )
 
     val isWeeklySummaryEnabled: StateFlow<Boolean> = settingsDataSource.isWeeklySummaryEnabled
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false
+            initialValue = settingsDataSource.isWeeklySummaryEnabled.value
         )
 
     val summaryNotificationTime: StateFlow<LocalTime> = settingsDataSource.summaryNotificationTime
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = LocalTime(8, 0)
+            initialValue = settingsDataSource.summaryNotificationTime.value
         )
 
     val showDecimals: StateFlow<Boolean> = settingsDataSource.showDecimals
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = true
+            initialValue = settingsDataSource.showDecimals.value
         )
 
     val trackedCategories: StateFlow<List<String>> = userRepository.getUserProfile()
@@ -209,7 +209,7 @@ class SettingsViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
+            initialValue = userRepository.getUserProfile().value?.trackedCategories ?: emptyList()
         )
 
     val allCategories: StateFlow<List<Category>> = categoryRepository.getCategories()
@@ -226,7 +226,12 @@ class SettingsViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
+            initialValue = categoryRepository.getCategories().value.let { categories ->
+                val expenseCategories = categories.filter { it.isExpense && it.id != "transaction_cost" }
+                    .distinctBy { it.name }
+                    .sortedBy { it.name }
+                listOf(Category.TransactionCost) + expenseCategories
+            }
         )
 
     private val _accounts = MutableStateFlow<List<Account>>(emptyList())

@@ -1,10 +1,10 @@
 package com.fintrack.shared.feature.user.domain.repository
 
 import com.fintrack.shared.feature.user.domain.model.User
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 interface UserRepository {
-    fun getUserProfile(): Flow<User?>
+    fun getUserProfile(): StateFlow<User?>
     suspend fun refreshProfile()
     suspend fun updateProfile(name: String, email: String)
     suspend fun updateTrackedCategories(categories: List<String>)

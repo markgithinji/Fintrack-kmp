@@ -5,7 +5,8 @@ import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import androidx.core.content.edit
@@ -95,7 +96,7 @@ class AndroidSettingsDataSource(
         _showDecimalsFlow.update { showDecimals }
     }
 
-    override val theme: Flow<AppTheme> = _themeFlow
+    override val theme: StateFlow<AppTheme> = _themeFlow.asStateFlow()
 
     override suspend fun setTheme(theme: AppTheme) {
         prefs.edit(commit = true) {
@@ -104,7 +105,7 @@ class AndroidSettingsDataSource(
         _themeFlow.value = theme
     }
 
-    override val timeFormat: Flow<TimeFormat> = _timeFormatFlow
+    override val timeFormat: StateFlow<TimeFormat> = _timeFormatFlow.asStateFlow()
 
     override suspend fun setTimeFormat(format: TimeFormat) {
         prefs.edit(commit = true) {
@@ -113,7 +114,7 @@ class AndroidSettingsDataSource(
         _timeFormatFlow.value = format
     }
 
-    override val currency: Flow<Currency> = _currencyFlow
+    override val currency: StateFlow<Currency> = _currencyFlow.asStateFlow()
 
     override suspend fun setCurrency(currency: Currency) {
         prefs.edit(commit = true) {
@@ -122,7 +123,7 @@ class AndroidSettingsDataSource(
         _currencyFlow.value = currency
     }
 
-    override val isBiometricEnabled: Flow<Boolean> = _biometricFlow
+    override val isBiometricEnabled: StateFlow<Boolean> = _biometricFlow.asStateFlow()
 
     override suspend fun setBiometricEnabled(enabled: Boolean) {
         prefs.edit(commit = true) {
@@ -131,7 +132,7 @@ class AndroidSettingsDataSource(
         _biometricFlow.value = enabled
     }
 
-    override val isBalanceHidden: Flow<Boolean> = _balanceHiddenFlow
+    override val isBalanceHidden: StateFlow<Boolean> = _balanceHiddenFlow.asStateFlow()
 
     override suspend fun setBalanceHidden(hidden: Boolean) {
         prefs.edit(commit = true) {
@@ -140,7 +141,7 @@ class AndroidSettingsDataSource(
         _balanceHiddenFlow.value = hidden
     }
 
-    override val isReminderEnabled: Flow<Boolean> = _reminderFlow
+    override val isReminderEnabled: StateFlow<Boolean> = _reminderFlow.asStateFlow()
 
     override suspend fun setReminderEnabled(enabled: Boolean) {
         prefs.edit(commit = true) {
@@ -149,7 +150,7 @@ class AndroidSettingsDataSource(
         _reminderFlow.value = enabled
     }
 
-    override val reminderTime: Flow<LocalTime> = _reminderTimeFlow
+    override val reminderTime: StateFlow<LocalTime> = _reminderTimeFlow.asStateFlow()
 
     override suspend fun setReminderTime(time: LocalTime) {
         prefs.edit(commit = true) {
@@ -158,7 +159,7 @@ class AndroidSettingsDataSource(
         _reminderTimeFlow.value = time
     }
 
-    override val mpesaSimSlot: Flow<Int?> = _mpesaSimSlotFlow
+    override val mpesaSimSlot: StateFlow<Int?> = _mpesaSimSlotFlow.asStateFlow()
 
     override suspend fun setMpesaSimSlot(slot: Int?) {
         prefs.edit(commit = true) {
@@ -171,7 +172,7 @@ class AndroidSettingsDataSource(
         _mpesaSimSlotFlow.value = slot
     }
 
-    override val mpesaAccountId: Flow<String?> = _mpesaAccountIdFlow
+    override val mpesaAccountId: StateFlow<String?> = _mpesaAccountIdFlow.asStateFlow()
 
     override suspend fun setMpesaAccountId(accountId: String?) {
         prefs.edit(commit = true) {
@@ -184,7 +185,7 @@ class AndroidSettingsDataSource(
         _mpesaAccountIdFlow.value = accountId
     }
 
-    override val isMpesaListenerEnabled: Flow<Boolean> = _mpesaListenerFlow
+    override val isMpesaListenerEnabled: StateFlow<Boolean> = _mpesaListenerFlow.asStateFlow()
 
     override suspend fun setMpesaListenerEnabled(enabled: Boolean) {
         prefs.edit(commit = true) {
@@ -193,7 +194,7 @@ class AndroidSettingsDataSource(
         _mpesaListenerFlow.value = enabled
     }
 
-    override val budgetAlertsEnabled: Flow<Boolean> = _budgetAlertsEnabledFlow
+    override val budgetAlertsEnabled: StateFlow<Boolean> = _budgetAlertsEnabledFlow.asStateFlow()
 
     override suspend fun setBudgetAlertsEnabled(enabled: Boolean) {
         prefs.edit(commit = true) {
@@ -202,7 +203,7 @@ class AndroidSettingsDataSource(
         _budgetAlertsEnabledFlow.value = enabled
     }
 
-    override val budgetAlertThresholds: Flow<Set<Int>> = _budgetAlertThresholdsFlow
+    override val budgetAlertThresholds: StateFlow<Set<Int>> = _budgetAlertThresholdsFlow.asStateFlow()
 
     override suspend fun setBudgetAlertThresholds(thresholds: Set<Int>) {
         prefs.edit(commit = true) {
@@ -211,7 +212,7 @@ class AndroidSettingsDataSource(
         _budgetAlertThresholdsFlow.value = thresholds
     }
 
-    override val alertBudgetId: Flow<String?> = _alertBudgetIdFlow
+    override val alertBudgetId: StateFlow<String?> = _alertBudgetIdFlow.asStateFlow()
 
     override suspend fun setAlertBudgetId(budgetId: String?) {
         prefs.edit(commit = true) {
@@ -224,7 +225,7 @@ class AndroidSettingsDataSource(
         _alertBudgetIdFlow.value = budgetId
     }
 
-    override val isBillReminderEnabled: Flow<Boolean> = _billReminderEnabledFlow
+    override val isBillReminderEnabled: StateFlow<Boolean> = _billReminderEnabledFlow.asStateFlow()
 
     override suspend fun setBillReminderEnabled(enabled: Boolean) {
         prefs.edit(commit = true) {
@@ -233,7 +234,7 @@ class AndroidSettingsDataSource(
         _billReminderEnabledFlow.value = enabled
     }
 
-    override val billReminderDaysBefore: Flow<Int> = _billReminderDaysBeforeFlow
+    override val billReminderDaysBefore: StateFlow<Int> = _billReminderDaysBeforeFlow.asStateFlow()
 
     override suspend fun setBillReminderDaysBefore(days: Int) {
         prefs.edit(commit = true) {
@@ -242,7 +243,7 @@ class AndroidSettingsDataSource(
         _billReminderDaysBeforeFlow.value = days
     }
 
-    override val isDailySummaryEnabled: Flow<Boolean> = _dailySummaryEnabledFlow
+    override val isDailySummaryEnabled: StateFlow<Boolean> = _dailySummaryEnabledFlow.asStateFlow()
 
     override suspend fun setDailySummaryEnabled(enabled: Boolean) {
         prefs.edit(commit = true) {
@@ -251,7 +252,7 @@ class AndroidSettingsDataSource(
         _dailySummaryEnabledFlow.value = enabled
     }
 
-    override val isWeeklySummaryEnabled: Flow<Boolean> = _weeklySummaryEnabledFlow
+    override val isWeeklySummaryEnabled: StateFlow<Boolean> = _weeklySummaryEnabledFlow.asStateFlow()
 
     override suspend fun setWeeklySummaryEnabled(enabled: Boolean) {
         prefs.edit(commit = true) {
@@ -260,7 +261,7 @@ class AndroidSettingsDataSource(
         _weeklySummaryEnabledFlow.value = enabled
     }
 
-    override val summaryNotificationTime: Flow<LocalTime> = _summaryNotificationTimeFlow
+    override val summaryNotificationTime: StateFlow<LocalTime> = _summaryNotificationTimeFlow.asStateFlow()
 
     override suspend fun setSummaryNotificationTime(time: LocalTime) {
         prefs.edit(commit = true) {
@@ -269,7 +270,7 @@ class AndroidSettingsDataSource(
         _summaryNotificationTimeFlow.value = time
     }
 
-    override val showDecimals: Flow<Boolean> = _showDecimalsFlow
+    override val showDecimals: StateFlow<Boolean> = _showDecimalsFlow.asStateFlow()
 
     override suspend fun setShowDecimals(show: Boolean) {
         prefs.edit(commit = true) {

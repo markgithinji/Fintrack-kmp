@@ -9,7 +9,7 @@ import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.safeApiCall
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -18,7 +18,7 @@ class BudgetRepositoryImpl(
 ) : BudgetRepository {
 
     private val _budgets = MutableStateFlow<Result<List<BudgetWithStatus>>>(Result.Loading)
-    override val budgets: Flow<Result<List<BudgetWithStatus>>> = _budgets.asStateFlow()
+    override val budgets: StateFlow<Result<List<BudgetWithStatus>>> = _budgets.asStateFlow()
 
     override suspend fun getBudgets(forceRefresh: Boolean): Result<List<BudgetWithStatus>> {
         if (!forceRefresh && _budgets.value is Result.Success) {

@@ -4,7 +4,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.safeApiCall
 import com.fintrack.shared.feature.user.domain.model.User
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -13,7 +13,7 @@ class UserRepositoryImpl(
 ) : UserRepository {
     private val _userProfile = MutableStateFlow<User?>(null)
 
-    override fun getUserProfile(): Flow<User?> = _userProfile.asStateFlow()
+    override fun getUserProfile(): StateFlow<User?> = _userProfile.asStateFlow()
 
     override suspend fun refreshProfile() {
         when (val result = safeApiCall { api.getUserProfile() }) {

@@ -3,7 +3,7 @@ package com.fintrack.shared.feature.transaction.data
 import com.fintrack.shared.feature.transaction.data.model.toDomain
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.repository.CategoryRepository
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -13,7 +13,7 @@ class CategoryRepositoryImpl(
 ) : CategoryRepository {
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
     
-    override fun getCategories(): Flow<List<Category>> = _categories.asStateFlow()
+    override fun getCategories(): StateFlow<List<Category>> = _categories.asStateFlow()
 
     override suspend fun refreshCategories() {
         try {
