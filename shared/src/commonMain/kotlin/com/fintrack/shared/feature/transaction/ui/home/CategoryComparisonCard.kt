@@ -1,5 +1,11 @@
 package com.fintrack.shared.feature.transaction.ui.home
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,6 +34,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,6 +60,11 @@ fun CategoryComparisonCard(
     categoryComparisonResult: Result<CategoryComparisonSummary>,
     modifier: Modifier = Modifier
 ) {
+    var lastSummary by remember { mutableStateOf<CategoryComparisonSummary?>(null) }
+    if (categoryComparisonResult is Result.Success) {
+        lastSummary = categoryComparisonResult.data
+    }
+
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -69,9 +84,10 @@ fun CategoryComparisonCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 
-                if (categoryComparisonResult is Result.Success) {
-                    val period = categoryComparisonResult.data.period
-                    val isCurrent = categoryComparisonResult.data.isCurrent
+                val displayPeriod = (categoryComparisonResult as? Result.Success)?.data?.let { it.period to it.isCurrent }
+                    ?: lastSummary?.let { it.period to it.isCurrent }
+
+                displayPeriod?.let { (period, isCurrent) ->
                     Text(
                         text = if (isCurrent) formatPeriod(period) else "From ${formatPeriod(period)}",
                         style = MaterialTheme.typography.labelSmall,
@@ -82,42 +98,71 @@ fun CategoryComparisonCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            when (categoryComparisonResult) {
-                is Result.Loading -> {
-                    repeat(2) { index ->
-                        LoadingCategoryComparisonItem()
-                        if (index < 1) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                thickness = 0.5.dp,
-                                color = Color.LightGray.copy(alpha = 0.4f)
-                            )
+            AnimatedContent(
+                targetState = categoryComparisonResult,
+                transitionSpec = {
+                    fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)) togetherWith
+                            fadeOut(animationSpec = spring(stiffness = Spring.StiffnessLow))
+                },
+                label = "CategoryComparisonContent"
+            ) { result ->
+                when (result) {
+                    is Result.Loading -> {
+                        val currentData = lastSummary?.data
+                        if (currentData != null) {
+                            Column {
+                                val sortedData = currentData.sortedWith(
+                                    compareByDescending<CategoryComparison> { it.isIncome }
+                                        .thenBy { it.category == "Transaction Cost" }
+                                )
+                                sortedData.forEachIndexed { index, comparison ->
+                                    CategoryComparisonItem(
+                                        comparison = comparison,
+                                        isCurrent = lastSummary?.isCurrent ?: true,
+                                        isLast = index == sortedData.lastIndex
+                                    )
+                                }
+                            }
+                        } else {
+                            repeat(2) { index ->
+                                LoadingCategoryComparisonItem()
+                                if (index < 1) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(vertical = 8.dp),
+                                        thickness = 0.5.dp,
+                                        color = Color.LightGray.copy(alpha = 0.4f)
+                                    )
+                                }
+                            }
                         }
                     }
-                }
 
-                is Result.Error -> {
-                    CategoryComparisonErrorState(
-                        onRetry = { /* Add retry logic */ }
-                    )
-                }
-
-                is Result.Success -> {
-                    if (categoryComparisonResult.data.data.isEmpty()) {
-                        CategoryComparisonEmptyState()
-                    } else {
-                        // Sort: Income first, then Expense, with Transaction Fees at the very bottom
-                        val sortedData = categoryComparisonResult.data.data.sortedWith(
-                            compareByDescending<CategoryComparison> { it.isIncome }
-                                .thenBy { it.category == "Transaction Cost" }
+                    is Result.Error -> {
+                        CategoryComparisonErrorState(
+                            onRetry = { /* Add retry logic */ }
                         )
-                        
-                        sortedData.forEachIndexed { index, comparison ->
-                            CategoryComparisonItem(
-                                comparison = comparison,
-                                isCurrent = categoryComparisonResult.data.isCurrent,
-                                isLast = index == sortedData.lastIndex
+                    }
+
+                    is Result.Success -> {
+                        if (result.data.data.isEmpty()) {
+                            CategoryComparisonEmptyState()
+                        } else {
+                            // Sort: Income first, then Expense, with Transaction Fees at the very bottom
+                            val sortedData = result.data.data.sortedWith(
+                                compareByDescending<CategoryComparison> { it.isIncome }
+                                    .thenBy { it.category == "Transaction Cost" }
+                                    .thenByDescending { it.currentTotal }
                             )
+
+                            Column {
+                                sortedData.forEachIndexed { index, comparison ->
+                                    CategoryComparisonItem(
+                                        comparison = comparison,
+                                        isCurrent = result.data.isCurrent,
+                                        isLast = index == sortedData.lastIndex
+                                    )
+                                }
+                            }
                         }
                     }
                 }

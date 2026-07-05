@@ -1,10 +1,14 @@
 package com.fintrack.shared.feature.transaction.ui.home
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope.OverlayClip
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +38,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -71,6 +79,11 @@ fun TransactionsListCard(
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
 
+    var lastTransactions by remember { mutableStateOf<List<Transaction>?>(null) }
+    if (transactionsResult is Result.Success) {
+        lastTransactions = transactionsResult.data
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -95,22 +108,44 @@ fun TransactionsListCard(
                 onViewAllClick = onViewAllClick
             )
 
-            when (transactionsResult) {
-                is Result.Loading -> TransactionsLoadingState()
-                is Result.Error -> TransactionsErrorState(
-                    error = transactionsResult.exception,
-                    onRetry = onRetry
-                )
-                is Result.Success -> {
-                    val transactions = transactionsResult.data
-                    if (transactions.isEmpty()) {
-                        TransactionsEmptyState()
-                    } else {
-                        TransactionsListContent(
-                            transactions = transactions,
-                            animatedVisibilityScope = animatedVisibilityScope,
-                            onTransactionClick = onTransactionClick
-                        )
+            AnimatedContent(
+                targetState = transactionsResult,
+                transitionSpec = {
+                    fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)) togetherWith
+                            fadeOut(animationSpec = spring(stiffness = Spring.StiffnessLow))
+                },
+                label = "TransactionsListContent"
+            ) { result ->
+                when (result) {
+                    is Result.Loading -> {
+                        val currentData = lastTransactions
+                        if (currentData != null) {
+                            TransactionsListContent(
+                                transactions = currentData,
+                                animatedVisibilityScope = animatedVisibilityScope,
+                                onTransactionClick = onTransactionClick
+                            )
+                        } else {
+                            TransactionsLoadingState()
+                        }
+                    }
+
+                    is Result.Error -> TransactionsErrorState(
+                        error = result.exception,
+                        onRetry = onRetry
+                    )
+
+                    is Result.Success -> {
+                        val transactions = result.data
+                        if (transactions.isEmpty()) {
+                            TransactionsEmptyState()
+                        } else {
+                            TransactionsListContent(
+                                transactions = transactions,
+                                animatedVisibilityScope = animatedVisibilityScope,
+                                onTransactionClick = onTransactionClick
+                            )
+                        }
                     }
                 }
             }

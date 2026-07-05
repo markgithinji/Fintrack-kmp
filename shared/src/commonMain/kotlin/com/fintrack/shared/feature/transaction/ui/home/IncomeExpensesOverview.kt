@@ -40,6 +40,11 @@ import kotlinx.datetime.LocalDate
 @Composable
 fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
     var selectedPeriod by remember { mutableStateOf(OverviewPeriod.Weekly) }
+    var lastOverview by remember { mutableStateOf<OverviewSummary?>(null) }
+
+    if (overviewResult is Result.Success) {
+        lastOverview = overviewResult.data
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -47,27 +52,45 @@ fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        when (overviewResult) {
-            is Result.Loading -> {
-                OverviewLoadingState(
-                    selectedPeriod = selectedPeriod,
-                    onPeriodSelected = { period -> selectedPeriod = period }
-                )
-            }
+        AnimatedContent(
+            targetState = overviewResult,
+            transitionSpec = {
+                fadeIn(animationSpec = tween(500)) togetherWith
+                        fadeOut(animationSpec = tween(500))
+            },
+            label = "OverviewContent"
+        ) { result ->
+            when (result) {
+                is Result.Loading -> {
+                    val currentData = lastOverview
+                    if (currentData != null) {
+                        OverviewSuccessState(
+                            overview = currentData,
+                            selectedPeriod = selectedPeriod,
+                            onPeriodSelected = { period -> selectedPeriod = period }
+                        )
+                    } else {
+                        OverviewLoadingState(
+                            selectedPeriod = selectedPeriod,
+                            onPeriodSelected = { period -> selectedPeriod = period }
+                        )
+                    }
+                }
 
-            is Result.Error -> {
-                OverviewErrorState(
-                    selectedPeriod = selectedPeriod,
-                    onPeriodSelected = { period -> selectedPeriod = period }
-                )
-            }
+                is Result.Error -> {
+                    OverviewErrorState(
+                        selectedPeriod = selectedPeriod,
+                        onPeriodSelected = { period -> selectedPeriod = period }
+                    )
+                }
 
-            is Result.Success -> {
-                OverviewSuccessState(
-                    overview = overviewResult.data,
-                    selectedPeriod = selectedPeriod,
-                    onPeriodSelected = { period -> selectedPeriod = period }
-                )
+                is Result.Success -> {
+                    OverviewSuccessState(
+                        overview = result.data,
+                        selectedPeriod = selectedPeriod,
+                        onPeriodSelected = { period -> selectedPeriod = period }
+                    )
+                }
             }
         }
     }

@@ -117,6 +117,11 @@ fun CurrentBalanceCard(
     onSyncErrorClick: (String) -> Unit = {},
     onRetry: () -> Unit = {}
 ) {
+    var lastAccount by remember { mutableStateOf<Account?>(null) }
+    if (selectedAccountResult is Result.Success) {
+        lastAccount = selectedAccountResult.data
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -130,31 +135,56 @@ fun CurrentBalanceCard(
         ) {
             LowerRightWavesBackground(modifier = Modifier.matchParentSize())
 
-            when (selectedAccountResult) {
-                is Result.Loading -> {
-                    CurrentBalanceLoadingState()
-                }
+            AnimatedContent(
+                targetState = selectedAccountResult,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(500)) togetherWith
+                            fadeOut(animationSpec = tween(500))
+                },
+                label = "BalanceContent"
+            ) { result ->
+                when (result) {
+                    is Result.Loading -> {
+                        val currentData = lastAccount
+                        if (currentData != null) {
+                            CurrentBalanceSuccessState(
+                                account = currentData,
+                                isBalanceHidden = isBalanceHidden,
+                                isMpesaLinked = currentData.isMpesa,
+                                isMpesaAutoSyncEnabled = isMpesaAutoSyncEnabled,
+                                importState = importState,
+                                syncProgress = syncProgress,
+                                onChangeAccountClicked = onChangeAccountClicked,
+                                onToggleBalanceVisibility = onToggleBalanceVisibility,
+                                onSyncMpesa = onSyncMpesa,
+                                onSyncErrorClick = onSyncErrorClick
+                            )
+                        } else {
+                            CurrentBalanceLoadingState()
+                        }
+                    }
 
-                is Result.Error -> {
-                    CurrentBalanceErrorState(
-                        errorMessage = selectedAccountResult.exception.message,
-                        onRetry = onRetry
-                    )
-                }
+                    is Result.Error -> {
+                        CurrentBalanceErrorState(
+                            errorMessage = result.exception.message,
+                            onRetry = onRetry
+                        )
+                    }
 
-                is Result.Success -> {
-                    CurrentBalanceSuccessState(
-                        account = selectedAccountResult.data,
-                        isBalanceHidden = isBalanceHidden,
-                        isMpesaLinked = selectedAccountResult.data.isMpesa,
-                        isMpesaAutoSyncEnabled = isMpesaAutoSyncEnabled,
-                        importState = importState,
-                        syncProgress = syncProgress,
-                        onChangeAccountClicked = onChangeAccountClicked,
-                        onToggleBalanceVisibility = onToggleBalanceVisibility,
-                        onSyncMpesa = onSyncMpesa,
-                        onSyncErrorClick = onSyncErrorClick
-                    )
+                    is Result.Success -> {
+                        CurrentBalanceSuccessState(
+                            account = result.data,
+                            isBalanceHidden = isBalanceHidden,
+                            isMpesaLinked = result.data.isMpesa,
+                            isMpesaAutoSyncEnabled = isMpesaAutoSyncEnabled,
+                            importState = importState,
+                            syncProgress = syncProgress,
+                            onChangeAccountClicked = onChangeAccountClicked,
+                            onToggleBalanceVisibility = onToggleBalanceVisibility,
+                            onSyncMpesa = onSyncMpesa,
+                            onSyncErrorClick = onSyncErrorClick
+                        )
+                    }
                 }
             }
         }
