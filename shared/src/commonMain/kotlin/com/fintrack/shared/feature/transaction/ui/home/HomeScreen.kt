@@ -135,6 +135,7 @@ fun HomeScreen(
             item {
                 CategoryComparisonCard(
                     categoryComparisonResult = categoryComparisonResult,
+                    accountId = (selectedAccountResult as? Result.Success)?.data?.id,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -142,6 +143,7 @@ fun HomeScreen(
                 TransactionsListCard(
                     transactionsResult = transactionsResult,
                     animatedVisibilityScope = animatedVisibilityScope,
+                    accountId = (selectedAccountResult as? Result.Success)?.data?.id,
                     onViewAllClick = {
                         val accountId = (selectedAccountResult as? Result.Success)?.data?.id
                         accountId?.let { onCardClick(it, null) }

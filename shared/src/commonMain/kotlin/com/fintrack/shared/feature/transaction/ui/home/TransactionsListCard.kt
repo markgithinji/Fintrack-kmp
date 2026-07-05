@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -44,13 +45,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
+import com.fintrack.shared.feature.core.logger.KMPLogger
+import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
@@ -73,13 +79,16 @@ fun TransactionsListCard(
     transactionsResult: Result<List<Transaction>>,
     onViewAllClick: () -> Unit,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    accountId: String? = null,
     onTransactionClick: (Transaction) -> Unit = {},
     onRetry: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
+    val logger = remember { KMPLogger() }
+    val density = LocalDensity.current
 
-    var lastTransactions by remember { mutableStateOf<List<Transaction>?>(null) }
+    var lastTransactions by remember(accountId) { mutableStateOf<List<Transaction>?>(null) }
     if (transactionsResult is Result.Success) {
         lastTransactions = transactionsResult.data
     }
@@ -87,6 +96,10 @@ fun TransactionsListCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .onGloballyPositioned { coords ->
+                val heightDp = with(density) { coords.size.height.toDp() }
+                logger.debug("TransactionsListCard", "Total Card Height: $heightDp")
+            }
             .then(
                 if (sharedTransitionScope != null) {
                     with(sharedTransitionScope) {
@@ -114,11 +127,16 @@ fun TransactionsListCard(
                     fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)) togetherWith
                             fadeOut(animationSpec = spring(stiffness = Spring.StiffnessLow))
                 },
+                modifier = Modifier.onGloballyPositioned { coords ->
+                    val heightDp = with(density) { coords.size.height.toDp() }
+                    logger.debug("TransactionsListCard", "Content Area Height: $heightDp (State: ${transactionsResult::class.simpleName})")
+                },
                 label = "TransactionsListContent"
             ) { result ->
                 when (result) {
                     is Result.Loading -> {
                         val currentData = lastTransactions
+                        logger.debug("TransactionsListCard", "State: Loading, Last transaction count: ${currentData?.size ?: 0}")
                         if (currentData != null) {
                             TransactionsListContent(
                                 transactions = currentData,
@@ -130,13 +148,17 @@ fun TransactionsListCard(
                         }
                     }
 
-                    is Result.Error -> TransactionsErrorState(
-                        error = result.exception,
-                        onRetry = onRetry
-                    )
+                    is Result.Error -> {
+                        logger.error("TransactionsListCard", "State: Error, Exception: ${result.exception.message}")
+                        TransactionsErrorState(
+                            error = result.exception,
+                            onRetry = onRetry
+                        )
+                    }
 
                     is Result.Success -> {
                         val transactions = result.data
+                        logger.debug("TransactionsListCard", "State: Success, Transaction count: ${transactions.size}")
                         if (transactions.isEmpty()) {
                             TransactionsEmptyState()
                         } else {
@@ -161,7 +183,8 @@ private fun RecentTransactionsHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 12.dp),
+            .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 12.dp)
+            .height(48.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -219,17 +242,75 @@ private fun RecentTransactionsHeader(
 @Composable
 private fun TransactionsLoadingState() {
     Column {
-        repeat(3) { index ->
-            TransactionLoadingItem(
-                padding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
-            )
-            if (index < 2) {
+        repeat(6) { index ->
+            RecentTransactionLoadingItem()
+            if (index < 5) {
                 HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 20.dp),
+                    modifier = Modifier.padding(start = 80.dp, end = 20.dp),
                     thickness = 0.5.dp,
-                    color = Color.LightGray.copy(alpha = 0.4f)
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun RecentTransactionLoadingItem() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AnimatedShimmerBox(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(12.dp))
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            AnimatedShimmerBox(
+                modifier = Modifier
+                    .width(120.dp)
+                    .height(20.dp)
+                    .clip(RoundedCornerShape(4.dp))
+            )
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            AnimatedShimmerBox(
+                modifier = Modifier
+                    .width(80.dp)
+                    .height(14.dp)
+                    .clip(RoundedCornerShape(4.dp))
+            )
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column(
+            horizontalAlignment = Alignment.End
+        ) {
+            AnimatedShimmerBox(
+                modifier = Modifier
+                    .width(70.dp)
+                    .height(20.dp)
+                    .clip(RoundedCornerShape(4.dp))
+            )
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            AnimatedShimmerBox(
+                modifier = Modifier
+                    .width(40.dp)
+                    .height(14.dp)
+                    .clip(RoundedCornerShape(4.dp))
+            )
         }
     }
 }

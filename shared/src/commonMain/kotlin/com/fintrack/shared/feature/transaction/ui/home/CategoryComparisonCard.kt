@@ -58,9 +58,10 @@ import com.fintrack.shared.feature.transaction.ui.util.toIcon
 @Composable
 fun CategoryComparisonCard(
     categoryComparisonResult: Result<CategoryComparisonSummary>,
+    accountId: String? = null,
     modifier: Modifier = Modifier
 ) {
-    var lastSummary by remember { mutableStateOf<CategoryComparisonSummary?>(null) }
+    var lastSummary by remember(accountId) { mutableStateOf<CategoryComparisonSummary?>(null) }
     if (categoryComparisonResult is Result.Success) {
         lastSummary = categoryComparisonResult.data
     }
@@ -124,14 +125,9 @@ fun CategoryComparisonCard(
                                 }
                             }
                         } else {
-                            repeat(2) { index ->
-                                LoadingCategoryComparisonItem()
-                                if (index < 1) {
-                                    HorizontalDivider(
-                                        modifier = Modifier.padding(vertical = 8.dp),
-                                        thickness = 0.5.dp,
-                                        color = Color.LightGray.copy(alpha = 0.4f)
-                                    )
+                            Column {
+                                repeat(2) { index ->
+                                    LoadingCategoryComparisonItem(isLast = index == 1)
                                 }
                             }
                         }
@@ -374,43 +370,71 @@ private fun TrendBadge(text: String, color: Color, isPositive: Boolean) {
 }
 
 @Composable
-private fun LoadingCategoryComparisonItem() {
-    Row(
+private fun LoadingCategoryComparisonItem(isLast: Boolean) {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(vertical = 12.dp)
     ) {
-        AnimatedShimmerBox(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-        )
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             AnimatedShimmerBox(
                 modifier = Modifier
-                    .width(120.dp)
-                    .height(20.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .size(48.dp)
+                    .clip(CircleShape)
             )
-            Spacer(modifier = Modifier.height(6.dp))
-            AnimatedShimmerBox(
-                modifier = Modifier
-                    .width(80.dp)
-                    .height(16.dp)
-                    .clip(RoundedCornerShape(4.dp))
-            )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    AnimatedShimmerBox(
+                        modifier = Modifier
+                            .width(100.dp)
+                            .height(20.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                    )
+                    AnimatedShimmerBox(
+                        modifier = Modifier
+                            .width(80.dp)
+                            .height(20.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                AnimatedShimmerBox(
+                    modifier = Modifier
+                        .width(160.dp)
+                        .height(32.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                AnimatedShimmerBox(
+                    modifier = Modifier
+                        .padding(start = 4.dp)
+                        .width(180.dp)
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                )
+            }
         }
 
-        AnimatedShimmerBox(
-            modifier = Modifier
-                .width(140.dp)
-                .height(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-        )
+        if (!isLast) {
+            HorizontalDivider(
+                modifier = Modifier.padding(top = 12.dp),
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+            )
+        }
     }
 }
 
