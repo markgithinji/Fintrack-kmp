@@ -111,7 +111,10 @@ fun StatisticsScreen(
                 SpendingHighlightsSection(
                     tabType = selectedTab,
                     highlightsResult = highlights,
-                    loadHighlights = { viewModel.loadHighlights() }
+                    loadHighlights = { 
+                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                        viewModel.loadHighlights(accountId, selectedPeriod?.code, force = true)
+                    }
                 )
             }
 

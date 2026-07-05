@@ -370,13 +370,13 @@ fun LoadingCategoryList() {
         modifier = Modifier
             .padding(top = 8.dp)
             .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         repeat(4) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp, horizontal = 12.dp),
+                    .padding(vertical = 6.dp, horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AnimatedShimmerBox(modifier = Modifier.size(10.dp).clip(CircleShape))
@@ -415,7 +415,7 @@ fun CategoryList(
         displayCategories.add("Others" to othersTotal)
     }
 
-    Column(modifier = Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(modifier = Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         displayCategories.forEachIndexed { index, (categoryName, amount) ->
             val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
             val color = if (index < 4) segmentColors[index % segmentColors.size] else segmentColors.last()
@@ -450,7 +450,7 @@ fun CategoryList(
             ) {
                 Row(
                     modifier = Modifier
-                        .padding(vertical = 10.dp, horizontal = 12.dp),
+                        .padding(vertical = 8.dp, horizontal = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(

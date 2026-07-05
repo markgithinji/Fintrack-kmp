@@ -39,7 +39,7 @@ class StatisticsViewModel(
                 .debounce(500)
                 .collect {
                     // Force reload all data when global refresh is triggered
-                    loadHighlights(lastHighlightsAccountId, force = true)
+                    loadHighlights(lastHighlightsAccountId, lastHighlightsPeriod, force = true)
                     loadAvailablePeriods(lastAvailablePeriodsAccountId, force = true)
                     loadOverview(lastOverviewAccountId, force = true)
                     loadCategoryComparisons(lastCategoryComparisonAccountId, force = true)
@@ -114,17 +114,41 @@ class StatisticsViewModel(
     private var lastHighlightsAccountId: String? = null
     private var lastHighlightsPeriod: String? = null
     fun loadHighlights(accountId: String? = null, period: String? = null, force: Boolean = false) {
+        println("StatisticsViewModel: loadHighlights called. accountId=$accountId, period=$period, force=$force")
+        
+        // Prevent overwriting a specific period with a null period (all-time) during initial loads
+        if (period == null && lastHighlightsPeriod != null && !force) {
+            println("StatisticsViewModel: loadHighlights ignored null period because we already have a specific period: $lastHighlightsPeriod")
+            return
+        }
+
         if (!force && _highlights.value is Result.Success && 
             lastHighlightsAccountId == accountId && 
-            lastHighlightsPeriod == period) return
+            lastHighlightsPeriod == period) {
+            println("StatisticsViewModel: loadHighlights skipped (already loaded)")
+            return
+        }
 
         viewModelScope.launch {
+            // Only show loading if we don't have success data yet, to prevent flicker
             if (_highlights.value !is Result.Success) {
+                println("StatisticsViewModel: Setting Highlights to Loading")
                 _highlights.value = Result.Loading
             }
+            
             lastHighlightsAccountId = accountId
             lastHighlightsPeriod = period
-            _highlights.value = repo.getHighlightsSummary(accountId, period)
+            
+            println("StatisticsViewModel: Fetching highlights for period: $period")
+            val result = repo.getHighlightsSummary(accountId, period)
+            
+            if (result is Result.Success) {
+                println("StatisticsViewModel: Successfully fetched highlights for $period")
+            } else if (result is Result.Error) {
+                println("StatisticsViewModel: Error fetching highlights: ${result.exception.message}")
+            }
+            
+            _highlights.value = result
         }
     }
 

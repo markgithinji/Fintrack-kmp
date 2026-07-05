@@ -5,9 +5,10 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 
 sealed class Period {
-    data class Week(val code: String) : Period()
-    data class Month(val code: String) : Period()
-    data class Year(val code: String) : Period()
+    abstract val code: String
+    data class Week(override val code: String) : Period()
+    data class Month(override val code: String) : Period()
+    data class Year(override val code: String) : Period()
 
     fun getDateRange(): Pair<String, String>? {
         return try {

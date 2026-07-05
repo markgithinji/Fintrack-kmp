@@ -1,6 +1,8 @@
 package com.fintrack.shared.feature.summary.domain.model
 
 data class StatisticsSummary(
+    val period: String = "",
+    val isCurrent: Boolean = true,
     val income: Double = 0.0,
     val expense: Double = 0.0,
     val balance: Double = 0.0,

@@ -34,6 +34,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -77,15 +78,50 @@ fun SpendingHighlightsSection(
     }
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Text(
-            text = sectionTitle,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = sectionTitle,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                if (highlightsResult is Result.Success && !highlightsResult.data.isCurrent) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = "From ${extractYear(highlightsResult.data.period)}",
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                }
+            }
+
+            if (highlightsResult is Result.Success && highlightsResult.data.isCurrent) {
+                Text(
+                    text = extractYear(highlightsResult.data.period),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.padding(bottom = 2.dp)
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
-        Box(modifier = Modifier.heightIn(min = 250.dp)) {
+        Box(modifier = Modifier.heightIn(min = 264.dp)) {
             Crossfade(
                 targetState = highlightsResult,
                 animationSpec = tween(durationMillis = 300)
@@ -184,7 +220,7 @@ fun HighlightCard(
     color: Color
 ) {
     Card(
-        modifier = modifier,
+        modifier = modifier.height(126.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -238,7 +274,7 @@ fun HighlightCard(
 @Composable
 fun LoadingHighlightCard(modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier,
+        modifier = modifier.height(126.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -306,4 +342,8 @@ fun ErrorHighlightCard(
             onRetry = onRetry
         )
     }
+}
+
+private fun extractYear(period: String): String {
+    return period.split("-").firstOrNull() ?: period
 }

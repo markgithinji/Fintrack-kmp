@@ -28,6 +28,8 @@ fun HighlightsDto.toDomain(): Highlights =
 
 fun HighlightsSummaryDto.toDomain(): StatisticsSummary =
     StatisticsSummary(
+        period = period,
+        isCurrent = isCurrent,
         income = income,
         expense = expense,
         balance = balance,
