@@ -32,7 +32,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -81,41 +80,24 @@ fun CategoryComparisonCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Category Trends",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    val displayPeriod = (categoryComparisonResult as? Result.Success)?.data?.let { it.period to it.isCurrent }
-                        ?: lastSummary?.let { it.period to it.isCurrent }
-
-                    if (displayPeriod != null && !displayPeriod.second) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Surface(
-                            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                text = "From ${formatPeriod(displayPeriod.first)}",
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        }
-                    }
-                }
+                Text(
+                    text = "Category Trends",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold
+                )
 
                 val displayPeriod = (categoryComparisonResult as? Result.Success)?.data?.let { it.period to it.isCurrent }
                     ?: lastSummary?.let { it.period to it.isCurrent }
 
-                if (displayPeriod != null && displayPeriod.second) {
+                if (displayPeriod != null) {
+                    val (period, isCurrent) = displayPeriod
+                    val year = period.split("-").firstOrNull() ?: ""
+                    
                     Text(
-                        text = formatPeriod(displayPeriod.first),
+                        text = if (isCurrent) formatPeriod(period) else "Older ($year)",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (isCurrent) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 }
             }

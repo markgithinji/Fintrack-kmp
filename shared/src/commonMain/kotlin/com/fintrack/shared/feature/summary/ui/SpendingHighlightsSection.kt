@@ -109,11 +109,14 @@ fun SpendingHighlightsSection(
                 }
             }
 
-            if (highlightsResult is Result.Success && highlightsResult.data.isCurrent) {
+            if (highlightsResult is Result.Success) {
                 Text(
                     text = extractYear(highlightsResult.data.period),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (highlightsResult.data.isCurrent) 
+                                MaterialTheme.colorScheme.onSurfaceVariant 
+                            else 
+                                MaterialTheme.colorScheme.onSecondaryContainer,
                     textAlign = TextAlign.End,
                     modifier = Modifier.padding(bottom = 2.dp)
                 )
