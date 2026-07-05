@@ -50,6 +50,7 @@ It allows users to **track income, expenses, and balances**, visualize **financi
 ## 💡 Core Features
 
 - **Multi-Account Management**: Track balances across checking, savings, credit cards, and cash
+- **Smart Category Trends**: Features a "Historical Look-back" system that automatically discovers and displays your last active month's trends if the current month is empty. Includes dual-level comparisons (Monthly vs. Weekly) with context-aware wording.
 - **Smart Budget Planning**: Set monthly budgets with category-wise limits. Includes **real-time threshold alerts** (50%, 80%, 100%) to keep your spending in check.
 - **Automated Bill Reminders**: Intelligent backend engine that detects recurring subscriptions and bills from your history and automatically schedules local reminders before they are due.
 - **Daily & Weekly Summaries**: Stay informed with scheduled push notifications summarizing your previous day's or week's total spending, helping you maintain financial awareness.
