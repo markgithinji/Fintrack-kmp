@@ -50,6 +50,8 @@ fun DistributionSummaryDto.toDomain(): DistributionSummary =
 
 // Overview Summary
 fun OverviewSummaryDto.toDomain() = OverviewSummary(
+    period = period,
+    isCurrent = isCurrent,
     weeklyOverview = weeklyOverview.map { it.toDomain() },
     monthlyOverview = monthlyOverview.map { it.toDomain() }
 )

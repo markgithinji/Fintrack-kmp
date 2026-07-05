@@ -1,6 +1,8 @@
 package com.fintrack.shared.feature.summary.domain.model
 
 data class OverviewSummary(
+    val period: String = "",
+    val isCurrent: Boolean = true,
     val weeklyOverview: List<DaySummary>,
     val monthlyOverview: List<DaySummary>
 )

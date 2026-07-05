@@ -4,6 +4,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class OverviewSummaryDto(
+    val period: String = "",
+    val isCurrent: Boolean = true,
     val weeklyOverview: List<DaySummaryDto>,
     val monthlyOverview: List<DaySummaryDto>
 )

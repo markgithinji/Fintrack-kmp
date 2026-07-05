@@ -189,7 +189,9 @@ private fun OverviewSuccessState(
     ) {
         OverviewHeader(
             selectedPeriod = selectedPeriod,
-            onPeriodSelected = onPeriodSelected
+            onPeriodSelected = onPeriodSelected,
+            periodName = overview.period,
+            isCurrent = overview.isCurrent
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -234,7 +236,9 @@ private fun OverviewSuccessState(
 @Composable
 private fun OverviewHeader(
     selectedPeriod: OverviewPeriod,
-    onPeriodSelected: (OverviewPeriod) -> Unit
+    onPeriodSelected: (OverviewPeriod) -> Unit,
+    periodName: String? = null,
+    isCurrent: Boolean = true
 ) {
     Row(
         modifier = Modifier
@@ -244,12 +248,29 @@ private fun OverviewHeader(
         verticalAlignment = Alignment.Top
     ) {
         Column {
-            Text(
-                "Overview",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "Overview",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold
+                )
+
+                if (!isCurrent && periodName != null) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = "From ${formatPeriod(periodName)}",
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(8.dp).background(GreenIncome, CircleShape))
@@ -488,4 +509,38 @@ fun BarChart(
 
 enum class OverviewPeriod {
     Weekly, Monthly
+}
+
+private fun formatPeriod(period: String): String {
+    return try {
+        if (period.contains("-W")) {
+            // 2024-W25 -> Week 25, 2024
+            val parts = period.split("-W")
+            "Week ${parts[1]}, ${parts[0]}"
+        } else if (period.count { it == '-' } == 1) {
+            // 2024-06 -> June 2024
+            val parts = period.split("-")
+            val year = parts[0]
+            val month = when (parts[1]) {
+                "01" -> "January"
+                "02" -> "February"
+                "03" -> "March"
+                "04" -> "April"
+                "05" -> "May"
+                "06" -> "June"
+                "07" -> "July"
+                "08" -> "August"
+                "09" -> "September"
+                "10" -> "October"
+                "11" -> "November"
+                "12" -> "December"
+                else -> parts[1]
+            }
+            "$month $year"
+        } else {
+            period
+        }
+    } catch (_: Exception) {
+        period
+    }
 }
