@@ -5,6 +5,8 @@ data class CategoryComparison(
     val currentTotal: Double,
     val previousTotal: Double,
     val changePercentage: Double,
+    val isIncome: Boolean,
+    val period: String? = null,
     val weeklyChangePercentage: Double? = null,
     val weeklyCurrentTotal: Double? = null
 )

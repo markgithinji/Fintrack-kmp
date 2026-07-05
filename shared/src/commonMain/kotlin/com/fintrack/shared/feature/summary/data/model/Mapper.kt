@@ -4,6 +4,7 @@ import com.fintrack.shared.feature.summary.domain.model.AvailableMonths
 import com.fintrack.shared.feature.summary.domain.model.AvailableWeeks
 import com.fintrack.shared.feature.summary.domain.model.AvailableYears
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
+import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary
 import com.fintrack.shared.feature.summary.domain.model.CategorySummary
 import com.fintrack.shared.feature.summary.domain.model.DaySummary
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
@@ -65,8 +66,16 @@ fun CategoryComparisonDto.toDomain() = CategoryComparison(
     currentTotal = currentTotal,
     previousTotal = previousTotal,
     changePercentage = changePercentage,
+    isIncome = isIncome,
+    period = period,
     weeklyChangePercentage = weeklyChangePercentage,
     weeklyCurrentTotal = weeklyCurrentTotal
+)
+
+fun CategoryComparisonSummaryDto.toDomain() = CategoryComparisonSummary(
+    period = period,
+    isCurrent = isCurrent,
+    data = data.map { it.toDomain() }
 )
 
 // Available Weeks

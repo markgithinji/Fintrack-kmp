@@ -39,6 +39,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
+import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.transaction.ui.util.toColor
@@ -46,7 +47,7 @@ import com.fintrack.shared.feature.transaction.ui.util.toIcon
 
 @Composable
 fun CategoryComparisonCard(
-    categoryComparisonResult: Result<List<CategoryComparison>>,
+    categoryComparisonResult: Result<CategoryComparisonSummary>,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -57,11 +58,27 @@ fun CategoryComparisonCard(
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             // Header
-            Text(
-                text = "Category Trends",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Category Trends",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                
+                if (categoryComparisonResult is Result.Success) {
+                    val period = categoryComparisonResult.data.period
+                    val isCurrent = categoryComparisonResult.data.isCurrent
+                    Text(
+                        text = if (isCurrent) formatPeriod(period) else "From ${formatPeriod(period)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -86,17 +103,19 @@ fun CategoryComparisonCard(
                 }
 
                 is Result.Success -> {
-                    if (categoryComparisonResult.data.isEmpty()) {
+                    if (categoryComparisonResult.data.data.isEmpty()) {
                         CategoryComparisonEmptyState()
                     } else {
-                        // Sort so "Transaction Cost" is at the bottom if multiple items exist
-                        val sortedData = categoryComparisonResult.data.sortedBy { 
-                            it.category == "Transaction Cost" 
-                        }
+                        // Sort: Income first, then Expense, with Transaction Fees at the very bottom
+                        val sortedData = categoryComparisonResult.data.data.sortedWith(
+                            compareByDescending<CategoryComparison> { it.isIncome }
+                                .thenBy { it.category == "Transaction Cost" }
+                        )
                         
                         sortedData.forEachIndexed { index, comparison ->
                             CategoryComparisonItem(
                                 comparison = comparison,
+                                isCurrent = categoryComparisonResult.data.isCurrent,
                                 isLast = index == sortedData.lastIndex
                             )
                         }
@@ -107,14 +126,49 @@ fun CategoryComparisonCard(
     }
 }
 
+private fun formatPeriod(period: String): String {
+    return try {
+        if (period.contains("-W")) {
+            // 2024-W25 -> Week 25, 2024
+            val parts = period.split("-W")
+            "Week ${parts[1]}, ${parts[0]}"
+        } else if (period.count { it == '-' } == 1) {
+            // 2024-06 -> June 2024
+            val parts = period.split("-")
+            val year = parts[0]
+            val month = when (parts[1]) {
+                "01" -> "January"
+                "02" -> "February"
+                "03" -> "March"
+                "04" -> "April"
+                "05" -> "May"
+                "06" -> "June"
+                "07" -> "July"
+                "08" -> "August"
+                "09" -> "September"
+                "10" -> "October"
+                "11" -> "November"
+                "12" -> "December"
+                else -> parts[1]
+            }
+            "$month $year"
+        } else {
+            period
+        }
+    } catch (_: Exception) {
+        period
+    }
+}
+
 @Composable
 private fun CategoryComparisonItem(
     comparison: CategoryComparison,
+    isCurrent: Boolean,
     isLast: Boolean
 ) {
     val category = Category.fromName(
         comparison.category,
-        comparison.currentTotal < 0 || comparison.previousTotal < 0
+        !comparison.isIncome
     )
     val icon = category.toIcon()
     val bgColor = category.toColor().copy(alpha = 0.15f)
@@ -123,10 +177,15 @@ private fun CategoryComparisonItem(
     // Monthly Trend (Primary)
     val monthlyPositive = comparison.changePercentage >= 0
     val monthlyChangeColor = if (monthlyPositive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-    val monthlyChangeText = if (monthlyPositive) {
-        "${comparison.changePercentage.formatToSinglePrecision()}% more than last month"
+    
+    val monthlyChangeText = if (isCurrent) {
+        if (monthlyPositive) {
+            "${comparison.changePercentage.formatToSinglePrecision()}% more than last month"
+        } else {
+            "${(comparison.changePercentage * -1).formatToSinglePrecision()}% less than last month"
+        }
     } else {
-        "${(comparison.changePercentage * -1).formatToSinglePrecision()}% less than last month"
+        "${comparison.changePercentage.formatToSinglePrecision().removePrefix("-")}% vs previous month"
     }
 
     Column(
@@ -186,20 +245,33 @@ private fun CategoryComparisonItem(
                 // Change indicators
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     // Monthly Badge
-                    TrendBadge(text = monthlyChangeText, color = monthlyChangeColor)
+                    TrendBadge(text = monthlyChangeText, color = monthlyChangeColor, isPositive = monthlyPositive)
                     
                     // Weekly Context (If available)
                     comparison.weeklyChangePercentage?.let { weeklyChange ->
                         val weeklyPositive = weeklyChange >= 0
                         val weeklyColor = if (weeklyPositive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                        val weeklyText = if (weeklyPositive) {
-                            "${weeklyChange.formatToSinglePrecision()}% more than last week"
+                        val weeklyComparisonText = if (isCurrent) "last week" else "previous week"
+                        
+                        val weeklyPercentText = if (isCurrent) {
+                            if (weeklyPositive) {
+                                "${weeklyChange.formatToSinglePrecision()}% more than $weeklyComparisonText"
+                            } else {
+                                "${(weeklyChange * -1).formatToSinglePrecision()}% less than $weeklyComparisonText"
+                            }
                         } else {
-                            "${(weeklyChange * -1).formatToSinglePrecision()}% less than last week"
+                            "${weeklyChange.formatToSinglePrecision().removePrefix("-")}% vs $weeklyComparisonText"
+                        }
+                        
+                        val weeklyAmount = comparison.weeklyCurrentTotal?.toCurrencyString() ?: ""
+                        val weeklyFullText = if (weeklyAmount.isNotEmpty()) {
+                            "Weekly: $weeklyAmount ($weeklyPercentText)"
+                        } else {
+                            "Weekly: $weeklyPercentText"
                         }
                         
                         Text(
-                            text = "Weekly: $weeklyText",
+                            text = weeklyFullText,
                             style = MaterialTheme.typography.labelSmall,
                             color = weeklyColor.copy(alpha = 0.8f),
                             modifier = Modifier.padding(start = 4.dp)
@@ -220,8 +292,7 @@ private fun CategoryComparisonItem(
 }
 
 @Composable
-private fun TrendBadge(text: String, color: Color) {
-    val isPositive = !text.contains("less")
+private fun TrendBadge(text: String, color: Color, isPositive: Boolean) {
     val arrowIcon = if (isPositive)
         Icons.AutoMirrored.Outlined.TrendingUp
     else

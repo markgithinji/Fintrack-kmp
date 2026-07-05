@@ -5,6 +5,7 @@ import com.fintrack.shared.feature.summary.data.model.AvailableMonthsDto
 import com.fintrack.shared.feature.summary.data.model.AvailableWeeksDto
 import com.fintrack.shared.feature.summary.data.model.AvailableYearsDto
 import com.fintrack.shared.feature.summary.data.model.CategoryComparisonDto
+import com.fintrack.shared.feature.summary.data.model.CategoryComparisonSummaryDto
 import com.fintrack.shared.feature.summary.data.model.DistributionSummaryDto
 import com.fintrack.shared.feature.summary.data.model.HighlightsSummaryDto
 import com.fintrack.shared.feature.summary.data.model.OverviewSummaryDto
@@ -80,10 +81,14 @@ class SummaryApi(
         return response.result
     }
 
-    suspend fun getCategoryComparisons(accountId: String? = null): List<CategoryComparisonDto> {
-        val response: ApiResponse<List<CategoryComparisonDto>> =
+    suspend fun getCategoryComparisons(
+        accountId: String? = null,
+        period: String? = null
+    ): CategoryComparisonSummaryDto {
+        val response: ApiResponse<CategoryComparisonSummaryDto> =
             client.get("$baseUrl/transactions/summary/category-comparison") {
                 accountId?.let { parameter("accountId", it) }
+                period?.let { parameter("period", it) }
             }.body()
         return response.result
     }

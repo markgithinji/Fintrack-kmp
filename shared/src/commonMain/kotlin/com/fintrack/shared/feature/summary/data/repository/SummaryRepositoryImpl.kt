@@ -8,6 +8,7 @@ import com.fintrack.shared.feature.summary.domain.model.AvailableMonths
 import com.fintrack.shared.feature.summary.domain.model.AvailableWeeks
 import com.fintrack.shared.feature.summary.domain.model.AvailableYears
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
+import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
 import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
@@ -57,9 +58,12 @@ class SummaryRepositoryImpl(
             api.getOverviewSummary(accountId).toDomain()
         }
 
-    override suspend fun getCategoryComparisons(accountId: String?): Result<List<CategoryComparison>> =
+    override suspend fun getCategoryComparisons(
+        accountId: String?,
+        period: String?
+    ): Result<CategoryComparisonSummary> =
         safeApiCall {
-            api.getCategoryComparisons(accountId).map { it.toDomain() }
+            api.getCategoryComparisons(accountId, period).toDomain()
         }
 
     override suspend fun getTransactionCounts(

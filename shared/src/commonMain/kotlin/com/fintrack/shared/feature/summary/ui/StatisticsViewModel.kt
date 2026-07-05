@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
+import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
 import com.fintrack.shared.feature.summary.domain.model.Period
@@ -75,8 +76,11 @@ class StatisticsViewModel(
     val selectedPeriod: StateFlow<Period?> = _selectedPeriod
 
     private val _categoryComparisons =
-        MutableStateFlow<Result<List<CategoryComparison>>>(Result.Loading)
-    val categoryComparisons: StateFlow<Result<List<CategoryComparison>>> = _categoryComparisons
+        MutableStateFlow<Result<CategoryComparisonSummary>>(Result.Loading)
+    val categoryComparisons: StateFlow<Result<CategoryComparisonSummary>> = _categoryComparisons
+
+    private val _categoryComparisonPeriod = MutableStateFlow<String?>(null)
+    val categoryComparisonPeriod: StateFlow<String?> = _categoryComparisonPeriod
 
     private val _transactionCounts =
         MutableStateFlow<Result<TransactionCountSummary>>(Result.Loading)
@@ -227,15 +231,45 @@ class StatisticsViewModel(
     }
 
     private var lastCategoryComparisonAccountId: String? = null
-    fun loadCategoryComparisons(accountId: String? = null, force: Boolean = false) {
-        if (!force && _categoryComparisons.value is Result.Success && lastCategoryComparisonAccountId == accountId) return
+    private var lastCategoryComparisonPeriod: String? = null
+    fun loadCategoryComparisons(
+        accountId: String? = null,
+        period: String? = null,
+        force: Boolean = false
+    ) {
+        if (!force && _categoryComparisons.value is Result.Success &&
+            lastCategoryComparisonAccountId == accountId &&
+            lastCategoryComparisonPeriod == period
+        ) return
 
         viewModelScope.launch {
             if (_categoryComparisons.value !is Result.Success) {
                 _categoryComparisons.value = Result.Loading
             }
             lastCategoryComparisonAccountId = accountId
-            _categoryComparisons.value = repo.getCategoryComparisons(accountId)
+            lastCategoryComparisonPeriod = period
+
+            // If no period provided, try to find the last active month
+            val targetPeriod = period ?: if (_availableMonths.value.isNotEmpty()) {
+                _availableMonths.value.first()
+            } else {
+                // Fetch available months if they aren't loaded yet
+                val result = repo.getAvailableMonths(accountId)
+                if (result is Result.Success && result.data.months.isNotEmpty()) {
+                    val months = result.data.months
+                    _availableMonths.value = months
+                    months.first()
+                } else {
+                    null
+                }
+            }
+
+            val result = repo.getCategoryComparisons(accountId, targetPeriod)
+
+            _categoryComparisons.value = result
+            if (result is Result.Success) {
+                _categoryComparisonPeriod.value = result.data.period
+            }
         }
     }
 
@@ -262,6 +296,11 @@ class StatisticsViewModel(
             loadDistribution(periodCode, TransactionType.Income, accountId = accountId, force = force)
             loadDistribution(periodCode, TransactionType.Expense, accountId = accountId, force = force)
             loadHighlights(accountId = accountId, period = periodCode, force = force)
+            
+            // Also load category comparisons if the period is a month
+            if (currentPeriod is Period.Month) {
+                loadCategoryComparisons(accountId = accountId, period = periodCode, force = force)
+            }
         } else {
             // Clear distributions if no period is selected (e.g., after data deletion)
             lastIncomeDistributionParams = null
