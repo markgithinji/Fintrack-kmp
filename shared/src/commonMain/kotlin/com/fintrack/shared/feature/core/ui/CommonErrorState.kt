@@ -11,7 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Error
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -23,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.compose.AuthGold
 import com.fintrack.shared.feature.core.data.domain.ApiException
 import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
 
@@ -32,6 +38,8 @@ fun CommonErrorState(
     title: String = "Something went wrong",
     error: Throwable? = null,
     errorMessage: String? = null,
+    isLoading: Boolean = false,
+    isSuccess: Boolean = false,
     onRetry: (() -> Unit)? = null
 ) {
     val displayMessage = remember(error, errorMessage) {
@@ -57,7 +65,7 @@ fun CommonErrorState(
             Text(
                 text = title,
                 color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
@@ -65,14 +73,45 @@ fun CommonErrorState(
             Text(
                 text = displayMessage,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelSmall,
                 textAlign = TextAlign.Center
             )
             
             if (onRetry != null) {
                 Spacer(modifier = Modifier.height(24.dp))
-                Button(onClick = onRetry) {
-                    Text("Retry")
+                Button(
+                    onClick = onRetry,
+                    enabled = !isLoading && !isSuccess,
+                    colors = ButtonDefaults.buttonColors(
+                        disabledContainerColor = if (isSuccess) AuthGold else MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                        disabledContentColor = if (isSuccess) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                    )
+                ) {
+                    when {
+                        isLoading -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                        isSuccess -> {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text("Success", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        else -> {
+                            Text("Retry", fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
         }

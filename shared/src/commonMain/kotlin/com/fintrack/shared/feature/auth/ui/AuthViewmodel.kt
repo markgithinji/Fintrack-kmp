@@ -302,8 +302,9 @@ class AuthViewModel(
 
     fun checkAuthenticationStatus() {
         viewModelScope.launch {
+            val currentStatus = _authStatus.value
             // Only set loading if we are currently Idle or Error
-            if (_authStatus.value is AuthState.Idle || _authStatus.value is AuthState.Error) {
+            if (currentStatus is AuthState.Idle || currentStatus is AuthState.Error) {
                 _authStatus.value = AuthState.Loading("Checking authentication...")
             }
             val currentToken = tokenDataSource.accessToken.first()
