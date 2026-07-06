@@ -85,14 +85,16 @@ class AuthViewModel(
     private fun observeTokenChanges() {
         viewModelScope.launch {
             tokenDataSource.accessToken.collect { token ->
+                val currentStatus = _authStatus.value
                 if (token == null) {
-                    val currentStatus = _authStatus.value
                     if (currentStatus != AuthState.Success(false)) {
                         _authStatus.value = AuthState.Success(false)
                     }
                 } else {
-                    val currentStatus = _authStatus.value
-                    if (currentStatus !is AuthState.Success || !currentStatus.data) {
+                    // Only update authStatus to Success(true) if we were explicitly not authenticated
+                    // This avoids the race condition at startup where a cached token might 
+                    // set Success(true) before validateToken has finished.
+                    if (currentStatus is AuthState.Success && !currentStatus.data) {
                         
                         // If we are currently logging in or just succeeded, delay to let UI show success
                         if (_loginState.value !is AuthState.Idle || _registerState.value !is AuthState.Idle) {
