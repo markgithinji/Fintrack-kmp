@@ -10,5 +10,5 @@ import org.koin.dsl.module
 val accountModule = module {
     single { AccountsApi(get(), getProperty("baseUrl")) }
     single<AccountRepository> { AccountRepositoryImpl(get()) }
-    viewModel { AccountsViewModel(get(), get()) }
+    viewModel { AccountsViewModel(get(), get(), get()) }
 }

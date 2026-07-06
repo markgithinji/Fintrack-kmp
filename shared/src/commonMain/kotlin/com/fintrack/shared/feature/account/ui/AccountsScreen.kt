@@ -2,6 +2,7 @@ package com.fintrack.shared.feature.account.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -10,16 +11,22 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Smartphone
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.util.Result
@@ -119,8 +126,11 @@ fun AccountsScreen(
                         }
                     }
                     is Result.Success -> {
+                        val defaultAccountId by settingsViewModel.defaultAccountId.collectAsStateWithLifecycle()
+                        
                         AccountList(
                             accounts = state.data,
+                            defaultAccountId = defaultAccountId,
                             topPadding = innerPadding.calculateTopPadding() + paddingValues.calculateTopPadding() - 4.dp,
                             bottomPadding = innerPadding.calculateBottomPadding() + paddingValues.calculateBottomPadding(),
                             onDeleteAccount = { viewModel.removeAccount(it.id) },
@@ -157,14 +167,22 @@ fun AccountsScreen(
     }
 
     showAccountDialog?.let { account ->
+        val defaultAccountId by settingsViewModel.defaultAccountId.collectAsStateWithLifecycle()
+        
         AccountDialog(
             account = account,
             isEditing = isEditing,
             isLoading = saveResult is Result.Loading,
             isMpesaLinked = account.isMpesa,
+            isDefaultSelection = account.id == defaultAccountId,
             onDismiss = { if (!isOperating) showAccountDialog = null },
-            onConfirm = { name, isMpesa ->
+            onConfirm = { name, isMpesa, isDefault ->
                 viewModel.saveAccount(account.copy(name = name, isMpesa = isMpesa))
+                if (isDefault) {
+                    settingsViewModel.setDefaultAccountId(account.id)
+                } else if (account.id == defaultAccountId) {
+                    settingsViewModel.setDefaultAccountId(null)
+                }
             }
         )
     }
@@ -173,6 +191,7 @@ fun AccountsScreen(
 @Composable
 fun AccountList(
     accounts: List<Account>,
+    defaultAccountId: String?,
     topPadding: androidx.compose.ui.unit.Dp = 0.dp,
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
     onDeleteAccount: (Account) -> Unit,
@@ -198,6 +217,7 @@ fun AccountList(
             items(accounts) { account ->
                 AccountItem(
                     account = account,
+                    isStartAccount = account.id == defaultAccountId,
                     onDelete = { onDeleteAccount(account) },
                     onEdit = { onEditAccount(account) }
                 )
@@ -209,6 +229,7 @@ fun AccountList(
 @Composable
 fun AccountItem(
     account: Account,
+    isStartAccount: Boolean,
     onDelete: () -> Unit,
     onEdit: () -> Unit
 ) {
@@ -249,17 +270,37 @@ fun AccountItem(
                     )
                 }
 
-                if (!account.isDefault) {
-                    IconButton(
-                        onClick = onDelete,
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete Account",
-                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f),
-                            modifier = Modifier.size(16.dp)
-                        )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (isStartAccount) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.size(20.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = "Default",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                    }
+
+                    if (!account.isDefault) {
+                        IconButton(
+                            onClick = onDelete,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete Account",
+                                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -291,65 +332,192 @@ fun AccountDialog(
     isEditing: Boolean,
     isLoading: Boolean,
     isMpesaLinked: Boolean,
+    isDefaultSelection: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: (String, Boolean) -> Unit
+    onConfirm: (String, Boolean, Boolean) -> Unit
 ) {
     var accountName by remember { mutableStateOf(account.name) }
     var isMpesa by remember { mutableStateOf(isMpesaLinked) }
+    var isDefault by remember { mutableStateOf(isDefaultSelection) }
 
-    AlertDialog(
+    BasicAlertDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
-        title = { Text(if (isEditing) "Edit Account" else "Add New Account") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier
+            .padding(28.dp)
+            .widthIn(max = 420.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                Text(
+                    text = if (isEditing) "Edit Account" else "Add New Account",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
                 OutlinedTextField(
                     value = accountName,
                     onValueChange = { accountName = it },
                     label = { Text("Account Name") },
+                    placeholder = { Text("e.g. Personal Savings") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    enabled = !isLoading
+                    enabled = !isLoading,
+                    shape = RoundedCornerShape(12.dp),
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.AccountBalanceWallet,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 )
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Checkbox(
-                        checked = isMpesa,
-                        onCheckedChange = { isMpesa = it },
-                        enabled = !isLoading
-                    )
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
-                        text = "Link to M-Pesa SMS Import",
-                        style = MaterialTheme.typography.bodyMedium
+                        text = "ACCOUNT OPTIONS",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.padding(start = 4.dp)
                     )
+                    
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f),
+                        shape = RoundedCornerShape(24.dp),
+                        border = BorderStroke(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp)) {
+                            AccountOptionRow(
+                                title = "M-Pesa SMS Link",
+                                subtitle = "Auto-track transactions",
+                                icon = Icons.Default.Smartphone,
+                                checked = isMpesa,
+                                onCheckedChange = { isMpesa = it },
+                                enabled = !isLoading
+                            )
+                            
+                            AccountOptionRow(
+                                title = "Set as Default",
+                                subtitle = "Loads this account first",
+                                icon = Icons.Default.Star,
+                                checked = isDefault,
+                                onCheckedChange = { isDefault = it },
+                                enabled = !isLoading
+                            )
+                        }
+                    }
                 }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = { if (accountName.isNotBlank()) onConfirm(accountName, isMpesa) },
-                enabled = accountName.isNotBlank() && !isLoading
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Text(if (isEditing) "Save" else "Add")
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(
+                        onClick = onDismiss,
+                        enabled = !isLoading
+                    ) {
+                        Text("Cancel", fontWeight = FontWeight.SemiBold)
+                    }
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    Button(
+                        onClick = { if (accountName.isNotBlank()) onConfirm(accountName, isMpesa, isDefault) },
+                        enabled = accountName.isNotBlank() && !isLoading,
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else {
+                            Text(
+                                text = if (isEditing) "Save Changes" else "Create Account",
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                enabled = !isLoading
-            ) {
-                Text("Cancel")
             }
         }
-    )
+    }
+}
+
+@Composable
+private fun AccountOptionRow(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(enabled = enabled) { onCheckedChange(!checked) }
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(
+                    color = if (checked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            enabled = enabled,
+            modifier = Modifier.scale(0.8f)
+        )
+    }
 }

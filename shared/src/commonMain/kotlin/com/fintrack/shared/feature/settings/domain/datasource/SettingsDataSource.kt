@@ -66,6 +66,9 @@ interface SettingsDataSource {
     val showDecimals: StateFlow<Boolean>
     suspend fun setShowDecimals(show: Boolean)
 
+    val defaultAccountId: StateFlow<String?>
+    suspend fun setDefaultAccountId(id: String?)
+
     val exportFormat: StateFlow<ExportFormat>
     suspend fun setExportFormat(format: ExportFormat)
 }

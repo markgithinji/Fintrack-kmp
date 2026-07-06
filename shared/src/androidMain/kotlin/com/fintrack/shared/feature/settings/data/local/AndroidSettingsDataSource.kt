@@ -37,6 +37,7 @@ class AndroidSettingsDataSource(
     private val _weeklySummaryEnabledFlow = MutableStateFlow(false)
     private val _summaryNotificationTimeFlow = MutableStateFlow(LocalTime(8, 0))
     private val _showDecimalsFlow = MutableStateFlow(true)
+    private val _defaultAccountIdFlow = MutableStateFlow<String?>(null)
     private val _exportFormatFlow = MutableStateFlow(ExportFormat.CSV)
 
     init {
@@ -96,6 +97,9 @@ class AndroidSettingsDataSource(
 
         val showDecimals = prefs.getBoolean("show_decimals", true)
         _showDecimalsFlow.update { showDecimals }
+
+        val defaultAccountId = prefs.getString("default_account_id", null)
+        _defaultAccountIdFlow.update { defaultAccountId }
 
         val exportFormatName = prefs.getString("export_format", ExportFormat.CSV.name) ?: ExportFormat.CSV.name
         _exportFormatFlow.update { try { ExportFormat.valueOf(exportFormatName) } catch (e: Exception) { ExportFormat.CSV } }
@@ -282,6 +286,19 @@ class AndroidSettingsDataSource(
             putBoolean("show_decimals", show)
         }
         _showDecimalsFlow.value = show
+    }
+
+    override val defaultAccountId: StateFlow<String?> = _defaultAccountIdFlow.asStateFlow()
+
+    override suspend fun setDefaultAccountId(id: String?) {
+        prefs.edit(commit = true) {
+            if (id == null) {
+                remove("default_account_id")
+            } else {
+                putString("default_account_id", id)
+            }
+        }
+        _defaultAccountIdFlow.value = id
     }
 
     override val exportFormat: StateFlow<ExportFormat> = _exportFormatFlow.asStateFlow()

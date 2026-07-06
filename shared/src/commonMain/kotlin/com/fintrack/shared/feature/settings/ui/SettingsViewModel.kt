@@ -205,6 +205,13 @@ class SettingsViewModel(
             initialValue = settingsDataSource.showDecimals.value
         )
 
+    val defaultAccountId: StateFlow<String?> = settingsDataSource.defaultAccountId
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = settingsDataSource.defaultAccountId.value
+        )
+
     val exportFormat: StateFlow<ExportFormat> = settingsDataSource.exportFormat
         .stateIn(
             scope = viewModelScope,
@@ -406,6 +413,12 @@ class SettingsViewModel(
     fun setShowDecimals(show: Boolean) {
         viewModelScope.launch {
             settingsDataSource.setShowDecimals(show)
+        }
+    }
+
+    fun setDefaultAccountId(id: String?) {
+        viewModelScope.launch {
+            settingsDataSource.setDefaultAccountId(id)
         }
     }
 

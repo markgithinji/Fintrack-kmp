@@ -33,6 +33,7 @@ class IOSSettingsDataSource : SettingsDataSource {
     private val _weeklySummaryEnabledFlow = MutableStateFlow(false)
     private val _summaryNotificationTimeFlow = MutableStateFlow(LocalTime(8, 0))
     private val _showDecimalsFlow = MutableStateFlow(true)
+    private val _defaultAccountIdFlow = MutableStateFlow<String?>(null)
     private val _exportFormatFlow = MutableStateFlow(ExportFormat.CSV)
 
     init {
@@ -92,6 +93,9 @@ class IOSSettingsDataSource : SettingsDataSource {
 
         val showDecimals = if (userDefaults.objectForKey("show_decimals") != null) userDefaults.boolForKey("show_decimals") else true
         _showDecimalsFlow.value = showDecimals
+
+        val defaultAccountId = userDefaults.stringForKey("default_account_id")
+        _defaultAccountIdFlow.value = defaultAccountId
 
         val exportFormatName = userDefaults.stringForKey("export_format") ?: ExportFormat.CSV.name
         _exportFormatFlow.value = try { ExportFormat.valueOf(exportFormatName) } catch (e: Exception) { ExportFormat.CSV }
@@ -240,6 +244,17 @@ class IOSSettingsDataSource : SettingsDataSource {
     override suspend fun setShowDecimals(show: Boolean) {
         userDefaults.setBool(show, "show_decimals")
         _showDecimalsFlow.value = show
+    }
+
+    override val defaultAccountId: StateFlow<String?> = _defaultAccountIdFlow.asStateFlow()
+
+    override suspend fun setDefaultAccountId(id: String?) {
+        if (id == null) {
+            userDefaults.removeObjectForKey("default_account_id")
+        } else {
+            userDefaults.setObject(id, "default_account_id")
+        }
+        _defaultAccountIdFlow.value = id
     }
 
     override val exportFormat: StateFlow<ExportFormat> = _exportFormatFlow.asStateFlow()

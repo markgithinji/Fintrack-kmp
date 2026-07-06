@@ -4,15 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
+import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.core.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class AccountsViewModel(
     private val repo: AccountRepository,
-    private val globalRefreshManager: GlobalRefreshManager
+    private val globalRefreshManager: GlobalRefreshManager,
+    private val settingsDataSource: SettingsDataSource
 ) : ViewModel() {
 
     private val _accounts = MutableStateFlow<Result<List<Account>>>(Result.Loading)
@@ -50,7 +53,9 @@ class AccountsViewModel(
             when (result) {
                 is Result.Success -> {
                     if (result.data.isNotEmpty()) {
-                        _selectedAccount.value = Result.Success(result.data.first())
+                        val defaultId = settingsDataSource.defaultAccountId.value
+                        val defaultAccount = result.data.find { it.id == defaultId }
+                        _selectedAccount.value = Result.Success(defaultAccount ?: result.data.first())
                     } else {
                         _selectedAccount.value = Result.Error(Exception("No accounts available"))
                     }

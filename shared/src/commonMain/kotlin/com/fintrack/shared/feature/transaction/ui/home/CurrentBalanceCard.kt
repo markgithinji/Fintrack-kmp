@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -40,6 +41,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +59,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.core.util.Result
@@ -551,6 +556,7 @@ private fun CurrentBalanceSuccessState(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountSelectionDialog(
     accountsResult: Result<List<Account>>,
@@ -559,71 +565,66 @@ fun AccountSelectionDialog(
     onDismiss: () -> Unit,
     onRetry: () -> Unit = {}
 ) {
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(0.dp),
-            modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .wrapContentHeight()
+    BasicAlertDialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier
+            .padding(28.dp)
+            .widthIn(max = 400.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     "Select Account",
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                    thickness = 1.dp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                when (accountsResult) {
-                    is Result.Loading -> {
-                        AccountSelectionLoadingState()
-                    }
+                Box(modifier = Modifier.heightIn(max = 400.dp)) {
+                    when (accountsResult) {
+                        is Result.Loading -> {
+                            AccountSelectionLoadingState()
+                        }
 
-                    is Result.Error -> {
-                        AccountSelectionErrorState(
-                            errorMessage = accountsResult.exception.message,
-                            onRetry = onRetry
-                        )
-                    }
-
-                    is Result.Success -> {
-                        if (accountsResult.data.isEmpty()) {
-                            AccountSelectionEmptyState()
-                        } else {
-                            AccountSelectionListState(
-                                accounts = accountsResult.data,
-                                selectedAccountId = selectedAccountId,
-                                onAccountSelected = { accountId ->
-                                    onAccountSelected(accountId)
-                                    onDismiss()
-                                }
+                        is Result.Error -> {
+                            AccountSelectionErrorState(
+                                errorMessage = accountsResult.exception.message,
+                                onRetry = onRetry
                             )
+                        }
+
+                        is Result.Success -> {
+                            if (accountsResult.data.isEmpty()) {
+                                AccountSelectionEmptyState()
+                            } else {
+                                AccountSelectionListState(
+                                    accounts = accountsResult.data,
+                                    selectedAccountId = selectedAccountId,
+                                    onAccountSelected = { accountId ->
+                                        onAccountSelected(accountId)
+                                        onDismiss()
+                                    }
+                                )
+                            }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                Button(
+                TextButton(
                     onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    shape = RoundedCornerShape(14.dp)
+                    modifier = Modifier.align(Alignment.End)
                 ) {
                     Text(
-                        "Close",
-                        style = MaterialTheme.typography.bodyLarge,
+                        "Cancel",
+                        style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -699,7 +700,6 @@ private fun AccountSelectionListState(
     LazyColumn(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = 300.dp)
     ) {
         items(accounts) { acc ->
             val isSelected = selectedAccountId == acc.id
