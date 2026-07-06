@@ -58,6 +58,7 @@ It allows users to **track income, expenses, and balances**, visualize **financi
 - **Category-based Analytics**: Visual breakdown of spending by categories (food, transportation, entertainment, etc.)
 - **Interactive Charts**: Beautiful visualizations for spending patterns, income trends, and budget compliance
 - **Transaction History**: Comprehensive ledger with search, filter, and export capabilities
+- **Flexible Data Export**: Export your transaction history in multiple formats (**CSV, PDF, or JSON**) for external analysis. Customize your preferred format in settings for a one-tap export experience.
 - **Financial Highlights**: Key insights showing top expenses, savings rate, and financial health metrics
 - **Global Currency Preferences**: Seamlessly switch between multiple currencies (USD, KES, EUR, etc.) with real-time UI updates across the entire application.
 - **Biometric Security**: Protect your financial data with **Fingerprint, FaceID, or TouchID** lock, ensuring privacy even if your device is unlocked.

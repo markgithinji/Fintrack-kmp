@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
+import com.fintrack.shared.feature.settings.domain.model.ExportFormat
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
@@ -204,6 +205,13 @@ class SettingsViewModel(
             initialValue = settingsDataSource.showDecimals.value
         )
 
+    val exportFormat: StateFlow<ExportFormat> = settingsDataSource.exportFormat
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = settingsDataSource.exportFormat.value
+        )
+
     val trackedCategories: StateFlow<List<String>> = userRepository.getUserProfile()
         .map { it?.trackedCategories ?: emptyList() }
         .stateIn(
@@ -395,6 +403,12 @@ class SettingsViewModel(
         }
     }
 
+    fun setExportFormat(format: ExportFormat) {
+        viewModelScope.launch {
+            settingsDataSource.setExportFormat(format)
+        }
+    }
+
     private suspend fun updateSummaryScheduling() {
         val daily = settingsDataSource.isDailySummaryEnabled.first()
         val weekly = settingsDataSource.isWeeklySummaryEnabled.first()
@@ -423,7 +437,7 @@ class SettingsViewModel(
         _showPermissionRequest.value = false
     }
 
-    fun exportToCsv() {
+    fun exportTransactions() {
         viewModelScope.launch {
             val authResult = biometricAuthenticator.authenticate(
                 title = "Export Data",
@@ -433,7 +447,8 @@ class SettingsViewModel(
             if (authResult is BiometricResult.Success || authResult is BiometricResult.NotAvailable) {
                 _exportResult.value = null
                 _isLoading.value = true
-                when (val result = exportTransactionsUseCase()) {
+                val format = settingsDataSource.exportFormat.value
+                when (val result = exportTransactionsUseCase(format)) {
                     is Result.Success -> {
                         _exportResult.value = result.data
                     }

@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
+import com.fintrack.shared.feature.settings.domain.model.ExportFormat
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import com.fintrack.shared.feature.settings.domain.util.format
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
@@ -77,6 +78,7 @@ fun SettingsScreen(
     val isDailySummaryEnabled by viewModel.isDailySummaryEnabled.collectAsStateWithLifecycle()
     val isWeeklySummaryEnabled by viewModel.isWeeklySummaryEnabled.collectAsStateWithLifecycle()
     val summaryNotificationTime by viewModel.summaryNotificationTime.collectAsStateWithLifecycle()
+    val exportFormat by viewModel.exportFormat.collectAsStateWithLifecycle()
     val budgetsResult by viewModel.budgets.collectAsStateWithLifecycle()
     val reminderTime by viewModel.reminderTime.collectAsStateWithLifecycle()
     val showPermissionRequest by viewModel.showPermissionRequest.collectAsStateWithLifecycle()
@@ -105,6 +107,7 @@ fun SettingsScreen(
     var showBudgetSelectionDialog by remember { mutableStateOf(false) }
     var showThresholdDialog by remember { mutableStateOf(false) }
     var showSummaryTimePickerDialog by remember { mutableStateOf(false) }
+    var showExportFormatDialog by remember { mutableStateOf(false) }
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
@@ -418,10 +421,10 @@ fun SettingsScreen(
 
                     SettingsSection(title = "Data & Backup") {
                         SettingsItem(
-                            title = "Export Data",
-                            subtitle = "Download transactions as CSV",
+                            title = "Export Transactions",
+                            subtitle = "Download data as ${exportFormat.name}",
                             icon = Icons.Default.FileDownload,
-                            onClick = { viewModel.exportToCsv() }
+                            onClick = { showExportFormatDialog = true }
                         )
 
                         HorizontalDivider(
@@ -614,6 +617,18 @@ fun SettingsScreen(
                 showAccountSelectionDialog = false
                 viewModel.clearAccountSelectionForReset()
             }
+        )
+    }
+
+    if (showExportFormatDialog) {
+        ExportFormatSelectionDialog(
+            currentFormat = exportFormat,
+            onFormatSelected = { viewModel.setExportFormat(it) },
+            onExport = {
+                viewModel.exportTransactions()
+                showExportFormatDialog = false
+            },
+            onDismiss = { showExportFormatDialog = false }
         )
     }
 
@@ -818,6 +833,110 @@ fun ChangePasswordDialog(
                         } else {
                             Text("Update")
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExportFormatSelectionDialog(
+    currentFormat: ExportFormat,
+    onFormatSelected: (ExportFormat) -> Unit,
+    onExport: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    BasicAlertDialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier
+            .padding(28.dp)
+            .widthIn(max = 400.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Text(
+                    text = "Export Transactions",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Text(
+                    text = "Choose your preferred format and download your data.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 24.dp)
+                )
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ExportFormat.entries.forEach { format ->
+                        val isSelected = format == currentFormat
+                        
+                        Surface(
+                            onClick = { onFormatSelected(format) },
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected) 
+                                MaterialTheme.colorScheme.primaryContainer 
+                            else 
+                                Color.Transparent,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = format.name,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancel")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = onExport,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.FileDownload, null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Export Now")
                     }
                 }
             }

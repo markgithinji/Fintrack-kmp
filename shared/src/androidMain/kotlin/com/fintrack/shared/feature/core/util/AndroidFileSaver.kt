@@ -34,6 +34,28 @@ class AndroidFileSaver(private val context: Context) : FileSaver {
             }
         }
     }
+
+    override suspend fun saveFileBytes(fileName: String, bytes: ByteArray): String? {
+        return try {
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val file = if (downloadsDir.exists() || downloadsDir.mkdirs()) {
+                File(downloadsDir, fileName)
+            } else {
+                File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
+            }
+            
+            file.writeBytes(bytes)
+            file.absolutePath
+        } catch (e: Exception) {
+            try {
+                val file = File(context.filesDir, fileName)
+                file.writeBytes(bytes)
+                file.absolutePath
+            } catch (inner: Exception) {
+                null
+            }
+        }
+    }
 }
 
 actual fun createFileSaver(): FileSaver {

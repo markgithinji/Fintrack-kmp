@@ -4,6 +4,7 @@ import android.content.Context
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
+import com.fintrack.shared.feature.settings.domain.model.ExportFormat
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,6 +37,7 @@ class AndroidSettingsDataSource(
     private val _weeklySummaryEnabledFlow = MutableStateFlow(false)
     private val _summaryNotificationTimeFlow = MutableStateFlow(LocalTime(8, 0))
     private val _showDecimalsFlow = MutableStateFlow(true)
+    private val _exportFormatFlow = MutableStateFlow(ExportFormat.CSV)
 
     init {
         val themeName = prefs.getString("app_theme", AppTheme.SYSTEM.name)
@@ -94,6 +96,9 @@ class AndroidSettingsDataSource(
 
         val showDecimals = prefs.getBoolean("show_decimals", true)
         _showDecimalsFlow.update { showDecimals }
+
+        val exportFormatName = prefs.getString("export_format", ExportFormat.CSV.name) ?: ExportFormat.CSV.name
+        _exportFormatFlow.update { try { ExportFormat.valueOf(exportFormatName) } catch (e: Exception) { ExportFormat.CSV } }
     }
 
     override val theme: StateFlow<AppTheme> = _themeFlow.asStateFlow()
@@ -277,5 +282,14 @@ class AndroidSettingsDataSource(
             putBoolean("show_decimals", show)
         }
         _showDecimalsFlow.value = show
+    }
+
+    override val exportFormat: StateFlow<ExportFormat> = _exportFormatFlow.asStateFlow()
+
+    override suspend fun setExportFormat(format: ExportFormat) {
+        prefs.edit(commit = true) {
+            putString("export_format", format.name)
+        }
+        _exportFormatFlow.value = format
     }
 }

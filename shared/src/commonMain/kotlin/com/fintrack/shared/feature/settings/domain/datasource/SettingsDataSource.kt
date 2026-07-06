@@ -2,6 +2,7 @@ package com.fintrack.shared.feature.settings.domain.datasource
 
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
+import com.fintrack.shared.feature.settings.domain.model.ExportFormat
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -64,4 +65,7 @@ interface SettingsDataSource {
 
     val showDecimals: StateFlow<Boolean>
     suspend fun setShowDecimals(show: Boolean)
+
+    val exportFormat: StateFlow<ExportFormat>
+    suspend fun setExportFormat(format: ExportFormat)
 }

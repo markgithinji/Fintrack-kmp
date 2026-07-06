@@ -3,9 +3,12 @@ package com.fintrack.shared.feature.settings.data.local
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
+import com.fintrack.shared.feature.settings.domain.model.ExportFormat
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.datetime.LocalTime
 import platform.Foundation.NSUserDefaults
 
@@ -30,6 +33,7 @@ class IOSSettingsDataSource : SettingsDataSource {
     private val _weeklySummaryEnabledFlow = MutableStateFlow(false)
     private val _summaryNotificationTimeFlow = MutableStateFlow(LocalTime(8, 0))
     private val _showDecimalsFlow = MutableStateFlow(true)
+    private val _exportFormatFlow = MutableStateFlow(ExportFormat.CSV)
 
     init {
         val themeName = userDefaults.stringForKey("app_theme") ?: AppTheme.SYSTEM.name
@@ -88,58 +92,61 @@ class IOSSettingsDataSource : SettingsDataSource {
 
         val showDecimals = if (userDefaults.objectForKey("show_decimals") != null) userDefaults.boolForKey("show_decimals") else true
         _showDecimalsFlow.value = showDecimals
+
+        val exportFormatName = userDefaults.stringForKey("export_format") ?: ExportFormat.CSV.name
+        _exportFormatFlow.value = try { ExportFormat.valueOf(exportFormatName) } catch (e: Exception) { ExportFormat.CSV }
     }
 
-    override val theme: Flow<AppTheme> = _themeFlow
+    override val theme: StateFlow<AppTheme> = _themeFlow.asStateFlow()
 
     override suspend fun setTheme(theme: AppTheme) {
         userDefaults.setObject(theme.name, "app_theme")
         _themeFlow.value = theme
     }
 
-    override val timeFormat: Flow<TimeFormat> = _timeFormatFlow
+    override val timeFormat: StateFlow<TimeFormat> = _timeFormatFlow.asStateFlow()
 
     override suspend fun setTimeFormat(format: TimeFormat) {
         userDefaults.setObject(format.name, "time_format")
         _timeFormatFlow.value = format
     }
 
-    override val currency: Flow<Currency> = _currencyFlow
+    override val currency: StateFlow<Currency> = _currencyFlow.asStateFlow()
 
     override suspend fun setCurrency(currency: Currency) {
         userDefaults.setObject(currency.code, "currency_code")
         _currencyFlow.value = currency
     }
 
-    override val isBiometricEnabled: Flow<Boolean> = _biometricFlow
+    override val isBiometricEnabled: StateFlow<Boolean> = _biometricFlow.asStateFlow()
 
     override suspend fun setBiometricEnabled(enabled: Boolean) {
         userDefaults.setBool(enabled, "biometric_enabled")
         _biometricFlow.value = enabled
     }
 
-    override val isBalanceHidden: Flow<Boolean> = _balanceHiddenFlow
+    override val isBalanceHidden: StateFlow<Boolean> = _balanceHiddenFlow.asStateFlow()
 
     override suspend fun setBalanceHidden(hidden: Boolean) {
         userDefaults.setBool(hidden, "balance_hidden")
         _balanceHiddenFlow.value = hidden
     }
 
-    override val isReminderEnabled: Flow<Boolean> = _reminderFlow
+    override val isReminderEnabled: StateFlow<Boolean> = _reminderFlow.asStateFlow()
 
     override suspend fun setReminderEnabled(enabled: Boolean) {
         userDefaults.setBool(enabled, "reminder_enabled")
         _reminderFlow.value = enabled
     }
 
-    override val reminderTime: Flow<LocalTime> = _reminderTimeFlow
+    override val reminderTime: StateFlow<LocalTime> = _reminderTimeFlow.asStateFlow()
 
     override suspend fun setReminderTime(time: LocalTime) {
         userDefaults.setObject(time.toString(), "reminder_time")
         _reminderTimeFlow.value = time
     }
 
-    override val mpesaSimSlot: Flow<Int?> = _mpesaSimSlotFlow
+    override val mpesaSimSlot: StateFlow<Int?> = _mpesaSimSlotFlow.asStateFlow()
 
     override suspend fun setMpesaSimSlot(slot: Int?) {
         if (slot == null) {
@@ -150,7 +157,7 @@ class IOSSettingsDataSource : SettingsDataSource {
         _mpesaSimSlotFlow.value = slot
     }
 
-    override val mpesaAccountId: Flow<String?> = _mpesaAccountIdFlow
+    override val mpesaAccountId: StateFlow<String?> = _mpesaAccountIdFlow.asStateFlow()
 
     override suspend fun setMpesaAccountId(accountId: String?) {
         if (accountId == null) {
@@ -158,31 +165,31 @@ class IOSSettingsDataSource : SettingsDataSource {
         } else {
             userDefaults.setObject(accountId, "mpesa_account_id")
         }
-        _mpesaAccountIdFlow.value = mpesaAccountId
+        _mpesaAccountIdFlow.value = accountId
     }
 
-    override val isMpesaListenerEnabled: Flow<Boolean> = _mpesaListenerFlow
+    override val isMpesaListenerEnabled: StateFlow<Boolean> = _mpesaListenerFlow.asStateFlow()
 
     override suspend fun setMpesaListenerEnabled(enabled: Boolean) {
         userDefaults.setBool(enabled, "mpesa_listener_enabled")
         _mpesaListenerFlow.value = enabled
     }
 
-    override val budgetAlertsEnabled: Flow<Boolean> = _budgetAlertsEnabledFlow
+    override val budgetAlertsEnabled: StateFlow<Boolean> = _budgetAlertsEnabledFlow.asStateFlow()
 
     override suspend fun setBudgetAlertsEnabled(enabled: Boolean) {
         userDefaults.setBool(enabled, "budget_alerts_enabled")
         _budgetAlertsEnabledFlow.value = enabled
     }
 
-    override val budgetAlertThresholds: Flow<Set<Int>> = _budgetAlertThresholdsFlow
+    override val budgetAlertThresholds: StateFlow<Set<Int>> = _budgetAlertThresholdsFlow.asStateFlow()
 
     override suspend fun setBudgetAlertThresholds(thresholds: Set<Int>) {
         userDefaults.setObject(thresholds.map { it.toString() }, "budget_alert_thresholds")
         _budgetAlertThresholdsFlow.value = thresholds
     }
 
-    override val alertBudgetId: Flow<String?> = _alertBudgetIdFlow
+    override val alertBudgetId: StateFlow<String?> = _alertBudgetIdFlow.asStateFlow()
 
     override suspend fun setAlertBudgetId(budgetId: String?) {
         if (budgetId == null) {
@@ -193,46 +200,53 @@ class IOSSettingsDataSource : SettingsDataSource {
         _alertBudgetIdFlow.value = budgetId
     }
 
-    override val isBillReminderEnabled: Flow<Boolean> = _billReminderEnabledFlow
+    override val isBillReminderEnabled: StateFlow<Boolean> = _billReminderEnabledFlow.asStateFlow()
 
     override suspend fun setBillReminderEnabled(enabled: Boolean) {
         userDefaults.setBool(enabled, "bill_reminder_enabled")
         _billReminderEnabledFlow.value = enabled
     }
 
-    override val billReminderDaysBefore: Flow<Int> = _billReminderDaysBeforeFlow
+    override val billReminderDaysBefore: StateFlow<Int> = _billReminderDaysBeforeFlow.asStateFlow()
 
     override suspend fun setBillReminderDaysBefore(days: Int) {
         userDefaults.setInteger(days.toLong(), "bill_reminder_days_before")
         _billReminderDaysBeforeFlow.value = days
     }
 
-    override val isDailySummaryEnabled: Flow<Boolean> = _dailySummaryEnabledFlow
+    override val isDailySummaryEnabled: StateFlow<Boolean> = _dailySummaryEnabledFlow.asStateFlow()
 
     override suspend fun setDailySummaryEnabled(enabled: Boolean) {
         userDefaults.setBool(enabled, "daily_summary_enabled")
         _dailySummaryEnabledFlow.value = enabled
     }
 
-    override val isWeeklySummaryEnabled: Flow<Boolean> = _weeklySummaryEnabledFlow
+    override val isWeeklySummaryEnabled: StateFlow<Boolean> = _weeklySummaryEnabledFlow.asStateFlow()
 
     override suspend fun setWeeklySummaryEnabled(enabled: Boolean) {
         userDefaults.setBool(enabled, "weekly_summary_enabled")
         _weeklySummaryEnabledFlow.value = enabled
     }
 
-    override val summaryNotificationTime: Flow<LocalTime> = _summaryNotificationTimeFlow
+    override val summaryNotificationTime: StateFlow<LocalTime> = _summaryNotificationTimeFlow.asStateFlow()
 
     override suspend fun setSummaryNotificationTime(time: LocalTime) {
         userDefaults.setObject(time.toString(), "summary_notification_time")
         _summaryNotificationTimeFlow.value = time
     }
 
-    override val showDecimals: Flow<Boolean> = _showDecimalsFlow
+    override val showDecimals: StateFlow<Boolean> = _showDecimalsFlow.asStateFlow()
 
     override suspend fun setShowDecimals(show: Boolean) {
         userDefaults.setBool(show, "show_decimals")
         _showDecimalsFlow.value = show
+    }
+
+    override val exportFormat: StateFlow<ExportFormat> = _exportFormatFlow.asStateFlow()
+
+    override suspend fun setExportFormat(format: ExportFormat) {
+        userDefaults.setObject(format.name, "export_format")
+        _exportFormatFlow.value = format
     }
 }
 
