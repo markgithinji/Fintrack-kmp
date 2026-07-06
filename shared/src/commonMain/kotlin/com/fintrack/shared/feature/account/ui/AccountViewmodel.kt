@@ -5,17 +5,23 @@ import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
+import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
+import com.fintrack.shared.feature.settings.domain.util.BiometricResult
+import com.fintrack.shared.feature.core.domain.usecase.ClearAllUserDataUseCase
 import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.core.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class AccountsViewModel(
     private val repo: AccountRepository,
     private val globalRefreshManager: GlobalRefreshManager,
-    private val settingsDataSource: SettingsDataSource
+    private val settingsDataSource: SettingsDataSource,
+    private val clearAllUserDataUseCase: ClearAllUserDataUseCase,
+    private val biometricAuthenticator: BiometricAuthenticator
 ) : ViewModel() {
 
     private val _accounts = MutableStateFlow<Result<List<Account>>>(Result.Loading)
@@ -30,10 +36,13 @@ class AccountsViewModel(
     private val _deleteResult = MutableStateFlow<Result<Unit>?>(null)
     val deleteResult: StateFlow<Result<Unit>?> = _deleteResult
 
+    private val _clearDataResult = MutableStateFlow<Result<Unit>?>(null)
+    val clearDataResult: StateFlow<Result<Unit>?> = _clearDataResult.asStateFlow()
+
     init {
         viewModelScope.launch {
             globalRefreshManager.refreshEvent.collect {
-                reloadAccounts(force = true)
+                reloadAccounts(force = true, showLoading = false)
             }
         }
         reloadAccounts(force = false)
@@ -118,16 +127,43 @@ class AccountsViewModel(
         }
 
         viewModelScope.launch {
-            _deleteResult.value = Result.Loading
-            val result = repo.deleteAccount(id)
-            _deleteResult.value = result
-            if (result is Result.Success) {
-                // Update local state immediately for a smooth transition
-                val currentResult = _accounts.value
-                if (currentResult is Result.Success) {
-                    _accounts.value = Result.Success(currentResult.data.filter { it.id != id })
+            val authResult = biometricAuthenticator.authenticate(
+                title = "Delete Account",
+                subtitle = "Confirm your identity to delete this account"
+            )
+
+            if (authResult is BiometricResult.Success || authResult is BiometricResult.NotAvailable) {
+                _deleteResult.value = Result.Loading
+                val result = repo.deleteAccount(id)
+                _deleteResult.value = result
+                if (result is Result.Success) {
+                    // Update local state immediately for a smooth transition
+                    val currentResult = _accounts.value
+                    if (currentResult is Result.Success) {
+                        _accounts.value = Result.Success(currentResult.data.filter { it.id != id })
+                    }
+                    reloadAccounts(showLoading = false)
                 }
-                reloadAccounts(showLoading = false)
+            } else if (authResult is BiometricResult.Error) {
+                _deleteResult.value = Result.Error(Exception(authResult.message))
+            }
+        }
+    }
+
+    fun clearAccountData(id: String) {
+        viewModelScope.launch {
+            val authResult = biometricAuthenticator.authenticate(
+                title = "Clear Account Data",
+                subtitle = "Confirm your identity to delete all transactions for this account"
+            )
+
+            if (authResult is BiometricResult.Success || authResult is BiometricResult.NotAvailable) {
+                _clearDataResult.value = Result.Loading
+                _clearDataResult.value = clearAllUserDataUseCase(listOf(id))
+                // Note: clearAllUserDataUseCase triggers globalRefreshManager, 
+                // which our init block observes to reload accounts without flickering.
+            } else if (authResult is BiometricResult.Error) {
+                _clearDataResult.value = Result.Error(Exception(authResult.message))
             }
         }
     }
@@ -135,5 +171,6 @@ class AccountsViewModel(
     fun clearResults() {
         _saveResult.value = null
         _deleteResult.value = null
+        _clearDataResult.value = null
     }
 }

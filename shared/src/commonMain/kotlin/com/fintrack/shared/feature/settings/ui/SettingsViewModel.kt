@@ -252,9 +252,6 @@ class SettingsViewModel(
     private val _accounts = MutableStateFlow<List<Account>>(emptyList())
     val accounts: StateFlow<List<Account>> = _accounts.asStateFlow()
 
-    private val _selectedAccountIdsForReset = MutableStateFlow<Set<String>>(emptySet())
-    val selectedAccountIdsForReset: StateFlow<Set<String>> = _selectedAccountIdsForReset.asStateFlow()
-
     private val _exportResult = MutableStateFlow<String?>(null)
     val exportResult: StateFlow<String?> = _exportResult.asStateFlow()
 
@@ -486,64 +483,6 @@ class SettingsViewModel(
                 _error.value = authResult.message
             }
         }
-    }
-
-    private val _clearDataState = MutableStateFlow<SaveState<Unit>>(SaveState.Idle)
-    val clearDataState: StateFlow<SaveState<Unit>> = _clearDataState.asStateFlow()
-
-    fun toggleAccountSelectionForReset(accountId: String) {
-        _selectedAccountIdsForReset.value = if (_selectedAccountIdsForReset.value.contains(accountId)) {
-            _selectedAccountIdsForReset.value - accountId
-        } else {
-            _selectedAccountIdsForReset.value + accountId
-        }
-    }
-
-    fun selectAllAccountsForReset() {
-        _selectedAccountIdsForReset.value = _accounts.value.map { it.id }.toSet()
-    }
-
-    fun clearAccountSelectionForReset() {
-        _selectedAccountIdsForReset.value = emptySet()
-    }
-
-    fun clearTransactions() {
-        viewModelScope.launch {
-            val authResult = biometricAuthenticator.authenticate(
-                title = "Clear Data",
-                subtitle = "Confirm your identity to delete transactions for selected accounts"
-            )
-            
-            when (authResult) {
-                is BiometricResult.Success -> {
-                    performClear()
-                }
-                is BiometricResult.Error -> {
-                    _error.value = authResult.message
-                }
-                BiometricResult.NotAvailable -> {
-                    performClear()
-                }
-            }
-        }
-    }
-
-    private suspend fun performClear() {
-        _clearDataState.value = SaveState.Loading
-        val selectedIds = _selectedAccountIdsForReset.value
-        val accountIds: List<String>? = if (selectedIds.isEmpty()) null else selectedIds.toList()
-        val result = clearAllUserDataUseCase(accountIds)
-        if (result is Result.Error) {
-            _clearDataState.value = SaveState.Error(result.exception)
-            _error.value = "Failed to clear data"
-        } else {
-            _clearDataState.value = SaveState.Success(Unit)
-            _selectedAccountIdsForReset.value = emptySet()
-        }
-    }
-
-    fun resetClearDataState() {
-        _clearDataState.value = SaveState.Idle
     }
 
     private val _deleteAccountState = MutableStateFlow<SaveState<Unit>>(SaveState.Idle)

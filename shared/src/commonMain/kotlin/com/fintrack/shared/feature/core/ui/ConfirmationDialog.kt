@@ -11,6 +11,7 @@ expect fun ConfirmationDialog(
     isDestructive: Boolean = false,
     isLoading: Boolean = false,
     isSuccess: Boolean = false,
+    errorMessage: String? = null,
     successTitle: String? = null,
     successMessage: String? = null,
     autoDismiss: Boolean = true,

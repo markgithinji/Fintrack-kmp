@@ -1,11 +1,13 @@
 package com.fintrack.shared.feature.core.ui
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -27,6 +29,7 @@ actual fun ConfirmationDialog(
     isDestructive: Boolean,
     isLoading: Boolean,
     isSuccess: Boolean,
+    errorMessage: String?,
     successTitle: String?,
     successMessage: String?,
     autoDismiss: Boolean,
@@ -43,17 +46,18 @@ actual fun ConfirmationDialog(
                 .padding(16.dp),
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier.padding(24.dp).animateContentSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                // Fancy Icon Circle
+                // Icon Circle
                 Box(
                     modifier = Modifier
                         .size(64.dp)
                         .background(
                             color = when {
                                 isSuccess -> Color(0xFF4CAF50).copy(alpha = 0.2f)
-                                isDestructive -> MaterialTheme.colorScheme.errorContainer
+                                errorMessage != null -> MaterialTheme.colorScheme.errorContainer
+                                isDestructive -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f)
                                 else -> MaterialTheme.colorScheme.primaryContainer
                             },
                             shape = CircleShape
@@ -61,11 +65,16 @@ actual fun ConfirmationDialog(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = if (isSuccess) Icons.Default.CheckCircle else Icons.Default.Warning,
+                        imageVector = when {
+                            isSuccess -> Icons.Default.CheckCircle
+                            errorMessage != null -> Icons.Default.Error
+                            else -> Icons.Default.Warning
+                        },
                         contentDescription = null,
                         modifier = Modifier.size(32.dp),
                         tint = when {
                             isSuccess -> Color(0xFF4CAF50)
+                            errorMessage != null -> MaterialTheme.colorScheme.error
                             isDestructive -> MaterialTheme.colorScheme.error
                             else -> MaterialTheme.colorScheme.primary
                         }
@@ -75,21 +84,29 @@ actual fun ConfirmationDialog(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = if (isSuccess) (successTitle ?: "Success!") else title,
-                    style = MaterialTheme.typography.headlineSmall,
+                    text = when {
+                        isSuccess -> (successTitle ?: "Success!")
+                        errorMessage != null -> "Operation Failed"
+                        else -> title
+                    },
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = if (errorMessage != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = if (isSuccess) (successMessage ?: "Action completed successfully.") else message,
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = when {
+                        isSuccess -> (successMessage ?: "Action completed successfully.")
+                        errorMessage != null -> errorMessage
+                        else -> message
+                    },
+                    style = MaterialTheme.typography.bodySmall, // Smaller text as requested
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                    lineHeight = 20.sp
+                    lineHeight = 16.sp
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -100,7 +117,7 @@ actual fun ConfirmationDialog(
                 ) {
                     Button(
                         onClick = {
-                            if (isSuccess) {
+                            if (isSuccess || errorMessage != null) {
                                 onDismiss()
                             } else {
                                 onConfirm()
@@ -117,7 +134,7 @@ actual fun ConfirmationDialog(
                         colors = ButtonDefaults.buttonColors(
                             containerColor = when {
                                 isSuccess -> Color(0xFF4CAF50)
-                                isDestructive -> MaterialTheme.colorScheme.error
+                                errorMessage != null || isDestructive -> MaterialTheme.colorScheme.error
                                 else -> MaterialTheme.colorScheme.primary
                             }
                         )
@@ -130,14 +147,18 @@ actual fun ConfirmationDialog(
                             )
                         } else {
                             Text(
-                                text = if (isSuccess) "Close" else confirmLabel,
+                                text = when {
+                                    isSuccess -> "Done"
+                                    errorMessage != null -> "Close"
+                                    else -> confirmLabel
+                                },
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1
                             )
                         }
                     }
 
-                    if (!isSuccess) {
+                    if (!isSuccess && errorMessage == null) {
                         TextButton(
                             onClick = onDismiss,
                             enabled = !isLoading,

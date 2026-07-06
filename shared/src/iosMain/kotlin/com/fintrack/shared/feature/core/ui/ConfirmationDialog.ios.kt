@@ -19,6 +19,7 @@ actual fun ConfirmationDialog(
     isDestructive: Boolean,
     isLoading: Boolean,
     isSuccess: Boolean,
+    errorMessage: String?,
     successTitle: String?,
     successMessage: String?,
     autoDismiss: Boolean,
@@ -27,7 +28,7 @@ actual fun ConfirmationDialog(
 ) {
     val viewController = LocalUIViewController.current
 
-    LaunchedEffect(isLoading, isSuccess) {
+    LaunchedEffect(isLoading, isSuccess, errorMessage) {
         if (isSuccess) {
              val successAlert = UIAlertController.alertControllerWithTitle(
                 title = successTitle ?: "Success!",
@@ -42,6 +43,23 @@ actual fun ConfirmationDialog(
                 )
             )
             viewController.presentViewController(successAlert, animated = true, completion = null)
+            return@LaunchedEffect
+        }
+
+        if (errorMessage != null) {
+            val errorAlert = UIAlertController.alertControllerWithTitle(
+                title = "Operation Failed",
+                message = errorMessage,
+                preferredStyle = UIAlertControllerStyleAlert
+            )
+            errorAlert.addAction(
+                UIAlertAction.actionWithTitle(
+                    title = "Close",
+                    style = UIAlertActionStyleDefault,
+                    handler = { onDismiss() }
+                )
+            )
+            viewController.presentViewController(errorAlert, animated = true, completion = null)
             return@LaunchedEffect
         }
 

@@ -91,20 +91,15 @@ fun SettingsScreen(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val trackedCategories by viewModel.trackedCategories.collectAsStateWithLifecycle()
     val allCategories by viewModel.allCategories.collectAsStateWithLifecycle()
-    val accounts by viewModel.accounts.collectAsStateWithLifecycle()
-    val selectedAccountIds by viewModel.selectedAccountIdsForReset.collectAsStateWithLifecycle()
 
     val changePasswordFormState by viewModel.changePasswordFormState.collectAsStateWithLifecycle()
     val changePasswordState by viewModel.changePasswordState.collectAsStateWithLifecycle()
-    val clearDataState by viewModel.clearDataState.collectAsStateWithLifecycle()
     val deleteAccountState by viewModel.deleteAccountState.collectAsStateWithLifecycle()
     
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showTimeFormatDialog by remember { mutableStateOf(false) }
     var showTimePickerDialog by remember { mutableStateOf(false) }
-    var showAccountSelectionDialog by remember { mutableStateOf(false) }
-    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
     var showTrackedCategoriesDialog by remember { mutableStateOf(false) }
@@ -438,21 +433,6 @@ fun SettingsScreen(
                         )
 
                         SettingsItem(
-                            title = "Reset Data",
-                            subtitle = "Permanently delete records for selected accounts",
-                            icon = Icons.Default.DeleteForever,
-                            iconContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f),
-                            iconTint = MaterialTheme.colorScheme.error,
-                            onClick = { showAccountSelectionDialog = true }
-                        )
-
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-                        )
-
-                        SettingsItem(
                             title = "Delete Account",
                             subtitle = "Permanently delete your account",
                             icon = Icons.Default.PersonRemove,
@@ -575,55 +555,6 @@ fun SettingsScreen(
         onDismissTrigger = { showSmsPermissionRequest = false }
     )
 
-    if (showDeleteConfirmDialog) {
-        val selectedAccountNames = accounts.filter { it.id in selectedAccountIds }.joinToString { it.name }
-        val message = if (selectedAccountIds.isEmpty()) {
-            "Are you sure you want to delete ALL transactions and budgets across ALL accounts? This action cannot be undone."
-        } else {
-            "Are you sure you want to delete all transactions and budgets for the following accounts: $selectedAccountNames? This action cannot be undone."
-        }
-
-        ConfirmationDialog(
-            title = "Clear Data",
-            message = message,
-            confirmLabel = "Clear Data",
-            isDestructive = true,
-            isLoading = clearDataState is SaveState.Loading,
-            isSuccess = clearDataState is SaveState.Success,
-            successTitle = "Data Cleared",
-            successMessage = "Transactions and budgets for selected accounts have been successfully deleted.",
-            autoDismiss = false,
-            onConfirm = {
-                viewModel.clearTransactions()
-            },
-            onDismiss = {
-                showDeleteConfirmDialog = false
-                viewModel.resetClearDataState()
-                if (clearDataState is SaveState.Success) {
-                    viewModel.clearAccountSelectionForReset()
-                }
-            }
-        )
-    }
-
-    if (showAccountSelectionDialog) {
-        AccountSelectionDialog(
-            accounts = accounts,
-            selectedAccountIds = selectedAccountIds,
-            onAccountToggle = viewModel::toggleAccountSelectionForReset,
-            onSelectAll = viewModel::selectAllAccountsForReset,
-            onClearSelection = viewModel::clearAccountSelectionForReset,
-            onConfirm = {
-                showAccountSelectionDialog = false
-                showDeleteConfirmDialog = true
-            },
-            onDismiss = {
-                showAccountSelectionDialog = false
-                viewModel.clearAccountSelectionForReset()
-            }
-        )
-    }
-
     if (showExportFormatDialog) {
         ExportFormatSelectionDialog(
             currentFormat = exportFormat,
@@ -647,6 +578,7 @@ fun SettingsScreen(
             isDestructive = true,
             isLoading = deleteAccountState is SaveState.Loading,
             isSuccess = deleteAccountState is SaveState.Success,
+            errorMessage = (deleteAccountState as? SaveState.Error)?.exception?.message,
             successTitle = "Account Deleted",
             successMessage = "Your account and all associated data have been permanently deleted.",
             autoDismiss = false,
@@ -1607,167 +1539,6 @@ fun TrackedCategoriesSelectionDialog(
     }
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AccountSelectionDialog(
-    accounts: List<Account>,
-    selectedAccountIds: Set<String>,
-    onAccountToggle: (String) -> Unit,
-    onSelectAll: () -> Unit,
-    onClearSelection: () -> Unit,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    BasicAlertDialog(
-        onDismissRequest = onDismiss,
-        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
-        modifier = Modifier
-            .padding(28.dp)
-            .widthIn(max = 420.dp)
-    ) {
-        Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(24.dp)
-                    .fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Select Accounts",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    
-                    if (accounts.isNotEmpty()) {
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                        ) {
-                            Text(
-                                text = "${selectedAccountIds.size}/${accounts.size}",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
-
-                        Text(
-                            text = "Fintrack automatically detects your recurring bills and subscriptions from your history to provide timely reminders.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                            lineHeight = 16.sp
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "Choose the accounts from which you want to delete all transactions and budgets.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextButton(onClick = onSelectAll) {
-                        Text("Select All", style = MaterialTheme.typography.labelLarge)
-                    }
-                    Box(modifier = Modifier.width(1.dp).height(16.dp).background(MaterialTheme.colorScheme.outlineVariant))
-                    TextButton(onClick = onClearSelection) {
-                        Text("Clear", style = MaterialTheme.typography.labelLarge)
-                    }
-                }
-
-                Box(modifier = Modifier.heightIn(min = 200.dp, max = 340.dp)) {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(vertical = 4.dp)
-                    ) {
-                        items(accounts, key = { it.id }) { account ->
-                            val isSelected = selectedAccountIds.contains(account.id)
-                            Surface(
-                                onClick = { onAccountToggle(account.id) },
-                                shape = RoundedCornerShape(16.dp),
-                                color = if (isSelected)
-                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
-                                else
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                border = if (isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Checkbox(
-                                        checked = isSelected,
-                                        onCheckedChange = { onAccountToggle(account.id) },
-                                        colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Column {
-                                        Text(
-                                            text = account.name,
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                        Text(
-                                            text = if (account.isMpesa) "M-Pesa" else "Standard Account",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.height(48.dp)
-                    ) {
-                        Text("Cancel")
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Button(
-                        onClick = onConfirm,
-                        enabled = selectedAccountIds.isNotEmpty(),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.height(48.dp),
-                        contentPadding = PaddingValues(horizontal = 24.dp)
-                    ) {
-                        Text("Continue")
-                    }
-                }
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

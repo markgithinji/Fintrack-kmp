@@ -5,12 +5,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -22,8 +22,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
@@ -32,6 +34,7 @@ import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.ui.CommonErrorState
+import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.data.domain.ApiException
 import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
@@ -50,28 +53,13 @@ fun AccountsScreen(
     val accountsState by viewModel.accounts.collectAsStateWithLifecycle()
     val deleteResult by viewModel.deleteResult.collectAsStateWithLifecycle()
     val saveResult by viewModel.saveResult.collectAsStateWithLifecycle()
+    val clearDataResult by viewModel.clearDataResult.collectAsStateWithLifecycle()
     
     var showAccountDialog by remember { mutableStateOf<Account?>(null) }
     var isEditing by remember { mutableStateOf(false) }
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
 
-    val isOperating = deleteResult is Result.Loading || saveResult is Result.Loading
-
-    LaunchedEffect(deleteResult) {
-        when (val result = deleteResult) {
-            is Result.Success -> {
-                toastMessage = "Account deleted successfully" to false
-                viewModel.clearResults()
-            }
-            is Result.Error -> {
-                val message = (result.exception as? ApiException)?.getUserFriendlyMessage()
-                    ?: result.exception.message ?: "Error deleting account"
-                toastMessage = message to true
-                viewModel.clearResults()
-            }
-            else -> Unit
-        }
-    }
+    val isOperating = (deleteResult is Result.Loading) || (saveResult is Result.Loading) || (clearDataResult is Result.Loading)
 
     LaunchedEffect(saveResult) {
         when (val result = saveResult) {
@@ -155,12 +143,16 @@ fun AccountsScreen(
         AccountDialog(
             account = account,
             isEditing = isEditing,
-            isLoading = saveResult is Result.Loading || deleteResult is Result.Loading,
+            isLoading = saveResult is Result.Loading || deleteResult is Result.Loading || clearDataResult is Result.Loading,
+            deleteResult = deleteResult,
+            clearDataResult = clearDataResult,
             isMpesaLinked = account.isMpesa,
             isDefaultSelection = account.id == defaultAccountId,
             isOtherAccountDefault = isOtherAccountDefault,
             onDismiss = { if (!isOperating) showAccountDialog = null },
             onDelete = { viewModel.removeAccount(account.id) },
+            onClearData = { viewModel.clearAccountData(account.id) },
+            onClearResults = { viewModel.clearResults() },
             onConfirm = { name, isMpesa, isDefault ->
                 viewModel.saveAccount(account.copy(name = name, isMpesa = isMpesa))
                 if (isDefault) {
@@ -177,8 +169,8 @@ fun AccountsScreen(
 fun AccountList(
     accounts: List<Account>,
     defaultAccountId: String?,
-    topPadding: androidx.compose.ui.unit.Dp = 0.dp,
-    bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
+    topPadding: Dp = 0.dp,
+    bottomPadding: Dp = 0.dp,
     onEditAccount: (Account) -> Unit,
     onAddAccount: () -> Unit
 ) {
@@ -348,21 +340,74 @@ fun AccountDialog(
     account: Account,
     isEditing: Boolean,
     isLoading: Boolean,
+    deleteResult: Result<Unit>?,
+    clearDataResult: Result<Unit>?,
     isMpesaLinked: Boolean,
     isDefaultSelection: Boolean,
     isOtherAccountDefault: Boolean,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
+    onClearData: () -> Unit,
+    onClearResults: () -> Unit,
     onConfirm: (String, Boolean, Boolean) -> Unit
 ) {
     var accountName by remember { mutableStateOf(account.name) }
     var isMpesa by remember { mutableStateOf(isMpesaLinked) }
     var isDefault by remember { mutableStateOf(isDefaultSelection || (!isOtherAccountDefault && isMpesa)) }
+    var showClearDataConfirm by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     LaunchedEffect(isMpesa, isOtherAccountDefault) {
         if (isMpesa && !isOtherAccountDefault) {
             isDefault = true
         }
+    }
+
+    val hasChanges = accountName != account.name || 
+                     isMpesa != isMpesaLinked || 
+                     isDefault != isDefaultSelection
+
+    if (showClearDataConfirm) {
+        ConfirmationDialog(
+            title = "Clear Account Data",
+            message = "Are you sure you want to delete all transactions and budgets for '${account.name}'? This action cannot be undone.",
+            confirmLabel = "Clear Data",
+            isDestructive = true,
+            autoDismiss = false,
+            isLoading = clearDataResult is Result.Loading,
+            isSuccess = clearDataResult is Result.Success,
+            errorMessage = (clearDataResult as? Result.Error)?.exception?.message,
+            successTitle = "Data Cleared",
+            successMessage = "All transactions and budgets for '${account.name}' have been removed.",
+            onConfirm = onClearData,
+            onDismiss = {
+                showClearDataConfirm = false
+                onClearResults()
+            }
+        )
+    }
+
+    if (showDeleteConfirm) {
+        ConfirmationDialog(
+            title = "Delete Account",
+            message = "Are you sure you want to permanently delete '${account.name}' and all its associated data?",
+            confirmLabel = "Delete Account",
+            isDestructive = true,
+            autoDismiss = false,
+            isLoading = deleteResult is Result.Loading,
+            isSuccess = deleteResult is Result.Success,
+            errorMessage = (deleteResult as? Result.Error)?.exception?.message,
+            successTitle = "Account Deleted",
+            successMessage = "The account '${account.name}' has been successfully removed.",
+            onConfirm = onDelete,
+            onDismiss = {
+                showDeleteConfirm = false
+                if (deleteResult is Result.Success) {
+                    onDismiss() // Close the AccountDialog as well
+                }
+                onClearResults()
+            }
+        )
     }
 
     BasicAlertDialog(
@@ -397,7 +442,7 @@ fun AccountDialog(
                     
                     if (isEditing && !account.isDefault) {
                         IconButton(
-                            onClick = onDelete,
+                            onClick = { showDeleteConfirm = true },
                             enabled = !isLoading
                         ) {
                             Icon(
@@ -466,6 +511,17 @@ fun AccountDialog(
                                 onCheckedChange = { isDefault = it },
                                 enabled = !isLoading && !isDefaultLocked
                             )
+
+                            if (isEditing) {
+                                AccountActionRow(
+                                    title = "Clear Data",
+                                    subtitle = "Delete all transactions",
+                                    icon = Icons.Default.Delete,
+                                    onClick = { showClearDataConfirm = true },
+                                    enabled = !isLoading,
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                     }
                 }
@@ -486,7 +542,7 @@ fun AccountDialog(
                     
                     Button(
                         onClick = { if (accountName.isNotBlank()) onConfirm(accountName, isMpesa, isDefault) },
-                        enabled = accountName.isNotBlank() && !isLoading,
+                        enabled = accountName.isNotBlank() && !isLoading && (hasChanges || !isEditing),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                     ) {
@@ -506,6 +562,65 @@ fun AccountDialog(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AccountActionRow(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    tint: Color = MaterialTheme.colorScheme.primary
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(enabled = enabled) { onClick() }
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(
+                    color = tint.copy(alpha = 0.1f),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = tint
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 
