@@ -89,36 +89,11 @@ fun AccountsScreen(
         }
     }
 
-    Scaffold(
-        floatingActionButton = {
-            if (!isOperating) {
-                FloatingActionButton(
-                    onClick = { 
-                        showAccountDialog = Account(id = "", name = "")
-                        isEditing = false
-                    },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Account")
-                }
-            }
-        }
-    ) { innerPadding ->
+    Scaffold { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                if (isOperating) {
-                    LinearProgressIndicator(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = innerPadding.calculateTopPadding() + paddingValues.calculateTopPadding())
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
                 when (val state = accountsState) {
                     is Result.Loading -> {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -127,10 +102,11 @@ fun AccountsScreen(
                     }
                     is Result.Success -> {
                         val defaultAccountId by settingsViewModel.defaultAccountId.collectAsStateWithLifecycle()
+                        val effectiveDefaultAccountId = defaultAccountId ?: state.data.find { it.isMpesa }?.id
                         
                         AccountList(
                             accounts = state.data,
-                            defaultAccountId = defaultAccountId,
+                            defaultAccountId = effectiveDefaultAccountId,
                             topPadding = innerPadding.calculateTopPadding() + paddingValues.calculateTopPadding() - 4.dp,
                             bottomPadding = innerPadding.calculateBottomPadding() + paddingValues.calculateBottomPadding(),
                             onDeleteAccount = { viewModel.removeAccount(it.id) },
@@ -138,6 +114,12 @@ fun AccountsScreen(
                                 if (!isOperating) {
                                     showAccountDialog = it
                                     isEditing = true
+                                }
+                            },
+                            onAddAccount = {
+                                if (!isOperating) {
+                                    showAccountDialog = Account(id = "", name = "")
+                                    isEditing = false
                                 }
                             }
                         )
@@ -168,6 +150,7 @@ fun AccountsScreen(
 
     showAccountDialog?.let { account ->
         val defaultAccountId by settingsViewModel.defaultAccountId.collectAsStateWithLifecycle()
+        val isOtherAccountDefault = defaultAccountId != null && defaultAccountId != account.id
         
         AccountDialog(
             account = account,
@@ -175,6 +158,7 @@ fun AccountsScreen(
             isLoading = saveResult is Result.Loading,
             isMpesaLinked = account.isMpesa,
             isDefaultSelection = account.id == defaultAccountId,
+            isOtherAccountDefault = isOtherAccountDefault,
             onDismiss = { if (!isOperating) showAccountDialog = null },
             onConfirm = { name, isMpesa, isDefault ->
                 viewModel.saveAccount(account.copy(name = name, isMpesa = isMpesa))
@@ -195,33 +179,85 @@ fun AccountList(
     topPadding: androidx.compose.ui.unit.Dp = 0.dp,
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
     onDeleteAccount: (Account) -> Unit,
-    onEditAccount: (Account) -> Unit
+    onEditAccount: (Account) -> Unit,
+    onAddAccount: () -> Unit
 ) {
-    if (accounts.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize().padding(top = topPadding), contentAlignment = Alignment.Center) {
-            Text("No accounts added yet.")
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            end = 16.dp,
+            top = topPadding,
+            bottom = bottomPadding + 16.dp
+        ),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(
+            items = accounts,
+            key = { it.id }
+        ) { account ->
+            AccountItem(
+                account = account,
+                isStartAccount = account.id == defaultAccountId,
+                onDelete = { onDeleteAccount(account) },
+                onEdit = { onEditAccount(account) }
+            )
         }
-    } else {
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 16.dp, 
-                end = 16.dp, 
-                top = topPadding, 
-                bottom = bottomPadding + 80.dp
-            ),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        item(key = "add_account") {
+            AddAccountItem(onClick = onAddAccount)
+        }
+    }
+}
+
+@Composable
+fun AddAccountItem(
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(10.dp),
+            verticalArrangement = Arrangement.Center
         ) {
-            items(accounts) { account ->
-                AccountItem(
-                    account = account,
-                    isStartAccount = account.id == defaultAccountId,
-                    onDelete = { onDeleteAccount(account) },
-                    onEdit = { onEditAccount(account) }
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
                 )
             }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = "Add Account",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Text(
+                text = " ",
+                style = MaterialTheme.typography.bodyLarge
+            )
         }
     }
 }
@@ -333,12 +369,19 @@ fun AccountDialog(
     isLoading: Boolean,
     isMpesaLinked: Boolean,
     isDefaultSelection: Boolean,
+    isOtherAccountDefault: Boolean,
     onDismiss: () -> Unit,
     onConfirm: (String, Boolean, Boolean) -> Unit
 ) {
     var accountName by remember { mutableStateOf(account.name) }
     var isMpesa by remember { mutableStateOf(isMpesaLinked) }
-    var isDefault by remember { mutableStateOf(isDefaultSelection) }
+    var isDefault by remember { mutableStateOf(isDefaultSelection || (!isOtherAccountDefault && isMpesa)) }
+
+    LaunchedEffect(isMpesa, isOtherAccountDefault) {
+        if (isMpesa && !isOtherAccountDefault) {
+            isDefault = true
+        }
+    }
 
     BasicAlertDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
@@ -412,13 +455,14 @@ fun AccountDialog(
                                 enabled = !isLoading
                             )
                             
+                            val isDefaultLocked = isMpesa && !isOtherAccountDefault
                             AccountOptionRow(
                                 title = "Set as Default",
-                                subtitle = "Loads this account first",
+                                subtitle = if (isDefaultLocked) "Always default for M-Pesa" else "Loads this account first",
                                 icon = Icons.Default.Star,
                                 checked = isDefault,
                                 onCheckedChange = { isDefault = it },
-                                enabled = !isLoading
+                                enabled = !isLoading && !isDefaultLocked
                             )
                         }
                     }

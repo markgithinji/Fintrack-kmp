@@ -40,12 +40,14 @@ class AccountsViewModel(
     }
 
     // Reload all accounts
-    fun reloadAccounts(force: Boolean = true) {
+    fun reloadAccounts(force: Boolean = true, showLoading: Boolean = true) {
         val currentAccounts = _accounts.value
         if (!force && currentAccounts is Result.Success && currentAccounts.data.isNotEmpty()) return
 
         viewModelScope.launch {
-            _accounts.value = Result.Loading
+            if (showLoading) {
+                _accounts.value = Result.Loading
+            }
 
             val result = repo.getAccounts()
             _accounts.value = result
@@ -55,7 +57,8 @@ class AccountsViewModel(
                     if (result.data.isNotEmpty()) {
                         val defaultId = settingsDataSource.defaultAccountId.value
                         val defaultAccount = result.data.find { it.id == defaultId }
-                        _selectedAccount.value = Result.Success(defaultAccount ?: result.data.first())
+                        val mpesaAccount = result.data.find { it.isMpesa }
+                        _selectedAccount.value = Result.Success(defaultAccount ?: mpesaAccount ?: result.data.first())
                     } else {
                         _selectedAccount.value = Result.Error(Exception("No accounts available"))
                     }
@@ -82,8 +85,21 @@ class AccountsViewModel(
     fun saveAccount(account: Account) {
         viewModelScope.launch {
             _saveResult.value = Result.Loading
-            _saveResult.value = repo.addOrUpdateAccount(account)
-            reloadAccounts()
+            val result = repo.addOrUpdateAccount(account)
+            _saveResult.value = result
+            if (result is Result.Success) {
+                // Update local state immediately for a smooth transition
+                val currentResult = _accounts.value
+                if (currentResult is Result.Success) {
+                    val updatedList = if (currentResult.data.any { it.id == result.data.id }) {
+                        currentResult.data.map { if (it.id == result.data.id) result.data else it }
+                    } else {
+                        currentResult.data + result.data
+                    }
+                    _accounts.value = Result.Success(updatedList)
+                }
+                reloadAccounts(showLoading = false)
+            }
         }
     }
 
@@ -96,8 +112,16 @@ class AccountsViewModel(
 
         viewModelScope.launch {
             _deleteResult.value = Result.Loading
-            _deleteResult.value = repo.deleteAccount(id)
-            reloadAccounts()
+            val result = repo.deleteAccount(id)
+            _deleteResult.value = result
+            if (result is Result.Success) {
+                // Update local state immediately for a smooth transition
+                val currentResult = _accounts.value
+                if (currentResult is Result.Success) {
+                    _accounts.value = Result.Success(currentResult.data.filter { it.id != id })
+                }
+                reloadAccounts(showLoading = false)
+            }
         }
     }
 

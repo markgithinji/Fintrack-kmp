@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -70,6 +71,7 @@ import com.fintrack.shared.feature.core.ui.CommonErrorState
 fun CurrentBalanceCardWrapper(
     selectedAccountResult: Result<Account>,
     accountsResult: Result<List<Account>>,
+    defaultAccountId: String? = null,
     isBalanceHidden: Boolean,
     isMpesaAutoSyncEnabled: Boolean,
     importState: Result<Unit>?,
@@ -99,6 +101,7 @@ fun CurrentBalanceCardWrapper(
         AccountSelectionDialog(
             accountsResult = accountsResult,
             selectedAccountId = (selectedAccountResult as? Result.Success)?.data?.id,
+            defaultAccountId = defaultAccountId,
             onAccountSelected = { accountId ->
                 onAccountSelected(accountId)
                 showDialog = false
@@ -561,6 +564,7 @@ private fun CurrentBalanceSuccessState(
 fun AccountSelectionDialog(
     accountsResult: Result<List<Account>>,
     selectedAccountId: String?,
+    defaultAccountId: String? = null,
     onAccountSelected: (String) -> Unit,
     onDismiss: () -> Unit,
     onRetry: () -> Unit = {}
@@ -570,7 +574,7 @@ fun AccountSelectionDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier
             .padding(28.dp)
-            .widthIn(max = 400.dp)
+            .widthIn(max = 280.dp)
     ) {
         Surface(
             shape = RoundedCornerShape(28.dp),
@@ -606,6 +610,7 @@ fun AccountSelectionDialog(
                                 AccountSelectionListState(
                                     accounts = accountsResult.data,
                                     selectedAccountId = selectedAccountId,
+                                    defaultAccountId = defaultAccountId,
                                     onAccountSelected = { accountId ->
                                         onAccountSelected(accountId)
                                         onDismiss()
@@ -695,6 +700,7 @@ private fun AccountSelectionEmptyState() {
 private fun AccountSelectionListState(
     accounts: List<Account>,
     selectedAccountId: String?,
+    defaultAccountId: String? = null,
     onAccountSelected: (String) -> Unit
 ) {
     LazyColumn(
@@ -703,6 +709,7 @@ private fun AccountSelectionListState(
     ) {
         items(accounts) { acc ->
             val isSelected = selectedAccountId == acc.id
+            val isDefault = defaultAccountId == acc.id
 
             Row(
                 modifier = Modifier
@@ -739,12 +746,32 @@ private fun AccountSelectionListState(
                 Spacer(Modifier.width(12.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        acc.name,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            acc.name,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold
+                        )
+                        
+                        if (isDefault) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                modifier = Modifier.size(16.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.Star,
+                                        contentDescription = "Default",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(10.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
                     Text(
                         (acc.balance ?: 0.0).toCurrencyString(),
                         style = MaterialTheme.typography.labelSmall,
