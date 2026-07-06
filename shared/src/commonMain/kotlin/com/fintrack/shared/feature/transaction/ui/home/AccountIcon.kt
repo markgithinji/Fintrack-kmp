@@ -8,23 +8,26 @@ import androidx.compose.material.icons.filled.Savings
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 
-sealed class AccountIcon(val icon: ImageVector, val color: Color = Color.Companion.Unspecified) {
-    object Bank : AccountIcon(Icons.Default.AccountBalance, Color.Companion.Blue)
-    object Wallet : AccountIcon(Icons.Default.AccountCircle, Color.Companion.Green)
-    object Cash : AccountIcon(Icons.Default.Money, Color.Companion.Yellow)
-    object Savings : AccountIcon(Icons.Default.Savings, Color.Companion.Cyan) // new Savings account
-    object Mpesa : AccountIcon(Icons.Default.Money, Color(0xFF4CAF50))
-    object Default : AccountIcon(Icons.Default.AccountBalance, Color.Companion.Gray)
+sealed class AccountIcon(val icon: ImageVector, val color: Color) {
+    object Bank : AccountIcon(Icons.Default.AccountBalance, Color(0xFF1976D2))
+    object Wallet : AccountIcon(Icons.Default.AccountCircle, Color(0xFF00897B))
+    object Cash : AccountIcon(Icons.Default.Money, Color(0xFFF57C00))
+    object Savings : AccountIcon(Icons.Default.Savings, Color(0xFF0097A7))
+    object Mpesa : AccountIcon(Icons.Default.Money, Color(0xFF2E7D32))
+    object Default : AccountIcon(Icons.Default.AccountBalance, Color(0xFF616161))
 
     companion object {
         /** Map account names or types to icons */
-        fun fromAccountName(name: String): AccountIcon = when (name.lowercase()) {
-            "bank" -> Bank
-            "wallet" -> Wallet
-            "cash" -> Cash
-            "savings" -> Savings
-            "mpesa" -> Mpesa
-            else -> Default
+        fun fromAccountName(name: String): AccountIcon {
+            val lower = name.lowercase()
+            return when {
+                lower.contains("bank") -> Bank
+                lower.contains("wallet") -> Wallet
+                lower.contains("cash") -> Cash
+                lower.contains("savings") -> Savings
+                lower.contains("mpesa") -> Mpesa
+                else -> Default
+            }
         }
     }
 }

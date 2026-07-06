@@ -38,8 +38,9 @@ import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
 fun AccountsScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
@@ -109,7 +110,6 @@ fun AccountsScreen(
                             defaultAccountId = effectiveDefaultAccountId,
                             topPadding = innerPadding.calculateTopPadding() + paddingValues.calculateTopPadding() - 4.dp,
                             bottomPadding = innerPadding.calculateBottomPadding() + paddingValues.calculateBottomPadding(),
-                            onDeleteAccount = { viewModel.removeAccount(it.id) },
                             onEditAccount = { 
                                 if (!isOperating) {
                                     showAccountDialog = it
@@ -155,11 +155,12 @@ fun AccountsScreen(
         AccountDialog(
             account = account,
             isEditing = isEditing,
-            isLoading = saveResult is Result.Loading,
+            isLoading = saveResult is Result.Loading || deleteResult is Result.Loading,
             isMpesaLinked = account.isMpesa,
             isDefaultSelection = account.id == defaultAccountId,
             isOtherAccountDefault = isOtherAccountDefault,
             onDismiss = { if (!isOperating) showAccountDialog = null },
+            onDelete = { viewModel.removeAccount(account.id) },
             onConfirm = { name, isMpesa, isDefault ->
                 viewModel.saveAccount(account.copy(name = name, isMpesa = isMpesa))
                 if (isDefault) {
@@ -178,7 +179,6 @@ fun AccountList(
     defaultAccountId: String?,
     topPadding: androidx.compose.ui.unit.Dp = 0.dp,
     bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
-    onDeleteAccount: (Account) -> Unit,
     onEditAccount: (Account) -> Unit,
     onAddAccount: () -> Unit
 ) {
@@ -201,7 +201,6 @@ fun AccountList(
             AccountItem(
                 account = account,
                 isStartAccount = account.id == defaultAccountId,
-                onDelete = { onDeleteAccount(account) },
                 onEdit = { onEditAccount(account) }
             )
         }
@@ -234,7 +233,7 @@ fun AddAccountItem(
                 modifier = Modifier
                     .size(32.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -266,7 +265,6 @@ fun AddAccountItem(
 fun AccountItem(
     account: Account,
     isStartAccount: Boolean,
-    onDelete: () -> Unit,
     onEdit: () -> Unit
 ) {
     val accountIcon = if (account.isMpesa) AccountIcon.Mpesa else AccountIcon.fromAccountName(account.name)
@@ -295,7 +293,7 @@ fun AccountItem(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(accountIcon.color.copy(alpha = 0.12f)),
+                        .background(accountIcon.color.copy(alpha = 0.16f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -306,35 +304,18 @@ fun AccountItem(
                     )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (isStartAccount) {
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            modifier = Modifier.size(20.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Default.Star,
-                                    contentDescription = "Default",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(12.dp)
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(4.dp))
-                    }
-
-                    if (!account.isDefault) {
-                        IconButton(
-                            onClick = onDelete,
-                            modifier = Modifier.size(24.dp)
-                        ) {
+                if (isStartAccount) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(20.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
                             Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete Account",
-                                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f),
-                                modifier = Modifier.size(16.dp)
+                                imageVector = Icons.Default.Star,
+                                contentDescription = "Default",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(12.dp)
                             )
                         }
                     }
@@ -371,6 +352,7 @@ fun AccountDialog(
     isDefaultSelection: Boolean,
     isOtherAccountDefault: Boolean,
     onDismiss: () -> Unit,
+    onDelete: () -> Unit,
     onConfirm: (String, Boolean, Boolean) -> Unit
 ) {
     var accountName by remember { mutableStateOf(account.name) }
@@ -401,12 +383,31 @@ fun AccountDialog(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                Text(
-                    text = if (isEditing) "Edit Account" else "Add New Account",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (isEditing) "Edit Account" else "Add New Account",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    
+                    if (isEditing && !account.isDefault) {
+                        IconButton(
+                            onClick = onDelete,
+                            enabled = !isLoading
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete Account",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
 
                 OutlinedTextField(
                     value = accountName,
@@ -415,13 +416,14 @@ fun AccountDialog(
                     placeholder = { Text("e.g. Personal Savings") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    enabled = !isLoading,
+                    enabled = !isLoading && !account.isDefault,
                     shape = RoundedCornerShape(12.dp),
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.AccountBalanceWallet,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = if (account.isDefault) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f) 
+                                   else MaterialTheme.colorScheme.primary
                         )
                     }
                 )

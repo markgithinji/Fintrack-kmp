@@ -8,7 +8,9 @@ import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.safeApiCall
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 class AccountRepositoryImpl(
     private val api: AccountsApi
 ) : AccountRepository {
@@ -17,25 +19,23 @@ class AccountRepositoryImpl(
         val accountsDto = api.getAccounts()
         val accounts = accountsDto.map { it.toDomain() }
         
-        // Custom sorting: M-Pesa first, Bank second, others in middle, Cash last.
+        // Priority sorting:
+        // 1. System/Default accounts first
+        // 2. Within defaults, M-Pesa first
+        // 3. Followed by creation time (if available)
         accounts.sortedWith { a, b ->
-            val weightA = when {
-                a.isMpesa || a.name.contains("mpesa", ignoreCase = true) -> 0
-                a.name.contains("bank", ignoreCase = true) -> 1
-                a.name.contains("cash", ignoreCase = true) -> 3
-                else -> 2
-            }
-            val weightB = when {
-                b.isMpesa || b.name.contains("mpesa", ignoreCase = true) -> 0
-                b.name.contains("bank", ignoreCase = true) -> 1
-                b.name.contains("cash", ignoreCase = true) -> 3
-                else -> 2
-            }
-            
-            if (weightA != weightB) {
-                weightA.compareTo(weightB)
-            } else {
-                a.name.compareTo(b.name, ignoreCase = true)
+            when {
+                a.isDefault != b.isDefault -> if (a.isDefault) -1 else 1
+                a.isDefault && a.isMpesa != b.isMpesa -> if (a.isMpesa) -1 else 1
+                else -> {
+                    val timeA = a.createdAt
+                    val timeB = b.createdAt
+                    if (timeA != null && timeB != null) {
+                        timeA.compareTo(timeB)
+                    } else {
+                        0
+                    }
+                }
             }
         }
     }
