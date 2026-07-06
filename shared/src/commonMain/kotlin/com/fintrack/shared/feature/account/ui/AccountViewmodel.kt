@@ -55,10 +55,17 @@ class AccountsViewModel(
             when (result) {
                 is Result.Success -> {
                     if (result.data.isNotEmpty()) {
-                        val defaultId = settingsDataSource.defaultAccountId.value
-                        val defaultAccount = result.data.find { it.id == defaultId }
-                        val mpesaAccount = result.data.find { it.isMpesa }
-                        _selectedAccount.value = Result.Success(defaultAccount ?: mpesaAccount ?: result.data.first())
+                        val currentSelectedId = (_selectedAccount.value as? Result.Success)?.data?.id
+                        val preservedAccount = result.data.find { it.id == currentSelectedId }
+                        
+                        if (preservedAccount != null) {
+                            _selectedAccount.value = Result.Success(preservedAccount)
+                        } else {
+                            val defaultId = settingsDataSource.defaultAccountId.value
+                            val defaultAccount = result.data.find { it.id == defaultId }
+                            val mpesaAccount = result.data.find { it.isMpesa }
+                            _selectedAccount.value = Result.Success(defaultAccount ?: mpesaAccount ?: result.data.first())
+                        }
                     } else {
                         _selectedAccount.value = Result.Error(Exception("No accounts available"))
                     }
