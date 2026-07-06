@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.core.ui
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -45,17 +46,23 @@ fun MaterialToast(
         AnimatedVisibility(
             visible = isVisible,
             modifier = Modifier.align(alignment),
-            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+            enter = slideInVertically(
+                initialOffsetY = { it / 2 },
+                animationSpec = tween(durationMillis = 400, easing = EaseOutBack)
+            ) + fadeIn(animationSpec = tween(durationMillis = 400)),
+            exit = slideOutVertically(
+                targetOffsetY = { it / 2 },
+                animationSpec = tween(durationMillis = 300, easing = EaseIn)
+            ) + fadeOut(animationSpec = tween(durationMillis = 300))
         ) {
             Surface(
-                modifier = Modifier
-                    .shadow(12.dp, RoundedCornerShape(16.dp)),
                 color = if (isError) MaterialTheme.colorScheme.errorContainer
                         else MaterialTheme.colorScheme.primaryContainer,
                 contentColor = if (isError) MaterialTheme.colorScheme.onErrorContainer
                               else MaterialTheme.colorScheme.onPrimaryContainer,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp),
+                tonalElevation = 0.dp,
+                shadowElevation = 0.5.dp
             ) {
                 Row(
                     modifier = Modifier
