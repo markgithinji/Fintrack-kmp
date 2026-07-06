@@ -25,6 +25,14 @@ data class Category(
         val Insurance = Category("insurance", "Insurance", true, "Shield", true)
         val DiningOut = Category("dining_out", "Dining Out", true, "Restaurant", true)
         val Utilities = Category("utilities", "Utilities", true, "Lightbulb", true)
+        val Internet = Category("internet", "Internet", true, "Wifi", true)
+        val Airtime = Category("airtime", "Airtime", true, "Smartphone", true)
+        val Bank = Category("bank", "Bank", true, "AccountBalance", true)
+        val Loans = Category("loans", "Loans", true, "AccountBalanceWallet", true)
+        val Charity = Category("charity", "Charity", true, "VolunteerActivism", true)
+        val Government = Category("government", "Government", true, "AccountBalance", true)
+        val Savings = Category("savings", "Savings", true, "Savings", true)
+        val Transfer = Category("transfer", "Transfer", true, "Sync", true)
         val Pets = Category("pets", "Pets", true, "Pets", true)
         val Fitness = Category("fitness", "Fitness", true, "FitnessCenter", true)
         val Maintenance = Category("maintenance", "Maintenance", true, "Build", true)
@@ -40,14 +48,16 @@ data class Category(
         val Rental = Category("rental", "Rental", false, "RealEstateAgent", true)
         val Dividends = Category("dividends", "Dividends", false, "Analytics", true)
         val Interest = Category("interest", "Interest", false, "Percent", true)
+        val GeneralIncome = Category("income", "Income", false, "AttachMoney", true)
         val OtherIncome = Category("other_income", "Other", false, "AttachMoney", true)
 
         val allCategories = listOf(
             Food, Transport, Shopping, Health, Bills,
             Entertainment, Education, GiftsExpense, Travel,
             PersonalCare, Subscriptions, Rent, Groceries,
-            Insurance, DiningOut, Utilities, Pets, Fitness, Maintenance, TransactionCost, MiscExpense,
-            Salary, Freelance, Investments, GiftsIncome, Bonus, Rental, Dividends, Interest, OtherIncome
+            Insurance, DiningOut, Utilities, Internet, Airtime, Bank, Loans, Charity, Government, Savings, Transfer,
+            Pets, Fitness, Maintenance, TransactionCost, MiscExpense,
+            Salary, Freelance, Investments, GiftsIncome, Bonus, Rental, Dividends, Interest, GeneralIncome, OtherIncome
         )
 
         val expenseCategories = allCategories.filter { it.isExpense }

@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.transaction.ui.util
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.AttachMoney
@@ -22,14 +23,17 @@ import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.RealEstateAgent
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material.icons.filled.Subscriptions
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.VolunteerActivism
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -54,6 +58,10 @@ fun Category.toIcon(): ImageVector = when (this.iconName ?: this.name) {
     "Restaurant", "Dining Out" -> Icons.Default.Restaurant
     "VolunteerActivism", "Charity" -> Icons.Default.VolunteerActivism
     "AccountBalanceWallet", "Loans" -> Icons.Default.AccountBalanceWallet
+    "AccountBalance", "Bank", "Government" -> Icons.Default.AccountBalance
+    "Savings" -> Icons.Default.Savings
+    "Wifi", "Internet" -> Icons.Default.Wifi
+    "Smartphone", "Airtime" -> Icons.Default.Smartphone
     "Lightbulb", "Utilities" -> Icons.Default.Lightbulb
     "Pets" -> Icons.Default.Pets
     "FitnessCenter", "Fitness" -> Icons.Default.FitnessCenter
@@ -89,6 +97,10 @@ fun Category.toColor(): Color = when (this.iconName ?: this.name) {
     "Restaurant", "Dining Out" -> Color(0xFFF06292)
     "VolunteerActivism", "Charity" -> Color(0xFFE91E63)
     "AccountBalanceWallet", "Loans" -> Color(0xFF795548)
+    "AccountBalance", "Bank", "Government" -> Color(0xFF1976D2)
+    "Savings" -> Color(0xFF0097A7)
+    "Wifi", "Internet" -> Color(0xFF4FC3F7)
+    "Smartphone", "Airtime" -> Color(0xFF81C784)
     "Lightbulb", "Utilities" -> Color(0xFFFFD54F)
     "Pets" -> Color(0xFF8D6E63)
     "FitnessCenter", "Fitness" -> Color(0xFF4DB6AC)

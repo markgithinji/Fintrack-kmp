@@ -317,7 +317,10 @@ object MpesaParser {
             r.contains("hardware") || r.contains("timber") || r.contains("maintenance") || r.contains("repair") -> "Maintenance"
             r.contains("e-citizen") || r.contains("kra") || r.contains("county") -> "Government"
             r.contains("britam") || r.contains("nhif") || r.contains("insurance") -> "Insurance"
-            r.contains("commission") || r.contains("bonus") || r.contains("interest") || r.contains("salary") -> "Income"
+            r.contains("salary") -> "Salary"
+            r.contains("bonus") -> "Bonus"
+            r.contains("interest") -> "Interest"
+            r.contains("commission") || r.contains("income") -> "Income"
             r.contains("sacco") || r.contains("chama") || r.contains("orokise") -> "Savings"
             else -> "Transfer"
         }
