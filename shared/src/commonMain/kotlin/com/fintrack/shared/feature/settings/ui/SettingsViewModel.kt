@@ -251,6 +251,12 @@ class SettingsViewModel(
     private val _exportResult = MutableStateFlow<String?>(null)
     val exportResult: StateFlow<String?> = _exportResult.asStateFlow()
 
+    private val _exportStartDate = MutableStateFlow<String?>(null)
+    val exportStartDate: StateFlow<String?> = _exportStartDate.asStateFlow()
+
+    private val _exportEndDate = MutableStateFlow<String?>(null)
+    val exportEndDate: StateFlow<String?> = _exportEndDate.asStateFlow()
+
     private val _isLoading = MutableStateFlow(value = false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -448,7 +454,12 @@ class SettingsViewModel(
                 _exportResult.value = null
                 _isLoading.value = true
                 val format = settingsDataSource.exportFormat.value
-                when (val result = exportTransactionsUseCase(format)) {
+                val result = exportTransactionsUseCase(
+                    format = format,
+                    startDate = _exportStartDate.value,
+                    endDate = _exportEndDate.value
+                )
+                when (result) {
                     is Result.Success -> {
                         _exportResult.value = result.data
                     }
@@ -569,6 +580,11 @@ class SettingsViewModel(
 
     fun clearExportResult() {
         _exportResult.value = null
+    }
+
+    fun setExportDateRange(startDate: String?, endDate: String?) {
+        _exportStartDate.value = startDate
+        _exportEndDate.value = endDate
     }
 
     // Password change methods

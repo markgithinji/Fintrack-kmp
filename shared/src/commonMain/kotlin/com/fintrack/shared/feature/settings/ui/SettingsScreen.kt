@@ -39,6 +39,7 @@ import com.fintrack.shared.feature.settings.domain.model.ExportFormat
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import com.fintrack.shared.feature.settings.domain.util.format
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
+import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
@@ -55,6 +56,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlinx.datetime.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,6 +85,8 @@ fun SettingsScreen(
     val reminderTime by viewModel.reminderTime.collectAsStateWithLifecycle()
     val showPermissionRequest by viewModel.showPermissionRequest.collectAsStateWithLifecycle()
     val exportResult by viewModel.exportResult.collectAsStateWithLifecycle()
+    val exportStartDate by viewModel.exportStartDate.collectAsStateWithLifecycle()
+    val exportEndDate by viewModel.exportEndDate.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val trackedCategories by viewModel.trackedCategories.collectAsStateWithLifecycle()
@@ -623,7 +627,10 @@ fun SettingsScreen(
     if (showExportFormatDialog) {
         ExportFormatSelectionDialog(
             currentFormat = exportFormat,
+            startDate = exportStartDate,
+            endDate = exportEndDate,
             onFormatSelected = { viewModel.setExportFormat(it) },
+            onDateRangeSelected = { start, end -> viewModel.setExportDateRange(start, end) },
             onExport = {
                 viewModel.exportTransactions()
                 showExportFormatDialog = false
@@ -844,16 +851,22 @@ fun ChangePasswordDialog(
 @Composable
 fun ExportFormatSelectionDialog(
     currentFormat: ExportFormat,
+    startDate: String?,
+    endDate: String?,
     onFormatSelected: (ExportFormat) -> Unit,
+    onDateRangeSelected: (String?, String?) -> Unit,
     onExport: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    var showStartPicker by remember { mutableStateOf(false) }
+    var showEndPicker by remember { mutableStateOf(false) }
+
     BasicAlertDialog(
         onDismissRequest = onDismiss,
         properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier
             .padding(28.dp)
-            .widthIn(max = 400.dp)
+            .widthIn(max = 420.dp)
     ) {
         Surface(
             shape = RoundedCornerShape(28.dp),
@@ -872,10 +885,50 @@ fun ExportFormatSelectionDialog(
                 )
 
                 Text(
-                    text = "Choose your preferred format and download your data.",
+                    text = "Filter by date range (optional) and select your preferred format.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 24.dp)
+                    modifier = Modifier.padding(bottom = 20.dp)
+                )
+
+                // Date Range Section
+                Text(
+                    text = "Date Range",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    DateRangeItem(
+                        label = "From",
+                        date = startDate,
+                        modifier = Modifier.weight(1f),
+                        onClick = { showStartPicker = true },
+                        onClear = { onDateRangeSelected(null, endDate) }
+                    )
+                    DateRangeItem(
+                        label = "To",
+                        date = endDate,
+                        modifier = Modifier.weight(1f),
+                        onClick = { showEndPicker = true },
+                        onClear = { onDateRangeSelected(startDate, null) }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Format Selection Section
+                Text(
+                    text = "File Format",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
 
                 Column(
@@ -890,7 +943,7 @@ fun ExportFormatSelectionDialog(
                             color = if (isSelected) 
                                 MaterialTheme.colorScheme.primaryContainer 
                             else 
-                                Color.Transparent,
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -919,7 +972,7 @@ fun ExportFormatSelectionDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
                 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -932,12 +985,94 @@ fun ExportFormatSelectionDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = onExport,
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
                     ) {
                         Icon(Icons.Default.FileDownload, null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Export Now")
                     }
+                }
+            }
+        }
+    }
+
+    if (showStartPicker) {
+        FintrackDatePickerDialog(
+            initialDate = startDate?.let { LocalDate.parse(it) },
+            onDateSelected = {
+                onDateRangeSelected(it.toString(), endDate)
+                showStartPicker = false
+            },
+            onDismiss = { showStartPicker = false }
+        )
+    }
+
+    if (showEndPicker) {
+        FintrackDatePickerDialog(
+            initialDate = endDate?.let { LocalDate.parse(it) },
+            onDateSelected = {
+                onDateRangeSelected(startDate, it.toString())
+                showEndPicker = false
+            },
+            onDismiss = { showEndPicker = false }
+        )
+    }
+}
+
+@Composable
+private fun DateRangeItem(
+    label: String,
+    date: String?,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    onClear: () -> Unit
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+        )
+        Surface(
+            onClick = onClick,
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = date ?: "Any",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (date != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+                if (date != null) {
+                    IconButton(
+                        onClick = onClear,
+                        modifier = Modifier.size(18.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Clear",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                } else {
+                    Icon(
+                        Icons.Default.CalendarToday,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(14.dp)
+                    )
                 }
             }
         }

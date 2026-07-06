@@ -103,11 +103,19 @@ class TransactionRepositoryImpl(
             api.getTransaction(id).toDomain()
         }
 
-    override suspend fun getAllTransactions(): Result<List<Transaction>> =
+    override suspend fun getAllTransactions(
+        startDate: String?,
+        endDate: String?,
+        accountId: String?
+    ): Result<List<Transaction>> =
         safeApiCall {
             // Fetching with a large limit for export. 
-            // In a real app, this might need to handle pagination to get *everything*.
-            val paginated = api.getTransactions(limit = 1000)
+            val paginated = api.getTransactions(
+                limit = 2000,
+                startDate = startDate,
+                endDate = endDate,
+                accountId = accountId
+            )
             paginated.data.map { it.toDomain() }
         }
 

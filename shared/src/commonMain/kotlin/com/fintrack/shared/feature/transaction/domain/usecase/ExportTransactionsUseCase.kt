@@ -18,8 +18,15 @@ class ExportTransactionsUseCase(
     private val json = Json { prettyPrint = true }
 
     @OptIn(ExperimentalTime::class)
-    suspend operator fun invoke(format: ExportFormat = ExportFormat.CSV): Result<String> {
-        val result = repository.getAllTransactions()
+    suspend operator fun invoke(
+        format: ExportFormat = ExportFormat.CSV,
+        startDate: String? = null,
+        endDate: String? = null
+    ): Result<String> {
+        val result = repository.getAllTransactions(
+            startDate = startDate,
+            endDate = endDate
+        )
         if (result is Result.Error) return Result.Error(result.exception)
         
         val transactions = (result as Result.Success).data

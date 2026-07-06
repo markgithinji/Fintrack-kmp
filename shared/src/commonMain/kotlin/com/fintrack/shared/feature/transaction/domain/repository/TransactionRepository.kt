@@ -30,7 +30,11 @@ interface TransactionRepository {
 
     suspend fun getTransaction(id: String): Result<Transaction>
 
-    suspend fun getAllTransactions(): Result<List<Transaction>>
+    suspend fun getAllTransactions(
+        startDate: String? = null,
+        endDate: String? = null,
+        accountId: String? = null
+    ): Result<List<Transaction>>
 
     suspend fun updateTransaction(id: String, transaction: Transaction): Result<Transaction>
 
