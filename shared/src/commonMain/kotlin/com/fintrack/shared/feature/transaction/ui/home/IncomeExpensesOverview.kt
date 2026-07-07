@@ -431,23 +431,27 @@ fun BarChart(
                                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                             ) {
                                 // Income bar
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.BottomCenter)
-                                        .fillMaxHeight(incomeHeightFraction.coerceAtLeast(0.01f))
-                                        .width(barWidth)
-                                        .background(GreenIncome, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp))
-                                )
+                                if (incomeHeightFraction > 0f) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.BottomCenter)
+                                            .fillMaxHeight(incomeHeightFraction)
+                                            .width(barWidth)
+                                            .background(GreenIncome, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp))
+                                    )
+                                }
 
                                 // Expense stacked on income
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.BottomCenter)
-                                        .fillMaxHeight(expenseHeightFraction.coerceAtLeast(0.01f))
-                                        .width(barWidth)
-                                        .offset(y = -totalBarHeight * incomeHeightFraction)
-                                        .background(PinkExpense, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                                )
+                                if (expenseHeightFraction > 0f) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.BottomCenter)
+                                            .fillMaxHeight(expenseHeightFraction)
+                                            .width(barWidth)
+                                            .offset(y = -totalBarHeight * incomeHeightFraction)
+                                            .background(PinkExpense, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                                    )
+                                }
                             }
                         }
                     }

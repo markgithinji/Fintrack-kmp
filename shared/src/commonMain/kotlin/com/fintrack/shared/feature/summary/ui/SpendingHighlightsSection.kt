@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -134,10 +135,8 @@ fun SpendingHighlightsSection(
                 when (result) {
                     is Result.Loading -> {
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                LoadingHighlightCard(modifier = Modifier.weight(1f))
-                                LoadingHighlightCard(modifier = Modifier.weight(1f))
-                            }
+                            LoadingHealthSummaryCard()
+                            
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 LoadingHighlightCard(modifier = Modifier.weight(1f))
                                 LoadingHighlightCard(modifier = Modifier.weight(1f))
@@ -187,30 +186,10 @@ private fun SuccessContent(
         val essentialRatio = highlights.essentialSpendRatio
 
         if (savingsRate != null || essentialRatio != null) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                if (savingsRate != null) {
-                    HighlightCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Income Saved",
-                        value = "${savingsRate.toInt()}%",
-                        subValue = "Portion of earnings kept",
-                        icon = Icons.AutoMirrored.Filled.ShowChart,
-                        color = if (savingsRate >= 20) GreenIncome else SegmentColor2,
-                        badge = if (savingsRate >= 20) "Healthy" to GreenIncome else null
-                    )
-                }
-                if (essentialRatio != null) {
-                    HighlightCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Needs & Bills",
-                        value = "${essentialRatio.toInt()}%",
-                        subValue = "Rent, Food & Utilities",
-                        icon = Icons.Default.Category,
-                        color = if (essentialRatio <= 50) GreenIncome else PinkExpense,
-                        badge = if (essentialRatio <= 50) "Good" to GreenIncome else null
-                    )
-                }
-            }
+            HealthSummaryCard(
+                savingsRate = savingsRate,
+                essentialRatio = essentialRatio
+            )
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -431,6 +410,171 @@ fun HighlightCard(
                     color = color
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun HealthSummaryCard(
+    savingsRate: Double?,
+    essentialRatio: Double?
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().height(134.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (savingsRate != null) {
+                HealthMetricItem(
+                    modifier = Modifier.weight(1f),
+                    title = "Income Saved",
+                    value = "${savingsRate.toInt()}%",
+                    subValue = "Portion kept",
+                    icon = Icons.AutoMirrored.Filled.ShowChart,
+                    color = if (savingsRate >= 20) GreenIncome else SegmentColor2,
+                    badge = if (savingsRate >= 20) "Healthy" else null
+                )
+            }
+
+            if (savingsRate != null && essentialRatio != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(1.dp)
+                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+                        .padding(vertical = 8.dp)
+                )
+            }
+
+            if (essentialRatio != null) {
+                HealthMetricItem(
+                    modifier = Modifier.weight(1f),
+                    title = "Needs & Bills",
+                    value = "${essentialRatio.toInt()}%",
+                    subValue = "Rent & Food",
+                    icon = Icons.Default.Category,
+                    color = if (essentialRatio <= 50) GreenIncome else PinkExpense,
+                    badge = if (essentialRatio <= 50) "Good" else null
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HealthMetricItem(
+    modifier: Modifier = Modifier,
+    title: String,
+    value: String,
+    subValue: String,
+    icon: ImageVector,
+    color: Color,
+    badge: String? = null
+) {
+    Column(
+        modifier = modifier.padding(horizontal = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(color.copy(alpha = 0.15f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            if (badge != null) {
+                Surface(
+                    color = color.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = badge,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = color,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        Column {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subValue,
+                style = MaterialTheme.typography.labelSmall,
+                color = color,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+fun LoadingHealthSummaryCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth().height(134.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            LoadingHealthMetricItem(modifier = Modifier.weight(1f))
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(1.dp)
+                    .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+            )
+            LoadingHealthMetricItem(modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun LoadingHealthMetricItem(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(horizontal = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        AnimatedShimmerBox(modifier = Modifier.size(36.dp).clip(CircleShape))
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            AnimatedShimmerBox(modifier = Modifier.width(60.dp).height(10.dp).clip(RoundedCornerShape(4.dp)))
+            AnimatedShimmerBox(modifier = Modifier.width(40.dp).height(14.dp).clip(RoundedCornerShape(4.dp)))
+            AnimatedShimmerBox(modifier = Modifier.width(50.dp).height(10.dp).clip(RoundedCornerShape(4.dp)))
         }
     }
 }

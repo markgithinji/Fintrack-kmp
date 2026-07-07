@@ -9,6 +9,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +31,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -157,8 +160,20 @@ fun InteractiveDonutWithText(
         val isShowingOverallTotal = selectedIndex < 0
         val displayText = if (isShowingOverallTotal) "Total" else categorySums[selectedIndex].first
         val displayAmount = if (isShowingOverallTotal) totalAmount else categorySums[selectedIndex].second
+        val currencyString = displayAmount.toCurrencyString()
+        
+        // Auto-scale text logic: shrink if currency string is long
+        val amountFontSize = when {
+            currencyString.length > 12 -> 14.sp
+            currencyString.length > 10 -> 16.sp
+            currencyString.length > 8 -> 18.sp
+            else -> 20.sp
+        }
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = 40.dp) // Leave room for donut segments
+        ) {
             if (!isShowingOverallTotal) {
                 val category = Category.fromName(displayText, isExpense = true)
                 val icon = category.toIcon()
@@ -166,27 +181,32 @@ fun InteractiveDonutWithText(
                 Icon(
                     imageVector = icon,
                     contentDescription = displayText,
-                    modifier = Modifier.size(32.dp),
+                    modifier = Modifier.size(28.dp),
                     tint = segmentColors[selectedIndex % segmentColors.size]
                 )
             } else {
                 Text(
                     text = "📊",
-                    fontSize = 28.sp
+                    fontSize = 24.sp
                 )
             }
 
             Text(
                 text = displayText,
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = displayAmount.toCurrencyString(),
-                fontSize = 22.sp,
+                text = currencyString,
+                fontSize = amountFontSize,
+                lineHeight = amountFontSize,
                 fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                textAlign = TextAlign.Center
             )
         }
     }
