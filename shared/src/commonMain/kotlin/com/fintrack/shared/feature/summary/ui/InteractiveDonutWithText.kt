@@ -109,7 +109,7 @@ fun InteractiveDonutWithText(
             modifier = Modifier.fillMaxSize()
         ) {
             val baseStrokeWidthPx = 36.dp.toPx()
-            val diameter = size.minDimension - 80.dp.toPx() // More room for selected stroke
+            val diameter = size.minDimension - 80.dp.toPx()
             var startAngle = -90f
 
             categorySums.forEachIndexed { index, (_, amount) ->
@@ -153,7 +153,7 @@ fun InteractiveDonutWithText(
             }
         }
 
-        // --- Center label with conditional icon ---
+        // Center label with conditional icon
         val isShowingOverallTotal = selectedIndex < 0
         val displayText = if (isShowingOverallTotal) "Total" else categorySums[selectedIndex].first
         val displayAmount = if (isShowingOverallTotal) totalAmount else categorySums[selectedIndex].second
@@ -192,7 +192,7 @@ fun InteractiveDonutWithText(
     }
 }
 
-// --- Helper: calculate arcs ---
+// Helper: calculate arcs
 private data class DrawingAngles(val start: Float, val sweep: Float) {
     fun isInsideAngle(angle: Float): Boolean {
         val normalizedStart = (start % 360 + 360) % 360
@@ -220,7 +220,7 @@ private fun calculateAnglesList(
 }
 
 
-// --- Tap detection helpers ---
+// Tap detection helpers
 private fun handleCanvasTap(
     center: Offset,
     tapOffset: Offset,
@@ -235,8 +235,6 @@ private fun handleCanvasTap(
     val distance = sqrt(dx * dx + dy * dy)
     val tapAngle = (atan2(dy, dx) * 180f / PI.toFloat() + 360f) % 360f
 
-    // Widened radius check: Donut segments are easier to hit.
-    // Inner hole is smaller (0.2x), and outside reach is larger (1.5x).
     val isDistanceValid = distance > center.x * 0.2f && distance < center.x * 1.5f
 
     var selectedIndex = -1
@@ -244,7 +242,6 @@ private fun handleCanvasTap(
 
     if (isDistanceValid) {
         anglesList.forEachIndexed { index, angle ->
-            // Expand touch area for small slices to at least 25 degrees for easier interaction
             val minTouchSweep = 25f
             val expandedSweep = angle.sweep.coerceAtLeast(minTouchSweep)
             val expansion = (expandedSweep - angle.sweep) / 2f

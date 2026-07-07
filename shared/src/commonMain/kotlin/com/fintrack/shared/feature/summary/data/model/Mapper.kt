@@ -6,6 +6,7 @@ import com.fintrack.shared.feature.summary.domain.model.AvailableYears
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary
 import com.fintrack.shared.feature.summary.domain.model.CategorySummary
+import com.fintrack.shared.feature.summary.domain.model.Correlation
 import com.fintrack.shared.feature.summary.domain.model.DaySummary
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.Highlight
@@ -14,7 +15,7 @@ import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
 import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 
-// --- Highlight Summary ---
+// Highlight Summary
 fun HighlightDto.toDomain(): Highlight =
     Highlight(
         label = label.ifEmpty { "-" }, 
@@ -23,6 +24,9 @@ fun HighlightDto.toDomain(): Highlight =
         volatilityPercentage = volatilityPercentage
     )
 
+fun CorrelationDto.toDomain(): Correlation =
+    Correlation(source, target, insight)
+
 fun HighlightsDto.toDomain(): Highlights =
     Highlights(
         highestMonth = highestMonth?.toDomain(),
@@ -30,7 +34,11 @@ fun HighlightsDto.toDomain(): Highlights =
         highestDay = highestDay?.toDomain(),
         averagePerDay = averagePerDay,
         ytdChangePercentage = ytdChangePercentage,
-        projectedTotal = projectedTotal
+        projectedTotal = projectedTotal,
+        savingsRate = savingsRate,
+        essentialSpendRatio = essentialSpendRatio,
+        projectedExceedMonth = projectedExceedMonth,
+        correlations = correlations?.map { it.toDomain() }
     )
 
 fun HighlightsSummaryDto.toDomain(): StatisticsSummary =
@@ -45,16 +53,25 @@ fun HighlightsSummaryDto.toDomain(): StatisticsSummary =
         totalTransactionCost = totalTransactionCost
     )
 
-// --- Distribution Summary ---
+// Distribution Summary
 fun CategorySummaryDto.toDomain(): CategorySummary =
-    CategorySummary(category, total, percentage)
+    CategorySummary(
+        category = category, 
+        total = total, 
+        percentage = percentage,
+        transactionCount = transactionCount,
+        averageTransactionCount = averageTransactionCount,
+        momentumTrend = momentumTrend,
+        topDescriptionInsights = topDescriptionInsights
+    )
 
 fun DistributionSummaryDto.toDomain(): DistributionSummary =
     DistributionSummary(
         period = period,
         totalTransactionCost = totalTransactionCost,
         incomeCategories = incomeCategories.map { it.toDomain() },
-        expenseCategories = expenseCategories.map { it.toDomain() }
+        expenseCategories = expenseCategories.map { it.toDomain() },
+        othersInsightSummary = othersInsightSummary
     )
 
 // Overview Summary
@@ -105,4 +122,3 @@ fun TransactionCountSummaryDto.toDomain() = TransactionCountSummary(
     totalTransactions = totalTransactions,
     totalTransactionCost = totalTransactionCost
 )
-

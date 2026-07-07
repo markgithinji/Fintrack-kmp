@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Today
+import androidx.compose.material.icons.filled.TipsAndUpdates
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -145,6 +146,10 @@ fun SpendingHighlightsSection(
                                 LoadingHighlightCard(modifier = Modifier.weight(1f))
                                 LoadingHighlightCard(modifier = Modifier.weight(1f))
                             }
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                LoadingHighlightCard(modifier = Modifier.weight(1f))
+                                LoadingHighlightCard(modifier = Modifier.weight(1f))
+                            }
                         }
                     }
 
@@ -175,8 +180,39 @@ private fun SuccessContent(
     }
 
     val isIncome = tabType == TabType.Income
+    val accentColor = if (isIncome) GreenIncome else PinkExpense
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        val savingsRate = highlights.savingsRate
+        val essentialRatio = highlights.essentialSpendRatio
+
+        if (savingsRate != null || essentialRatio != null) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (savingsRate != null) {
+                    HighlightCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Income Saved",
+                        value = "${savingsRate.toInt()}%",
+                        subValue = "Portion of earnings kept",
+                        icon = Icons.AutoMirrored.Filled.ShowChart,
+                        color = if (savingsRate >= 20) GreenIncome else SegmentColor2,
+                        badge = if (savingsRate >= 20) "Healthy" to GreenIncome else null
+                    )
+                }
+                if (essentialRatio != null) {
+                    HighlightCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Needs & Bills",
+                        value = "${essentialRatio.toInt()}%",
+                        subValue = "Rent, Food & Utilities",
+                        icon = Icons.Default.Category,
+                        color = if (essentialRatio <= 50) GreenIncome else PinkExpense,
+                        badge = if (essentialRatio <= 50) "Good" to GreenIncome else null
+                    )
+                }
+            }
+        }
+
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             HighlightCard(
                 modifier = Modifier.weight(1f),
@@ -225,13 +261,15 @@ private fun SuccessContent(
                 } else SegmentColor1
             )
             
+            val exceedMonth = highlights.projectedExceedMonth
             HighlightCard(
                 modifier = Modifier.weight(1f),
                 title = "Projected Year",
                 value = highlights.projectedTotal?.toCurrencyString() ?: "N/A",
-                subValue = "Est. Year-end",
+                subValue = if (exceedMonth != null) "Budget ends in $exceedMonth" else "Est. Year-end",
                 icon = Icons.AutoMirrored.Filled.ShowChart,
-                color = SegmentColor2
+                color = if (exceedMonth != null) PinkExpense else SegmentColor2,
+                badge = exceedMonth?.let { "Budget Risk" to PinkExpense }
             )
         }
 
@@ -252,6 +290,64 @@ private fun SuccessContent(
                 icon = Icons.Default.CalendarMonth,
                 color = SegmentColor1
             )
+        }
+
+        val correlations = highlights.correlations
+        if (correlations != null && correlations.isNotEmpty()) {
+            correlations.forEach { correlation ->
+                CorrelationCard(
+                    correlation = correlation,
+                    color = accentColor
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CorrelationCard(
+    correlation: com.fintrack.shared.feature.summary.domain.model.Correlation,
+    color: Color
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(color.copy(alpha = 0.15f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.TipsAndUpdates,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Smart Insight",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = correlation.insight,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }

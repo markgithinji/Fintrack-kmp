@@ -31,6 +31,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -191,14 +193,31 @@ fun CategoryTotalsCardWithTabs(
                             if (baseCategories.isEmpty() && (tabType !is TabType.Expense || result.data.totalTransactionCost <= 0.0)) {
                                 EmptyDistributionState()
                             } else {
-                                val categorySums = mutableListOf<Pair<String, Float>>()
-                                categorySums.addAll(baseCategories.map { it.category to it.total.toFloat() })
+                                val displayModels = baseCategories.map { 
+                                    CategoryDisplayModel(
+                                        name = it.category,
+                                        amount = it.total.toFloat(),
+                                        count = it.transactionCount,
+                                        avgCount = it.averageTransactionCount,
+                                        trend = it.momentumTrend,
+                                        insights = it.topDescriptionInsights
+                                    )
+                                }.toMutableList()
 
                                 if (tabType is TabType.Expense && result.data.totalTransactionCost > 0) {
-                                    categorySums.add("Transaction Fees" to result.data.totalTransactionCost.toFloat())
+                                    displayModels.add(
+                                        CategoryDisplayModel(
+                                            name = "Transaction Fees",
+                                            amount = result.data.totalTransactionCost.toFloat(),
+                                            count = 0 
+                                        )
+                                    )
                                 }
 
-                                val totalAmount = categorySums.sumOf { it.second.toDouble() }.toFloat()
+                                val totalAmount = displayModels.sumOf { it.amount.toDouble() }.toFloat()
+                                val categorySums = displayModels.map { it.name to it.amount }
+
+                                val othersInsight = result.data.othersInsightSummary
 
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -212,13 +231,15 @@ fun CategoryTotalsCardWithTabs(
                                     )
                                     Spacer(Modifier.height(16.dp))
                                     CategoryList(
-                                        categories = categorySums,
+                                        displayModels = displayModels,
                                         totalAmount = totalAmount,
                                         selectedIndex = selectedIndex,
                                         onSelectedIndexChange = { index -> selectedIndex = index },
                                         onCategoryClick = onCategoryClick,
                                         segmentColors = SegmentColors,
-                                        animatedVisibilityScope = animatedVisibilityScope
+                                        animatedVisibilityScope = animatedVisibilityScope,
+                                        othersInsight = othersInsight,
+                                        isIncome = tabType is TabType.Income
                                     )
                                 }
                             }
@@ -394,27 +415,47 @@ fun LoadingCategoryList() {
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun CategoryList(
-    categories: List<Pair<String, Float>>,
+    displayModels: List<CategoryDisplayModel>,
     totalAmount: Float,
     selectedIndex: Int,
     onSelectedIndexChange: (Int) -> Unit,
     onCategoryClick: (String) -> Unit = {},
     segmentColors: List<Color>,
-    animatedVisibilityScope: AnimatedVisibilityScope
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    othersInsight: String? = null,
+    isIncome: Boolean
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
-    val sortedCategorySums = categories.sortedByDescending { it.second }
-    val topCategoriesList = sortedCategorySums.take(4).toList()
-    val remainingCategories = sortedCategorySums.drop(4)
+    val sortedModels = displayModels.sortedByDescending { it.amount }
+    val topModelsList = sortedModels.take(4).toList()
+    val remainingModels = sortedModels.drop(4)
     
-    val displayCategories = topCategoriesList.toMutableList()
-    val othersTotal = remainingCategories.sumOf { it.second.toDouble() }.toFloat()
-    if (othersTotal > 0f) {
-        displayCategories.add("Others" to othersTotal)
+    val displayList = topModelsList.toMutableList()
+    val othersAmount = remainingModels.sumOf { it.amount.toDouble() }.toFloat()
+    if (othersAmount > 0f) {
+        val aggregatedInsights = if (othersInsight != null) listOf(othersInsight) else {
+            remainingModels.flatMap { it.insights ?: emptyList() }
+                .groupBy { it }
+                .map { it.key to it.value.size }
+                .sortedByDescending { it.second }
+                .take(3)
+                .map { it.first }
+        }
+
+        displayList.add(
+            CategoryDisplayModel(
+                name = "Others",
+                amount = othersAmount,
+                count = remainingModels.sumOf { it.count },
+                insights = aggregatedInsights
+            )
+        )
     }
 
     Column(modifier = Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        displayCategories.forEachIndexed { index, (categoryName, amount) ->
+        displayList.forEachIndexed { index, model ->
+            val categoryName = model.name
+            val amount = model.amount
             val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
             val color = if (index < 4) segmentColors[index % segmentColors.size] else segmentColors.last()
             val isSelected = selectedIndex == index
@@ -439,64 +480,120 @@ fun CategoryList(
                     onSelectedIndexChange(index)
                     
                     val categoryFilter = if (categoryName == "Others") {
-                        remainingCategories.joinToString(",") { it.first }
+                        remainingModels.joinToString(",") { it.name }
                     } else {
                         categoryName
                     }
                     onCategoryClick(categoryFilter)
                 }
             ) {
-                Row(
-                    modifier = Modifier
-                        .padding(vertical = 8.dp, horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .background(color, CircleShape)
-                            .then(
-                                if (sharedTransitionScope != null) {
-                                    with(sharedTransitionScope) {
-                                        Modifier.sharedElement(
-                                            rememberSharedContentState(key = "category_icon_$categoryName"),
-                                            animatedVisibilityScope = animatedVisibilityScope
-                                        )
-                                    }
-                                } else Modifier
-                            )
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Text(
-                        text = categoryName,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier
-                            .weight(1f)
-                            .then(
-                                if (sharedTransitionScope != null) {
-                                    with(sharedTransitionScope) {
-                                        Modifier.sharedElement(
-                                            rememberSharedContentState(key = "category_name_$categoryName"),
-                                            animatedVisibilityScope = animatedVisibilityScope
-                                        )
-                                    }
-                                } else Modifier
-                            )
-                    )
-
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = amount.toDouble().toCurrencyString(),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                Column(modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .background(color, CircleShape)
+                                .then(
+                                    if (sharedTransitionScope != null) {
+                                        with(sharedTransitionScope) {
+                                            Modifier.sharedElement(
+                                                rememberSharedContentState(key = "category_icon_$categoryName"),
+                                                animatedVisibilityScope = animatedVisibilityScope
+                                            )
+                                        }
+                                    } else Modifier
+                                )
                         )
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = categoryName,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.then(
+                                            if (sharedTransitionScope != null) {
+                                                with(sharedTransitionScope) {
+                                                    Modifier.sharedElement(
+                                                        rememberSharedContentState(key = "category_name_$categoryName"),
+                                                        animatedVisibilityScope = animatedVisibilityScope
+                                                    )
+                                                }
+                                            } else Modifier
+                                        )
+                                )
+                                
+                                if (model.trend != null && model.trend != "STABLE") {
+                                    val isUp = model.trend == "UP"
+                                    val trendText = when {
+                                        isIncome && isUp -> "Growing"
+                                        isIncome && !isUp -> "Dropping"
+                                        !isIncome && isUp -> "Rising (3 mo)"
+                                        !isIncome && !isUp -> "Saving (3 mo)"
+                                        else -> ""
+                                    }
+                                    val trendColor = if (isIncome) {
+                                        if (isUp) GreenIncome else PinkExpense
+                                    } else {
+                                        if (isUp) PinkExpense else GreenIncome
+                                    }
+
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = if (isUp) Icons.AutoMirrored.Filled.TrendingUp else Icons.AutoMirrored.Filled.TrendingDown,
+                                            contentDescription = null,
+                                            tint = trendColor,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(2.dp))
+                                        Text(
+                                            text = trendText,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = trendColor,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                            
+                            if (model.count > 0) {
+                                val avgText = model.avgCount?.let { " (Avg: ${it.toInt()})" } ?: ""
+                                Text(
+                                    text = "${model.count} transactions$avgText",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = amount.toDouble().toCurrencyString(),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "$percent%",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = color
+                            )
+                        }
+                    }
+                    
+                    if (model.insights != null && model.insights.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "$percent%",
+                            text = if (categoryName == "Others" && othersInsight != null) othersInsight else "Mainly: ${model.insights.take(2).joinToString(", ")}",
                             style = MaterialTheme.typography.labelSmall,
-                            color = color
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                            modifier = Modifier.padding(start = 22.dp)
                         )
                     }
                 }
@@ -733,3 +830,12 @@ enum class TimeSpan(val displayName: String) {
     MONTH("Month"),
     YEAR("Year")
 }
+
+data class CategoryDisplayModel(
+    val name: String,
+    val amount: Float,
+    val count: Int,
+    val avgCount: Double? = null,
+    val trend: String? = null,
+    val insights: List<String>? = null
+)

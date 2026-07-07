@@ -8,7 +8,7 @@ data class Category(
     val isDefault: Boolean = false
 ) {
     companion object {
-        // --- Expense categories ---
+        // Expense categories
         val Food = Category("food", "Food", true, "Fastfood", true)
         val Transport = Category("transport", "Transport", true, "DirectionsCar", true)
         val Shopping = Category("shopping", "Shopping", true, "ShoppingCart", true)
@@ -39,7 +39,7 @@ data class Category(
         val TransactionCost = Category("transaction_cost", "Transaction Fees", true, "Receipt", true)
         val MiscExpense = Category("misc_expense", "Misc", true, "HelpOutline", true)
 
-        // --- Income categories ---
+        // Income categories
         val Salary = Category("salary", "Salary", false, "AttachMoney", true)
         val Freelance = Category("freelance", "Freelance", false, "Work", true)
         val Investments = Category("investments", "Investments", false, "TrendingUp", true)

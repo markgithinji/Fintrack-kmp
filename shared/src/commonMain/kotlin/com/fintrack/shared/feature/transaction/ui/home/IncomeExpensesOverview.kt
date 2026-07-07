@@ -4,7 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import  androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -286,7 +286,6 @@ private fun OverviewHeader(
             }
         }
 
-        // Pill-style Period Switcher (App Consistent)
         Surface(
             shape = RoundedCornerShape(20.dp),
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
@@ -328,7 +327,7 @@ fun BarChart(
     val barWidth = 16.dp
     val density = LocalDensity.current
     
-    // Ensure we have 7 bars even if data is partial
+    // 7 bars even if data is partial
     val maxTotal = (data.maxOfOrNull { it.income + it.expense } ?: 1.0) * 1.2
     val totalBarHeightPx = with(density) { totalBarHeight.toPx() }
 
@@ -337,7 +336,6 @@ fun BarChart(
     var touchOffset by remember { mutableStateOf(Offset.Zero) }
     var barsWidth by remember { mutableStateOf(0f) }
 
-    // Use a root container that is clickable to dismiss
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -400,8 +398,7 @@ fun BarChart(
                                 
                                 val incomeTop = totalBarHeightPx - incomeH
                                 val expenseTop = incomeTop - expenseH
-                                
-                                // Increased hit-test sensitivity
+
                                 if (offset.y in (expenseTop - 10.dp.toPx())..incomeTop) {
                                     selectedAmount = day.expense
                                     selectedColor = PinkExpense
@@ -486,9 +483,9 @@ fun BarChart(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Day labels aligned to bars
+            // Day labels
             Row(
-                modifier = Modifier.fillMaxWidth().padding(start = 36.dp), // Match chart area start offset
+                modifier = Modifier.fillMaxWidth().padding(start = 36.dp),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
                 data.forEach { day ->

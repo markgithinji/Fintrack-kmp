@@ -61,7 +61,6 @@ class StatisticsViewModel(
     private val _highlights = MutableStateFlow<Result<StatisticsSummary>>(Result.Loading)
     val highlights: StateFlow<Result<StatisticsSummary>> = _highlights
 
-    // Store separate distribution results for Income and Expense
     private val _incomeDistribution = MutableStateFlow<Result<DistributionSummary>>(Result.Loading)
     private val _expenseDistribution = MutableStateFlow<Result<DistributionSummary>>(Result.Loading)
 
@@ -94,7 +93,6 @@ class StatisticsViewModel(
         MutableStateFlow<Result<TransactionCountSummary>>(Result.Loading)
     val transactionCounts: StateFlow<Result<TransactionCountSummary>> = _transactionCounts
 
-    // Simple distribution flow that switches between income and expense
     val distribution: StateFlow<Result<DistributionSummary>> =
         combine(
             selectedTab,
@@ -117,8 +115,7 @@ class StatisticsViewModel(
 
     fun loadHighlights(accountId: String? = null, period: String? = null, force: Boolean = false) {
         println("StatisticsViewModel: loadHighlights called. accountId=$accountId, period=$period, force=$force")
-        
-        // Prevent overwriting a specific period with a null period (all-time) during initial loads
+
         if (period == null && lastHighlightsPeriod != null && !force) {
             println("StatisticsViewModel: loadHighlights ignored null period because we already have a specific period: $lastHighlightsPeriod")
             return
@@ -133,7 +130,6 @@ class StatisticsViewModel(
 
         highlightsJob?.cancel()
         highlightsJob = viewModelScope.launch {
-            // Only show loading if we don't have success data yet, to prevent flicker
             if (_highlights.value !is Result.Success) {
                 println("StatisticsViewModel: Setting Highlights to Loading")
                 _highlights.value = Result.Loading
@@ -213,7 +209,6 @@ class StatisticsViewModel(
     private var lastAvailablePeriodsAccountId: String? = null
     fun loadAvailablePeriods(accountId: String? = null, force: Boolean = false) {
         if (!force && lastAvailablePeriodsAccountId == accountId && (_availableWeeks.value.isNotEmpty() || _availableMonths.value.isNotEmpty() || _availableYears.value.isNotEmpty())) {
-            // Already populated, just ensure distribution is ready
             reloadDistributionForCurrentSelection(accountId, force = false)
             return
         }
@@ -245,7 +240,7 @@ class StatisticsViewModel(
                 _availableMonths.value = months
                 _availableYears.value = years
 
-                // --- Pick initial selection only if none exists ---
+                // Pick initial selection only if none exists
                 if (_selectedPeriod.value == null) {
                     _selectedPeriod.value = when {
                         weeks.isNotEmpty() -> Period.Week(weeks.first())

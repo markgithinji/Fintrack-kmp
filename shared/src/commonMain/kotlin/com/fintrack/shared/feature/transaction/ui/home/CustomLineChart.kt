@@ -106,7 +106,7 @@ fun CustomLineChart(
         contentAlignment = Alignment.Center
     ) {
         Box(modifier = Modifier.height(200.dp)) {
-            // --- Static Y-axis background ---
+            // Static Y-axis background
             Canvas(modifier = Modifier.fillMaxWidth().height(200.dp).padding(bottom = 24.dp, start = 36.dp, end = 12.dp)) {
                 val height = size.height
                 val gridLines = 4
@@ -138,7 +138,7 @@ fun CustomLineChart(
                 }
             }
 
-            // --- Scrollable Area ---
+            // Scrollable Area
             val scrollState = rememberScrollState()
             var viewportWidth by remember { mutableStateOf(0f) }
 
@@ -173,7 +173,7 @@ fun CustomLineChart(
                         val height = size.height
                         val spacingX = if (sortedData.size > 1) width / (sortedData.size - 1) else width
 
-                        // --- Prepare Paths ---
+                        // Prepare Paths
                         val incomePath = Path()
                         val expensePath = Path()
                         val incomeFillPath = Path()
@@ -205,7 +205,7 @@ fun CustomLineChart(
                                 expenseFillPath.close()
                             }
 
-                            // --- X-axis Labels ---
+                            // X-axis Labels
                             val dateLabel = day.date.split("-").last()
                             val textLayoutResult = textMeasurer.measure(dateLabel, labelStyle)
                             drawText(
@@ -214,7 +214,7 @@ fun CustomLineChart(
                             )
                         }
 
-                        // --- Draw Paths with Animation ---
+                        // Draw Paths with Animation
                         clipRect(right = width * animationProgress.value) {
                             if (sortedData.size > 1) {
                                 drawPath(
@@ -266,7 +266,7 @@ fun CustomLineChart(
                 }
             }
 
-            // Tooltip (Outside scrollable area to allow Y-axis overlap)
+            // Tooltip
             var tooltipSize by remember { mutableStateOf(IntSize.Zero) }
             val isTooltipVisible = selectedDay != null && (touchOffset.x >= scrollState.value && touchOffset.x <= scrollState.value + viewportWidth)
 
