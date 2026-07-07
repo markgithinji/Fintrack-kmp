@@ -20,12 +20,10 @@ class CategoryRepositoryImpl(
             val dtos = api.getCategories()
             val remoteCategories = dtos.map { it.toDomain() }
             
-            // Deduplicate by name and type to prevent showing duplicate "Other Income" etc.
-            // We keep all defaults first, then add remote categories that don't match any default name
-            val defaultNames = Category.allCategories.map { it.name.lowercase() to it.isExpense }.toSet()
-            val uniqueRemote = remoteCategories.filter { (it.name.lowercase() to it.isExpense) !in defaultNames }
-            
-            _categories.update { Category.allCategories + uniqueRemote }
+            _categories.update { 
+                (Category.allCategories + remoteCategories)
+                    .distinctBy { it.name.lowercase() to it.isExpense }
+            }
         } catch (e: Exception) {
             // Log or handle error if needed
         }
@@ -34,7 +32,9 @@ class CategoryRepositoryImpl(
     override suspend fun addCategory(name: String, isExpense: Boolean, iconName: String?): Category {
         val dto = api.addCategory(name, isExpense, iconName)
         val category = dto.toDomain()
-        _categories.update { current -> current + category }
+        _categories.update { current -> 
+            (current + category).distinctBy { it.name.lowercase() to it.isExpense }
+        }
         return category
     }
 
