@@ -45,11 +45,11 @@ object MpesaParser {
     private val transferToRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+$AMOUNT transferred to (.+?)(?: account)?(?: on $DATE at $TIME)?$PARTY_END""".toRegex(RegexOption.IGNORE_CASE)
     
     // 4. Loans
-    private val loanRepayRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:Loan of |Your loan repayment of )$AMOUNT repaid (?:from|to) (?:your\s+)?(.+?)(?:\s+account)?.*?on $DATE at $TIME""".toRegex(RegexOption.IGNORE_CASE)
+    private val loanRepayRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:Loan of |Your loan repayment of )$AMOUNT (?:repaid (?:from|to)|from your M-PESA account to) (?:your\s+)?(.+?)(?:\s+account)?.*?on $DATE at $TIME(?: is successful)?""".toRegex(RegexOption.IGNORE_CASE)
     private val loanApprovedRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+Your M-Shwari loan has been approved (?:on $DATE[\s,]+(?:at\s+)?$TIME\s+)?.*?and $AMOUNT .*? deposited to your M-PESA account""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
     
     // 5. Fuliza Repayment
-    private val fulizaRepayRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+$AMOUNT from your M-PESA has been used to (?:fully|partially) pay your outstanding Fuliza M-PESA(?:.*?$DATE[\s,]+(?:at\s+)?$TIME)?""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
+    private val fulizaRepayRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+$AMOUNT (?:from|transferred from) your M-PESA has been used to (?:fully|partially) pay your outstanding Fuliza M-PESA(?:.*?$DATE[\s,]+(?:at\s+)?$TIME)?""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
     
     // 6. Airtime
     private val airtimeRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:You (?:bought|have bought|have received) |)$AMOUNT (?:of |)airtime(?: for [+\d]+)? on $DATE at $TIME""".toRegex(RegexOption.IGNORE_CASE)
@@ -76,7 +76,34 @@ object MpesaParser {
         val cost = parseAmountFromMatch(costRegex.find(message))
         val balance = parseBalance(message)
 
-        // Try Agent Transactions (Date First)
+        // 1. Fuliza (Check this FIRST because it often uses "transferred from M-PESA")
+        fulizaRepayRegex.find(message)?.let {
+            val code = it.groupValues[1]
+            val amount = parseAmount(it.groupValues[2])
+            val date = it.groupValues.getOrNull(3) ?: ""
+            val time = it.groupValues.getOrNull(4) ?: ""
+            return createTransactionModel(code, amount, cost, balance, "Loans", parseDateTime(date, time, smsTimestamp), "Fuliza M-PESA Repayment", accountId, false)
+        }
+
+        // 2. Loans (Repayments should be checked before general transfers)
+        loanRepayRegex.find(message)?.let { 
+            val code = it.groupValues[1]
+            val amount = parseAmount(it.groupValues[2])
+            val party = cleanPartyName(it.groupValues[3])
+            val date = it.groupValues.getOrNull(4) ?: ""
+            val time = it.groupValues.getOrNull(5) ?: ""
+            return createTransactionModel(code, amount, cost, balance, "Loans", parseDateTime(date, time, smsTimestamp), "Loan Repayment to $party", accountId, false)
+        }
+
+        loanApprovedRegex.find(message)?.let { 
+            val code = it.groupValues[1]
+            val amount = parseAmount(it.groupValues[2])
+            val date = it.groupValues.getOrNull(3) ?: ""
+            val time = it.groupValues.getOrNull(4) ?: ""
+            return createTransactionModel(code, amount, cost, balance, "Loans", parseDateTime(date, time, smsTimestamp), "Loan Approved", accountId, true)
+        }
+
+        // 3. Try Agent Transactions (Date First)
         agentDateFirstRegex.find(message)?.let {
             val code = it.groupValues[1]
             val date = it.groupValues[2]
@@ -110,14 +137,16 @@ object MpesaParser {
             val date = it.groupValues.getOrNull(4) ?: ""
             val time = it.groupValues.getOrNull(5) ?: ""
             
-            val isSavings = party.lowercase().let { it.contains("m-shwari") || it.contains("kcb") }
+            val isSavings = party.lowercase().let { 
+                (it.contains("m-shwari") || it.contains("kcb")) && !it.contains("loan") 
+            }
             
             return createTransactionModel(
                 code, 
                 amount, 
                 cost, 
                 balance, 
-                if (isSavings) "Transfer" else "Other Income",
+                if (isSavings) "Savings" else "Other Income",
                 parseDateTime(date, time, smsTimestamp), 
                 "Transferred from $party", 
                 accountId, 
@@ -131,36 +160,21 @@ object MpesaParser {
             val date = it.groupValues.getOrNull(4) ?: ""
             val time = it.groupValues.getOrNull(5) ?: ""
             
-            val isSavings = party.lowercase().let { it.contains("m-shwari") || it.contains("kcb") }
+            val isSavings = party.lowercase().let { 
+                (it.contains("m-shwari") || it.contains("kcb")) && !it.contains("loan") 
+            }
 
             return createTransactionModel(
                 code, 
                 amount, 
                 cost, 
                 balance, 
-                if (isSavings) "Transfer" else inferCategory(party),
+                if (isSavings) "Savings" else inferCategory(party),
                 parseDateTime(date, time, smsTimestamp), 
                 "Transferred to $party", 
                 accountId, 
                 false
             )
-        }
-        
-        // Loans
-        loanApprovedRegex.find(message)?.let { 
-            val code = it.groupValues[1]
-            val amount = parseAmount(it.groupValues[2])
-            val date = it.groupValues.getOrNull(3) ?: ""
-            val time = it.groupValues.getOrNull(4) ?: ""
-            return createTransactionModel(code, amount, cost, balance, "Loans", parseDateTime(date, time, smsTimestamp), "Loan Approved", accountId, true)
-        }
-        loanRepayRegex.find(message)?.let { 
-            val code = it.groupValues[1]
-            val amount = parseAmount(it.groupValues[2])
-            val party = cleanPartyName(it.groupValues[3])
-            val date = it.groupValues.getOrNull(4) ?: ""
-            val time = it.groupValues.getOrNull(5) ?: ""
-            return createTransactionModel(code, amount, cost, balance, "Loans", parseDateTime(date, time, smsTimestamp), "Loan Repayment to $party", accountId, false)
         }
         
         // Airtime
@@ -182,15 +196,6 @@ object MpesaParser {
             val type = it.groupValues[6].lowercase()
             val isIncome = type == "credited"
             return createTransactionModel(code, amount, cost, balance, "Transfer", parseDateTime(date, time, smsTimestamp), "Reversal of $originalCode ($type)", accountId, isIncome)
-        }
-
-        // Fuliza
-        fulizaRepayRegex.find(message)?.let {
-            val code = it.groupValues[1]
-            val amount = parseAmount(it.groupValues[2])
-            val date = it.groupValues.getOrNull(3) ?: ""
-            val time = it.groupValues.getOrNull(4) ?: ""
-            return createTransactionModel(code, amount, cost, balance, "Loans", parseDateTime(date, time, smsTimestamp), "Fuliza M-PESA Repayment", accountId, false)
         }
 
         // Standard transactions
@@ -332,12 +337,13 @@ object MpesaParser {
         val r = recipient.lowercase(Locale.ENGLISH)
         return when {
             r.contains("kplc") || r.contains("tokens") || r.contains("power") || r.contains("jajemelo") -> "Utilities"
-            r.contains("zuku") || r.contains("safaricom home") || r.contains("poa internet") || r.contains("vilcom") -> "Internet"
+            r.contains("zuku") || r.contains("safaricom home") || r.contains("poa internet") || r.contains("vilcom") || r.contains("safaricom offers") -> "Internet"
             r.contains("airtime") || r.contains("safaricom data") || r.contains("bundles") || r.contains("tunukiwa") || r.contains("tingg") -> "Airtime"
             r.contains("supermarket") || r.contains("naivas") || r.contains("carrefour") || r.contains("quickmart") || r.contains("butchery") || r.contains("quick mart") || r.contains("friendly 5") -> "Groceries"
             r.contains("restaurant") || r.contains("cafe") || r.contains("kfc") || r.contains("java") || Regex("""\bbar\b""").containsMatchIn(r) || r.contains("lounge") || r.contains("chicken inn") || r.contains("pizza inn") || r.contains("creamy inn") || r.contains("choma place") || r.contains("nas n001") || r.contains("caterers") || r.contains("dishes") -> "Dining Out"
-            r.contains("equity") || r.contains("co-operative") || r.contains("kcb") || r.contains("bank") || r.contains("i&m") || r.contains("ncba") || r.contains("boa") || r.contains("family bank") || r.contains("stanbic") || r.contains("loop") || r.contains("sidian") -> "Bank"
-            r.contains("loan") || r.contains("fuliza") || r.contains("m-shwari") || r.contains("tala") || r.contains("branch") -> "Loans"
+            r.contains("equity") || r.contains("co-operative") || r.contains("bank") || r.contains("i&m") || r.contains("ncba") || r.contains("boa") || r.contains("family bank") || r.contains("stanbic") || r.contains("loop") || r.contains("sidian") -> "Bank"
+            r.contains("loan") || r.contains("fuliza") || r.contains("tala") || r.contains("branch") -> "Loans"
+            r.contains("m-shwari") || r.contains("kcb") || r.contains("sacco") || r.contains("chama") || r.contains("orokise") -> "Savings"
             r.contains("tithe") || r.contains("offering") || r.contains("citam") || r.contains("church") || r.contains("charity") || r.contains("mosque") || r.contains("prayer mountain") -> "Charity"
             r.contains("parking") || r.contains("kaps") || r.contains("bolt") || r.contains("uber") || r.contains("taxi") || r.contains("rubis") || r.contains("totalenergies") || r.contains("shell") -> "Transport"
             r.contains("chemist") || r.contains("pharmacy") || r.contains("hospital") || r.contains("health") || r.contains("clinic") || r.contains("meds") || r.contains("dental") -> "Health"
@@ -350,7 +356,6 @@ object MpesaParser {
             r.contains("bonus") -> "Bonus"
             r.contains("interest") -> "Interest"
             r.contains("commission") || r.contains("income") -> "Other Income"
-            r.contains("sacco") || r.contains("chama") || r.contains("orokise") -> "Savings"
             else -> "Transfer"
         }
     }
