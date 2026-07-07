@@ -43,7 +43,7 @@ class ProfileViewModel(
         // Collect from the repository flow and update our Result state
         viewModelScope.launch {
             getUserProfileUseCase().collect { user ->
-               if (user != null) {
+                if (user != null) {
                     _profileState.value = Result.Success(user)
                     _formState.update { state ->
                         state.copy(name = user.name, email = user.email)
@@ -83,7 +83,10 @@ class ProfileViewModel(
             when (val result = updateProfileUseCase(name, email)) {
                 is Result.Success -> {
                     _editState.value = SaveState.Success(Unit)
-                    // Success state update is handled by the userProfile collector
+                    // State update is handled by the userProfile collector, but we can force it here
+                    getUserProfileUseCase().value?.let {
+                        _profileState.value = Result.Success(it)
+                    }
                 }
                 is Result.Error -> {
                     _editState.value = SaveState.Error(result.exception)
@@ -99,13 +102,23 @@ class ProfileViewModel(
 
     fun refreshProfile() {
         viewModelScope.launch {
+            // Only show loading if we don't already have success data to prevent flicker
             if (_profileState.value !is Result.Success) {
                 _profileState.value = Result.Loading
             }
+            
             try {
                 getUserProfileUseCase.refresh()
+                // Ensure state is updated even if the user data is identical (StateFlow won't re-emit)
+                getUserProfileUseCase().value?.let { 
+                    _profileState.value = Result.Success(it)
+                }
             } catch (e: Exception) {
-                _profileState.value = Result.Error(e)
+                // If we have existing data, don't show the error as a full-screen state
+                // but if we were stuck in loading, show the error.
+                if (_profileState.value !is Result.Success) {
+                    _profileState.value = Result.Error(e)
+                }
             }
         }
     }
