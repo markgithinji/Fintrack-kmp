@@ -327,7 +327,13 @@ class StatisticsViewModel(
             // Load BOTH income and expense data for this period
             loadDistribution(periodCode, TransactionType.Income, accountId = accountId, force = force)
             loadDistribution(periodCode, TransactionType.Expense, accountId = accountId, force = force)
-            loadHighlights(accountId = accountId, period = periodCode, force = force)
+
+            val yearCode = when (currentPeriod) {
+                is Period.Week -> currentPeriod.code.split("-").firstOrNull()
+                is Period.Month -> currentPeriod.code.split("-").firstOrNull()
+                is Period.Year -> currentPeriod.code
+            }
+            loadHighlights(accountId = accountId, period = yearCode, force = force)
             
             // Also load category comparisons if the period is a month
             if (currentPeriod is Period.Month) {

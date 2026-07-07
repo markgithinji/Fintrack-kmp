@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.TrendingUp
@@ -140,6 +141,10 @@ fun SpendingHighlightsSection(
                                 LoadingHighlightCard(modifier = Modifier.weight(1f))
                                 LoadingHighlightCard(modifier = Modifier.weight(1f))
                             }
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                LoadingHighlightCard(modifier = Modifier.weight(1f))
+                                LoadingHighlightCard(modifier = Modifier.weight(1f))
+                            }
                         }
                     }
 
@@ -170,25 +175,63 @@ private fun SuccessContent(
     }
 
     val isIncome = tabType == TabType.Income
-    val accentColor = if (isIncome) GreenIncome else PinkExpense
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             HighlightCard(
                 modifier = Modifier.weight(1f),
-                title = "Busiest Month",
+                title = if (isIncome) "Best Month" else "Busiest Month",
                 value = highlights.highestMonth?.value?.toMonthName() ?: "N/A",
                 subValue = highlights.highestMonth?.amount?.toCurrencyString() ?: "$0",
                 icon = Icons.Default.CalendarMonth,
                 color = SegmentColor3
             )
+            
+            val volatility = highlights.highestCategory?.volatilityPercentage
             HighlightCard(
                 modifier = Modifier.weight(1f),
                 title = "Top Category",
                 value = highlights.highestCategory?.value ?: "N/A",
                 subValue = highlights.highestCategory?.amount?.toCurrencyString() ?: "$0",
                 icon = Icons.Default.Category,
-                color = SegmentColor4
+                color = SegmentColor4,
+                badge = volatility?.let {
+                    val isIncrease = it > 0
+                    val prefix = if (isIncrease) "+" else ""
+                    val badgeColor = if (isIncome) {
+                        if (isIncrease) GreenIncome else PinkExpense
+                    } else {
+                        if (isIncrease) PinkExpense else GreenIncome
+                    }
+                    "$prefix${it.toInt()}% vs LY" to badgeColor
+                }
+            )
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            val ytdChange = highlights.ytdChangePercentage
+            HighlightCard(
+                modifier = Modifier.weight(1f),
+                title = "YTD Progress",
+                value = if (ytdChange != null) {
+                    val prefix = if (ytdChange > 0) "+" else ""
+                    "$prefix${ytdChange.toInt()}%"
+                } else "N/A",
+                subValue = "vs Last Year",
+                icon = Icons.AutoMirrored.Filled.TrendingUp,
+                color = if (ytdChange != null) {
+                    val isBetter = if (isIncome) ytdChange > 0 else ytdChange < 0
+                    if (isBetter) GreenIncome else PinkExpense
+                } else SegmentColor1
+            )
+            
+            HighlightCard(
+                modifier = Modifier.weight(1f),
+                title = "Projected Year",
+                value = highlights.projectedTotal?.toCurrencyString() ?: "N/A",
+                subValue = "Est. Year-end",
+                icon = Icons.AutoMirrored.Filled.ShowChart,
+                color = SegmentColor2
             )
         }
 
@@ -206,8 +249,8 @@ private fun SuccessContent(
                 title = "Daily Avg",
                 value = highlights.averagePerDay.toCurrencyString(),
                 subValue = if (isIncome) "Avg. Income" else "Avg. Expense",
-                icon = Icons.AutoMirrored.Filled.ShowChart,
-                color = SegmentColor2
+                icon = Icons.Default.CalendarMonth,
+                color = SegmentColor1
             )
         }
     }
@@ -220,10 +263,11 @@ fun HighlightCard(
     value: String,
     subValue: String,
     icon: ImageVector,
-    color: Color
+    color: Color,
+    badge: Pair<String, Color>? = null
 ) {
     Card(
-        modifier = modifier.height(126.dp),
+        modifier = modifier.height(134.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -235,18 +279,39 @@ fun HighlightCard(
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(color.copy(alpha = 0.15f), CircleShape),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = color,
-                    modifier = Modifier.size(20.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(color.copy(alpha = 0.15f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = color,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                if (badge != null) {
+                    Surface(
+                        color = badge.second.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = badge.first,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = badge.second,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
 
             Column {
@@ -277,7 +342,7 @@ fun HighlightCard(
 @Composable
 fun LoadingHighlightCard(modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier.height(126.dp),
+        modifier = modifier.height(134.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),

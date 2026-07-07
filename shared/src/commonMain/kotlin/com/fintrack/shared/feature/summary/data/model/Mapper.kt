@@ -16,14 +16,21 @@ import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 
 // --- Highlight Summary ---
 fun HighlightDto.toDomain(): Highlight =
-    Highlight(label.ifEmpty { "-" }, value.ifEmpty { "-" }, amount)
+    Highlight(
+        label = label.ifEmpty { "-" }, 
+        value = value.ifEmpty { "-" }, 
+        amount = amount,
+        volatilityPercentage = volatilityPercentage
+    )
 
 fun HighlightsDto.toDomain(): Highlights =
     Highlights(
         highestMonth = highestMonth?.toDomain(),
         highestCategory = highestCategory?.toDomain(),
         highestDay = highestDay?.toDomain(),
-        averagePerDay = averagePerDay
+        averagePerDay = averagePerDay,
+        ytdChangePercentage = ytdChangePercentage,
+        projectedTotal = projectedTotal
     )
 
 fun HighlightsSummaryDto.toDomain(): StatisticsSummary =

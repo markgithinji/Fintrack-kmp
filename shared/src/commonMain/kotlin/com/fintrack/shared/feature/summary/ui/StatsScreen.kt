@@ -113,7 +113,8 @@ fun StatisticsScreen(
                     highlightsResult = highlights,
                     loadHighlights = { 
                         val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-                        viewModel.loadHighlights(accountId, selectedPeriod?.code, force = true)
+                        val yearCode = selectedPeriod?.code?.split("-")?.firstOrNull() ?: selectedPeriod?.code
+                        viewModel.loadHighlights(accountId, yearCode, force = true)
                     }
                 )
             }
