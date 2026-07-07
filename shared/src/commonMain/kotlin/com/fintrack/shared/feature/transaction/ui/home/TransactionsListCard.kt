@@ -445,6 +445,7 @@ fun TransactionRow(
             Text(
                 text = category.name,
                 style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -470,6 +471,7 @@ fun TransactionRow(
             Text(
                 text = "${if (isExpense) "-" else "+"}${transaction.amount.toCurrencyString()}",
                 style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
                 color = amountColor
             )
 

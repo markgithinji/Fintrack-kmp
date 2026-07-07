@@ -225,30 +225,40 @@ private fun SuccessContent(
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             val ytdChange = highlights.ytdChangePercentage
+            val currentYearTotal = if (isIncome) data.income else data.expense
+            val yearLabel = extractYear(data.period).ifBlank { "Annual" }
+            
             HighlightCard(
                 modifier = Modifier.weight(1f),
-                title = "YTD Progress",
-                value = if (ytdChange != null) {
+                title = "$yearLabel Total",
+                value = currentYearTotal.toCurrencyString(),
+                subValue = if (ytdChange != null) {
                     val prefix = if (ytdChange > 0) "+" else ""
-                    "$prefix${ytdChange.toInt()}%"
-                } else "N/A",
-                subValue = "vs Last Year",
+                    "$prefix${ytdChange.toInt()}% vs Last Year"
+                } else "So far this year",
                 icon = Icons.AutoMirrored.Filled.TrendingUp,
                 color = if (ytdChange != null) {
                     val isBetter = if (isIncome) ytdChange > 0 else ytdChange < 0
                     if (isBetter) GreenIncome else PinkExpense
-                } else SegmentColor1
+                } else SegmentColor1,
+                badge = ytdChange?.let {
+                    val prefix = if (it > 0) "+" else ""
+                    "$prefix${it.toInt()}%" to if (isIncome) (if (it > 0) GreenIncome else PinkExpense) else (if (it > 0) PinkExpense else GreenIncome)
+                }
             )
             
             val exceedMonth = highlights.projectedExceedMonth
+            val projected = highlights.projectedTotal ?: 0.0
+            val progressPercent = if (projected > 0) (currentYearTotal / projected * 100).toInt() else 0
+            
             HighlightCard(
                 modifier = Modifier.weight(1f),
-                title = "Projected Year",
-                value = highlights.projectedTotal?.toCurrencyString() ?: "N/A",
-                subValue = if (exceedMonth != null) "Budget ends in $exceedMonth" else "Est. Year-end",
+                title = "Annual Forecast",
+                value = projected.toCurrencyString(),
+                subValue = if (exceedMonth != null) "Budget ends in $exceedMonth" else "Paced at $progressPercent% of est.",
                 icon = Icons.AutoMirrored.Filled.ShowChart,
                 color = if (exceedMonth != null) PinkExpense else SegmentColor2,
-                badge = exceedMonth?.let { "Budget Risk" to PinkExpense }
+                badge = if (exceedMonth != null) "Budget Risk" to PinkExpense else if (progressPercent > 0) "$progressPercent%" to SegmentColor2 else null
             )
         }
 

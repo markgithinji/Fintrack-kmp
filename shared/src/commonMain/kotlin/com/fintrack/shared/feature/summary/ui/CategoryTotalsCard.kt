@@ -34,6 +34,8 @@ import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -116,6 +118,14 @@ fun CategoryTotalsCardWithTabs(
     var selectedIndex by rememberSaveable(period.toString(), tabType.toString()) { 
         mutableStateOf(-1) 
     }
+    var showHelpDialog by remember { mutableStateOf(false) }
+
+    if (showHelpDialog) {
+        DistributionHelpDialog(
+            isIncome = tabType is TabType.Income,
+            onDismiss = { showHelpDialog = false }
+        )
+    }
 
     Card(
         modifier = Modifier
@@ -140,11 +150,23 @@ fun CategoryTotalsCardWithTabs(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Distribution",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { showHelpDialog = true }
+                ) {
+                    Text(
+                        text = "Distribution",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = "Help",
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                    )
+                }
 
                 PeriodSelector(
                     selectedPeriod = period,
@@ -515,6 +537,7 @@ fun CategoryList(
                                 Text(
                                     text = categoryName,
                                     style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.then(
                                             if (sharedTransitionScope != null) {
@@ -845,3 +868,106 @@ data class CategoryDisplayModel(
     val trend: String? = null,
     val insights: List<String>? = null
 )
+
+@Composable
+fun DistributionHelpDialog(
+    isIncome: Boolean,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.PieChart,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.width(12.dp))
+                Text("About Distribution")
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(
+                    "This section shows how your ${if (isIncome) "income is sourced" else "money is being spent"} across different categories for the selected period.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                HelpSection(
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
+                    iconColor = if (isIncome) GreenIncome else PinkExpense,
+                    title = if (isIncome) "Growing" else "Rising (3 mo)",
+                    description = if (isIncome) 
+                        "This income has consistently increased over the last 3 months."
+                    else "You've spent more in this category for 3 consecutive months."
+                )
+
+                HelpSection(
+                    icon = Icons.AutoMirrored.Filled.TrendingDown,
+                    iconColor = if (isIncome) PinkExpense else GreenIncome,
+                    title = if (isIncome) "Dropping" else "Saving (3 mo)",
+                    description = if (isIncome) 
+                        "This income has consistently decreased over the last 3 months."
+                    else "Great job! Your spending in this category has decreased for 3 consecutive months."
+                )
+
+                HelpSection(
+                    icon = Icons.Outlined.Info,
+                    iconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    title = "Usually X times",
+                    description = "This is your average number of transactions in this category over the last 6 months."
+                )
+
+                HelpSection(
+                    icon = Icons.Default.PieChart,
+                    iconColor = MaterialTheme.colorScheme.primary,
+                    title = "Mainly",
+                    description = "Shows the most frequent descriptions or specific shops where this money was ${if (isIncome) "received from" else "spent"}."
+                )
+            }
+        },
+        confirmButton = {
+            Text(
+                "Got it",
+                modifier = Modifier
+                    .clickable { onDismiss() }
+                    .padding(16.dp),
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        shape = RoundedCornerShape(28.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+    )
+}
+
+@Composable
+private fun HelpSection(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconColor: Color,
+    title: String,
+    description: String
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = iconColor,
+            modifier = Modifier.size(24.dp).padding(top = 2.dp)
+        )
+        Column {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = iconColor
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}

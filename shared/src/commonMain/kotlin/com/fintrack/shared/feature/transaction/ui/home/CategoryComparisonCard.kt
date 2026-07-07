@@ -273,6 +273,7 @@ private fun CategoryComparisonItem(
                     Text(
                         text = comparison.category,
                         style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -284,6 +285,7 @@ private fun CategoryComparisonItem(
                     Text(
                         text = comparison.currentTotal.toCurrencyString(),
                         style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
