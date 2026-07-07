@@ -162,66 +162,64 @@ fun CategoryTotalsCardWithTabs(
                 animationSpec = tween(durationMillis = 300),
                 label = "ChartContentFade"
             ) { result ->
-                key(period.getDateRange()?.first ?: period.toString(), tabType) {
-                    Box(modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 450.dp)
-                    ) {
-                        when (result) {
-                            is Result.Loading -> {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    LoadingDonutChartSection()
+                Box(modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 450.dp)
+                ) {
+                    when (result) {
+                        is Result.Loading -> {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                LoadingDonutChartSection()
+                                Spacer(Modifier.height(16.dp))
+                                LoadingCategoryList()
+                            }
+                        }
+
+                        is Result.Error -> {
+                            ErrorState(
+                                message = result.exception.message ?: "Failed to load distribution",
+                                onRetry = { /* distribution logic doesn't have an easy retry here */ }
+                            )
+                        }
+
+                        is Result.Success -> {
+                            val baseCategories = when (tabType) {
+                                is TabType.Income -> result.data.incomeCategories
+                                is TabType.Expense -> result.data.expenseCategories
+                            }
+
+                            if (baseCategories.isEmpty() && (tabType !is TabType.Expense || result.data.totalTransactionCost <= 0.0)) {
+                                EmptyDistributionState()
+                            } else {
+                                val categorySums = mutableListOf<Pair<String, Float>>()
+                                categorySums.addAll(baseCategories.map { it.category to it.total.toFloat() })
+
+                                if (tabType is TabType.Expense && result.data.totalTransactionCost > 0) {
+                                    categorySums.add("Transaction Fees" to result.data.totalTransactionCost.toFloat())
+                                }
+
+                                val totalAmount = categorySums.sumOf { it.second.toDouble() }.toFloat()
+
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    DonutChartSection(
+                                        categorySums = categorySums,
+                                        totalAmount = totalAmount,
+                                        selectedIndex = selectedIndex,
+                                        onSelectedIndexChange = { index -> selectedIndex = index }
+                                    )
                                     Spacer(Modifier.height(16.dp))
-                                    LoadingCategoryList()
-                                }
-                            }
-
-                            is Result.Error -> {
-                                ErrorState(
-                                    message = result.exception.message ?: "Failed to load distribution",
-                                    onRetry = { /* distribution logic doesn't have an easy retry here, but we can pass one if needed */ }
-                                )
-                            }
-
-                            is Result.Success -> {
-                                val baseCategories = when (tabType) {
-                                    is TabType.Income -> result.data.incomeCategories
-                                    is TabType.Expense -> result.data.expenseCategories
-                                }
-
-                                if (baseCategories.isEmpty() && (tabType !is TabType.Expense || result.data.totalTransactionCost <= 0.0)) {
-                                    EmptyDistributionState()
-                                } else {
-                                    val categorySums = mutableListOf<Pair<String, Float>>()
-                                    categorySums.addAll(baseCategories.map { it.category to it.total.toFloat() })
-
-                                    if (tabType is TabType.Expense && result.data.totalTransactionCost > 0) {
-                                        categorySums.add("Transaction Fees" to result.data.totalTransactionCost.toFloat())
-                                    }
-
-                                    val totalAmount = categorySums.sumOf { it.second.toDouble() }.toFloat()
-
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        DonutChartSection(
-                                            categorySums = categorySums,
-                                            totalAmount = totalAmount,
-                                            selectedIndex = selectedIndex,
-                                            onSelectedIndexChange = { selectedIndex = it }
-                                        )
-                                        Spacer(Modifier.height(16.dp))
-                                        CategoryList(
-                                            categories = categorySums,
-                                            totalAmount = totalAmount,
-                                            selectedIndex = selectedIndex,
-                                            onSelectedIndexChange = { selectedIndex = it },
-                                            onCategoryClick = onCategoryClick,
-                                            segmentColors = SegmentColors,
-                                            animatedVisibilityScope = animatedVisibilityScope
-                                        )
-                                    }
+                                    CategoryList(
+                                        categories = categorySums,
+                                        totalAmount = totalAmount,
+                                        selectedIndex = selectedIndex,
+                                        onSelectedIndexChange = { index -> selectedIndex = index },
+                                        onCategoryClick = onCategoryClick,
+                                        segmentColors = SegmentColors,
+                                        animatedVisibilityScope = animatedVisibilityScope
+                                    )
                                 }
                             }
                         }

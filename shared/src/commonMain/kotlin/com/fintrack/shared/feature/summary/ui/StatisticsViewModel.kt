@@ -113,6 +113,8 @@ class StatisticsViewModel(
 
     private var lastHighlightsAccountId: String? = null
     private var lastHighlightsPeriod: String? = null
+    private var highlightsJob: kotlinx.coroutines.Job? = null
+
     fun loadHighlights(accountId: String? = null, period: String? = null, force: Boolean = false) {
         println("StatisticsViewModel: loadHighlights called. accountId=$accountId, period=$period, force=$force")
         
@@ -129,7 +131,8 @@ class StatisticsViewModel(
             return
         }
 
-        viewModelScope.launch {
+        highlightsJob?.cancel()
+        highlightsJob = viewModelScope.launch {
             // Only show loading if we don't have success data yet, to prevent flicker
             if (_highlights.value !is Result.Success) {
                 println("StatisticsViewModel: Setting Highlights to Loading")
@@ -154,6 +157,8 @@ class StatisticsViewModel(
 
     private var lastIncomeDistributionParams: String? = null
     private var lastExpenseDistributionParams: String? = null
+    private var incomeDistributionJob: kotlinx.coroutines.Job? = null
+    private var expenseDistributionJob: kotlinx.coroutines.Job? = null
 
     private fun loadDistribution(
         weekOrMonthCode: String,
@@ -175,7 +180,7 @@ class StatisticsViewModel(
 
         if (!force && targetFlow.value is Result.Success && lastParams == paramKey) return
 
-        viewModelScope.launch {
+        val job = viewModelScope.launch {
             when (type) {
                 TransactionType.Income -> lastIncomeDistributionParams = paramKey
                 TransactionType.Expense -> lastExpenseDistributionParams = paramKey
@@ -191,6 +196,17 @@ class StatisticsViewModel(
                 end = end,
                 accountId = accountId
             )
+        }
+
+        when (type) {
+            TransactionType.Income -> {
+                incomeDistributionJob?.cancel()
+                incomeDistributionJob = job
+            }
+            TransactionType.Expense -> {
+                expenseDistributionJob?.cancel()
+                expenseDistributionJob = job
+            }
         }
     }
 
@@ -329,8 +345,8 @@ class StatisticsViewModel(
             loadDistribution(periodCode, TransactionType.Expense, accountId = accountId, force = force)
 
             val yearCode = when (currentPeriod) {
-                is Period.Week -> currentPeriod.code.split("-").firstOrNull()
-                is Period.Month -> currentPeriod.code.split("-").firstOrNull()
+                is Period.Week -> currentPeriod.code.substringBefore("-")
+                is Period.Month -> currentPeriod.code.substringBefore("-")
                 is Period.Year -> currentPeriod.code
             }
             loadHighlights(accountId = accountId, period = yearCode, force = force)
