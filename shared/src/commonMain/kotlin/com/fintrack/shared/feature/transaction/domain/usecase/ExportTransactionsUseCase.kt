@@ -54,7 +54,7 @@ class ExportTransactionsUseCase(
     @OptIn(ExperimentalTime::class)
     private fun generateCsv(transactions: List<com.fintrack.shared.feature.transaction.domain.model.Transaction>): String {
         val csv = StringBuilder()
-        csv.append("Date,Category,Amount,Transaction Cost,Total,Type,Account,Description\n")
+        csv.append("Date,Category,Amount,Transaction Fees,Total,Type,Account,Description\n")
         
         transactions.forEach { transaction ->
             csv.append("${transaction.dateTime},")

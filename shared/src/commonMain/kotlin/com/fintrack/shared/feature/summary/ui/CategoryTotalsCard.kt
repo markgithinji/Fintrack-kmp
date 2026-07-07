@@ -196,7 +196,7 @@ fun CategoryTotalsCardWithTabs(
                                     categorySums.addAll(baseCategories.map { it.category to it.total.toFloat() })
 
                                     if (tabType is TabType.Expense && result.data.totalTransactionCost > 0) {
-                                        categorySums.add("Transaction Cost" to result.data.totalTransactionCost.toFloat())
+                                        categorySums.add("Transaction Fees" to result.data.totalTransactionCost.toFloat())
                                     }
 
                                     val totalAmount = categorySums.sumOf { it.second.toDouble() }.toFloat()

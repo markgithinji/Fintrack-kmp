@@ -99,7 +99,7 @@ object MpesaParser {
                 parseAmount(it.groupValues[2]), 
                 cost, 
                 balance, 
-                if (isMshwari) "Loans" else "Income", 
+                if (isMshwari) "Loans" else "Other Income", 
                 parseDateTime(date, time, smsTimestamp), 
                 "Transferred from $party", 
                 accountId, 
@@ -167,12 +167,12 @@ object MpesaParser {
         // Standard transactions
         sentRegex.find(message)?.let { return createFromMatch(it, false, "Sent to", null, accountId, cost, balance, smsTimestamp) }
         
-        receivedRegex.find(message)?.let { return createFromMatch(it, true, "Received from", "Income", accountId, cost, balance, smsTimestamp) }
-        sentToYouRegex.find(message)?.let { return createFromMatch(it, true, "Sent by", "Income", accountId, cost, balance, smsTimestamp) }
+        receivedRegex.find(message)?.let { return createFromMatch(it, true, "Received from", "Other Income", accountId, cost, balance, smsTimestamp) }
+        sentToYouRegex.find(message)?.let { return createFromMatch(it, true, "Sent by", "Other Income", accountId, cost, balance, smsTimestamp) }
         
         paidRegex.find(message)?.let { return createFromMatch(it, false, "Paid to", null, accountId, cost, balance, smsTimestamp) }
 
-        depositRegex.find(message)?.let { return createFromMatch(it, true, "Deposit from", "Income", accountId, cost, balance, smsTimestamp) }
+        depositRegex.find(message)?.let { return createFromMatch(it, true, "Deposit from", "Other Income", accountId, cost, balance, smsTimestamp) }
         withdrawRegex.find(message)?.let { return createFromMatch(it, false, "Withdrawn from", "Transport", accountId, cost, balance, smsTimestamp) }
 
         return null
@@ -320,7 +320,7 @@ object MpesaParser {
             r.contains("salary") -> "Salary"
             r.contains("bonus") -> "Bonus"
             r.contains("interest") -> "Interest"
-            r.contains("commission") || r.contains("income") -> "Income"
+            r.contains("commission") || r.contains("income") -> "Other Income"
             r.contains("sacco") || r.contains("chama") || r.contains("orokise") -> "Savings"
             else -> "Transfer"
         }

@@ -41,7 +41,7 @@ class CategoryManagementViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = CategoryManagementState()
+        initialValue = CategoryManagementState(categories = Category.allCategories)
     )
 
     init {

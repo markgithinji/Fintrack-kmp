@@ -63,7 +63,7 @@ fun TransactionListScreen(
 
     val sharedBoundsKey = remember(accountId, isIncome, category, hasTransactionCost) {
         when {
-            hasTransactionCost == true -> "header_card_Transaction Cost"
+            hasTransactionCost == true -> "header_card_Transaction Fees"
             category?.contains(",") == true -> "header_card_Others"
             category != null -> "header_card_$category"
             isIncome == true -> "income_card"

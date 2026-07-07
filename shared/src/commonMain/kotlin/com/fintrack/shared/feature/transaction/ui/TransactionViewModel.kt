@@ -40,7 +40,7 @@ class TransactionViewModel(
     private val globalRefreshManager: GlobalRefreshManager
 ) : ViewModel() {
 
-    private val _categories = MutableStateFlow<List<Category>>(emptyList())
+    private val _categories = MutableStateFlow<List<Category>>(Category.allCategories)
     val categories: StateFlow<List<Category>> = _categories.asStateFlow()
 
     private val _amount = MutableStateFlow("")

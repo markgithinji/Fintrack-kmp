@@ -103,10 +103,11 @@ actual fun ConfirmationDialog(
                         errorMessage != null -> errorMessage
                         else -> message
                     },
-                    style = MaterialTheme.typography.bodySmall, // Smaller text as requested
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                    lineHeight = 16.sp
+                    lineHeight = 16.sp,
+                    modifier = Modifier.padding(horizontal = 14.dp)
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))

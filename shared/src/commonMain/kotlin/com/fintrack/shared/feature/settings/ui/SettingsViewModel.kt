@@ -229,23 +229,30 @@ class SettingsViewModel(
 
     val allCategories: StateFlow<List<Category>> = categoryRepository.getCategories()
         .map { categories ->
-            val expenseCategories = categories.filter { it.isExpense && it.id != "transaction_cost" }
-                .distinctBy { it.name }
-                .sortedBy { it.name }
+            // Include both Expense and Income categories for tracking
+            // Filter out the technical 'transaction_cost' ID but keep our 'Transaction Fees' object
+            val filtered = categories.filter { it.id != "transaction_cost" }
+                .distinctBy { it.name.lowercase() to it.isExpense }
+                .sortedWith(
+                    compareByDescending<Category> { it.isDefault }
+                        .thenBy { !it.isExpense } // Expenses first, then Income
+                        .thenBy { it.name }
+                )
             
-            // Add Transaction Cost as a selectable metric at the TOP
-            val txCostVirtual = Category.TransactionCost
-            
-            listOf(txCostVirtual) + expenseCategories
+            listOf(Category.TransactionCost) + filtered
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = categoryRepository.getCategories().value.let { categories ->
-                val expenseCategories = categories.filter { it.isExpense && it.id != "transaction_cost" }
-                    .distinctBy { it.name }
-                    .sortedBy { it.name }
-                listOf(Category.TransactionCost) + expenseCategories
+                val filtered = categories.filter { it.id != "transaction_cost" }
+                    .distinctBy { it.name.lowercase() to it.isExpense }
+                    .sortedWith(
+                        compareByDescending<Category> { it.isDefault }
+                            .thenBy { !it.isExpense }
+                            .thenBy { it.name }
+                    )
+                listOf(Category.TransactionCost) + filtered
             }
         )
 

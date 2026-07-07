@@ -196,7 +196,7 @@ fun AppNavigation(
                         paddingValues = paddingValues,
                         animatedVisibilityScope = this,
                         onCategoryClick = { category, isIncome, startDate, endDate, accountId ->
-                            val isTransactionCost = category == "Transaction Cost"
+                            val isTransactionCost = category == "Transaction Fees"
                             navController.navigate(
                                 Screen.TransactionList.createRoute(
                                     accountId = accountId,

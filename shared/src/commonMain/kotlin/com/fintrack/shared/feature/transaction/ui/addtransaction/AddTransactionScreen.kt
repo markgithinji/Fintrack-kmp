@@ -433,7 +433,7 @@ fun TransactionCostSection(
     onClick: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Transaction Cost", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Text("Transaction Fees", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),

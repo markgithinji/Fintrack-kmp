@@ -119,7 +119,7 @@ fun CategoryComparisonCard(
                             Column {
                                 val sortedData = currentData.sortedWith(
                                     compareByDescending<CategoryComparison> { it.isIncome }
-                                        .thenBy { it.category == "Transaction Cost" }
+                                        .thenBy { it.category == "Transaction Fees" }
                                 )
                                 sortedData.forEachIndexed { index, comparison ->
                                     CategoryComparisonItem(
@@ -151,7 +151,7 @@ fun CategoryComparisonCard(
                             // Sort: Income first, then Expense, with Transaction Fees at the very bottom
                             val sortedData = result.data.data.sortedWith(
                                 compareByDescending<CategoryComparison> { it.isIncome }
-                                    .thenBy { it.category == "Transaction Cost" }
+                                    .thenBy { it.category == "Transaction Fees" }
                                     .thenByDescending { it.currentTotal }
                             )
 
@@ -271,7 +271,7 @@ private fun CategoryComparisonItem(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = if (comparison.category == "Transaction Cost") "Transaction Fees" else comparison.category,
+                        text = comparison.category,
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,

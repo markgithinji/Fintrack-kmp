@@ -36,7 +36,7 @@ data class Category(
         val Pets = Category("pets", "Pets", true, "Pets", true)
         val Fitness = Category("fitness", "Fitness", true, "FitnessCenter", true)
         val Maintenance = Category("maintenance", "Maintenance", true, "Build", true)
-        val TransactionCost = Category("transaction_cost", "Transaction Cost", true, "Receipt", false)
+        val TransactionCost = Category("transaction_cost", "Transaction Fees", true, "Receipt", true)
         val MiscExpense = Category("misc_expense", "Misc", true, "HelpOutline", true)
 
         // --- Income categories ---
@@ -48,8 +48,7 @@ data class Category(
         val Rental = Category("rental", "Rental", false, "RealEstateAgent", true)
         val Dividends = Category("dividends", "Dividends", false, "Analytics", true)
         val Interest = Category("interest", "Interest", false, "Percent", true)
-        val GeneralIncome = Category("income", "Income", false, "AttachMoney", true)
-        val OtherIncome = Category("other_income", "Other", false, "AttachMoney", true)
+        val OtherIncome = Category("other_income", "Other Income", false, "AttachMoney", true)
 
         val allCategories = listOf(
             Food, Transport, Shopping, Health, Bills,
@@ -57,7 +56,7 @@ data class Category(
             PersonalCare, Subscriptions, Rent, Groceries,
             Insurance, DiningOut, Utilities, Internet, Airtime, Bank, Loans, Charity, Government, Savings, Transfer,
             Pets, Fitness, Maintenance, TransactionCost, MiscExpense,
-            Salary, Freelance, Investments, GiftsIncome, Bonus, Rental, Dividends, Interest, GeneralIncome, OtherIncome
+            Salary, Freelance, Investments, GiftsIncome, Bonus, Rental, Dividends, Interest, OtherIncome
         )
 
         val expenseCategories = allCategories.filter { it.isExpense }
