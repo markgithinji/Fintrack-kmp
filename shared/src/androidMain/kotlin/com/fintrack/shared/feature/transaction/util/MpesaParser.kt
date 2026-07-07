@@ -343,7 +343,12 @@ object MpesaParser {
             r.contains("restaurant") || r.contains("cafe") || r.contains("kfc") || r.contains("java") || Regex("""\bbar\b""").containsMatchIn(r) || r.contains("lounge") || r.contains("chicken inn") || r.contains("pizza inn") || r.contains("creamy inn") || r.contains("choma place") || r.contains("nas n001") || r.contains("caterers") || r.contains("dishes") -> "Dining Out"
             r.contains("equity") || r.contains("co-operative") || r.contains("bank") || r.contains("i&m") || r.contains("ncba") || r.contains("boa") || r.contains("family bank") || r.contains("stanbic") || r.contains("loop") || r.contains("sidian") -> "Bank"
             r.contains("loan") || r.contains("fuliza") || r.contains("tala") || r.contains("branch") -> "Loans"
-            r.contains("m-shwari") || r.contains("kcb") || r.contains("sacco") || r.contains("chama") || r.contains("orokise") -> "Savings"
+            r.contains("m-shwari") || r.contains("kcb") || r.contains("sacco") || r.contains("chama") || r.contains("orokise") || 
+            r.contains("zimele") || r.contains("etica") || r.contains("gulfcap") || r.contains("cytonn") || r.contains("arvocap") || 
+            r.contains("lofty") || r.contains("kuza") || r.contains("mali") || r.contains("ziidi") || r.contains("kasha") || 
+            r.contains("genghis") || r.contains("hela imara") || r.contains("old mutual") || r.contains("sanlam") || r.contains("cic") || 
+            r.contains("icea lion") || r.contains("britam") || r.contains("madison") || r.contains("apollo") || r.contains("nabo capital") || 
+            r.contains("dry associates") -> "Savings"
             r.contains("tithe") || r.contains("offering") || r.contains("citam") || r.contains("church") || r.contains("charity") || r.contains("mosque") || r.contains("prayer mountain") -> "Charity"
             r.contains("parking") || r.contains("kaps") || r.contains("bolt") || r.contains("uber") || r.contains("taxi") || r.contains("rubis") || r.contains("totalenergies") || r.contains("shell") -> "Transport"
             r.contains("chemist") || r.contains("pharmacy") || r.contains("hospital") || r.contains("health") || r.contains("clinic") || r.contains("meds") || r.contains("dental") -> "Health"
