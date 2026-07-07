@@ -48,6 +48,9 @@ data class Category(
         val Rental = Category("rental", "Rental", false, "RealEstateAgent", true)
         val Dividends = Category("dividends", "Dividends", false, "Analytics", true)
         val Interest = Category("interest", "Interest", false, "Percent", true)
+        val LoansIncome = Category("loans_income", "Loans", false, "AccountBalanceWallet", true)
+        val TransferIncome = Category("transfer_income", "Transfer", false, "Sync", true)
+        val SavingsIncome = Category("savings_income", "Savings", false, "Savings", true)
         val OtherIncome = Category("other_income", "Other Income", false, "AttachMoney", true)
 
         val allCategories = listOf(
@@ -56,7 +59,8 @@ data class Category(
             PersonalCare, Subscriptions, Rent, Groceries,
             Insurance, DiningOut, Utilities, Internet, Airtime, Bank, Loans, Charity, Government, Savings, Transfer,
             Pets, Fitness, Maintenance, TransactionCost, MiscExpense,
-            Salary, Freelance, Investments, GiftsIncome, Bonus, Rental, Dividends, Interest, OtherIncome
+            Salary, Freelance, Investments, GiftsIncome, Bonus, Rental, Dividends, Interest, 
+            LoansIncome, TransferIncome, SavingsIncome, OtherIncome
         )
 
         val expenseCategories = allCategories.filter { it.isExpense }

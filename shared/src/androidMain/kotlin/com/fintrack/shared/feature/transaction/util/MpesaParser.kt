@@ -22,8 +22,8 @@ object MpesaParser {
     private const val FOOTER = """(?:\.|\s+)(?:New M-PESA|Transaction cost|Amount you can transact|Your new M-PESA|Separate personal|Start Investing|on Lipa Na M-PESA)"""
     private const val PARTY_END = """(?:$DATE_TIME|$FOOTER|$)"""
 
-    // 1. Withdrawal with Date first
-    private val withdrawDateFirstRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]*on $DATE at $TIME\s?(?:Withdraw|Withdrawn) $AMOUNT from (.+?)$PARTY_END""".toRegex(RegexOption.IGNORE_CASE)
+    // 1. Agent Transactions with Date first
+    private val agentDateFirstRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]*on $DATE at $TIME\s?(Withdraw|Withdrawn|Receive|Received) $AMOUNT (?:from|to) (.+?)$PARTY_END""".toRegex(RegexOption.IGNORE_CASE)
     
     // 1b. Older Withdrawal style: Give cash to
     private val giveCashRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]*on $DATE at $TIME\s?Give $AMOUNT cash to (.+?)$PARTY_END""".toRegex(RegexOption.IGNORE_CASE)
@@ -39,23 +39,23 @@ object MpesaParser {
     private val sentToYouRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+$AMOUNT was sent to you by (.+?)$PARTY_END""".toRegex(RegexOption.IGNORE_CASE)
     private val withdrawRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+$AMOUNT withdrawn from (.+?)$PARTY_END""".toRegex(RegexOption.IGNORE_CASE)
     
-    // 3. Transfers (M-Shwari / Bank)
-    private val transferFromRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+$AMOUNT transferred from (.+?)$PARTY_END""".toRegex(RegexOption.IGNORE_CASE)
+    // 3. Transfers (M-Shwari / Bank / KCB)
+    private val transferFromRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:You have transfered |)$AMOUNT (?:transferred |)from (?:your )?(.+?)(?: account)?(?: on $DATE at $TIME)?$PARTY_END""".toRegex(RegexOption.IGNORE_CASE)
     
-    private val transferToRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+$AMOUNT transferred to (.+?)$PARTY_END""".toRegex(RegexOption.IGNORE_CASE)
+    private val transferToRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+$AMOUNT transferred to (.+?)(?: account)?(?: on $DATE at $TIME)?$PARTY_END""".toRegex(RegexOption.IGNORE_CASE)
     
     // 4. Loans
-    private val loanRepayRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+Loan of $AMOUNT repaid from (?:your\s+)?(M-PESA)(?:\s+account)?.*?on $DATE at $TIME""".toRegex(RegexOption.IGNORE_CASE)
-    private val loanApprovedRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+Your M-Shwari loan has been approved (?:on $DATE[\s,]+(?:at\s+)?$TIME\s+)?.*?and $AMOUNT .*? deposited to your M-PESA account""".toRegex(RegexOption.IGNORE_CASE)
+    private val loanRepayRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:Loan of |Your loan repayment of )$AMOUNT repaid (?:from|to) (?:your\s+)?(.+?)(?:\s+account)?.*?on $DATE at $TIME""".toRegex(RegexOption.IGNORE_CASE)
+    private val loanApprovedRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+Your M-Shwari loan has been approved (?:on $DATE[\s,]+(?:at\s+)?$TIME\s+)?.*?and $AMOUNT .*? deposited to your M-PESA account""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
     
     // 5. Fuliza Repayment
-    private val fulizaRepayRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+$AMOUNT from your M-PESA has been used to (?:fully|partially) pay your outstanding Fuliza M-PESA(?:.*?$DATE[\s,]+(?:at\s+)?$TIME)?""".toRegex(RegexOption.IGNORE_CASE)
+    private val fulizaRepayRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+$AMOUNT from your M-PESA has been used to (?:fully|partially) pay your outstanding Fuliza M-PESA(?:.*?$DATE[\s,]+(?:at\s+)?$TIME)?""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
     
     // 6. Airtime
-    private val airtimeRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+You (?:bought|have bought|have received) $AMOUNT of airtime(?: for \d+)? on $DATE at $TIME""".toRegex(RegexOption.IGNORE_CASE)
+    private val airtimeRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:You (?:bought|have bought|have received) |)$AMOUNT (?:of |)airtime(?: for [+\d]+)? on $DATE at $TIME""".toRegex(RegexOption.IGNORE_CASE)
 
     // 7. Reversals
-    private val reversalRegex = """$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:Your transaction|Reversal of transaction) (.+?) has been successfully reversed[\s,]+(?:on $DATE at $TIME)?.*?$AMOUNT is (debited|credited) (?:from|to) your M-PESA account""".toRegex(RegexOption.IGNORE_CASE)
+    private val reversalRegex = """$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:Your transaction|Your original transaction|Reversal of transaction) (.+?) (?:in favour of .+? |)has been successfully reversed[\s,]+(?:on $DATE at $TIME)?.*?$AMOUNT is (debited|credited) (?:from|to) your M-PESA account""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
 
     // Auxiliary data regexes
     private val costRegex = """Transaction cost[\s,]+[Kk][Ss][Hh][\.\s]*$AMOUNT_VAL""".toRegex(RegexOption.IGNORE_CASE)
@@ -65,17 +65,31 @@ object MpesaParser {
     fun parse(message: String, accountId: String = "mpesa", smsTimestamp: Instant? = null): Transaction? {
         if (!message.contains("Confirmed", ignoreCase = true)) return null
 
+        // Ignore messages that are just balance notifications or meta-info
+        if (message.contains("Fuliza M-Pesa amount is", ignoreCase = true)) return null
+        if (message.contains("loan request will be processed shortly", ignoreCase = true)) return null
+        if (message.contains("Your loan limit is", ignoreCase = true)) return null
+        if (message.contains("Deposit Account balance is", ignoreCase = true)) return null
+        if (message.contains("KCB M-PESA balance is", ignoreCase = true)) return null
+        if (message.contains("account balance was", ignoreCase = true) && !message.contains("reversed", ignoreCase = true)) return null
+
         val cost = parseAmountFromMatch(costRegex.find(message))
         val balance = parseBalance(message)
 
-        // Try Withdraw (Date First)
-        withdrawDateFirstRegex.find(message)?.let {
+        // Try Agent Transactions (Date First)
+        agentDateFirstRegex.find(message)?.let {
             val code = it.groupValues[1]
             val date = it.groupValues[2]
             val time = it.groupValues[3]
-            val amount = parseAmount(it.groupValues[4])
-            val party = cleanPartyName(it.groupValues[5])
-            return createTransactionModel(code, amount, cost, balance, "Transport", parseDateTime(date, time, smsTimestamp), "Withdrawn from $party", accountId, false)
+            val action = it.groupValues[4].lowercase()
+            val amount = parseAmount(it.groupValues[5])
+            val party = cleanPartyName(it.groupValues[6])
+            
+            val isIncome = action.contains("receive")
+            val prefix = if (isIncome) "Deposit from" else "Withdrawn from"
+            val category = if (isIncome) "Other Income" else "Transport"
+            
+            return createTransactionModel(code, amount, cost, balance, category, parseDateTime(date, time, smsTimestamp), "$prefix $party", accountId, isIncome)
         }
 
         // Try "Give cash to" (Older withdrawal style)
@@ -88,18 +102,22 @@ object MpesaParser {
             return createTransactionModel(code, amount, cost, balance, "Transport", parseDateTime(date, time, smsTimestamp), "Withdrawn from $party", accountId, false)
         }
 
-        // M-Shwari / Bank Transfers
+        // M-Shwari / Bank / KCB Transfers
         transferFromRegex.find(message)?.let { 
+            val code = it.groupValues[1]
+            val amount = parseAmount(it.groupValues[2])
             val party = cleanPartyName(it.groupValues[3])
-            val isMshwari = party.lowercase().contains("m-shwari")
             val date = it.groupValues.getOrNull(4) ?: ""
             val time = it.groupValues.getOrNull(5) ?: ""
+            
+            val isSavings = party.lowercase().let { it.contains("m-shwari") || it.contains("kcb") }
+            
             return createTransactionModel(
-                it.groupValues[1], 
-                parseAmount(it.groupValues[2]), 
+                code, 
+                amount, 
                 cost, 
                 balance, 
-                if (isMshwari) "Loans" else "Other Income", 
+                if (isSavings) "Transfer" else "Other Income",
                 parseDateTime(date, time, smsTimestamp), 
                 "Transferred from $party", 
                 accountId, 
@@ -107,16 +125,20 @@ object MpesaParser {
             )
         }
         transferToRegex.find(message)?.let { 
+            val code = it.groupValues[1]
+            val amount = parseAmount(it.groupValues[2])
             val party = cleanPartyName(it.groupValues[3])
-            val isMshwari = party.lowercase().contains("m-shwari")
             val date = it.groupValues.getOrNull(4) ?: ""
             val time = it.groupValues.getOrNull(5) ?: ""
+            
+            val isSavings = party.lowercase().let { it.contains("m-shwari") || it.contains("kcb") }
+
             return createTransactionModel(
-                it.groupValues[1], 
-                parseAmount(it.groupValues[2]), 
+                code, 
+                amount, 
                 cost, 
                 balance, 
-                if (isMshwari) "Loans" else inferCategory(party), 
+                if (isSavings) "Transfer" else inferCategory(party),
                 parseDateTime(date, time, smsTimestamp), 
                 "Transferred to $party", 
                 accountId, 
@@ -130,9 +152,16 @@ object MpesaParser {
             val amount = parseAmount(it.groupValues[2])
             val date = it.groupValues.getOrNull(3) ?: ""
             val time = it.groupValues.getOrNull(4) ?: ""
-            return createTransactionModel(code, amount, cost, balance, "Loans", parseDateTime(date, time, smsTimestamp), "M-Shwari Loan Approved", accountId, true)
+            return createTransactionModel(code, amount, cost, balance, "Loans", parseDateTime(date, time, smsTimestamp), "Loan Approved", accountId, true)
         }
-        loanRepayRegex.find(message)?.let { return createFromMatch(it, false, "Loan Repaid from", "Loans", accountId, cost, balance, smsTimestamp) }
+        loanRepayRegex.find(message)?.let { 
+            val code = it.groupValues[1]
+            val amount = parseAmount(it.groupValues[2])
+            val party = cleanPartyName(it.groupValues[3])
+            val date = it.groupValues.getOrNull(4) ?: ""
+            val time = it.groupValues.getOrNull(5) ?: ""
+            return createTransactionModel(code, amount, cost, balance, "Loans", parseDateTime(date, time, smsTimestamp), "Loan Repayment to $party", accountId, false)
+        }
         
         // Airtime
         airtimeRegex.find(message)?.let {
