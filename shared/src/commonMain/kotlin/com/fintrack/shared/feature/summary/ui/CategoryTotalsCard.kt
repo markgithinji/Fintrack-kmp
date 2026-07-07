@@ -562,9 +562,9 @@ fun CategoryList(
                             }
                             
                             if (model.count > 0) {
-                                val avgText = model.avgCount?.let { " (Avg: ${it.toInt()})" } ?: ""
+                                val avgText = model.avgCount?.let { " · Usually ${it.toInt()}" } ?: ""
                                 Text(
-                                    text = "${model.count} transactions$avgText",
+                                    text = "${model.count} times$avgText",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                                 )
@@ -588,8 +588,13 @@ fun CategoryList(
                     
                     if (model.insights != null && model.insights.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(4.dp))
+                        val insightText = if (categoryName == "Others" && othersInsight != null) {
+                            "Mainly: $othersInsight"
+                        } else {
+                            "Mainly: ${model.insights.take(2).joinToString(", ")}"
+                        }
                         Text(
-                            text = if (categoryName == "Others" && othersInsight != null) othersInsight else "Mainly: ${model.insights.take(2).joinToString(", ")}",
+                            text = insightText,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                             fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
