@@ -27,7 +27,7 @@ class AndroidSettingsDataSource(
     private val _reminderTimeFlow = MutableStateFlow(LocalTime(20, 0))
     private val _mpesaSimSlotFlow = MutableStateFlow<Int?>(null)
     private val _mpesaAccountIdFlow = MutableStateFlow<String?>(null)
-    private val _mpesaListenerFlow = MutableStateFlow(true)
+    private val _mpesaListenerFlow = MutableStateFlow(false)
     private val _budgetAlertsEnabledFlow = MutableStateFlow(false)
     private val _budgetAlertThresholdsFlow = MutableStateFlow(setOf(50, 80, 100))
     private val _alertBudgetIdFlow = MutableStateFlow<String?>(null)
@@ -68,7 +68,7 @@ class AndroidSettingsDataSource(
         val mpesaAccountId = prefs.getString("mpesa_account_id", null)
         _mpesaAccountIdFlow.update { mpesaAccountId }
 
-        val mpesaListenerEnabled = prefs.getBoolean("mpesa_listener_enabled", true)
+        val mpesaListenerEnabled = prefs.getBoolean("mpesa_listener_enabled", false)
         _mpesaListenerFlow.update { mpesaListenerEnabled }
 
         val budgetAlertsEnabled = prefs.getBoolean("budget_alerts_enabled", false)

@@ -231,35 +231,7 @@ fun SettingsScreen(
                         )
                     }
 
-                    SettingsSection(title = "Notifications") {
-                        SettingsToggleItem(
-                            title = "Daily Logging Nudge",
-                            subtitle = "Reminder to log your transactions for the day",
-                            icon = Icons.Default.Notifications,
-                            checked = isReminderEnabled,
-                            onCheckedChange = { viewModel.setReminderEnabled(it) }
-                        )
-
-                        if (isReminderEnabled) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                thickness = 0.5.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                            )
-                            SettingsItem(
-                                title = "Nudge Time",
-                                subtitle = reminderTime.format(currentTimeFormat),
-                                icon = Icons.Default.Schedule,
-                                onClick = { showTimePickerDialog = true }
-                            )
-                        }
-
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-                        )
-
+                    SettingsSection(title = "M-Pesa Tracking") {
                         SettingsToggleItem(
                             title = "M-Pesa Auto-tracking",
                             subtitle = "Automatically log M-Pesa SMS",
@@ -275,7 +247,41 @@ fun SettingsScreen(
                         )
                     }
 
-                    SettingsSection(title = "Budget Alerts") {
+                    SettingsSection(title = "Notifications") {
+                        SettingsToggleItem(
+                            title = "Daily Logging Nudge",
+                            subtitle = "Reminder to log your transactions for the day",
+                            icon = Icons.Default.Notifications,
+                            checked = isReminderEnabled,
+                            onCheckedChange = { viewModel.setReminderEnabled(it) }
+                        )
+
+                        AnimatedVisibility(
+                            visible = isReminderEnabled,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
+                        ) {
+                            Column {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    thickness = 0.5.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                )
+                                SettingsItem(
+                                    title = "Nudge Time",
+                                    subtitle = reminderTime.format(currentTimeFormat),
+                                    icon = Icons.Default.Schedule,
+                                    onClick = { showTimePickerDialog = true }
+                                )
+                            }
+                        }
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                        )
+
                         SettingsToggleItem(
                             title = "Threshold Alerts",
                             subtitle = "Notify when spending reaches 50%, 80%, or 100% of limit",
@@ -284,39 +290,49 @@ fun SettingsScreen(
                             onCheckedChange = { viewModel.setBudgetAlertsEnabled(it) }
                         )
 
-                        if (budgetAlertsEnabled) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                thickness = 0.5.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                            )
-                            
-                            val budgets = (budgetsResult as? Result.Success)?.data ?: emptyList()
-                            val selectedBudget = budgets.find { it.budget.id == alertBudgetId }
-                            
-                            SettingsItem(
-                                title = "Monitored Budget",
-                                subtitle = selectedBudget?.budget?.name ?: "Select a budget",
-                                icon = Icons.Default.AccountBalanceWallet,
-                                onClick = { showBudgetSelectionDialog = true }
-                            )
+                        AnimatedVisibility(
+                            visible = budgetAlertsEnabled,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
+                        ) {
+                            Column {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    thickness = 0.5.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                )
+                                
+                                val budgets = (budgetsResult as? Result.Success)?.data ?: emptyList()
+                                val selectedBudget = budgets.find { it.budget.id == alertBudgetId }
+                                
+                                SettingsItem(
+                                    title = "Monitored Budget",
+                                    subtitle = selectedBudget?.budget?.name ?: "Select a budget",
+                                    icon = Icons.Default.AccountBalanceWallet,
+                                    onClick = { showBudgetSelectionDialog = true }
+                                )
 
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                thickness = 0.5.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                            )
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    thickness = 0.5.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                )
 
-                            SettingsItem(
-                                title = "Active Thresholds",
-                                subtitle = if (budgetAlertThresholds.isEmpty()) "None" else budgetAlertThresholds.sorted().joinToString("% ") { it.toString() } + "%",
-                                icon = Icons.Default.NotificationsActive,
-                                onClick = { showThresholdDialog = true }
-                            )
+                                SettingsItem(
+                                    title = "Active Thresholds",
+                                    subtitle = if (budgetAlertThresholds.isEmpty()) "None" else budgetAlertThresholds.sorted().joinToString("% ") { it.toString() } + "%",
+                                    icon = Icons.Default.NotificationsActive,
+                                    onClick = { showThresholdDialog = true }
+                                )
+                            }
                         }
-                    }
 
-                    SettingsSection(title = "Upcoming Bills") {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                        )
+
                         SettingsToggleItem(
                             title = "Smart Bill Reminders",
                             subtitle = "Get notified before recurring payments are due",
@@ -325,31 +341,33 @@ fun SettingsScreen(
                             onCheckedChange = { viewModel.setBillReminderEnabled(it) }
                         )
 
-                        if (isBillReminderEnabled) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                thickness = 0.5.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                            )
-                            
-                            SettingsItem(
-                                title = "Advance Notice",
-                                subtitle = "$billReminderDaysBefore days before due date",
-                                icon = Icons.Default.EventRepeat,
-                                onClick = { /* Show a picker or dialog for days */ }
-                            )
+                        AnimatedVisibility(
+                            visible = isBillReminderEnabled,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
+                        ) {
+                            Column {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    thickness = 0.5.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                )
+                                
+                                SettingsItem(
+                                    title = "Advance Notice",
+                                    subtitle = "$billReminderDaysBefore days before due date",
+                                    icon = Icons.Default.EventRepeat,
+                                    onClick = { /* Show a picker or dialog for days */ }
+                                )
+                            }
                         }
 
-                        Text(
-                            text = "Fintrack automatically detects your recurring bills and subscriptions from your history to provide timely reminders.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                            lineHeight = 16.sp
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                         )
-                    }
 
-                    SettingsSection(title = "Summaries") {
                         SettingsToggleItem(
                             title = "Daily Spending Summary",
                             subtitle = "Summary of yesterday's total spending",
@@ -372,27 +390,25 @@ fun SettingsScreen(
                             onCheckedChange = { viewModel.setWeeklySummaryEnabled(it) }
                         )
 
-                        if (isDailySummaryEnabled || isWeeklySummaryEnabled) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                thickness = 0.5.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                            )
-                            SettingsItem(
-                                title = "Notification Time",
-                                subtitle = summaryNotificationTime.format(currentTimeFormat),
-                                icon = Icons.Default.Schedule,
-                                onClick = { showSummaryTimePickerDialog = true }
-                            )
+                        AnimatedVisibility(
+                            visible = isDailySummaryEnabled || isWeeklySummaryEnabled,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
+                        ) {
+                            Column {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    thickness = 0.5.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                )
+                                SettingsItem(
+                                    title = "Notification Time",
+                                    subtitle = summaryNotificationTime.format(currentTimeFormat),
+                                    icon = Icons.Default.Schedule,
+                                    onClick = { showSummaryTimePickerDialog = true }
+                                )
+                            }
                         }
-
-                        Text(
-                            text = "Fintrack automatically detects your recurring bills and subscriptions from your history to provide timely reminders.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                            lineHeight = 16.sp
-                        )
                     }
 
                     SettingsSection(title = "Security") {
@@ -1770,7 +1786,14 @@ fun SettingsSection(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
-                modifier = Modifier.padding(vertical = 4.dp)
+                modifier = Modifier
+                    .padding(vertical = 4.dp)
+                    .animateContentSize(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    )
             ) {
                 content()
             }
@@ -1814,7 +1837,11 @@ fun SettingsItem(
             
             Spacer(modifier = Modifier.width(16.dp))
             
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 16.dp)
+            ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge,
@@ -1823,8 +1850,9 @@ fun SettingsItem(
                 )
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 14.sp
                 )
             }
             
@@ -1873,7 +1901,11 @@ fun SettingsToggleItem(
             
             Spacer(modifier = Modifier.width(16.dp))
             
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 16.dp)
+            ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge,
@@ -1882,8 +1914,9 @@ fun SettingsToggleItem(
                 )
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 14.sp
                 )
             }
             

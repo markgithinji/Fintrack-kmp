@@ -23,7 +23,7 @@ class IOSSettingsDataSource : SettingsDataSource {
     private val _reminderTimeFlow = MutableStateFlow(LocalTime(20, 0))
     private val _mpesaSimSlotFlow = MutableStateFlow<Int?>(null)
     private val _mpesaAccountIdFlow = MutableStateFlow<String?>(null)
-    private val _mpesaListenerFlow = MutableStateFlow(true)
+    private val _mpesaListenerFlow = MutableStateFlow(false)
     private val _budgetAlertsEnabledFlow = MutableStateFlow(false)
     private val _budgetAlertThresholdsFlow = MutableStateFlow(setOf(50, 80, 100))
     private val _alertBudgetIdFlow = MutableStateFlow<String?>(null)
@@ -64,7 +64,7 @@ class IOSSettingsDataSource : SettingsDataSource {
         val mpesaAccountId = userDefaults.stringForKey("mpesa_account_id")
         _mpesaAccountIdFlow.value = mpesaAccountId
 
-        val mpesaListenerEnabled = if (userDefaults.objectForKey("mpesa_listener_enabled") != null) userDefaults.boolForKey("mpesa_listener_enabled") else true
+        val mpesaListenerEnabled = if (userDefaults.objectForKey("mpesa_listener_enabled") != null) userDefaults.boolForKey("mpesa_listener_enabled") else false
         _mpesaListenerFlow.value = mpesaListenerEnabled
 
         val budgetAlertsEnabled = userDefaults.boolForKey("budget_alerts_enabled")
