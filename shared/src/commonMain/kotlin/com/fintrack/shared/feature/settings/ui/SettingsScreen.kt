@@ -108,6 +108,7 @@ fun SettingsScreen(
     var showSummaryTimePickerDialog by remember { mutableStateOf(false) }
     var showExportFormatDialog by remember { mutableStateOf(false) }
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
+    var showBillReminderDaysDialog by remember { mutableStateOf(false) }
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
 
@@ -224,7 +225,7 @@ fun SettingsScreen(
 
                         SettingsToggleItem(
                             title = "Show Decimals",
-                            subtitle = if (showDecimals) "Show cents (e.g. .00)" else "Clean whole numbers only",
+                            subtitle = if (showDecimals) "Show cents (e.g., 0.00)" else "Clean whole numbers only",
                             icon = Icons.Default.Pin,
                             checked = showDecimals,
                             onCheckedChange = { viewModel.setShowDecimals(it) }
@@ -357,7 +358,7 @@ fun SettingsScreen(
                                     title = "Advance Notice",
                                     subtitle = "$billReminderDaysBefore days before due date",
                                     icon = Icons.Default.EventRepeat,
-                                    onClick = { /* Show a picker or dialog for days */ }
+                                    onClick = { showBillReminderDaysDialog = true }
                                 )
                             }
                         }
@@ -655,6 +656,17 @@ fun SettingsScreen(
                 viewModel.setBudgetAlertThresholds(it)
             },
             onDismiss = { showThresholdDialog = false }
+        )
+    }
+
+    if (showBillReminderDaysDialog) {
+        BillReminderDaysDialog(
+            currentDays = billReminderDaysBefore,
+            onDaysSelected = {
+                viewModel.setBillReminderDaysBefore(it)
+                showBillReminderDaysDialog = false
+            },
+            onDismiss = { showBillReminderDaysDialog = false }
         )
     }
 
@@ -1753,6 +1765,98 @@ fun BudgetThresholdDialog(
                     modifier = Modifier.align(Alignment.End)
                 ) {
                     Text("Done")
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BillReminderDaysDialog(
+    currentDays: Int,
+    onDaysSelected: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val options = listOf(1, 2, 3, 5, 7, 14)
+    
+    BasicAlertDialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier
+            .padding(28.dp)
+            .widthIn(max = 400.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Text(
+                    text = "Select Advance Notice",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    options.forEach { days ->
+                        val isSelected = days == currentDays
+                        val label = when (days) {
+                            1 -> "1 day before"
+                            7 -> "1 week before"
+                            14 -> "2 weeks before"
+                            else -> "$days days before"
+                        }
+                        
+                        Surface(
+                            onClick = { onDaysSelected(days) },
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected) 
+                                MaterialTheme.colorScheme.primaryContainer 
+                            else 
+                                Color.Transparent,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Cancel")
                 }
             }
         }
