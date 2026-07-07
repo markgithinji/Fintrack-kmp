@@ -108,7 +108,8 @@ fun CategoryTotalsCardWithTabs(
     onMonthSelected: (String) -> Unit = {},
     onYearSelected: (String) -> Unit = {},
     onPeriodSelected: (Period) -> Unit = {},
-    onCategoryClick: (String) -> Unit = {}
+    onCategoryClick: (String) -> Unit = {},
+    onRetry: () -> Unit = {}
 ) {
     // Use rememberSaveable to maintain selection across navigation
     // Reset selection only when period or tab type changes
@@ -180,7 +181,7 @@ fun CategoryTotalsCardWithTabs(
                         is Result.Error -> {
                             ErrorState(
                                 message = result.exception.message ?: "Failed to load distribution",
-                                onRetry = { /* distribution logic doesn't have an easy retry here */ }
+                                onRetry = onRetry
                             )
                         }
 

@@ -132,6 +132,10 @@ fun StatisticsScreen(
                     onMonthSelected = { month -> viewModel.onPeriodChanged(Period.Month(month)) },
                     onYearSelected = { year -> viewModel.onPeriodChanged(Period.Year(year)) },
                     onPeriodSelected = { period -> viewModel.onPeriodChanged(period) },
+                    onRetry = {
+                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                        viewModel.reloadDistributionForCurrentSelection(accountId, force = true)
+                    },
                     onCategoryClick = { category ->
                         val dateRange = safePeriod.getDateRange()
                         val accountId = (selectedAccountResult as? Result.Success)?.data?.id

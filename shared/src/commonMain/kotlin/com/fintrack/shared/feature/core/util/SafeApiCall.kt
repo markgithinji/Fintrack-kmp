@@ -58,12 +58,12 @@ private suspend fun convertToDomainException(e: Exception): ApiException {
             ApiException.Network(cleanMessage.ifEmpty { "Request timeout" })
         }
 
+        is CancellationException -> throw e
+
         is IllegalStateException -> {
             logger.error(LogTags.ERROR, "Invalid app state", e)
             ApiException.InvalidState("Invalid app state: ${e.message}")
         }
-
-        is CancellationException -> throw e
 
         else -> {
             val className = e::class.simpleName ?: ""
