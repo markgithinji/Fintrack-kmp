@@ -311,6 +311,9 @@ class TransactionViewModel(
         }
     }
 
+    private var lastPagingParams: TransactionPagingParams? = null
+    private var cachedPagingFlow: Flow<PagingData<Transaction>>? = null
+
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getTransactionsPagingData(
         accountId: String?,
@@ -320,7 +323,21 @@ class TransactionViewModel(
         endDate: String? = null,
         hasTransactionCost: Boolean? = null
     ): Flow<PagingData<Transaction>> {
-        return repo.refreshSignal
+        val newParams = TransactionPagingParams(
+            accountId = accountId,
+            isIncome = isIncome,
+            category = category,
+            startDate = startDate,
+            endDate = endDate,
+            hasTransactionCost = hasTransactionCost
+        )
+
+        if (newParams == lastPagingParams && cachedPagingFlow != null) {
+            return cachedPagingFlow!!
+        }
+
+        lastPagingParams = newParams
+        val flow = repo.refreshSignal
             .onStart { emit(Unit) }
             .flatMapLatest {
                 repo.getTransactionsPagingFlow(
@@ -333,6 +350,9 @@ class TransactionViewModel(
                 )
             }
             .cachedIn(viewModelScope)
+        
+        cachedPagingFlow = flow
+        return flow
     }
 
     fun resetSaveState() {
@@ -387,3 +407,12 @@ class TransactionViewModel(
         _validationError.value = null
     }
 }
+
+private data class TransactionPagingParams(
+    val accountId: String?,
+    val isIncome: Boolean?,
+    val category: String?,
+    val startDate: String?,
+    val endDate: String?,
+    val hasTransactionCost: Boolean?
+)

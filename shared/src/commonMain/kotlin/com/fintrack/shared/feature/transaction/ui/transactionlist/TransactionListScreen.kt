@@ -159,62 +159,56 @@ private fun TransactionListContent(
 
         item { Spacer(modifier = Modifier.height(4.dp)) }
 
-        when (val refreshState = transactions.loadState.refresh) {
-            is LoadState.Loading -> {
-                items(5) { index ->
-                    TransactionLoadingItem(
-                        padding = PaddingValues(16.dp)
-                    )
-                }
+        val refreshState = transactions.loadState.refresh
+        
+        if (refreshState is LoadState.Loading && transactions.itemCount == 0) {
+            items(5) { index ->
+                TransactionLoadingItem(
+                    padding = PaddingValues(16.dp)
+                )
             }
-
-            is LoadState.Error -> {
-                item {
-                    TransactionListErrorState(
-                        message = refreshState.error.message ?: "Failed to load transactions",
-                        onRetry = { transactions.retry() }
-                    )
-                }
+        } else if (refreshState is LoadState.Error && transactions.itemCount == 0) {
+            item {
+                TransactionListErrorState(
+                    message = refreshState.error.message ?: "Failed to load transactions",
+                    onRetry = { transactions.retry() }
+                )
             }
-
-            else -> {
-                if (transactions.itemCount == 0) {
-                    item {
-                        TransactionListEmptyState(isIncome = isIncome)
+        } else if (transactions.itemCount == 0 && refreshState is LoadState.NotLoading) {
+            item {
+                TransactionListEmptyState(isIncome = isIncome)
+            }
+        } else {
+            items(
+                count = transactions.itemCount,
+                key = { index ->
+                    val t = transactions[index]
+                    (t as? Transaction)?.id ?: "loading_$index"
+                }
+            ) { index ->
+                val transaction = transactions[index] as? Transaction
+                
+                if (transaction != null) {
+                    val timeZone = TimeZone.currentSystemDefault()
+                    val transactionDate = transaction.dateTime.toLocalDateTime(timeZone).date
+                    
+                    // Show date header if it's the first item or the date has changed
+                    val prevTransaction = if (index > 0) transactions[index - 1] as? Transaction else null
+                    val showHeader = index == 0 || (prevTransaction != null && prevTransaction.dateTime.toLocalDateTime(timeZone).date != transactionDate)
+                    
+                    if (showHeader) {
+                        DateHeader(
+                            dateString = transactionDate.formatAsHeaderDate(),
+                            modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+                        )
                     }
-                } else {
-                    items(
-                        count = transactions.itemCount,
-                        key = { index ->
-                            val t = transactions[index]
-                            (t as? Transaction)?.id ?: "loading_$index"
-                        }
-                    ) { index ->
-                        val transaction = transactions[index] as? Transaction
-                        
-                        if (transaction != null) {
-                            val timeZone = TimeZone.currentSystemDefault()
-                            val transactionDate = transaction.dateTime.toLocalDateTime(timeZone).date
-                            
-                            // Show date header if it's the first item or the date has changed
-                            val prevTransaction = if (index > 0) transactions[index - 1] as? Transaction else null
-                            val showHeader = index == 0 || (prevTransaction != null && prevTransaction.dateTime.toLocalDateTime(timeZone).date != transactionDate)
-                            
-                            if (showHeader) {
-                                DateHeader(
-                                    dateString = transactionDate.formatAsHeaderDate(),
-                                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
-                                )
-                            }
 
-                            TransactionItem(
-                                transaction = transaction,
-                                animatedVisibilityScope = animatedVisibilityScope,
-                                modifier = Modifier.animateItem(),
-                                onClick = { transaction.id?.let { id -> onTransactionClick(id) } }
-                            )
-                        }
-                    }
+                    TransactionItem(
+                        transaction = transaction,
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        modifier = Modifier.animateItem(),
+                        onClick = { transaction.id?.let { id -> onTransactionClick(id) } }
+                    )
                 }
             }
         }

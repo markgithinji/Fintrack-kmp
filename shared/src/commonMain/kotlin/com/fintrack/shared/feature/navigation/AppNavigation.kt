@@ -144,9 +144,11 @@ fun AppNavigation(
                     }
                 }
             ) {
-                composable(Screen.Home.route) {
-                    LaunchedEffect(Unit) {
-                        onUpdateAppBarState(AppBarState(title = "Home"))
+                composable(Screen.Home.route) { backStackEntry ->
+                    LaunchedEffect(backStackEntry.lifecycle.currentState) {
+                        if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+                            onUpdateAppBarState(AppBarState(title = "Home"))
+                        }
                     }
                     HomeScreen(
                         paddingValues = paddingValues,
@@ -188,9 +190,11 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Screen.Statistics.route) {
-                    LaunchedEffect(Unit) {
-                        onUpdateAppBarState(AppBarState(title = "Statistics"))
+                composable(Screen.Statistics.route) { backStackEntry ->
+                    LaunchedEffect(backStackEntry.lifecycle.currentState) {
+                        if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+                            onUpdateAppBarState(AppBarState(title = "Statistics"))
+                        }
                     }
                     StatisticsScreen(
                         paddingValues = paddingValues,
@@ -211,9 +215,11 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Screen.Budget.route) {
-                    LaunchedEffect(Unit) {
-                        onUpdateAppBarState(AppBarState(title = "Budget"))
+                composable(Screen.Budget.route) { backStackEntry ->
+                    LaunchedEffect(backStackEntry.lifecycle.currentState) {
+                        if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+                            onUpdateAppBarState(AppBarState(title = "Budget"))
+                        }
                     }
                     BudgetScreen(
                         paddingValues = paddingValues,
@@ -231,9 +237,11 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Screen.Profile.route) {
-                    LaunchedEffect(Unit) {
-                        onUpdateAppBarState(AppBarState(title = "Profile"))
+                composable(Screen.Profile.route) { backStackEntry ->
+                    LaunchedEffect(backStackEntry.lifecycle.currentState) {
+                        if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+                            onUpdateAppBarState(AppBarState(title = "Profile"))
+                        }
                     }
                     ProfileScreen(
                         paddingValues = paddingValues,
@@ -245,43 +253,49 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Screen.EditProfile.route) {
-                    LaunchedEffect(Unit) {
-                        onUpdateAppBarState(
-                            AppBarState(
-                                title = "Edit Profile",
-                                showBackButton = true,
-                                onBack = { navController.popBackStack() }
+                composable(Screen.EditProfile.route) { backStackEntry ->
+                    LaunchedEffect(backStackEntry.lifecycle.currentState) {
+                        if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+                            onUpdateAppBarState(
+                                AppBarState(
+                                    title = "Edit Profile",
+                                    showBackButton = true,
+                                    onBack = { navController.popBackStack() }
+                                )
                             )
-                        )
+                        }
                     }
                     EditProfileScreen(
                         onNavigateBack = { navController.popBackStack() }
                     )
                 }
 
-                composable(Screen.Accounts.route) {
-                    LaunchedEffect(Unit) {
-                        onUpdateAppBarState(
-                            AppBarState(
-                                title = "Accounts",
-                                showBackButton = true,
-                                onBack = { navController.popBackStack() }
+                composable(Screen.Accounts.route) { backStackEntry ->
+                    LaunchedEffect(backStackEntry.lifecycle.currentState) {
+                        if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+                            onUpdateAppBarState(
+                                AppBarState(
+                                    title = "Accounts",
+                                    showBackButton = true,
+                                    onBack = { navController.popBackStack() }
+                                )
                             )
-                        )
+                        }
                     }
                     AccountsScreen(paddingValues = paddingValues)
                 }
 
-                composable(Screen.Categories.route) {
-                    LaunchedEffect(Unit) {
-                        onUpdateAppBarState(
-                            AppBarState(
-                                title = "Categories",
-                                showBackButton = true,
-                                onBack = { navController.popBackStack() }
+                composable(Screen.Categories.route) { backStackEntry ->
+                    LaunchedEffect(backStackEntry.lifecycle.currentState) {
+                        if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+                            onUpdateAppBarState(
+                                AppBarState(
+                                    title = "Categories",
+                                    showBackButton = true,
+                                    onBack = { navController.popBackStack() }
+                                )
                             )
-                        )
+                        }
                     }
                     CategoryManagementScreen(
                         paddingValues = paddingValues,
@@ -289,15 +303,17 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Screen.Settings.route) {
-                    LaunchedEffect(Unit) {
-                        onUpdateAppBarState(
-                            AppBarState(
-                                title = "Settings",
-                                showBackButton = true,
-                                onBack = { navController.popBackStack() }
+                composable(Screen.Settings.route) { backStackEntry ->
+                    LaunchedEffect(backStackEntry.lifecycle.currentState) {
+                        if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+                            onUpdateAppBarState(
+                                AppBarState(
+                                    title = "Settings",
+                                    showBackButton = true,
+                                    onBack = { navController.popBackStack() }
+                                )
                             )
-                        )
+                        }
                     }
                     SettingsScreen(
                         paddingValues = paddingValues
@@ -317,14 +333,16 @@ fun AppNavigation(
                     }
                     val budgetId = if (budgetIdArg.isNullOrEmpty()) null else budgetIdArg
 
-                    LaunchedEffect(budgetId) {
-                        onUpdateAppBarState(
-                            AppBarState(
-                                title = if (budgetId == null) "Add Budget" else "Edit Budget",
-                                showBackButton = true,
-                                onBack = { navController.popBackStack() }
+                    LaunchedEffect(budgetId, backStackEntry.lifecycle.currentState) {
+                        if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+                            onUpdateAppBarState(
+                                AppBarState(
+                                    title = if (budgetId == null) "Add Budget" else "Edit Budget",
+                                    showBackButton = true,
+                                    onBack = { navController.popBackStack() }
+                                )
                             )
-                        )
+                        }
                     }
 
                     BudgetDetailScreen(
@@ -337,9 +355,11 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Screen.Login.route) {
-                    LaunchedEffect(Unit) {
-                        onUpdateAppBarState(AppBarState(title = "Login"))
+                composable(Screen.Login.route) { backStackEntry ->
+                    LaunchedEffect(backStackEntry.lifecycle.currentState) {
+                        if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+                            onUpdateAppBarState(AppBarState(title = "Login"))
+                        }
                     }
                     LoginScreen(
                         viewModel = authViewModel,
@@ -358,19 +378,21 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Screen.Register.route) {
-                    LaunchedEffect(Unit) {
-                        onUpdateAppBarState(
-                            AppBarState(
-                                title = "Create Account",
-                                showBackButton = true,
-                                onBack = {
-                                    navController.navigate(Screen.Login.route) {
-                                        popUpTo(Screen.Register.route) { inclusive = true }
+                composable(Screen.Register.route) { backStackEntry ->
+                    LaunchedEffect(backStackEntry.lifecycle.currentState) {
+                        if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+                            onUpdateAppBarState(
+                                AppBarState(
+                                    title = "Create Account",
+                                    showBackButton = true,
+                                    onBack = {
+                                        navController.navigate(Screen.Login.route) {
+                                            popUpTo(Screen.Register.route) { inclusive = true }
+                                        }
                                     }
-                                }
+                                )
                             )
-                        )
+                        }
                     }
                     RegisterScreen(
                         viewModel = authViewModel,
@@ -444,21 +466,23 @@ fun AppNavigation(
                     }
                     val hasTransactionCost: Boolean? = hasTransactionCostStr?.toBooleanStrictOrNull()
 
-                    LaunchedEffect(Unit) {
-                        onUpdateAppBarState(
-                            AppBarState(
-                                title = when {
-                                    hasTransactionCost == true -> "Transaction Fees"
-                                    category?.contains(",") == true -> "Other Categories"
-                                    category != null -> category
-                                    isIncome == true -> "Income Transactions"
-                                    isIncome == false -> "Expense Transactions"
-                                    else -> "All Transactions"
-                                },
-                                showBackButton = true,
-                                onBack = { navController.popBackStack() }
+                    LaunchedEffect(backStackEntry.lifecycle.currentState) {
+                        if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+                            onUpdateAppBarState(
+                                AppBarState(
+                                    title = when {
+                                        hasTransactionCost == true -> "Transaction Fees"
+                                        category?.contains(",") == true -> "Other Categories"
+                                        category != null -> category
+                                        isIncome == true -> "Income Transactions"
+                                        isIncome == false -> "Expense Transactions"
+                                        else -> "All Transactions"
+                                    },
+                                    showBackButton = true,
+                                    onBack = { navController.popBackStack() }
+                                )
                             )
-                        )
+                        }
                     }
 
                     TransactionListScreen(
