@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,6 +35,7 @@ import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -46,7 +48,7 @@ fun ProfileScreen(
     onNavigateToEditProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
-    val profileResult by viewModel.profileState.collectAsStateWithLifecycle()
+    val metricsResult by viewModel.metricsState.collectAsStateWithLifecycle()
     var showLogoutConfirmation by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -150,7 +152,7 @@ fun ProfileScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             AnimatedContent(
-                                targetState = profileResult,
+                                targetState = metricsResult,
                                 transitionSpec = {
                                     fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)) togetherWith
                                             fadeOut(animationSpec = spring(stiffness = Spring.StiffnessLow))
@@ -211,9 +213,9 @@ fun ProfileScreen(
                                         }
 
                                         is Result.Success -> {
-                                            val user = state.data
+                                            val profile = state.data
                                             Text(
-                                                text = user.name,
+                                                text = profile.name,
                                                 style = MaterialTheme.typography.titleLarge,
                                                 fontWeight = FontWeight.Bold,
                                                 color = MaterialTheme.colorScheme.onSurface,
@@ -221,7 +223,7 @@ fun ProfileScreen(
                                             )
 
                                             Text(
-                                                text = user.email,
+                                                text = profile.email,
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 textAlign = TextAlign.Center
@@ -230,6 +232,51 @@ fun ProfileScreen(
                                     }
                                 }
                             }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // Insights Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val metrics = (metricsResult as? Result.Success)?.data
+                            val netWorth = metrics?.netWorth ?: 0.0
+                            val savingsRate = metrics?.savingsRate
+                            val essentialRatio = metrics?.essentialSpendRatio
+
+                            ProfileMetricItem(
+                                label = "Net Worth",
+                                value = netWorth.toCurrencyString(),
+                                icon = Icons.Default.AccountBalanceWallet,
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            VerticalDivider(
+                                modifier = Modifier.height(32.dp).padding(horizontal = 8.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            )
+
+                            ProfileMetricItem(
+                                label = "Savings",
+                                value = if (savingsRate != null) "${savingsRate.toInt()}%" else "--",
+                                icon = Icons.AutoMirrored.Filled.TrendingUp,
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            VerticalDivider(
+                                modifier = Modifier.height(32.dp).padding(horizontal = 8.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            )
+
+                            ProfileMetricItem(
+                                label = "Needs",
+                                value = if (essentialRatio != null) "${essentialRatio.toInt()}%" else "--",
+                                icon = Icons.Default.ReceiptLong,
+                                modifier = Modifier.weight(1f)
+                            )
                         }
                     }
                 }
@@ -277,6 +324,39 @@ fun ProfileScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ProfileMetricItem(
+    label: String,
+    value: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+        )
     }
 }
 

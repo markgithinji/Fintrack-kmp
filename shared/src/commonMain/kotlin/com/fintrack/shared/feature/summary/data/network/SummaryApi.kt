@@ -9,6 +9,7 @@ import com.fintrack.shared.feature.summary.data.model.CategoryComparisonSummaryD
 import com.fintrack.shared.feature.summary.data.model.DistributionSummaryDto
 import com.fintrack.shared.feature.summary.data.model.HighlightsSummaryDto
 import com.fintrack.shared.feature.summary.data.model.OverviewSummaryDto
+import com.fintrack.shared.feature.summary.data.model.ProfileMetricsDto
 import com.fintrack.shared.feature.summary.data.model.TransactionCountSummaryDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -110,6 +111,12 @@ class SummaryApi(
                 end?.let { parameter("end", it) }
                 hasTransactionCost?.let { parameter("hasCost", it) }
             }.body()
+        return response.result
+    }
+
+    suspend fun getProfileMetrics(): ProfileMetricsDto {
+        val response: ApiResponse<ProfileMetricsDto> =
+            client.get("$baseUrl/transactions/summary/profile-metrics").body()
         return response.result
     }
 }

@@ -11,6 +11,7 @@ import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
+import com.fintrack.shared.feature.summary.domain.model.ProfileMetrics
 import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
@@ -75,5 +76,9 @@ class SummaryRepositoryImpl(
         hasTransactionCost: Boolean?
     ): Result<TransactionCountSummary> = safeApiCall {
         api.getTransactionCounts(accountId, isIncome, category, start, end, hasTransactionCost).toDomain()
+    }
+
+    override suspend fun getProfileMetrics(): Result<ProfileMetrics> = safeApiCall {
+        api.getProfileMetrics().toDomain()
     }
 }

@@ -19,5 +19,5 @@ val userModule = module {
     single { DeleteAccountUseCase(get(), get()) }
     single { ProfileValidationUseCase() }
 
-    viewModel { ProfileViewModel(get(), get(), get()) }
+    viewModel { ProfileViewModel(get(), get(), get(), get()) }
 }

@@ -12,6 +12,7 @@ import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.Highlight
 import com.fintrack.shared.feature.summary.domain.model.Highlights
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
+import com.fintrack.shared.feature.summary.domain.model.ProfileMetrics
 import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 
@@ -121,4 +122,12 @@ fun TransactionCountSummaryDto.toDomain() = TransactionCountSummary(
     totalExpenseTransactions = totalExpenseTransactions,
     totalTransactions = totalTransactions,
     totalTransactionCost = totalTransactionCost
+)
+
+fun ProfileMetricsDto.toDomain() = ProfileMetrics(
+    name = name,
+    email = email,
+    netWorth = netWorth,
+    savingsRate = savingsRate,
+    essentialSpendRatio = essentialSpendRatio
 )

@@ -8,6 +8,7 @@ import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
+import com.fintrack.shared.feature.summary.domain.model.ProfileMetrics
 import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 
@@ -39,4 +40,6 @@ interface SummaryRepository {
         end: String? = null,
         hasTransactionCost: Boolean? = null
     ): Result<TransactionCountSummary>
+
+    suspend fun getProfileMetrics(): Result<ProfileMetrics>
 }

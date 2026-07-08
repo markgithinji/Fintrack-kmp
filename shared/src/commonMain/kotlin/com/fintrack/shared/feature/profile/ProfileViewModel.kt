@@ -7,6 +7,8 @@ import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.logger.LogTags
+import com.fintrack.shared.feature.summary.domain.model.ProfileMetrics
+import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
 import com.fintrack.shared.feature.user.domain.model.User
 import com.fintrack.shared.feature.user.domain.usecase.GetUserProfileUseCase
 import com.fintrack.shared.feature.user.domain.usecase.ProfileValidationUseCase
@@ -21,13 +23,17 @@ import kotlinx.coroutines.launch
 class ProfileViewModel(
     private val getUserProfileUseCase: GetUserProfileUseCase,
     private val updateProfileUseCase: UpdateProfileUseCase,
-    private val validationUseCase: ProfileValidationUseCase
+    private val validationUseCase: ProfileValidationUseCase,
+    private val summaryRepository: SummaryRepository
 ) : ViewModel() {
 
     private val _profileState = MutableStateFlow<Result<User>>(
         getUserProfileUseCase().value?.let { Result.Success(it) } ?: Result.Loading
     )
     val profileState: StateFlow<Result<User>> = _profileState.asStateFlow()
+
+    private val _metricsState = MutableStateFlow<Result<ProfileMetrics>>(Result.Loading)
+    val metricsState: StateFlow<Result<ProfileMetrics>> = _metricsState.asStateFlow()
 
     private val _editState = MutableStateFlow<SaveState<Unit>>(SaveState.Idle)
     val editState: StateFlow<SaveState<Unit>> = _editState.asStateFlow()
@@ -102,23 +108,17 @@ class ProfileViewModel(
 
     fun refreshProfile() {
         viewModelScope.launch {
-            // Only show loading if we don't already have success data to prevent flicker
-            if (_profileState.value !is Result.Success) {
-                _profileState.value = Result.Loading
+            // Refresh profile summary (Metrics + User Info)
+            if (_metricsState.value !is Result.Success) {
+                _metricsState.value = Result.Loading
             }
             
-            try {
-                getUserProfileUseCase.refresh()
-                // Ensure state is updated even if the user data is identical (StateFlow won't re-emit)
-                getUserProfileUseCase().value?.let { 
-                    _profileState.value = Result.Success(it)
-                }
-            } catch (e: Exception) {
-                // If we have existing data, don't show the error as a full-screen state
-                // but if we were stuck in loading, show the error.
-                if (_profileState.value !is Result.Success) {
-                    _profileState.value = Result.Error(e)
-                }
+            val result = summaryRepository.getProfileMetrics()
+            _metricsState.value = result
+
+            // If we got fresh user info, we can also update the form state
+            if (result is Result.Success) {
+                _formState.update { it.copy(name = result.data.name, email = result.data.email) }
             }
         }
     }

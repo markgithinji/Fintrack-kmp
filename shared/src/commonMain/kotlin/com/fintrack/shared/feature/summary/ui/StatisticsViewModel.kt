@@ -119,13 +119,17 @@ class StatisticsViewModel(
         }
 
         val paramsChanged = lastHighlightsAccountId != accountId || lastHighlightsPeriod != period
-        if (!force && _highlights.value is Result.Success && !paramsChanged) {
+        val current = _highlights.value
+        
+        if (!force && current is Result.Success && !paramsChanged) {
             return
         }
 
         highlightsJob?.cancel()
         highlightsJob = viewModelScope.launch {
-            _highlights.value = Result.Loading
+            if (current !is Result.Success || paramsChanged) {
+                _highlights.value = Result.Loading
+            }
             
             lastHighlightsAccountId = accountId
             lastHighlightsPeriod = period
@@ -158,7 +162,9 @@ class StatisticsViewModel(
         }
 
         val paramsChanged = lastParams != paramKey
-        if (!force && targetFlow.value is Result.Success && !paramsChanged) return
+        val current = targetFlow.value
+        
+        if (!force && current is Result.Success && !paramsChanged) return
 
         val job = viewModelScope.launch {
             when (type) {
@@ -166,7 +172,10 @@ class StatisticsViewModel(
                 TransactionType.Expense -> lastExpenseDistributionParams = paramKey
             }
 
-            targetFlow.value = Result.Loading
+            if (current !is Result.Success || paramsChanged) {
+                targetFlow.value = Result.Loading
+            }
+            
             targetFlow.value = repo.getDistributionSummary(
                 weekOrMonthCode = weekOrMonthCode,
                 type = type.apiName,
@@ -245,10 +254,14 @@ class StatisticsViewModel(
     private var lastOverviewAccountId: String? = null
     fun loadOverview(accountId: String? = null, force: Boolean = false) {
         val paramsChanged = lastOverviewAccountId != accountId
-        if (!force && _overview.value is Result.Success && !paramsChanged) return
+        val current = _overview.value
+        
+        if (!force && current is Result.Success && !paramsChanged) return
         
         viewModelScope.launch {
-            _overview.value = Result.Loading
+            if (current !is Result.Success || paramsChanged) {
+                _overview.value = Result.Loading
+            }
             lastOverviewAccountId = accountId
             _overview.value = repo.getOverviewSummary(accountId)
         }
@@ -262,10 +275,15 @@ class StatisticsViewModel(
         force: Boolean = false
     ) {
         val paramsChanged = lastCategoryComparisonAccountId != accountId || lastCategoryComparisonPeriod != period
-        if (!force && _categoryComparisons.value is Result.Success && !paramsChanged) return
+        val current = _categoryComparisons.value
+        
+        if (!force && current is Result.Success && !paramsChanged) return
 
         viewModelScope.launch {
-            _categoryComparisons.value = Result.Loading
+            if (current !is Result.Success || paramsChanged) {
+                _categoryComparisons.value = Result.Loading
+            }
+
             lastCategoryComparisonAccountId = accountId
             lastCategoryComparisonPeriod = period
 
