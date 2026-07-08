@@ -8,12 +8,22 @@ import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.safeApiCall
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 class AccountRepositoryImpl(
     private val api: AccountsApi
 ) : AccountRepository {
+
+    private val _selectedAccountId = MutableStateFlow<String?>(null)
+    override val selectedAccountId: StateFlow<String?> = _selectedAccountId.asStateFlow()
+
+    override fun setSelectedAccountId(id: String?) {
+        _selectedAccountId.value = id
+    }
 
     override suspend fun getAccounts(): Result<List<Account>> = safeApiCall {
         val accountsDto = api.getAccounts()

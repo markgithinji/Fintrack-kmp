@@ -13,6 +13,7 @@ import com.fintrack.shared.feature.core.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -47,12 +48,25 @@ class AccountsViewModel(
         }
         
         viewModelScope.launch {
-            settingsDataSource.defaultAccountId.collect { id ->
-                val currentSelectedId = (_selectedAccount.value as? Result.Success)?.data?.id
-                if (id != null && id != currentSelectedId) {
-                    selectAccount(id)
+            settingsDataSource.defaultAccountId
+                .collect { id ->
+                    val currentId = repo.selectedAccountId.value
+                    if (id != null && currentId == null) {
+                        selectAccount(id)
+                    }
                 }
-            }
+        }
+
+        viewModelScope.launch {
+            repo.selectedAccountId
+                .collect { id ->
+                    if (id != null) {
+                        val currentSelectedId = (_selectedAccount.value as? Result.Success)?.data?.id
+                        if (id != currentSelectedId) {
+                            loadAccountById(id)
+                        }
+                    }
+                }
         }
 
         reloadAccounts(force = false)
@@ -74,16 +88,20 @@ class AccountsViewModel(
             when (result) {
                 is Result.Success -> {
                     if (result.data.isNotEmpty()) {
-                        val currentSelectedId = (_selectedAccount.value as? Result.Success)?.data?.id
-                        val preservedAccount = result.data.find { it.id == currentSelectedId }
+                        val currentId = repo.selectedAccountId.value
+                        val defaultId = settingsDataSource.defaultAccountId.value
+                        
+                        val targetId = currentId ?: defaultId
+                        val preservedAccount = result.data.find { it.id == targetId }
                         
                         if (preservedAccount != null) {
                             _selectedAccount.value = Result.Success(preservedAccount)
+                            if (currentId == null) repo.setSelectedAccountId(preservedAccount.id)
                         } else {
-                            val defaultId = settingsDataSource.defaultAccountId.value
-                            val defaultAccount = result.data.find { it.id == defaultId }
                             val mpesaAccount = result.data.find { it.isMpesa }
-                            _selectedAccount.value = Result.Success(defaultAccount ?: mpesaAccount ?: result.data.first())
+                            val fallback = mpesaAccount ?: result.data.first()
+                            _selectedAccount.value = Result.Success(fallback)
+                            if (currentId == null) repo.setSelectedAccountId(fallback.id)
                         }
                     } else {
                         _selectedAccount.value = Result.Error(Exception("No accounts available"))
@@ -96,6 +114,10 @@ class AccountsViewModel(
     }
 
     fun selectAccount(id: String) {
+        repo.setSelectedAccountId(id)
+    }
+
+    private fun loadAccountById(id: String) {
         viewModelScope.launch {
             _selectedAccount.value = Result.Loading
             val accounts = (_accounts.value as? Result.Success)?.data
