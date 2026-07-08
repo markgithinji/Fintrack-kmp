@@ -116,7 +116,7 @@ fun SettingsScreen(
     LaunchedEffect(changePasswordState) {
         if (changePasswordState is SaveState.Success) {
             toastMessage = "Password updated successfully" to false
-            delay(1000)
+            // Dismiss dialog first before resetting state to avoid button flicker
             showChangePasswordDialog = false
             viewModel.resetChangePasswordState()
         } else if (changePasswordState is SaveState.Error) {
@@ -809,10 +809,10 @@ fun ChangePasswordDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = onConfirm,
-                        enabled = saveState !is SaveState.Loading,
+                        enabled = saveState is SaveState.Idle,
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        if (saveState is SaveState.Loading) {
+                        if (saveState is SaveState.Loading || saveState is SaveState.Success) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp,

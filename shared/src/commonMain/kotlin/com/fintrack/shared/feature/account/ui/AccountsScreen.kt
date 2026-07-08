@@ -81,8 +81,9 @@ fun AccountsScreen(
         when (val result = saveResult) {
             is Result.Success -> {
                 toastMessage = (if (isEditing) "Account updated" else "Account added") to false
-                viewModel.clearResults()
+                // Dismiss dialog first before clearing results to avoid UI flicker
                 showAccountDialog = null
+                viewModel.clearResults()
             }
             is Result.Error -> {
                 val message = (result.exception as? ApiException)?.getUserFriendlyMessage()
@@ -159,7 +160,10 @@ fun AccountsScreen(
         AccountDialog(
             account = account,
             isEditing = isEditing,
-            isLoading = saveResult is Result.Loading || deleteResult is Result.Loading || clearDataResult is Result.Loading || importState is Result.Loading,
+            isLoading = saveResult is Result.Loading || saveResult is Result.Success || 
+                        deleteResult is Result.Loading || deleteResult is Result.Success || 
+                        clearDataResult is Result.Loading || clearDataResult is Result.Success || 
+                        importState is Result.Loading,
             deleteResult = deleteResult,
             clearDataResult = clearDataResult,
             isMpesaLinked = account.isMpesa,
@@ -386,15 +390,9 @@ fun AccountDialog(
     var accountName by remember { mutableStateOf(account.name) }
     var isMpesa by remember { mutableStateOf(isMpesaLinked) }
     var isEquity by remember { mutableStateOf(isEquityLinked) }
-    var isDefault by remember { mutableStateOf(isDefaultSelection || (!isOtherAccountDefault && (isMpesa || isEquity))) }
+    var isDefault by remember { mutableStateOf(isDefaultSelection || (isMpesa && !isOtherAccountDefault)) }
     var showClearDataConfirm by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
-
-    LaunchedEffect(isMpesa, isEquity, isOtherAccountDefault) {
-        if ((isMpesa || isEquity) && !isOtherAccountDefault) {
-            isDefault = true
-        }
-    }
 
     val hasChanges = accountName != account.name || 
                      isMpesa != isMpesaLinked || 
@@ -534,6 +532,7 @@ fun AccountDialog(
                                 checked = isMpesa,
                                 onCheckedChange = { 
                                     isMpesa = it 
+                                    if (it && !isOtherAccountDefault) isDefault = true
                                 },
                                 enabled = !isLoading
                             )
@@ -549,10 +548,10 @@ fun AccountDialog(
                                 enabled = !isLoading
                             )
                             
-                            val isDefaultLocked = (isMpesa || isEquity) && !isOtherAccountDefault
+                            val isDefaultLocked = isMpesa && !isOtherAccountDefault
                             AccountOptionRow(
                                 title = "Set as Default",
-                                subtitle = if (isDefaultLocked) "Always default for linked account" else "Loads this account first",
+                                subtitle = if (isDefaultLocked) "M-Pesa is default when no other account is set" else "Loads this account first",
                                 icon = Icons.Default.Star,
                                 checked = isDefault,
                                 onCheckedChange = { isDefault = it },

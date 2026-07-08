@@ -45,6 +45,16 @@ class AccountsViewModel(
                 reloadAccounts(force = true, showLoading = false)
             }
         }
+        
+        viewModelScope.launch {
+            settingsDataSource.defaultAccountId.collect { id ->
+                val currentSelectedId = (_selectedAccount.value as? Result.Success)?.data?.id
+                if (id != null && id != currentSelectedId) {
+                    selectAccount(id)
+                }
+            }
+        }
+
         reloadAccounts(force = false)
     }
 
