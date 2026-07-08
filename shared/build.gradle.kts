@@ -31,6 +31,7 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.core.ktx)
             implementation(libs.androidx.biometric)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.androidx.security.crypto.ktx)

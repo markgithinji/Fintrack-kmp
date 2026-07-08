@@ -120,6 +120,8 @@ fun FinanceTrackerTheme(
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
+    SystemAppearance(isDark = darkTheme)
+
     MaterialTheme(
         colorScheme = colorScheme,
         typography = FinanceTypography,
