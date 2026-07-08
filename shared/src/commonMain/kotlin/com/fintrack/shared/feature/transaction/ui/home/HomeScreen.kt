@@ -116,7 +116,10 @@ fun HomeScreen(
                     isEquityAutoSyncEnabled = isEquityListenerEnabled,
                     importState = importState,
                     syncProgress = importProgress,
-                    onAccountSelected = { accountId -> accountsViewModel.selectAccount(accountId) },
+                    onAccountSelected = { accountId -> 
+                        settingsViewModel.setDefaultAccountId(accountId)
+                        accountsViewModel.selectAccount(accountId)
+                    },
                     onToggleBalanceVisibility = { settingsViewModel.setBalanceHidden(it) },
                     onSyncMpesa = { showSmsPermissionRequest = true },
                     onSyncErrorClick = { message -> syncErrorMessage = message },

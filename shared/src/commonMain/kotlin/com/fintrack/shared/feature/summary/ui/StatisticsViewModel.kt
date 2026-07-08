@@ -114,40 +114,23 @@ class StatisticsViewModel(
     private var highlightsJob: kotlinx.coroutines.Job? = null
 
     fun loadHighlights(accountId: String? = null, period: String? = null, force: Boolean = false) {
-        println("StatisticsViewModel: loadHighlights called. accountId=$accountId, period=$period, force=$force")
-
         if (period == null && lastHighlightsPeriod != null && !force) {
-            println("StatisticsViewModel: loadHighlights ignored null period because we already have a specific period: $lastHighlightsPeriod")
             return
         }
 
-        if (!force && _highlights.value is Result.Success && 
-            lastHighlightsAccountId == accountId && 
-            lastHighlightsPeriod == period) {
-            println("StatisticsViewModel: loadHighlights skipped (already loaded)")
+        val paramsChanged = lastHighlightsAccountId != accountId || lastHighlightsPeriod != period
+        if (!force && _highlights.value is Result.Success && !paramsChanged) {
             return
         }
 
         highlightsJob?.cancel()
         highlightsJob = viewModelScope.launch {
-            if (_highlights.value !is Result.Success) {
-                println("StatisticsViewModel: Setting Highlights to Loading")
-                _highlights.value = Result.Loading
-            }
+            _highlights.value = Result.Loading
             
             lastHighlightsAccountId = accountId
             lastHighlightsPeriod = period
             
-            println("StatisticsViewModel: Fetching highlights for period: $period")
-            val result = repo.getHighlightsSummary(accountId, period)
-            
-            if (result is Result.Success) {
-                println("StatisticsViewModel: Successfully fetched highlights for $period")
-            } else if (result is Result.Error) {
-                println("StatisticsViewModel: Error fetching highlights: ${result.exception.message}")
-            }
-            
-            _highlights.value = result
+            _highlights.value = repo.getHighlightsSummary(accountId, period)
         }
     }
 
@@ -174,7 +157,8 @@ class StatisticsViewModel(
             TransactionType.Expense -> lastExpenseDistributionParams
         }
 
-        if (!force && targetFlow.value is Result.Success && lastParams == paramKey) return
+        val paramsChanged = lastParams != paramKey
+        if (!force && targetFlow.value is Result.Success && !paramsChanged) return
 
         val job = viewModelScope.launch {
             when (type) {
@@ -182,9 +166,7 @@ class StatisticsViewModel(
                 TransactionType.Expense -> lastExpenseDistributionParams = paramKey
             }
 
-            if (targetFlow.value !is Result.Success) {
-                targetFlow.value = Result.Loading
-            }
+            targetFlow.value = Result.Loading
             targetFlow.value = repo.getDistributionSummary(
                 weekOrMonthCode = weekOrMonthCode,
                 type = type.apiName,
@@ -262,12 +244,11 @@ class StatisticsViewModel(
 
     private var lastOverviewAccountId: String? = null
     fun loadOverview(accountId: String? = null, force: Boolean = false) {
-        if (!force && _overview.value is Result.Success && lastOverviewAccountId == accountId) return
+        val paramsChanged = lastOverviewAccountId != accountId
+        if (!force && _overview.value is Result.Success && !paramsChanged) return
         
         viewModelScope.launch {
-            if (_overview.value !is Result.Success) {
-                _overview.value = Result.Loading
-            }
+            _overview.value = Result.Loading
             lastOverviewAccountId = accountId
             _overview.value = repo.getOverviewSummary(accountId)
         }
@@ -280,15 +261,11 @@ class StatisticsViewModel(
         period: String? = null,
         force: Boolean = false
     ) {
-        if (!force && _categoryComparisons.value is Result.Success &&
-            lastCategoryComparisonAccountId == accountId &&
-            lastCategoryComparisonPeriod == period
-        ) return
+        val paramsChanged = lastCategoryComparisonAccountId != accountId || lastCategoryComparisonPeriod != period
+        if (!force && _categoryComparisons.value is Result.Success && !paramsChanged) return
 
         viewModelScope.launch {
-            if (_categoryComparisons.value !is Result.Success) {
-                _categoryComparisons.value = Result.Loading
-            }
+            _categoryComparisons.value = Result.Loading
             lastCategoryComparisonAccountId = accountId
             lastCategoryComparisonPeriod = period
 

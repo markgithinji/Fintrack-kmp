@@ -91,7 +91,10 @@ fun StatisticsScreen(
         ) {
             TabSwitcher(
                 selectedTab = selectedTab,
-                onTabSelected = { viewModel.onTabChanged(it) }
+                onTabSelected = { 
+                    val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                    viewModel.onTabChanged(it, accountId) 
+                }
             )
         }
 
@@ -128,10 +131,22 @@ fun StatisticsScreen(
                     availableMonths = availableMonths,
                     availableYears = availableYears,
                     animatedVisibilityScope = animatedVisibilityScope,
-                    onWeekSelected = { week -> viewModel.onPeriodChanged(Period.Week(week)) },
-                    onMonthSelected = { month -> viewModel.onPeriodChanged(Period.Month(month)) },
-                    onYearSelected = { year -> viewModel.onPeriodChanged(Period.Year(year)) },
-                    onPeriodSelected = { period -> viewModel.onPeriodChanged(period) },
+                    onWeekSelected = { week -> 
+                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                        viewModel.onPeriodChanged(Period.Week(week), accountId) 
+                    },
+                    onMonthSelected = { month -> 
+                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                        viewModel.onPeriodChanged(Period.Month(month), accountId) 
+                    },
+                    onYearSelected = { year -> 
+                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                        viewModel.onPeriodChanged(Period.Year(year), accountId) 
+                    },
+                    onPeriodSelected = { period -> 
+                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                        viewModel.onPeriodChanged(period, accountId) 
+                    },
                     onRetry = {
                         val accountId = (selectedAccountResult as? Result.Success)?.data?.id
                         viewModel.reloadDistributionForCurrentSelection(accountId, force = true)
