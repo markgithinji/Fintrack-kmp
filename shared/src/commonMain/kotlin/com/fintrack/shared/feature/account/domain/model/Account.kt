@@ -11,5 +11,6 @@ data class Account @OptIn(ExperimentalTime::class) constructor(
     val expense: Double? = null,
     val isDefault: Boolean = false,
     val isMpesa: Boolean = false,
+    val isEquity: Boolean = false,
     val createdAt: Instant? = null
 )

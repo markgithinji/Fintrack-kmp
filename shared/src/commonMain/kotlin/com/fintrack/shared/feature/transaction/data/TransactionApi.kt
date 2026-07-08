@@ -71,6 +71,13 @@ class TransactionApi(
         }
     }
 
+    suspend fun importEquityTransactions(requests: List<CreateTransactionRequest>): Unit {
+        client.post("$baseUrl/transactions/equity") {
+            contentType(ContentType.Application.Json)
+            setBody(requests)
+        }
+    }
+
     suspend fun getTransaction(id: String): TransactionDto {
         val response: ApiResponse<TransactionDto> = client.get("$baseUrl/transactions/$id").body()
         return response.result

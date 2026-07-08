@@ -71,6 +71,7 @@ fun SettingsScreen(
     val showDecimals by viewModel.showDecimals.collectAsStateWithLifecycle()
     val isReminderEnabled by viewModel.isReminderEnabled.collectAsStateWithLifecycle()
     val isMpesaListenerEnabled by viewModel.isMpesaListenerEnabled.collectAsStateWithLifecycle()
+    val isEquityListenerEnabled by viewModel.isEquityListenerEnabled.collectAsStateWithLifecycle()
     val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsStateWithLifecycle()
     val budgetAlertsEnabled by viewModel.budgetAlertsEnabled.collectAsStateWithLifecycle()
     val budgetAlertThresholds by viewModel.budgetAlertThresholds.collectAsStateWithLifecycle()
@@ -107,7 +108,7 @@ fun SettingsScreen(
     var showThresholdDialog by remember { mutableStateOf(false) }
     var showSummaryTimePickerDialog by remember { mutableStateOf(false) }
     var showExportFormatDialog by remember { mutableStateOf(false) }
-    var showSmsPermissionRequest by remember { mutableStateOf(false) }
+    var showSmsPermissionRequest by remember { mutableStateOf<SmsPermissionTarget?>(null) }
     var showBillReminderDaysDialog by remember { mutableStateOf(false) }
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
@@ -240,9 +241,25 @@ fun SettingsScreen(
                             checked = isMpesaListenerEnabled,
                             onCheckedChange = { 
                                 if (it) {
-                                    showSmsPermissionRequest = true 
+                                    showSmsPermissionRequest = SmsPermissionTarget.MPESA
                                 } else {
                                     viewModel.setMpesaListenerEnabled(false)
+                                }
+                            }
+                        )
+                    }
+
+                    SettingsSection(title = "Bank Tracking") {
+                        SettingsToggleItem(
+                            title = "Equity Auto-tracking",
+                            subtitle = "Automatically log Equity Bank SMS",
+                            icon = Icons.Default.AccountBalance,
+                            checked = isEquityListenerEnabled,
+                            onCheckedChange = { 
+                                if (it) {
+                                    showSmsPermissionRequest = SmsPermissionTarget.EQUITY
+                                } else {
+                                    viewModel.setEquityListenerEnabled(false)
                                 }
                             }
                         )
@@ -562,14 +579,18 @@ fun SettingsScreen(
     )
 
     SmsPermissionLauncher(
-        trigger = showSmsPermissionRequest,
+        trigger = showSmsPermissionRequest != null,
         onResult = { granted ->
-            if (granted) {
-                viewModel.setMpesaListenerEnabled(true)
+            val target = showSmsPermissionRequest
+            if (granted && target != null) {
+                when (target) {
+                    SmsPermissionTarget.MPESA -> viewModel.setMpesaListenerEnabled(true)
+                    SmsPermissionTarget.EQUITY -> viewModel.setEquityListenerEnabled(true)
+                }
             }
-            showSmsPermissionRequest = false
+            showSmsPermissionRequest = null
         },
-        onDismissTrigger = { showSmsPermissionRequest = false }
+        onDismissTrigger = { showSmsPermissionRequest = null }
     )
 
     if (showExportFormatDialog) {
@@ -1861,6 +1882,10 @@ fun BillReminderDaysDialog(
             }
         }
     }
+}
+
+enum class SmsPermissionTarget {
+    MPESA, EQUITY
 }
 
 @Composable

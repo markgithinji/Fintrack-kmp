@@ -28,6 +28,7 @@ class AndroidSettingsDataSource(
     private val _mpesaSimSlotFlow = MutableStateFlow<Int?>(null)
     private val _mpesaAccountIdFlow = MutableStateFlow<String?>(null)
     private val _mpesaListenerFlow = MutableStateFlow(false)
+    private val _equityListenerFlow = MutableStateFlow(false)
     private val _budgetAlertsEnabledFlow = MutableStateFlow(false)
     private val _budgetAlertThresholdsFlow = MutableStateFlow(setOf(50, 80, 100))
     private val _alertBudgetIdFlow = MutableStateFlow<String?>(null)
@@ -70,6 +71,9 @@ class AndroidSettingsDataSource(
 
         val mpesaListenerEnabled = prefs.getBoolean("mpesa_listener_enabled", false)
         _mpesaListenerFlow.update { mpesaListenerEnabled }
+
+        val equityListenerEnabled = prefs.getBoolean("equity_listener_enabled", false)
+        _equityListenerFlow.update { equityListenerEnabled }
 
         val budgetAlertsEnabled = prefs.getBoolean("budget_alerts_enabled", false)
         _budgetAlertsEnabledFlow.update { budgetAlertsEnabled }
@@ -201,6 +205,15 @@ class AndroidSettingsDataSource(
             putBoolean("mpesa_listener_enabled", enabled)
         }
         _mpesaListenerFlow.value = enabled
+    }
+
+    override val isEquityListenerEnabled: StateFlow<Boolean> = _equityListenerFlow.asStateFlow()
+
+    override suspend fun setEquityListenerEnabled(enabled: Boolean) {
+        prefs.edit(commit = true) {
+            putBoolean("equity_listener_enabled", enabled)
+        }
+        _equityListenerFlow.value = enabled
     }
 
     override val budgetAlertsEnabled: StateFlow<Boolean> = _budgetAlertsEnabledFlow.asStateFlow()

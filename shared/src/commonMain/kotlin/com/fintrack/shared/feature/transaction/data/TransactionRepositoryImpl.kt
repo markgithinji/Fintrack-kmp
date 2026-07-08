@@ -98,6 +98,17 @@ class TransactionRepositoryImpl(
         return result
     }
 
+    override suspend fun importEquityTransactions(transactions: List<Transaction>): Result<Unit> {
+        val result = safeApiCall {
+            val requests = transactions.map { it.toCreateRequest() }
+            api.importEquityTransactions(requests)
+        }
+        if (result is Result.Success) {
+            triggerRefresh()
+        }
+        return result
+    }
+
     override suspend fun getTransaction(id: String): Result<Transaction> =
         safeApiCall {
             api.getTransaction(id).toDomain()

@@ -57,6 +57,7 @@ fun HomeScreen(
     val isBalanceHidden by settingsViewModel.isBalanceHidden.collectAsStateWithLifecycle()
     val defaultAccountId by settingsViewModel.defaultAccountId.collectAsStateWithLifecycle()
     val isMpesaListenerEnabled by settingsViewModel.isMpesaListenerEnabled.collectAsStateWithLifecycle()
+    val isEquityListenerEnabled by settingsViewModel.isEquityListenerEnabled.collectAsStateWithLifecycle()
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
     val importProgress by transactionsViewModel.importProgress.collectAsStateWithLifecycle()
     
@@ -75,9 +76,9 @@ fun HomeScreen(
             accountsViewModel.reloadAccounts(force = true)
         }
         
-        // Auto-sync M-Pesa if enabled
-        if (isMpesaListenerEnabled) {
-            transactionsViewModel.autoSyncMpesaTransactions()
+        // Auto-sync transactions if enabled
+        if (isMpesaListenerEnabled || isEquityListenerEnabled) {
+            transactionsViewModel.autoSyncTransactions()
         }
     }
 
@@ -104,7 +105,7 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                val effectiveDefaultAccountId = defaultAccountId ?: (accountsResult as? Result.Success)?.data?.find { it.isMpesa }?.id
+                val effectiveDefaultAccountId = defaultAccountId ?: (accountsResult as? Result.Success)?.data?.find { it.isMpesa || it.isEquity }?.id
                 
                 CurrentBalanceCardWrapper(
                     accountsResult = accountsResult,
@@ -112,6 +113,7 @@ fun HomeScreen(
                     defaultAccountId = effectiveDefaultAccountId,
                     isBalanceHidden = isBalanceHidden,
                     isMpesaAutoSyncEnabled = isMpesaListenerEnabled,
+                    isEquityAutoSyncEnabled = isEquityListenerEnabled,
                     importState = importState,
                     syncProgress = importProgress,
                     onAccountSelected = { accountId -> accountsViewModel.selectAccount(accountId) },
@@ -163,7 +165,7 @@ fun HomeScreen(
             trigger = showSmsPermissionRequest,
             onResult = { granted ->
                 if (granted) {
-                    transactionsViewModel.importMpesaTransactions()
+                    transactionsViewModel.importTransactions()
                 }
                 showSmsPermissionRequest = false
             },

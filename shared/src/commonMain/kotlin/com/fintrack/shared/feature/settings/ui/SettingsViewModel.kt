@@ -142,6 +142,13 @@ class SettingsViewModel(
             initialValue = settingsDataSource.isMpesaListenerEnabled.value
         )
 
+    val isEquityListenerEnabled: StateFlow<Boolean> = settingsDataSource.isEquityListenerEnabled
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = settingsDataSource.isEquityListenerEnabled.value
+        )
+
     val budgetAlertsEnabled: StateFlow<Boolean> = settingsDataSource.budgetAlertsEnabled
         .stateIn(
             scope = viewModelScope,
@@ -360,6 +367,12 @@ class SettingsViewModel(
     fun setMpesaListenerEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsDataSource.setMpesaListenerEnabled(enabled)
+        }
+    }
+
+    fun setEquityListenerEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsDataSource.setEquityListenerEnabled(enabled)
         }
     }
 

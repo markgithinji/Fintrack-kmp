@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -40,6 +41,8 @@ import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
+import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
+import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.ExperimentalTime
 
@@ -48,18 +51,31 @@ import kotlin.time.ExperimentalTime
 fun AccountsScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
     viewModel: AccountsViewModel = koinViewModel(),
-    settingsViewModel: SettingsViewModel = koinViewModel()
+    settingsViewModel: SettingsViewModel = koinViewModel(),
+    transactionsViewModel: TransactionViewModel = koinViewModel()
 ) {
     val accountsState by viewModel.accounts.collectAsStateWithLifecycle()
     val deleteResult by viewModel.deleteResult.collectAsStateWithLifecycle()
     val saveResult by viewModel.saveResult.collectAsStateWithLifecycle()
     val clearDataResult by viewModel.clearDataResult.collectAsStateWithLifecycle()
+    val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
     
     var showAccountDialog by remember { mutableStateOf<Account?>(null) }
     var isEditing by remember { mutableStateOf(false) }
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    var showSmsPermissionRequest by remember { mutableStateOf(false) }
 
-    val isOperating = (deleteResult is Result.Loading) || (saveResult is Result.Loading) || (clearDataResult is Result.Loading)
+    val isOperating = (deleteResult is Result.Loading) || (saveResult is Result.Loading) || (clearDataResult is Result.Loading) || (importState is Result.Loading)
+
+    LaunchedEffect(importState) {
+        if (importState is Result.Success) {
+            toastMessage = "Sync completed successfully" to false
+            transactionsViewModel.resetImportState()
+        } else if (importState is Result.Error) {
+            toastMessage = ((importState as Result.Error).exception.message ?: "Sync failed") to true
+            transactionsViewModel.resetImportState()
+        }
+    }
 
     LaunchedEffect(saveResult) {
         when (val result = saveResult) {
@@ -143,18 +159,19 @@ fun AccountsScreen(
         AccountDialog(
             account = account,
             isEditing = isEditing,
-            isLoading = saveResult is Result.Loading || deleteResult is Result.Loading || clearDataResult is Result.Loading,
+            isLoading = saveResult is Result.Loading || deleteResult is Result.Loading || clearDataResult is Result.Loading || importState is Result.Loading,
             deleteResult = deleteResult,
             clearDataResult = clearDataResult,
             isMpesaLinked = account.isMpesa,
+            isEquityLinked = account.isEquity,
             isDefaultSelection = account.id == defaultAccountId,
             isOtherAccountDefault = isOtherAccountDefault,
             onDismiss = { if (!isOperating) showAccountDialog = null },
             onDelete = { viewModel.removeAccount(account.id) },
             onClearData = { viewModel.clearAccountData(account.id) },
             onClearResults = { viewModel.clearResults() },
-            onConfirm = { name, isMpesa, isDefault ->
-                viewModel.saveAccount(account.copy(name = name, isMpesa = isMpesa))
+            onConfirm = { name, isMpesa, isEquity, isDefault ->
+                viewModel.saveAccount(account.copy(name = name, isMpesa = isMpesa, isEquity = isEquity))
                 if (isDefault) {
                     settingsViewModel.setDefaultAccountId(account.id)
                 } else if (account.id == defaultAccountId) {
@@ -163,6 +180,16 @@ fun AccountsScreen(
             }
         )
     }
+    SmsPermissionLauncher(
+        trigger = showSmsPermissionRequest,
+        onResult = { granted ->
+            if (granted) {
+                transactionsViewModel.importTransactions()
+            }
+            showSmsPermissionRequest = false
+        },
+        onDismissTrigger = { showSmsPermissionRequest = false }
+    )
 }
 
 @Composable
@@ -259,7 +286,11 @@ fun AccountItem(
     isStartAccount: Boolean,
     onEdit: () -> Unit
 ) {
-    val accountIcon = if (account.isMpesa) AccountIcon.Mpesa else AccountIcon.fromAccountName(account.name)
+    val accountIcon = when {
+        account.isMpesa -> AccountIcon.Mpesa
+        account.isEquity -> AccountIcon.Equity
+        else -> AccountIcon.fromAccountName(account.name)
+    }
     
     Surface(
         onClick = onEdit,
@@ -343,28 +374,31 @@ fun AccountDialog(
     deleteResult: Result<Unit>?,
     clearDataResult: Result<Unit>?,
     isMpesaLinked: Boolean,
+    isEquityLinked: Boolean,
     isDefaultSelection: Boolean,
     isOtherAccountDefault: Boolean,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
     onClearData: () -> Unit,
     onClearResults: () -> Unit,
-    onConfirm: (String, Boolean, Boolean) -> Unit
+    onConfirm: (String, Boolean, Boolean, Boolean) -> Unit
 ) {
     var accountName by remember { mutableStateOf(account.name) }
     var isMpesa by remember { mutableStateOf(isMpesaLinked) }
-    var isDefault by remember { mutableStateOf(isDefaultSelection || (!isOtherAccountDefault && isMpesa)) }
+    var isEquity by remember { mutableStateOf(isEquityLinked) }
+    var isDefault by remember { mutableStateOf(isDefaultSelection || (!isOtherAccountDefault && (isMpesa || isEquity))) }
     var showClearDataConfirm by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
-    LaunchedEffect(isMpesa, isOtherAccountDefault) {
-        if (isMpesa && !isOtherAccountDefault) {
+    LaunchedEffect(isMpesa, isEquity, isOtherAccountDefault) {
+        if ((isMpesa || isEquity) && !isOtherAccountDefault) {
             isDefault = true
         }
     }
 
     val hasChanges = accountName != account.name || 
                      isMpesa != isMpesaLinked || 
+                     isEquity != isEquityLinked ||
                      isDefault != isDefaultSelection
 
     if (showClearDataConfirm) {
@@ -498,14 +532,27 @@ fun AccountDialog(
                                 subtitle = "Auto-track transactions",
                                 icon = Icons.Default.Smartphone,
                                 checked = isMpesa,
-                                onCheckedChange = { isMpesa = it },
+                                onCheckedChange = { 
+                                    isMpesa = it 
+                                },
+                                enabled = !isLoading
+                            )
+
+                            AccountOptionRow(
+                                title = "Equity Bank SMS Link",
+                                subtitle = "Auto-track bank transactions",
+                                icon = Icons.Default.AccountBalance,
+                                checked = isEquity,
+                                onCheckedChange = { 
+                                    isEquity = it 
+                                },
                                 enabled = !isLoading
                             )
                             
-                            val isDefaultLocked = isMpesa && !isOtherAccountDefault
+                            val isDefaultLocked = (isMpesa || isEquity) && !isOtherAccountDefault
                             AccountOptionRow(
                                 title = "Set as Default",
-                                subtitle = if (isDefaultLocked) "Always default for M-Pesa" else "Loads this account first",
+                                subtitle = if (isDefaultLocked) "Always default for linked account" else "Loads this account first",
                                 icon = Icons.Default.Star,
                                 checked = isDefault,
                                 onCheckedChange = { isDefault = it },
@@ -541,7 +588,7 @@ fun AccountDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     
                     Button(
-                        onClick = { if (accountName.isNotBlank()) onConfirm(accountName, isMpesa, isDefault) },
+                        onClick = { if (accountName.isNotBlank()) onConfirm(accountName, isMpesa, isEquity, isDefault) },
                         enabled = accountName.isNotBlank() && !isLoading && (hasChanges || !isEditing),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)

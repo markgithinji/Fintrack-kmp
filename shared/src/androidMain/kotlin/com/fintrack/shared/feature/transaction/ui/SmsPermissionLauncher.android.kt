@@ -28,7 +28,6 @@ actual fun SmsPermissionLauncher(
                     Manifest.permission.RECEIVE_SMS
                 )
             )
-            onDismissTrigger()
         }
     }
 }

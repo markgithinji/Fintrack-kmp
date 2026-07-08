@@ -39,6 +39,9 @@ interface SettingsDataSource {
     val isMpesaListenerEnabled: StateFlow<Boolean>
     suspend fun setMpesaListenerEnabled(enabled: Boolean)
 
+    val isEquityListenerEnabled: StateFlow<Boolean>
+    suspend fun setEquityListenerEnabled(enabled: Boolean)
+
     val budgetAlertsEnabled: StateFlow<Boolean>
     suspend fun setBudgetAlertsEnabled(enabled: Boolean)
 

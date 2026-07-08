@@ -28,6 +28,8 @@ interface TransactionRepository {
 
     suspend fun importMpesaTransactions(transactions: List<Transaction>): Result<Unit>
 
+    suspend fun importEquityTransactions(transactions: List<Transaction>): Result<Unit>
+
     suspend fun getTransaction(id: String): Result<Transaction>
 
     suspend fun getAllTransactions(

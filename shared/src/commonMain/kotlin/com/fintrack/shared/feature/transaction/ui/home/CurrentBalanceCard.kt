@@ -74,6 +74,7 @@ fun CurrentBalanceCardWrapper(
     defaultAccountId: String? = null,
     isBalanceHidden: Boolean,
     isMpesaAutoSyncEnabled: Boolean,
+    isEquityAutoSyncEnabled: Boolean,
     importState: Result<Unit>?,
     syncProgress: Float,
     onAccountSelected: (String) -> Unit,
@@ -88,6 +89,7 @@ fun CurrentBalanceCardWrapper(
         selectedAccountResult = selectedAccountResult,
         isBalanceHidden = isBalanceHidden,
         isMpesaAutoSyncEnabled = isMpesaAutoSyncEnabled,
+        isEquityAutoSyncEnabled = isEquityAutoSyncEnabled,
         importState = importState,
         syncProgress = syncProgress,
         onChangeAccountClicked = { showDialog = true },
@@ -117,6 +119,7 @@ fun CurrentBalanceCard(
     selectedAccountResult: Result<Account>,
     isBalanceHidden: Boolean,
     isMpesaAutoSyncEnabled: Boolean,
+    isEquityAutoSyncEnabled: Boolean,
     importState: Result<Unit>?,
     syncProgress: Float,
     onChangeAccountClicked: () -> Unit,
@@ -159,7 +162,9 @@ fun CurrentBalanceCard(
                                 account = currentData,
                                 isBalanceHidden = isBalanceHidden,
                                 isMpesaLinked = currentData.isMpesa,
+                                isEquityLinked = currentData.isEquity,
                                 isMpesaAutoSyncEnabled = isMpesaAutoSyncEnabled,
+                                isEquityAutoSyncEnabled = isEquityAutoSyncEnabled,
                                 importState = importState,
                                 syncProgress = syncProgress,
                                 onChangeAccountClicked = onChangeAccountClicked,
@@ -184,7 +189,9 @@ fun CurrentBalanceCard(
                             account = result.data,
                             isBalanceHidden = isBalanceHidden,
                             isMpesaLinked = result.data.isMpesa,
+                            isEquityLinked = result.data.isEquity,
                             isMpesaAutoSyncEnabled = isMpesaAutoSyncEnabled,
+                            isEquityAutoSyncEnabled = isEquityAutoSyncEnabled,
                             importState = importState,
                             syncProgress = syncProgress,
                             onChangeAccountClicked = onChangeAccountClicked,
@@ -295,7 +302,9 @@ private fun CurrentBalanceSuccessState(
     account: Account,
     isBalanceHidden: Boolean,
     isMpesaLinked: Boolean,
+    isEquityLinked: Boolean,
     isMpesaAutoSyncEnabled: Boolean,
+    isEquityAutoSyncEnabled: Boolean,
     importState: Result<Unit>?,
     syncProgress: Float,
     onChangeAccountClicked: () -> Unit,
@@ -304,6 +313,8 @@ private fun CurrentBalanceSuccessState(
     onSyncErrorClick: (String) -> Unit
 ) {
     val balance = account.balance ?: 0.0
+    val isLinkedAccount = isMpesaLinked || isEquityLinked
+    val isAutoSyncEnabled = if (isMpesaLinked) isMpesaAutoSyncEnabled else isEquityAutoSyncEnabled
 
     Box(
         modifier = Modifier
@@ -318,7 +329,11 @@ private fun CurrentBalanceSuccessState(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = AccountIcon.fromAccountName(account.name).icon,
+                        imageVector = when {
+                            account.isMpesa -> AccountIcon.Mpesa.icon
+                            account.isEquity -> AccountIcon.Equity.icon
+                            else -> AccountIcon.fromAccountName(account.name).icon
+                        },
                         contentDescription = "Bank",
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(16.dp)
@@ -332,7 +347,7 @@ private fun CurrentBalanceSuccessState(
                     )
 
                     AnimatedVisibility(
-                        visible = isMpesaLinked,
+                        visible = isLinkedAccount,
                         enter = fadeIn() + expandHorizontally(),
                         exit = fadeOut() + shrinkHorizontally()
                     ) {
@@ -459,7 +474,7 @@ private fun CurrentBalanceSuccessState(
                                     }
 
                                     null -> {
-                                        if (!isMpesaAutoSyncEnabled) {
+                                        if (!isAutoSyncEnabled) {
                                             Surface(
                                                 onClick = onSyncMpesa,
                                                 shape = CircleShape,
@@ -471,7 +486,7 @@ private fun CurrentBalanceSuccessState(
                                                 Box(contentAlignment = Alignment.Center) {
                                                     Icon(
                                                         imageVector = Icons.Default.Sync,
-                                                        contentDescription = "Sync M-Pesa",
+                                                        contentDescription = "Sync Transactions",
                                                         tint = MaterialTheme.colorScheme.onPrimary,
                                                         modifier = Modifier.size(14.dp)
                                                     )

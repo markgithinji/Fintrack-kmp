@@ -46,32 +46,53 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
 
         logger.debug("SmsReceiver", "Received SMS from: $sender")
 
-        if (sender?.contains("MPESA", ignoreCase = true) == true || 
-            sender?.contains("M-PESA", ignoreCase = true) == true) {
-            
+        val isMpesa = sender?.contains("MPESA", ignoreCase = true) == true || 
+                     sender?.contains("M-PESA", ignoreCase = true) == true
+        
+        val isEquity = sender?.contains("EquitBank", ignoreCase = true) == true || 
+                      sender?.contains("EquityBank", ignoreCase = true) == true
+
+        if (isMpesa || isEquity) {
             val pendingResult = goAsync()
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val isEnabled = settingsDataSource.isMpesaListenerEnabled.first()
+                    val isEnabled = if (isMpesa) {
+                        settingsDataSource.isMpesaListenerEnabled.first()
+                    } else {
+                        settingsDataSource.isEquityListenerEnabled.first()
+                    }
+
                     if (!isEnabled) {
-                        logger.debug("SmsReceiver", "M-Pesa listener is disabled in settings")
+                        logger.debug("SmsReceiver", "${if (isMpesa) "M-Pesa" else "Equity"} listener is disabled in settings")
                         return@launch
                     }
 
-                    logger.debug("SmsReceiver", "Processing M-Pesa message: ${fullMessage.take(50)}...")
+                    logger.debug("SmsReceiver", "Processing ${if (isMpesa) "M-Pesa" else "Equity"} message: ${fullMessage.take(50)}...")
                     
                     val accountsResult = accountRepository.getAccounts()
                     val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
-                    val mpesaAccountId = accounts.find { it.isMpesa }?.id 
-                        ?: accounts.find { it.name.lowercase() == "mpesa" }?.id 
-                        ?: "mpesa"
                     
-                    val transaction = MpesaParser.parse(fullMessage, mpesaAccountId)
+                    val accountId = if (isMpesa) {
+                        accounts.find { it.isMpesa }?.id 
+                            ?: accounts.find { it.name.lowercase() == "mpesa" }?.id 
+                            ?: "mpesa"
+                    } else {
+                        accounts.find { it.isEquity }?.id 
+                            ?: accounts.find { it.name.lowercase().contains("equity") }?.id 
+                            ?: "equity"
+                    }
+                    
+                    val transaction = if (isMpesa) {
+                        MpesaParser.parse(fullMessage, accountId)
+                    } else {
+                        EquityParser.parse(fullMessage, accountId)
+                    }
+
                     if (transaction != null) {
                         // Show notification immediately so the user knows we caught it
                         notificationService.showTransactionNotification(transaction)
 
-                        logger.info("SmsReceiver", "Scheduling sync for M-Pesa transaction: ${transaction.externalId}")
+                        logger.info("SmsReceiver", "Scheduling sync for ${if (isMpesa) "M-Pesa" else "Equity"} transaction: ${transaction.externalId}")
                         
                         val workData = workDataOf(
                             TransactionSyncWorker.KEY_TRANSACTION_JSON to Json.encodeToString(transaction)
@@ -100,7 +121,7 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                             refreshRequest
                         )
                     } else {
-                        logger.warning("SmsReceiver", "Failed to parse M-Pesa message: $fullMessage")
+                        logger.warning("SmsReceiver", "Failed to parse ${if (isMpesa) "M-Pesa" else "Equity"} message: $fullMessage")
                     }
                 } catch (e: Exception) {
                     logger.error("SmsReceiver", "Error processing SMS: ${e.message}")

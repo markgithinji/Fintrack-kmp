@@ -6,5 +6,6 @@ import kotlinx.serialization.Serializable
 data class UpdateAccountRequest(
     val name: String,
     val isMpesa: Boolean = false,
+    val isEquity: Boolean = false,
     val balance: Double? = null
 )

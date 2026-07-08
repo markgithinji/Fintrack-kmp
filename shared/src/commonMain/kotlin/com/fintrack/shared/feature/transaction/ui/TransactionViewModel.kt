@@ -350,7 +350,7 @@ class TransactionViewModel(
         }
     }
 
-    fun importMpesaTransactions() {
+    fun importTransactions() {
         if (_importState.value is Result.Loading) return
 
         viewModelScope.launch {
@@ -368,10 +368,10 @@ class TransactionViewModel(
         }
     }
 
-    fun autoSyncMpesaTransactions() {
+    fun autoSyncTransactions() {
         if (!hasAutoSynced) {
             hasAutoSynced = true
-            importMpesaTransactions()
+            importTransactions()
         }
     }
 

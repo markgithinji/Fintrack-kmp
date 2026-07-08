@@ -13,7 +13,7 @@ import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class MpesaImporter(
+class EquityImporter(
     private val context: Context,
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository
@@ -25,15 +25,16 @@ class MpesaImporter(
         onProgress(0.05f)
         val accountsResult = accountRepository.getAccounts()
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
-        val accountId = accounts.find { it.isMpesa }?.id 
-            ?: accounts.find { it.name.lowercase() == "mpesa" }?.id 
-            ?: "mpesa"
+        val accountId = accounts.find { it.isEquity }?.id 
+            ?: accounts.find { it.name.lowercase().contains("equity") }?.id
+            ?: "equity"
 
+        // Search for both "EquitBank" and "EquityBank"
         val cursor = context.contentResolver.query(
             Telephony.Sms.Inbox.CONTENT_URI,
             arrayOf(Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS, Telephony.Sms.Inbox.DATE),
-            "${Telephony.Sms.Inbox.ADDRESS} = ?",
-            arrayOf("MPESA"),
+            "${Telephony.Sms.Inbox.ADDRESS} IN (?, ?)",
+            arrayOf("EquitBank", "EquityBank"),
             "${Telephony.Sms.Inbox.DATE} DESC"
         )
 
@@ -52,20 +53,19 @@ class MpesaImporter(
 
                 // Keep the first balance we find (most recent message)
                 if (latestBalance == null) {
-                    latestBalance = MpesaParser.parseBalance(body)
+                    latestBalance = EquityParser.parseBalance(body)
                 }
 
-                val transaction = MpesaParser.parse(body, accountId, smsInstant)
+                val transaction = EquityParser.parse(body, accountId, smsInstant)
                 if (transaction != null) {
                     transactions.add(transaction)
                     if (loggedCount < 10) {
-                        logger.debug("MPESA_IMPORTER", "Parsed transaction: ${transaction.externalId} on ${transaction.dateTime}")
+                        logger.debug("EQUITY_IMPORTER", "Parsed Equity transaction: ${transaction.externalId} on ${transaction.dateTime}")
                     }
                 }
                 
                 loggedCount++
-                if (loggedCount % 50 == 0) {
-                    // Update progress up to 30% during scanning
+                if (loggedCount % 20 == 0) {
                     onProgress(0.05f + (loggedCount.toFloat() / totalMessages) * 0.25f)
                 }
             }
@@ -75,50 +75,45 @@ class MpesaImporter(
                 val chunks = transactions.chunked(250)
                 val totalChunks = chunks.size
                 
-                logger.info("MPESA_IMPORTER", "Starting upload of ${transactions.size} transactions in $totalChunks chunks")
+                logger.info("EQUITY_IMPORTER", "Starting upload of ${transactions.size} Equity transactions in $totalChunks chunks")
                 
                 var failedBatchCount = 0
                 var lastErrorMessage: String? = null
 
-                // Chunk the import to avoid "Internal Server Error" (often caused by large payloads)
                 chunks.forEachIndexed { index, chunk ->
-                    val result = transactionRepository.importMpesaTransactions(chunk)
+                    val result = transactionRepository.importEquityTransactions(chunk)
                     if (result is Result.Success) {
                         if (index < 5 || index == totalChunks - 1) {
-                           logger.debug("MPESA_IMPORTER", "Successfully imported chunk ${index + 1}/$totalChunks")
+                           logger.debug("EQUITY_IMPORTER", "Successfully imported Equity chunk ${index + 1}/$totalChunks")
                         }
                     } else if (result is Result.Error) {
                         failedBatchCount++
                         lastErrorMessage = result.exception.message
-                        logger.error("MPESA_IMPORTER", "Failed to import chunk ${index + 1}: $lastErrorMessage")
+                        logger.error("EQUITY_IMPORTER", "Failed to import Equity chunk ${index + 1}: $lastErrorMessage")
                     }
-                    // Update progress from 30% to 90% during upload
                     onProgress(0.3f + ((index + 1).toFloat() / totalChunks) * 0.6f)
                 }
 
                 if (failedBatchCount > 0) {
-                    val summary = "Failed to sync $failedBatchCount out of $totalChunks batches. Last error: $lastErrorMessage"
-                    logger.error("MPESA_IMPORTER", summary, null)
+                    val summary = "Failed to sync $failedBatchCount out of $totalChunks Equity batches. Last error: $lastErrorMessage"
+                    logger.error("EQUITY_IMPORTER", summary, null)
                     throw Exception(summary)
                 }
             }
-            logger.info("MPESA_IMPORTER", "Import process completed successfully")
+            
+            logger.info("EQUITY_IMPORTER", "Equity import process completed successfully")
 
-
-            // Correct account balance using an adjustment transaction if there's a discrepancy
+            // Update account balance if we found one
             if (latestBalance != null) {
                 val accountResult = accountRepository.getAccountById(accountId)
                 if (accountResult is Result.Success) {
                     val account = accountResult.data
-                    val currentAppBalance = account.balance ?: 0.0
-                    val discrepancy = latestBalance - currentAppBalance
-                    
-                    if (kotlin.math.abs(discrepancy) > 0.01) {
-                        // Silent update: Update the account balance directly instead of creating an adjustment transaction
+                    if (kotlin.math.abs((account.balance ?: 0.0) - latestBalance) > 0.01) {
                         accountRepository.addOrUpdateAccount(account.copy(balance = latestBalance))
                     }
                 }
             }
+
             onProgress(1.0f)
         }
         Unit

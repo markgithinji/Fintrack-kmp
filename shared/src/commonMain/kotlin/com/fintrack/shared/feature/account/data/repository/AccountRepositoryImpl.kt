@@ -21,12 +21,13 @@ class AccountRepositoryImpl(
         
         // Priority sorting:
         // 1. System/Default accounts first
-        // 2. Within defaults, M-Pesa first
+        // 2. Within defaults, M-Pesa then Equity first
         // 3. Followed by creation time (if available)
         accounts.sortedWith { a, b ->
             when {
                 a.isDefault != b.isDefault -> if (a.isDefault) -1 else 1
                 a.isDefault && a.isMpesa != b.isMpesa -> if (a.isMpesa) -1 else 1
+                a.isDefault && a.isEquity != b.isEquity -> if (a.isEquity) -1 else 1
                 else -> {
                     val timeA = a.createdAt
                     val timeB = b.createdAt
