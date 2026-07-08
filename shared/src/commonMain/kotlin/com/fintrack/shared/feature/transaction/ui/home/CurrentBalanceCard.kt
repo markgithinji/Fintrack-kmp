@@ -79,7 +79,7 @@ fun CurrentBalanceCardWrapper(
     syncProgress: Float,
     onAccountSelected: (String) -> Unit,
     onToggleBalanceVisibility: (Boolean) -> Unit,
-    onSyncMpesa: () -> Unit,
+    onManualSync: () -> Unit,
     onSyncErrorClick: (String) -> Unit = {},
     onRetry: () -> Unit = {}
 ) {
@@ -94,7 +94,7 @@ fun CurrentBalanceCardWrapper(
         syncProgress = syncProgress,
         onChangeAccountClicked = { showDialog = true },
         onToggleBalanceVisibility = onToggleBalanceVisibility,
-        onSyncMpesa = onSyncMpesa,
+        onManualSync = onManualSync,
         onSyncErrorClick = onSyncErrorClick,
         onRetry = onRetry
     )
@@ -124,7 +124,7 @@ fun CurrentBalanceCard(
     syncProgress: Float,
     onChangeAccountClicked: () -> Unit,
     onToggleBalanceVisibility: (Boolean) -> Unit,
-    onSyncMpesa: () -> Unit,
+    onManualSync: () -> Unit,
     onSyncErrorClick: (String) -> Unit = {},
     onRetry: () -> Unit = {}
 ) {
@@ -169,7 +169,7 @@ fun CurrentBalanceCard(
                                 syncProgress = syncProgress,
                                 onChangeAccountClicked = onChangeAccountClicked,
                                 onToggleBalanceVisibility = onToggleBalanceVisibility,
-                                onSyncMpesa = onSyncMpesa,
+                                onManualSync = onManualSync,
                                 onSyncErrorClick = onSyncErrorClick
                             )
                         } else {
@@ -196,7 +196,7 @@ fun CurrentBalanceCard(
                             syncProgress = syncProgress,
                             onChangeAccountClicked = onChangeAccountClicked,
                             onToggleBalanceVisibility = onToggleBalanceVisibility,
-                            onSyncMpesa = onSyncMpesa,
+                            onManualSync = onManualSync,
                             onSyncErrorClick = onSyncErrorClick
                         )
                     }
@@ -309,12 +309,15 @@ private fun CurrentBalanceSuccessState(
     syncProgress: Float,
     onChangeAccountClicked: () -> Unit,
     onToggleBalanceVisibility: (Boolean) -> Unit,
-    onSyncMpesa: () -> Unit,
+    onManualSync: () -> Unit,
     onSyncErrorClick: (String) -> Unit
 ) {
     val balance = account.balance ?: 0.0
     val isLinkedAccount = isMpesaLinked || isEquityLinked
-    val isAutoSyncEnabled = if (isMpesaLinked) isMpesaAutoSyncEnabled else isEquityAutoSyncEnabled
+    
+    // Show manual sync if ANY linked service on this account has auto-sync disabled
+    val showManualSyncAction = (isMpesaLinked && !isMpesaAutoSyncEnabled) || 
+                               (isEquityLinked && !isEquityAutoSyncEnabled)
 
     Box(
         modifier = Modifier
@@ -454,7 +457,7 @@ private fun CurrentBalanceSuccessState(
                                             }
 
                                             Surface(
-                                                onClick = onSyncMpesa,
+                                                onClick = onManualSync,
                                                 shape = CircleShape,
                                                 color = MaterialTheme.colorScheme.onPrimary.copy(
                                                     alpha = 0.15f
@@ -474,9 +477,9 @@ private fun CurrentBalanceSuccessState(
                                     }
 
                                     null -> {
-                                        if (!isAutoSyncEnabled) {
+                                        if (showManualSyncAction) {
                                             Surface(
-                                                onClick = onSyncMpesa,
+                                                onClick = onManualSync,
                                                 shape = CircleShape,
                                                 color = MaterialTheme.colorScheme.onPrimary.copy(
                                                     alpha = 0.15f

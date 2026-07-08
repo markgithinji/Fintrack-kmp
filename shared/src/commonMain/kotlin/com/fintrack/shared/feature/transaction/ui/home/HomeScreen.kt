@@ -118,9 +118,12 @@ fun HomeScreen(
                     syncProgress = importProgress,
                     onAccountSelected = { accountId -> 
                         accountsViewModel.selectAccount(accountId)
+                        if (importState !is Result.Loading) {
+                            transactionsViewModel.resetImportState()
+                        }
                     },
                     onToggleBalanceVisibility = { settingsViewModel.setBalanceHidden(it) },
-                    onSyncMpesa = { showSmsPermissionRequest = true },
+                    onManualSync = { showSmsPermissionRequest = true },
                     onSyncErrorClick = { message -> syncErrorMessage = message },
                     onRetry = {
                         accountsViewModel.reloadAccounts(force = true)

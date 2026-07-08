@@ -81,6 +81,7 @@ class TransactionViewModel(
 
     private var hasAutoSynced = false
     private var lastLoadedRecentAccountId: String? = null
+    private var recentTransactionsJob: kotlinx.coroutines.Job? = null
 
     init {
         viewModelScope.launch {
@@ -293,7 +294,8 @@ class TransactionViewModel(
             return
         }
 
-        viewModelScope.launch {
+        recentTransactionsJob?.cancel()
+        recentTransactionsJob = viewModelScope.launch {
             _recentTransactions.value = Result.Loading
             lastLoadedRecentAccountId = accountId
             val result = repo.getTransactions(

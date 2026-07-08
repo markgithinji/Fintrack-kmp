@@ -23,36 +23,29 @@ actual fun createTransactionImporter(
     
     return object : TransactionImporter {
         override suspend fun importHistory(onProgress: (Float) -> Unit) {
+            // We'll keep this as a 'Global' sync for now, but we'll ensure
+            // individual importers are robust against duplicate data.
             val accountsResult = accountRepository.getAccounts()
             val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
             
-            val hasMpesaAccount = accounts.any { it.isMpesa || it.name.lowercase() == "mpesa" }
-            val hasEquityAccount = accounts.any { it.isEquity || it.name.lowercase().contains("equity") }
+            val mpesaAccount = accounts.find { it.isMpesa || it.name.lowercase() == "mpesa" }
+            val equityAccount = accounts.find { it.isEquity || it.name.lowercase().contains("equity") }
 
             val mpesaImporter = MpesaImporter(context, transactionRepository, accountRepository)
             val equityImporter = EquityImporter(context, transactionRepository, accountRepository)
             
             when {
-                hasMpesaAccount && hasEquityAccount -> {
-                    // Run M-Pesa import
+                mpesaAccount != null && equityAccount != null -> {
                     mpesaImporter.importHistory { progress ->
-                        onProgress(progress * 0.5f) // Map to 0-50%
+                        onProgress(progress * 0.5f)
                     }
-                    
-                    // Run Equity import
                     equityImporter.importHistory { progress ->
-                        onProgress(0.5f + (progress * 0.5f)) // Map to 50-100%
+                        onProgress(0.5f + (progress * 0.5f))
                     }
                 }
-                hasMpesaAccount -> {
-                    mpesaImporter.importHistory(onProgress)
-                }
-                hasEquityAccount -> {
-                    equityImporter.importHistory(onProgress)
-                }
-                else -> {
-                    onProgress(1.0f)
-                }
+                mpesaAccount != null -> mpesaImporter.importHistory(onProgress)
+                equityAccount != null -> equityImporter.importHistory(onProgress)
+                else -> onProgress(1.0f)
             }
         }
     }
