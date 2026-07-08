@@ -106,7 +106,7 @@ actual fun ConfirmationDialog(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                    lineHeight = 16.sp,
+                    lineHeight = 14.sp,
                     modifier = Modifier.padding(horizontal = 14.dp)
                 )
 

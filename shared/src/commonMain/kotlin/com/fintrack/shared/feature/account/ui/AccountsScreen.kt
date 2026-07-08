@@ -657,6 +657,7 @@ private fun AccountActionRow(
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.labelSmall,
+                lineHeight = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -716,6 +717,7 @@ private fun AccountOptionRow(
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.labelSmall,
+                lineHeight = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
