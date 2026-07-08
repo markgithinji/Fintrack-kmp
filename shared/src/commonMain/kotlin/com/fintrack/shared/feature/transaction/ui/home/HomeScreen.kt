@@ -117,7 +117,6 @@ fun HomeScreen(
                     importState = importState,
                     syncProgress = importProgress,
                     onAccountSelected = { accountId -> 
-                        settingsViewModel.setDefaultAccountId(accountId)
                         accountsViewModel.selectAccount(accountId)
                     },
                     onToggleBalanceVisibility = { settingsViewModel.setBalanceHidden(it) },

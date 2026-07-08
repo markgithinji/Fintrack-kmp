@@ -106,7 +106,7 @@ class AndroidNotificationService(
         val title = "New Transaction Detected"
         val contentText = "$emoji $amountStr at $merchant"
         
-        val iconRes = if (transaction.isIncome) R.drawable.ic_notification_income else R.drawable.ic_notification_expense
+        val iconRes = if (transaction.isIncome) R.drawable.ic_notification_expense else R.drawable.ic_notification_income
 
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(iconRes)

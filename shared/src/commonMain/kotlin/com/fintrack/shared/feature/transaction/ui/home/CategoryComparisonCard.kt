@@ -92,12 +92,12 @@ fun CategoryComparisonCard(
 
                 if (displayPeriod != null) {
                     val (period, isCurrent) = displayPeriod
-                    val year = period.split("-").firstOrNull() ?: ""
                     
                     Text(
-                        text = if (isCurrent) formatPeriod(period) else "Older ($year)",
+                        text = if (isCurrent) formatPeriod(period) else "Older (${formatPeriod(period)})",
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isCurrent) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSecondaryContainer
+                        color = if (isCurrent) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSecondaryContainer,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }

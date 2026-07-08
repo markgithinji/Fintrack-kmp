@@ -192,7 +192,8 @@ private fun OverviewSuccessState(
             selectedPeriod = selectedPeriod,
             onPeriodSelected = onPeriodSelected,
             periodName = overview.period,
-            isCurrent = overview.isCurrent
+            isCurrent = overview.isCurrent,
+            data = if (selectedPeriod == OverviewPeriod.Weekly) overview.weeklyOverview else overview.monthlyOverview
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -239,8 +240,13 @@ private fun OverviewHeader(
     selectedPeriod: OverviewPeriod,
     onPeriodSelected: (OverviewPeriod) -> Unit,
     periodName: String? = null,
-    isCurrent: Boolean = true
+    isCurrent: Boolean = true,
+    data: List<DaySummary> = emptyList()
 ) {
+    val periodInfo = remember(selectedPeriod, periodName, data) {
+        formatOverviewPeriod(selectedPeriod, periodName ?: "", data)
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -257,13 +263,13 @@ private fun OverviewHeader(
                     fontWeight = FontWeight.Bold
                 )
 
-                if (!isCurrent && periodName != null) {
-                    val year = periodName.split("-").firstOrNull() ?: ""
+                if (periodInfo.isNotEmpty()) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Older ($year)",
+                        text = if (isCurrent) periodInfo else "Older ($periodInfo)",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
@@ -509,36 +515,40 @@ enum class OverviewPeriod {
     Weekly, Monthly
 }
 
-private fun formatPeriod(period: String): String {
-    return try {
-        if (period.contains("-W")) {
-            // 2024-W25 -> Week 25, 2024
-            val parts = period.split("-W")
-            "Week ${parts[1]}, ${parts[0]}"
-        } else if (period.count { it == '-' } == 1) {
-            // 2024-06 -> June 2024
-            val parts = period.split("-")
-            val year = parts[0]
-            val month = when (parts[1]) {
-                "01" -> "January"
-                "02" -> "February"
-                "03" -> "March"
-                "04" -> "April"
-                "05" -> "May"
-                "06" -> "June"
-                "07" -> "July"
-                "08" -> "August"
-                "09" -> "September"
-                "10" -> "October"
-                "11" -> "November"
-                "12" -> "December"
-                else -> parts[1]
-            }
-            "$month $year"
-        } else {
-            period
+private fun formatOverviewPeriod(
+    selectedPeriod: OverviewPeriod,
+    periodCode: String,
+    data: List<DaySummary>
+): String {
+    val firstDate = data.firstOrNull()?.date?.let {
+        try { LocalDate.parse(it) } catch (_: Exception) { null }
+    } ?: return ""
+
+    return when (selectedPeriod) {
+        OverviewPeriod.Weekly -> {
+            val weekPart = if (periodCode.contains("-W")) {
+                "W${periodCode.split("-W")[1]} · "
+            } else ""
+            
+            "$weekPart${getMonthName(firstDate.month)} ${firstDate.year}"
         }
-    } catch (_: Exception) {
-        period
+        OverviewPeriod.Monthly -> {
+            "${getMonthName(firstDate.month)} ${firstDate.year}"
+        }
     }
+}
+
+private fun getMonthName(month: kotlinx.datetime.Month): String = when (month) {
+    kotlinx.datetime.Month.JANUARY -> "January"
+    kotlinx.datetime.Month.FEBRUARY -> "February"
+    kotlinx.datetime.Month.MARCH -> "March"
+    kotlinx.datetime.Month.APRIL -> "April"
+    kotlinx.datetime.Month.MAY -> "May"
+    kotlinx.datetime.Month.JUNE -> "June"
+    kotlinx.datetime.Month.JULY -> "July"
+    kotlinx.datetime.Month.AUGUST -> "August"
+    kotlinx.datetime.Month.SEPTEMBER -> "September"
+    kotlinx.datetime.Month.OCTOBER -> "October"
+    kotlinx.datetime.Month.NOVEMBER -> "November"
+    kotlinx.datetime.Month.DECEMBER -> "December"
 }
