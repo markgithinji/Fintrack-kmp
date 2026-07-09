@@ -149,15 +149,18 @@ fun CustomLineChart(
                     .onGloballyPositioned { viewportWidth = it.size.width.toFloat() }
                     .horizontalScroll(scrollState)
             ) {
+                val paddingStart = 24.dp
+                val paddingEnd = 48.dp
+
                 Box(
                     modifier = Modifier
                         .width(totalChartWidthDp)
                         .height(200.dp)
                         .pointerInput(sortedData, maxValue) {
                             detectTapGestures { offset ->
-                                val chartWidth = size.width - 24.dp.toPx()
+                                val chartWidth = size.width - (paddingStart + paddingEnd).toPx()
                                 val spacingX = if (sortedData.size > 1) chartWidth / (sortedData.size - 1) else chartWidth
-                                val index = (offset.x / spacingX).roundToInt().coerceIn(0, sortedData.size - 1)
+                                val index = ((offset.x - paddingStart.toPx()) / spacingX).roundToInt().coerceIn(0, sortedData.size - 1)
                                 
                                 selectedDay = sortedData[index]
                                 touchOffset = offset
@@ -167,7 +170,7 @@ fun CustomLineChart(
                     Canvas(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(bottom = 24.dp, end = 24.dp)
+                            .padding(start = paddingStart, bottom = 24.dp, end = paddingEnd)
                     ) {
                         val width = size.width
                         val height = size.height
