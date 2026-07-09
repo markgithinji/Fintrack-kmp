@@ -118,9 +118,8 @@ fun HomeScreen(
                     syncProgress = importProgress,
                     onAccountSelected = { accountId -> 
                         accountsViewModel.selectAccount(accountId)
-                        if (importState !is Result.Loading) {
-                            transactionsViewModel.resetImportState()
-                        }
+                        // Cancel existing sync and clear progress if we switch accounts
+                        transactionsViewModel.cancelImport()
                     },
                     onToggleBalanceVisibility = { settingsViewModel.setBalanceHidden(it) },
                     onManualSync = { showSmsPermissionRequest = true },

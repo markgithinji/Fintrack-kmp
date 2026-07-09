@@ -4,6 +4,7 @@ import android.content.Context
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.transaction.util.EquityImporter
 import com.fintrack.shared.feature.transaction.util.MpesaImporter
@@ -20,22 +21,25 @@ actual fun createTransactionImporter(
     accountRepository: AccountRepository
 ): TransactionImporter {
     val context = importerContext ?: throw IllegalStateException("TransactionImporter not initialized. Call initTransactionImporter(context)")
+    val logger = KMPLogger()
     
     return object : TransactionImporter {
         override suspend fun importHistory(onProgress: (Float) -> Unit) {
-            // We'll keep this as a 'Global' sync for now, but we'll ensure
-            // individual importers are robust against duplicate data.
+            logger.info("SYNC_FLOW", "AndroidTransactionImporter: importHistory started")
             val accountsResult = accountRepository.getAccounts()
             val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
             
             val mpesaAccount = accounts.find { it.isMpesa || it.name.lowercase() == "mpesa" }
             val equityAccount = accounts.find { it.isEquity || it.name.lowercase().contains("equity") }
 
+            logger.info("SYNC_FLOW", "Found accounts - Mpesa: ${mpesaAccount?.id}, Equity: ${equityAccount?.id}")
+
             val mpesaImporter = MpesaImporter(context, transactionRepository, accountRepository)
             val equityImporter = EquityImporter(context, transactionRepository, accountRepository)
             
             when {
                 mpesaAccount != null && equityAccount != null -> {
+                    logger.info("SYNC_FLOW", "Importing both Mpesa and Equity")
                     mpesaImporter.importHistory { progress ->
                         onProgress(progress * 0.5f)
                     }
@@ -43,10 +47,20 @@ actual fun createTransactionImporter(
                         onProgress(0.5f + (progress * 0.5f))
                     }
                 }
-                mpesaAccount != null -> mpesaImporter.importHistory(onProgress)
-                equityAccount != null -> equityImporter.importHistory(onProgress)
-                else -> onProgress(1.0f)
+                mpesaAccount != null -> {
+                    logger.info("SYNC_FLOW", "Importing Mpesa only")
+                    mpesaImporter.importHistory(onProgress)
+                }
+                equityAccount != null -> {
+                    logger.info("SYNC_FLOW", "Importing Equity only")
+                    equityImporter.importHistory(onProgress)
+                }
+                else -> {
+                    logger.warning("SYNC_FLOW", "No suitable accounts found for import")
+                    onProgress(1.0f)
+                }
             }
+            logger.info("SYNC_FLOW", "AndroidTransactionImporter: importHistory finished")
         }
     }
 }

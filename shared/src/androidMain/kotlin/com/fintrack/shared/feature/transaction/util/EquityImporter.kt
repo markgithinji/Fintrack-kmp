@@ -11,6 +11,7 @@ import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import kotlin.time.Instant
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 class EquityImporter(
@@ -22,12 +23,15 @@ class EquityImporter(
 
     @OptIn(ExperimentalTime::class)
     override suspend fun importHistory(onProgress: (Float) -> Unit): Unit = withContext(Dispatchers.IO) {
+        logger.info("SYNC_FLOW", "EquityImporter: importHistory started")
         onProgress(0.05f)
         val accountsResult = accountRepository.getAccounts()
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
         val accountId = accounts.find { it.isEquity }?.id 
             ?: accounts.find { it.name.lowercase().contains("equity") }?.id
             ?: "equity"
+
+        logger.info("SYNC_FLOW", "Equity account identified as: $accountId")
 
         // Search for both "EquitBank" and "EquityBank"
         val cursor = context.contentResolver.query(
@@ -45,8 +49,11 @@ class EquityImporter(
             var latestBalance: Double? = null
             var loggedCount = 0
             val totalMessages = it.count
+            
+            logger.info("SYNC_FLOW", "Found $totalMessages potential Equity messages")
 
             while (it.moveToNext()) {
+                ensureActive()
                 val body = it.getString(bodyIndex)
                 val timestamp = it.getLong(dateIndex)
                 val smsInstant = Instant.fromEpochMilliseconds(timestamp)
@@ -59,57 +66,69 @@ class EquityImporter(
                 val transaction = EquityParser.parse(body, accountId, smsInstant)
                 if (transaction != null) {
                     transactions.add(transaction)
-                    if (loggedCount < 10) {
-                        logger.debug("EQUITY_IMPORTER", "Parsed Equity transaction: ${transaction.externalId} on ${transaction.dateTime}")
+                    if (loggedCount < 5) {
+                        logger.debug("SYNC_FLOW", "Parsed Equity sample: ${transaction.externalId} on ${transaction.dateTime}")
                     }
                 }
                 
                 loggedCount++
-                if (loggedCount % 20 == 0) {
+                if (loggedCount % 100 == 0) {
+                    logger.info("SYNC_FLOW", "Scanning Equity SMS: $loggedCount/$totalMessages processed...")
                     onProgress(0.05f + (loggedCount.toFloat() / totalMessages) * 0.25f)
                 }
             }
+
+            logger.info("SYNC_FLOW", "Scanning complete. Found ${transactions.size} valid Equity transactions to upload.")
 
             if (transactions.isNotEmpty()) {
                 onProgress(0.3f)
                 val chunks = transactions.chunked(250)
                 val totalChunks = chunks.size
                 
-                logger.info("EQUITY_IMPORTER", "Starting upload of ${transactions.size} Equity transactions in $totalChunks chunks")
+                logger.info("SYNC_FLOW", "Starting upload of ${transactions.size} Equity transactions in $totalChunks chunks")
                 
                 var failedBatchCount = 0
                 var lastErrorMessage: String? = null
 
                 chunks.forEachIndexed { index, chunk ->
+                    ensureActive()
+                    logger.debug("SYNC_FLOW", "Uploading Equity chunk ${index + 1}/$totalChunks...")
                     val result = transactionRepository.importEquityTransactions(chunk)
                     if (result is Result.Success) {
-                        if (index < 5 || index == totalChunks - 1) {
-                           logger.debug("EQUITY_IMPORTER", "Successfully imported Equity chunk ${index + 1}/$totalChunks")
+                        if (index < 3 || index == totalChunks - 1) {
+                           logger.info("SYNC_FLOW", "Successfully uploaded Equity chunk ${index + 1}/$totalChunks")
                         }
                     } else if (result is Result.Error) {
                         failedBatchCount++
                         lastErrorMessage = result.exception.message
-                        logger.error("EQUITY_IMPORTER", "Failed to import Equity chunk ${index + 1}: $lastErrorMessage")
+                        logger.error("SYNC_FLOW", "Failed to upload Equity chunk ${index + 1}: $lastErrorMessage", result.exception)
                     }
                     onProgress(0.3f + ((index + 1).toFloat() / totalChunks) * 0.6f)
                 }
 
                 if (failedBatchCount > 0) {
                     val summary = "Failed to sync $failedBatchCount out of $totalChunks Equity batches. Last error: $lastErrorMessage"
-                    logger.error("EQUITY_IMPORTER", summary, null)
+                    logger.error("SYNC_FLOW", summary, null)
                     throw Exception(summary)
                 }
             }
             
-            logger.info("EQUITY_IMPORTER", "Equity import process completed successfully")
+            logger.info("SYNC_FLOW", "Equity import process completed successfully")
 
             // Update account balance if we found one
             if (latestBalance != null) {
+                logger.info("SYNC_FLOW", "Latest balance from Equity SMS: $latestBalance. Checking for discrepancy...")
                 val accountResult = accountRepository.getAccountById(accountId)
                 if (accountResult is Result.Success) {
                     val account = accountResult.data
-                    if (kotlin.math.abs((account.balance ?: 0.0) - latestBalance) > 0.01) {
+                    val currentAppBalance = account.balance ?: 0.0
+                    val discrepancy = latestBalance - currentAppBalance
+                    
+                    if (kotlin.math.abs(discrepancy) > 0.01) {
+                        logger.info("SYNC_FLOW", "Equity balance discrepancy found: $discrepancy. Updating account balance to $latestBalance")
                         accountRepository.addOrUpdateAccount(account.copy(balance = latestBalance))
+                    } else {
+                        logger.info("SYNC_FLOW", "Equity balance is in sync.")
                     }
                 }
             }

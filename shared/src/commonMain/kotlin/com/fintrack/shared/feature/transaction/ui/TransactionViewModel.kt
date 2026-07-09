@@ -6,6 +6,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.domain.SaveState
+import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Category
@@ -79,9 +80,12 @@ class TransactionViewModel(
     private val _importProgress = MutableStateFlow(0f)
     val importProgress: StateFlow<Float> = _importProgress.asStateFlow()
 
+    private val logger = KMPLogger()
+
     private var hasAutoSynced = false
     private var lastLoadedRecentAccountId: String? = null
     private var recentTransactionsJob: kotlinx.coroutines.Job? = null
+    private var importJob: kotlinx.coroutines.Job? = null
 
     init {
         viewModelScope.launch {
@@ -373,21 +377,39 @@ class TransactionViewModel(
     }
 
     fun importTransactions() {
-        if (_importState.value is Result.Loading) return
+        logger.info("SYNC_FLOW", "importTransactions triggered. Current state: ${_importState.value}")
+        if (_importState.value is Result.Loading) {
+            logger.info("SYNC_FLOW", "Already importing, skipping.")
+            return
+        }
 
-        viewModelScope.launch {
+        importJob?.cancel()
+        importJob = viewModelScope.launch {
             _importState.value = Result.Loading
             _importProgress.value = 0f
+            logger.info("SYNC_FLOW", "Starting transaction import job")
             try {
                 transactionImporter.importHistory { progress ->
                     _importProgress.value = progress
                 }
+                logger.info("SYNC_FLOW", "Transaction import completed successfully")
                 _importState.value = Result.Success(Unit)
                 globalRefreshManager.triggerRefresh()
             } catch (e: Exception) {
-                _importState.value = Result.Error(e)
+                if (e !is kotlinx.coroutines.CancellationException) {
+                    logger.error("SYNC_FLOW", "Transaction import failed", e)
+                    _importState.value = Result.Error(e)
+                } else {
+                    logger.info("SYNC_FLOW", "Transaction import job cancelled")
+                }
             }
         }
+    }
+
+    fun cancelImport() {
+        logger.info("SYNC_FLOW", "cancelImport called. Cancelling import job.")
+        importJob?.cancel()
+        resetImportState()
     }
 
     fun autoSyncTransactions() {

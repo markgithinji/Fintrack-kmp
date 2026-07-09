@@ -11,6 +11,7 @@ import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import kotlin.time.Instant
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 class MpesaImporter(
@@ -22,12 +23,15 @@ class MpesaImporter(
 
     @OptIn(ExperimentalTime::class)
     override suspend fun importHistory(onProgress: (Float) -> Unit): Unit = withContext(Dispatchers.IO) {
+        logger.info("SYNC_FLOW", "MpesaImporter: importHistory started")
         onProgress(0.05f)
         val accountsResult = accountRepository.getAccounts()
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
         val accountId = accounts.find { it.isMpesa }?.id 
             ?: accounts.find { it.name.lowercase() == "mpesa" }?.id 
             ?: "mpesa"
+
+        logger.info("SYNC_FLOW", "Mpesa account identified as: $accountId")
 
         val cursor = context.contentResolver.query(
             Telephony.Sms.Inbox.CONTENT_URI,
@@ -44,8 +48,11 @@ class MpesaImporter(
             var latestBalance: Double? = null
             var loggedCount = 0
             val totalMessages = it.count
+            
+            logger.info("SYNC_FLOW", "Found $totalMessages potential MPESA messages")
 
             while (it.moveToNext()) {
+                ensureActive()
                 val body = it.getString(bodyIndex)
                 val timestamp = it.getLong(dateIndex)
                 val smsInstant = Instant.fromEpochMilliseconds(timestamp)
@@ -58,39 +65,43 @@ class MpesaImporter(
                 val transaction = MpesaParser.parse(body, accountId, smsInstant)
                 if (transaction != null) {
                     transactions.add(transaction)
-                    if (loggedCount < 10) {
-                        logger.debug("MPESA_IMPORTER", "Parsed transaction: ${transaction.externalId} on ${transaction.dateTime}")
+                    if (loggedCount < 5) {
+                        logger.debug("SYNC_FLOW", "Parsed sample: ${transaction.externalId} on ${transaction.dateTime}")
                     }
                 }
                 
                 loggedCount++
-                if (loggedCount % 50 == 0) {
-                    // Update progress up to 30% during scanning
+                if (loggedCount % 500 == 0) {
+                    logger.info("SYNC_FLOW", "Scanning SMS: $loggedCount/$totalMessages processed...")
                     onProgress(0.05f + (loggedCount.toFloat() / totalMessages) * 0.25f)
                 }
             }
+
+            logger.info("SYNC_FLOW", "Scanning complete. Found ${transactions.size} valid transactions to upload.")
 
             if (transactions.isNotEmpty()) {
                 onProgress(0.3f)
                 val chunks = transactions.chunked(250)
                 val totalChunks = chunks.size
                 
-                logger.info("MPESA_IMPORTER", "Starting upload of ${transactions.size} transactions in $totalChunks chunks")
+                logger.info("SYNC_FLOW", "Starting upload of ${transactions.size} transactions in $totalChunks chunks")
                 
                 var failedBatchCount = 0
                 var lastErrorMessage: String? = null
 
                 // Chunk the import to avoid "Internal Server Error" (often caused by large payloads)
                 chunks.forEachIndexed { index, chunk ->
+                    ensureActive()
+                    logger.debug("SYNC_FLOW", "Uploading chunk ${index + 1}/$totalChunks...")
                     val result = transactionRepository.importMpesaTransactions(chunk)
                     if (result is Result.Success) {
-                        if (index < 5 || index == totalChunks - 1) {
-                           logger.debug("MPESA_IMPORTER", "Successfully imported chunk ${index + 1}/$totalChunks")
+                        if (index < 3 || index == totalChunks - 1) {
+                           logger.info("SYNC_FLOW", "Successfully uploaded chunk ${index + 1}/$totalChunks")
                         }
                     } else if (result is Result.Error) {
                         failedBatchCount++
                         lastErrorMessage = result.exception.message
-                        logger.error("MPESA_IMPORTER", "Failed to import chunk ${index + 1}: $lastErrorMessage")
+                        logger.error("SYNC_FLOW", "Failed to upload chunk ${index + 1}: $lastErrorMessage", result.exception)
                     }
                     // Update progress from 30% to 90% during upload
                     onProgress(0.3f + ((index + 1).toFloat() / totalChunks) * 0.6f)
@@ -98,15 +109,16 @@ class MpesaImporter(
 
                 if (failedBatchCount > 0) {
                     val summary = "Failed to sync $failedBatchCount out of $totalChunks batches. Last error: $lastErrorMessage"
-                    logger.error("MPESA_IMPORTER", summary, null)
+                    logger.error("SYNC_FLOW", summary, null)
                     throw Exception(summary)
                 }
             }
-            logger.info("MPESA_IMPORTER", "Import process completed successfully")
+            logger.info("SYNC_FLOW", "Mpesa import process completed successfully")
 
 
             // Correct account balance using an adjustment transaction if there's a discrepancy
             if (latestBalance != null) {
+                logger.info("SYNC_FLOW", "Latest balance from SMS: $latestBalance. Checking for discrepancy...")
                 val accountResult = accountRepository.getAccountById(accountId)
                 if (accountResult is Result.Success) {
                     val account = accountResult.data
@@ -114,8 +126,10 @@ class MpesaImporter(
                     val discrepancy = latestBalance - currentAppBalance
                     
                     if (kotlin.math.abs(discrepancy) > 0.01) {
-                        // Silent update: Update the account balance directly instead of creating an adjustment transaction
+                        logger.info("SYNC_FLOW", "Balance discrepancy found: $discrepancy. Updating account balance to $latestBalance")
                         accountRepository.addOrUpdateAccount(account.copy(balance = latestBalance))
+                    } else {
+                        logger.info("SYNC_FLOW", "Balance is in sync.")
                     }
                 }
             }
