@@ -28,6 +28,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import com.example.compose.backgroundGray
+import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
@@ -61,6 +62,8 @@ fun HomeScreen(
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
     val importProgress by transactionsViewModel.importProgress.collectAsStateWithLifecycle()
     
+    val logger = remember { com.fintrack.shared.feature.core.logger.KMPLogger() }
+
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
     var syncErrorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -105,8 +108,13 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                val effectiveDefaultAccountId = defaultAccountId ?: (accountsResult as? Result.Success)?.data?.find { it.isMpesa || it.isEquity }?.id
+                val effectiveDefaultAccountId = defaultAccountId ?: (accountsResult as? Result.Success)?.data?.find { it.type != AccountType.GENERAL }?.id
                 
+                val selectedAccount = (selectedAccountResult as? Result.Success)?.data
+                if (selectedAccount != null) {
+                    logger.debug("HomeScreen", "Rendering CurrentBalanceCard for ${selectedAccount.name} (type=${selectedAccount.type})")
+                }
+
                 CurrentBalanceCardWrapper(
                     accountsResult = accountsResult,
                     selectedAccountResult = selectedAccountResult,

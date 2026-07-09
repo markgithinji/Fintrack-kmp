@@ -5,6 +5,7 @@ import com.fintrack.shared.feature.settings.domain.util.createBiometricAuthentic
 import com.fintrack.shared.feature.settings.domain.util.createNotificationService
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.core.domain.usecase.ClearAllUserDataUseCase
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val settingsModule = module {
@@ -12,5 +13,5 @@ val settingsModule = module {
     single { createBiometricAuthenticator() }
     single { createNotificationService(get()) }
     single { ClearAllUserDataUseCase(get(), get(), get()) }
-    factory { SettingsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { SettingsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
 }

@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.account.data.model
 
+import com.fintrack.shared.feature.account.domain.model.AccountType
 import kotlinx.serialization.Serializable
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -12,7 +13,6 @@ data class AccountDto @OptIn(ExperimentalTime::class) constructor(
     val income: Double? = null,
     val expense: Double? = null,
     val isDefault: Boolean? = false,
-    val isMpesa: Boolean? = false,
-    val isEquity: Boolean? = false,
+    val type: AccountType? = AccountType.GENERAL,
     val createdAt: Instant? = null
 )

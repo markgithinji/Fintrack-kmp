@@ -1,14 +1,13 @@
 package com.fintrack.shared.feature.transaction.domain.util
 
 import android.content.Context
+import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.logger.KMPLogger
-import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.transaction.util.EquityImporter
 import com.fintrack.shared.feature.transaction.util.MpesaImporter
-import kotlinx.coroutines.flow.first
 
 private var importerContext: Context? = null
 
@@ -18,7 +17,7 @@ fun initTransactionImporter(context: Context) {
 
 actual fun createTransactionImporter(
     transactionRepository: TransactionRepository,
-    accountRepository: AccountRepository
+    accountRepository: AccountRepository,
 ): TransactionImporter {
     val context = importerContext ?: throw IllegalStateException("TransactionImporter not initialized. Call initTransactionImporter(context)")
     val logger = KMPLogger()
@@ -29,8 +28,8 @@ actual fun createTransactionImporter(
             val accountsResult = accountRepository.getAccounts()
             val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
             
-            val mpesaAccount = accounts.find { it.isMpesa || it.name.lowercase() == "mpesa" }
-            val equityAccount = accounts.find { it.isEquity || it.name.lowercase().contains("equity") }
+            val mpesaAccount = accounts.find { (it.type == AccountType.MPESA) || (it.name.lowercase() == "mpesa") }
+            val equityAccount = accounts.find { (it.type == AccountType.EQUITY) || (it.name.lowercase().contains("equity")) }
 
             logger.info("SYNC_FLOW", "Found accounts - Mpesa: ${mpesaAccount?.id}, Equity: ${equityAccount?.id}")
 

@@ -10,7 +10,6 @@ data class Account @OptIn(ExperimentalTime::class) constructor(
     val income: Double? = null,
     val expense: Double? = null,
     val isDefault: Boolean = false,
-    val isMpesa: Boolean = false,
-    val isEquity: Boolean = false,
+    val type: AccountType = AccountType.GENERAL,
     val createdAt: Instant? = null
 )

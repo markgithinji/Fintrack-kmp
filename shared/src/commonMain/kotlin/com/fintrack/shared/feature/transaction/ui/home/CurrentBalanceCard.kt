@@ -46,6 +46,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.fintrack.shared.feature.account.domain.model.Account
+import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
@@ -161,8 +163,8 @@ fun CurrentBalanceCard(
                             CurrentBalanceSuccessState(
                                 account = currentData,
                                 isBalanceHidden = isBalanceHidden,
-                                isMpesaLinked = currentData.isMpesa,
-                                isEquityLinked = currentData.isEquity,
+                                isMpesaLinked = currentData.type == AccountType.MPESA,
+                                isEquityLinked = currentData.type == AccountType.EQUITY,
                                 isMpesaAutoSyncEnabled = isMpesaAutoSyncEnabled,
                                 isEquityAutoSyncEnabled = isEquityAutoSyncEnabled,
                                 importState = importState,
@@ -188,8 +190,8 @@ fun CurrentBalanceCard(
                         CurrentBalanceSuccessState(
                             account = result.data,
                             isBalanceHidden = isBalanceHidden,
-                            isMpesaLinked = result.data.isMpesa,
-                            isEquityLinked = result.data.isEquity,
+                            isMpesaLinked = result.data.type == AccountType.MPESA,
+                            isEquityLinked = result.data.type == AccountType.EQUITY,
                             isMpesaAutoSyncEnabled = isMpesaAutoSyncEnabled,
                             isEquityAutoSyncEnabled = isEquityAutoSyncEnabled,
                             importState = importState,
@@ -315,9 +317,14 @@ private fun CurrentBalanceSuccessState(
     val balance = account.balance ?: 0.0
     val isLinkedAccount = isMpesaLinked || isEquityLinked
     
-    // Show manual sync if ANY linked service on this account has auto-sync disabled
+    // Show manual sync if the account is linked AND auto-sync for that service is OFF
     val showManualSyncAction = (isMpesaLinked && !isMpesaAutoSyncEnabled) || 
                                (isEquityLinked && !isEquityAutoSyncEnabled)
+
+    val logger = remember { com.fintrack.shared.feature.core.logger.KMPLogger() }
+    SideEffect {
+        logger.debug("CurrentBalanceCard", "Account: ${account.name}, isMpesaLinked: $isMpesaLinked, isMpesaAuto: $isMpesaAutoSyncEnabled, showManualSync: $showManualSyncAction")
+    }
 
     Box(
         modifier = Modifier
@@ -332,11 +339,7 @@ private fun CurrentBalanceSuccessState(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = when {
-                            account.isMpesa -> AccountIcon.Mpesa.icon
-                            account.isEquity -> AccountIcon.Equity.icon
-                            else -> AccountIcon.fromAccountName(account.name).icon
-                        },
+                        imageVector = AccountIcon.fromAccountType(account.type, account.name).icon,
                         contentDescription = "Bank",
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(16.dp)
@@ -753,7 +756,7 @@ private fun AccountSelectionListState(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = AccountIcon.fromAccountName(acc.name).icon,
+                        imageVector = AccountIcon.fromAccountType(acc.type, acc.name).icon,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
                         tint = if (isSelected) MaterialTheme.colorScheme.primary

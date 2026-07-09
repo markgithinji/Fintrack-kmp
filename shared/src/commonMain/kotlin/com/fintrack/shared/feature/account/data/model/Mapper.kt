@@ -1,19 +1,18 @@
 package com.fintrack.shared.feature.account.data.model
 
 import com.fintrack.shared.feature.account.domain.model.Account
+import com.fintrack.shared.feature.account.domain.model.AccountType
 import kotlin.time.ExperimentalTime
 
 fun Account.toCreateRequest(): CreateAccountRequest = CreateAccountRequest(
     name = this.name,
-    isMpesa = this.isMpesa,
-    isEquity = this.isEquity,
+    type = this.type,
     balance = this.balance
 )
 
 fun Account.toUpdateRequest(): UpdateAccountRequest = UpdateAccountRequest(
     name = this.name,
-    isMpesa = this.isMpesa,
-    isEquity = this.isEquity,
+    type = this.type,
     balance = this.balance
 )
 
@@ -25,7 +24,6 @@ fun AccountDto.toDomain(): Account = Account(
     income = this.income,
     expense = this.expense,
     isDefault = this.isDefault ?: false,
-    isMpesa = this.isMpesa ?: false,
-    isEquity = this.isEquity ?: false,
+    type = this.type ?: AccountType.GENERAL,
     createdAt = this.createdAt
 )

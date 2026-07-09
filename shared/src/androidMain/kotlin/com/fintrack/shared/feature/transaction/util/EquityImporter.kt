@@ -2,6 +2,7 @@ package com.fintrack.shared.feature.transaction.util
 
 import android.content.Context
 import android.provider.Telephony
+import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
@@ -27,7 +28,7 @@ class EquityImporter(
         onProgress(0.05f)
         val accountsResult = accountRepository.getAccounts()
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
-        val accountId = accounts.find { it.isEquity }?.id 
+        val accountId = accounts.find { it.type == AccountType.EQUITY }?.id
             ?: accounts.find { it.name.lowercase().contains("equity") }?.id
             ?: "equity"
 

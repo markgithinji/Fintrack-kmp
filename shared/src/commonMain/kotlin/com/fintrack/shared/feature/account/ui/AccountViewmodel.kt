@@ -3,6 +3,7 @@ package com.fintrack.shared.feature.account.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.account.domain.model.Account
+import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
@@ -24,6 +25,8 @@ class AccountsViewModel(
     private val clearAllUserDataUseCase: ClearAllUserDataUseCase,
     private val biometricAuthenticator: BiometricAuthenticator
 ) : ViewModel() {
+
+    private val logger = com.fintrack.shared.feature.core.logger.KMPLogger()
 
     private val _accounts = MutableStateFlow<Result<List<Account>>>(Result.Loading)
     val accounts: StateFlow<Result<List<Account>>> = _accounts
@@ -60,6 +63,7 @@ class AccountsViewModel(
         viewModelScope.launch {
             repo.selectedAccountId
                 .collect { id ->
+                    logger.debug("AccountsViewModel", "Selected account ID changed: $id")
                     if (id != null) {
                         val currentSelectedId = (_selectedAccount.value as? Result.Success)?.data?.id
                         if (id != currentSelectedId) {
@@ -98,7 +102,7 @@ class AccountsViewModel(
                             _selectedAccount.value = Result.Success(preservedAccount)
                             if (currentId == null) repo.setSelectedAccountId(preservedAccount.id)
                         } else {
-                            val mpesaAccount = result.data.find { it.isMpesa }
+                            val mpesaAccount = result.data.find { it.type == AccountType.MPESA }
                             val fallback = mpesaAccount ?: result.data.first()
                             _selectedAccount.value = Result.Success(fallback)
                             if (currentId == null) repo.setSelectedAccountId(fallback.id)
@@ -123,19 +127,27 @@ class AccountsViewModel(
             val accounts = (_accounts.value as? Result.Success)?.data
             val account = accounts?.firstOrNull { it.id == id }
             if (account != null) {
+                logger.debug("AccountsViewModel", "Loading account from cache: ${account.name} (type=${account.type})")
                 _selectedAccount.value = Result.Success(account)
             } else {
-                _selectedAccount.value = repo.getAccountById(id)
+                logger.debug("AccountsViewModel", "Fetching account from repo: $id")
+                val result = repo.getAccountById(id)
+                if (result is Result.Success) {
+                    logger.debug("AccountsViewModel", "Fetched account: ${result.data.name} (type=${result.data.type})")
+                }
+                _selectedAccount.value = result
             }
         }
     }
 
     fun saveAccount(account: Account) {
         viewModelScope.launch {
+            logger.info("AccountsViewModel", "Saving account: ${account.name} (type=${account.type})")
             _saveResult.value = Result.Loading
             val result = repo.addOrUpdateAccount(account)
             _saveResult.value = result
             if (result is Result.Success) {
+                logger.info("AccountsViewModel", "Account saved successfully: ${result.data.name}")
                 // Update local state immediately for a smooth transition
                 val currentResult = _accounts.value
                 if (currentResult is Result.Success) {
@@ -146,6 +158,15 @@ class AccountsViewModel(
                     }
                     _accounts.value = Result.Success(updatedList)
                 }
+
+                // If the updated account is the currently selected one, update it immediately
+                val currentSelectedId = (selectedAccount.value as? Result.Success)?.data?.id
+                if (result.data.id == currentSelectedId) {
+                    logger.debug("AccountsViewModel", "Updating current selected account state immediately")
+                    _selectedAccount.value = Result.Success(result.data)
+                }
+
+                globalRefreshManager.triggerRefresh()
                 reloadAccounts(showLoading = false)
             }
         }

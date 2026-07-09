@@ -112,7 +112,7 @@ class AndroidSettingsDataSource(
     override val theme: StateFlow<AppTheme> = _themeFlow.asStateFlow()
 
     override suspend fun setTheme(theme: AppTheme) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putString("app_theme", theme.name)
         }
         _themeFlow.value = theme
@@ -121,7 +121,7 @@ class AndroidSettingsDataSource(
     override val timeFormat: StateFlow<TimeFormat> = _timeFormatFlow.asStateFlow()
 
     override suspend fun setTimeFormat(format: TimeFormat) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putString("time_format", format.name)
         }
         _timeFormatFlow.value = format
@@ -130,7 +130,7 @@ class AndroidSettingsDataSource(
     override val currency: StateFlow<Currency> = _currencyFlow.asStateFlow()
 
     override suspend fun setCurrency(currency: Currency) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putString("currency_code", currency.code)
         }
         _currencyFlow.value = currency
@@ -139,7 +139,7 @@ class AndroidSettingsDataSource(
     override val isBiometricEnabled: StateFlow<Boolean> = _biometricFlow.asStateFlow()
 
     override suspend fun setBiometricEnabled(enabled: Boolean) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putBoolean("biometric_enabled", enabled)
         }
         _biometricFlow.value = enabled
@@ -148,7 +148,7 @@ class AndroidSettingsDataSource(
     override val isBalanceHidden: StateFlow<Boolean> = _balanceHiddenFlow.asStateFlow()
 
     override suspend fun setBalanceHidden(hidden: Boolean) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putBoolean("balance_hidden", hidden)
         }
         _balanceHiddenFlow.value = hidden
@@ -157,7 +157,7 @@ class AndroidSettingsDataSource(
     override val isReminderEnabled: StateFlow<Boolean> = _reminderFlow.asStateFlow()
 
     override suspend fun setReminderEnabled(enabled: Boolean) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putBoolean("reminder_enabled", enabled)
         }
         _reminderFlow.value = enabled
@@ -166,7 +166,7 @@ class AndroidSettingsDataSource(
     override val reminderTime: StateFlow<LocalTime> = _reminderTimeFlow.asStateFlow()
 
     override suspend fun setReminderTime(time: LocalTime) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putString("reminder_time", time.toString())
         }
         _reminderTimeFlow.value = time
@@ -175,7 +175,7 @@ class AndroidSettingsDataSource(
     override val mpesaSimSlot: StateFlow<Int?> = _mpesaSimSlotFlow.asStateFlow()
 
     override suspend fun setMpesaSimSlot(slot: Int?) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             if (slot == null) {
                 remove("mpesa_sim_slot")
             } else {
@@ -188,7 +188,7 @@ class AndroidSettingsDataSource(
     override val mpesaAccountId: StateFlow<String?> = _mpesaAccountIdFlow.asStateFlow()
 
     override suspend fun setMpesaAccountId(accountId: String?) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             if (accountId == null) {
                 remove("mpesa_account_id")
             } else {
@@ -201,7 +201,7 @@ class AndroidSettingsDataSource(
     override val isMpesaListenerEnabled: StateFlow<Boolean> = _mpesaListenerFlow.asStateFlow()
 
     override suspend fun setMpesaListenerEnabled(enabled: Boolean) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putBoolean("mpesa_listener_enabled", enabled)
         }
         _mpesaListenerFlow.value = enabled
@@ -210,7 +210,7 @@ class AndroidSettingsDataSource(
     override val isEquityListenerEnabled: StateFlow<Boolean> = _equityListenerFlow.asStateFlow()
 
     override suspend fun setEquityListenerEnabled(enabled: Boolean) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putBoolean("equity_listener_enabled", enabled)
         }
         _equityListenerFlow.value = enabled
@@ -219,7 +219,7 @@ class AndroidSettingsDataSource(
     override val budgetAlertsEnabled: StateFlow<Boolean> = _budgetAlertsEnabledFlow.asStateFlow()
 
     override suspend fun setBudgetAlertsEnabled(enabled: Boolean) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putBoolean("budget_alerts_enabled", enabled)
         }
         _budgetAlertsEnabledFlow.value = enabled
@@ -228,7 +228,7 @@ class AndroidSettingsDataSource(
     override val budgetAlertThresholds: StateFlow<Set<Int>> = _budgetAlertThresholdsFlow.asStateFlow()
 
     override suspend fun setBudgetAlertThresholds(thresholds: Set<Int>) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putStringSet("budget_alert_thresholds", thresholds.map { it.toString() }.toSet())
         }
         _budgetAlertThresholdsFlow.value = thresholds
@@ -237,7 +237,7 @@ class AndroidSettingsDataSource(
     override val alertBudgetId: StateFlow<String?> = _alertBudgetIdFlow.asStateFlow()
 
     override suspend fun setAlertBudgetId(budgetId: String?) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             if (budgetId == null) {
                 remove("alert_budget_id")
             } else {
@@ -250,7 +250,7 @@ class AndroidSettingsDataSource(
     override val isBillReminderEnabled: StateFlow<Boolean> = _billReminderEnabledFlow.asStateFlow()
 
     override suspend fun setBillReminderEnabled(enabled: Boolean) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putBoolean("bill_reminder_enabled", enabled)
         }
         _billReminderEnabledFlow.value = enabled
@@ -259,7 +259,7 @@ class AndroidSettingsDataSource(
     override val billReminderDaysBefore: StateFlow<Int> = _billReminderDaysBeforeFlow.asStateFlow()
 
     override suspend fun setBillReminderDaysBefore(days: Int) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putInt("bill_reminder_days_before", days)
         }
         _billReminderDaysBeforeFlow.value = days
@@ -268,7 +268,7 @@ class AndroidSettingsDataSource(
     override val isDailySummaryEnabled: StateFlow<Boolean> = _dailySummaryEnabledFlow.asStateFlow()
 
     override suspend fun setDailySummaryEnabled(enabled: Boolean) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putBoolean("daily_summary_enabled", enabled)
         }
         _dailySummaryEnabledFlow.value = enabled
@@ -277,7 +277,7 @@ class AndroidSettingsDataSource(
     override val isWeeklySummaryEnabled: StateFlow<Boolean> = _weeklySummaryEnabledFlow.asStateFlow()
 
     override suspend fun setWeeklySummaryEnabled(enabled: Boolean) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putBoolean("weekly_summary_enabled", enabled)
         }
         _weeklySummaryEnabledFlow.value = enabled
@@ -286,7 +286,7 @@ class AndroidSettingsDataSource(
     override val summaryNotificationTime: StateFlow<LocalTime> = _summaryNotificationTimeFlow.asStateFlow()
 
     override suspend fun setSummaryNotificationTime(time: LocalTime) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putString("summary_notification_time", time.toString())
         }
         _summaryNotificationTimeFlow.value = time
@@ -295,7 +295,7 @@ class AndroidSettingsDataSource(
     override val showDecimals: StateFlow<Boolean> = _showDecimalsFlow.asStateFlow()
 
     override suspend fun setShowDecimals(show: Boolean) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putBoolean("show_decimals", show)
         }
         _showDecimalsFlow.value = show
@@ -304,7 +304,7 @@ class AndroidSettingsDataSource(
     override val defaultAccountId: StateFlow<String?> = _defaultAccountIdFlow.asStateFlow()
 
     override suspend fun setDefaultAccountId(id: String?) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             if (id == null) {
                 remove("default_account_id")
             } else {
@@ -317,7 +317,7 @@ class AndroidSettingsDataSource(
     override val exportFormat: StateFlow<ExportFormat> = _exportFormatFlow.asStateFlow()
 
     override suspend fun setExportFormat(format: ExportFormat) {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putString("export_format", format.name)
         }
         _exportFormatFlow.value = format

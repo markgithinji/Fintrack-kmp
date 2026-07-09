@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.account.domain.model.Account
+import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.ui.CommonErrorState
@@ -108,7 +109,7 @@ fun AccountsScreen(
                     }
                     is Result.Success -> {
                         val defaultAccountId by settingsViewModel.defaultAccountId.collectAsStateWithLifecycle()
-                        val effectiveDefaultAccountId = defaultAccountId ?: state.data.find { it.isMpesa }?.id
+                        val effectiveDefaultAccountId = defaultAccountId ?: state.data.find { it.type == AccountType.MPESA }?.id
                         
                         AccountList(
                             accounts = state.data,
@@ -166,16 +167,15 @@ fun AccountsScreen(
                         importState is Result.Loading,
             deleteResult = deleteResult,
             clearDataResult = clearDataResult,
-            isMpesaLinked = account.isMpesa,
-            isEquityLinked = account.isEquity,
+            accountType = account.type,
             isDefaultSelection = account.id == defaultAccountId,
             isOtherAccountDefault = isOtherAccountDefault,
             onDismiss = { if (!isOperating) showAccountDialog = null },
             onDelete = { viewModel.removeAccount(account.id) },
             onClearData = { viewModel.clearAccountData(account.id) },
             onClearResults = { viewModel.clearResults() },
-            onConfirm = { name, isMpesa, isEquity, isDefault ->
-                viewModel.saveAccount(account.copy(name = name, isMpesa = isMpesa, isEquity = isEquity))
+            onConfirm = { name, type, isDefault ->
+                viewModel.saveAccount(account.copy(name = name, type = type))
                 if (isDefault) {
                     settingsViewModel.setDefaultAccountId(account.id)
                 } else if (account.id == defaultAccountId) {
@@ -290,11 +290,7 @@ fun AccountItem(
     isStartAccount: Boolean,
     onEdit: () -> Unit
 ) {
-    val accountIcon = when {
-        account.isMpesa -> AccountIcon.Mpesa
-        account.isEquity -> AccountIcon.Equity
-        else -> AccountIcon.fromAccountName(account.name)
-    }
+    val accountIcon = AccountIcon.fromAccountType(account.type, account.name)
     
     Surface(
         onClick = onEdit,
@@ -377,26 +373,23 @@ fun AccountDialog(
     isLoading: Boolean,
     deleteResult: Result<Unit>?,
     clearDataResult: Result<Unit>?,
-    isMpesaLinked: Boolean,
-    isEquityLinked: Boolean,
+    accountType: AccountType,
     isDefaultSelection: Boolean,
     isOtherAccountDefault: Boolean,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
     onClearData: () -> Unit,
     onClearResults: () -> Unit,
-    onConfirm: (String, Boolean, Boolean, Boolean) -> Unit
+    onConfirm: (String, AccountType, Boolean) -> Unit
 ) {
     var accountName by remember { mutableStateOf(account.name) }
-    var isMpesa by remember { mutableStateOf(isMpesaLinked) }
-    var isEquity by remember { mutableStateOf(isEquityLinked) }
-    var isDefault by remember { mutableStateOf(isDefaultSelection || (isMpesa && !isOtherAccountDefault)) }
+    var type by remember { mutableStateOf(accountType) }
+    var isDefault by remember { mutableStateOf(isDefaultSelection || (type == AccountType.MPESA && !isOtherAccountDefault)) }
     var showClearDataConfirm by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
     val hasChanges = accountName != account.name || 
-                     isMpesa != isMpesaLinked || 
-                     isEquity != isEquityLinked ||
+                     type != accountType || 
                      isDefault != isDefaultSelection
 
     if (showClearDataConfirm) {
@@ -529,9 +522,9 @@ fun AccountDialog(
                                 title = "M-Pesa SMS Link",
                                 subtitle = "Auto-track transactions",
                                 icon = Icons.Default.Smartphone,
-                                checked = isMpesa,
+                                checked = type == AccountType.MPESA,
                                 onCheckedChange = { 
-                                    isMpesa = it 
+                                    type = if (it) AccountType.MPESA else AccountType.GENERAL
                                     if (it && !isOtherAccountDefault) isDefault = true
                                 },
                                 enabled = !isLoading
@@ -541,14 +534,14 @@ fun AccountDialog(
                                 title = "Equity Bank SMS Link",
                                 subtitle = "Auto-track bank transactions",
                                 icon = Icons.Default.AccountBalance,
-                                checked = isEquity,
+                                checked = type == AccountType.EQUITY,
                                 onCheckedChange = { 
-                                    isEquity = it 
+                                    type = if (it) AccountType.EQUITY else AccountType.GENERAL
                                 },
                                 enabled = !isLoading
                             )
                             
-                            val isDefaultLocked = isMpesa && !isOtherAccountDefault
+                            val isDefaultLocked = type == AccountType.MPESA && !isOtherAccountDefault
                             AccountOptionRow(
                                 title = "Set as Default",
                                 subtitle = if (isDefaultLocked) "M-Pesa is default when no other account is set" else "Loads this account first",
@@ -587,7 +580,7 @@ fun AccountDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     
                     Button(
-                        onClick = { if (accountName.isNotBlank()) onConfirm(accountName, isMpesa, isEquity, isDefault) },
+                        onClick = { if (accountName.isNotBlank()) onConfirm(accountName, type, isDefault) },
                         enabled = accountName.isNotBlank() && !isLoading && (hasChanges || !isEditing),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
