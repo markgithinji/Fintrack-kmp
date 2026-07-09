@@ -268,7 +268,7 @@ private fun OverviewHeader(
                     Text(
                         text = if (isCurrent) periodInfo else "Older ($periodInfo)",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        color = if (isCurrent) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSecondaryContainer,
                         fontWeight = FontWeight.Medium
                     )
                 }
