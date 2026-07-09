@@ -450,8 +450,23 @@ fun CategoryList(
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val sortedModels = displayModels.sortedByDescending { it.amount }
-    val topModelsList = sortedModels.take(4).toList()
-    val remainingModels = sortedModels.drop(4)
+    
+    // Categories that should always be shown if they exist
+    val priorityNames = listOf("Transaction Fees", "Transaction Cost")
+    val priorityModels = sortedModels.filter { it.name in priorityNames }
+    val regularModels = sortedModels.filter { it.name !in priorityNames }
+
+    val topModelsList = mutableListOf<CategoryDisplayModel>()
+    topModelsList.addAll(priorityModels)
+    
+    val remainingSlots = (4 - topModelsList.size).coerceAtLeast(0)
+    topModelsList.addAll(regularModels.take(remainingSlots))
+    
+    // Sort for consistent UI
+    topModelsList.sortByDescending { it.amount }
+
+    val topNames = topModelsList.map { it.name }.toSet()
+    val remainingModels = displayModels.filter { it.name !in topNames }
     
     val displayList = topModelsList.toMutableList()
     val othersAmount = remainingModels.sumOf { it.amount.toDouble() }.toFloat()

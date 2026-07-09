@@ -16,9 +16,24 @@ fun DonutChartSection(
 ) {
     if (categorySums.isEmpty() || totalAmount <= 0f) return
 
-    val sortedForChart = categorySums.sortedByDescending { it.second }
-    val topForChart = sortedForChart.take(4).toMutableList()
-    val othersTotal = sortedForChart.drop(4).sumOf { it.second.toDouble() }.toFloat()
+    val sorted = categorySums.sortedByDescending { it.second }
+    
+    // Categories that should always be shown if they exist
+    val priorityNames = listOf("Transaction Fees", "Transaction Cost")
+    val priorityItems = sorted.filter { it.first in priorityNames }
+    val regularItems = sorted.filter { it.first !in priorityNames }
+
+    val topForChart = mutableListOf<Pair<String, Float>>()
+    topForChart.addAll(priorityItems)
+    
+    val remainingSlots = (4 - topForChart.size).coerceAtLeast(0)
+    topForChart.addAll(regularItems.take(remainingSlots))
+    
+    // Sort the final selection for better visualization
+    topForChart.sortByDescending { it.second }
+
+    val topNames = topForChart.map { it.first }.toSet()
+    val othersTotal = categorySums.filter { it.first !in topNames }.sumOf { it.second.toDouble() }.toFloat()
 
     if (othersTotal > 0f) {
         topForChart.add("Others" to othersTotal)
