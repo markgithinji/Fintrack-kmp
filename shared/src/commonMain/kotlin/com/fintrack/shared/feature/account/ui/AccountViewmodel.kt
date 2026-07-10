@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
+import com.fintrack.shared.feature.account.domain.usecase.GetAccountsUseCase
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
@@ -20,6 +21,7 @@ import kotlinx.coroutines.launch
 
 class AccountsViewModel(
     private val repo: AccountRepository,
+    private val getAccountsUseCase: GetAccountsUseCase,
     private val globalRefreshManager: GlobalRefreshManager,
     private val settingsDataSource: SettingsDataSource,
     private val clearAllUserDataUseCase: ClearAllUserDataUseCase,
@@ -63,7 +65,7 @@ class AccountsViewModel(
                 _accounts.value = Result.Loading
             }
 
-            val result = repo.getAccounts()
+            val result = getAccountsUseCase()
             _accounts.value = result
             
             // If we have a selected account, update it from the new list if possible

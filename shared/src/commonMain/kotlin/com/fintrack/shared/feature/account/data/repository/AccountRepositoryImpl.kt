@@ -5,7 +5,6 @@ import com.fintrack.shared.feature.account.data.model.toDomain
 import com.fintrack.shared.feature.account.data.model.toUpdateRequest
 import com.fintrack.shared.feature.account.data.remote.AccountsApi
 import com.fintrack.shared.feature.account.domain.model.Account
-import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.safeApiCall
@@ -16,36 +15,7 @@ class AccountRepositoryImpl(
 
     override suspend fun getAccounts(): Result<List<Account>> = safeApiCall {
         val accountsDto = api.getAccounts()
-        val accounts = accountsDto.map { it.toDomain() }
-        
-        // Priority sorting:
-        // 1. System/Default accounts first
-        // 2. Within defaults, M-Pesa then Equity first
-        // 3. Followed by creation time (if available)
-        accounts.sortedWith { a, b ->
-            when {
-                a.isDefault != b.isDefault -> if (a.isDefault) -1 else 1
-                a.isDefault && a.type != b.type -> {
-                    // M-Pesa first, then Equity, then others
-                    when {
-                        a.type == AccountType.MPESA -> -1
-                        b.type == AccountType.MPESA -> 1
-                        a.type == AccountType.EQUITY -> -1
-                        b.type == AccountType.EQUITY -> 1
-                        else -> 0
-                    }
-                }
-                else -> {
-                    val timeA = a.createdAt
-                    val timeB = b.createdAt
-                    if (timeA != null && timeB != null) {
-                        timeA.compareTo(timeB)
-                    } else {
-                        0
-                    }
-                }
-            }
-        }
+        accountsDto.map { it.toDomain() }
     }
 
     override suspend fun getAccountById(id: String): Result<Account> = safeApiCall {
