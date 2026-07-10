@@ -41,6 +41,8 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun HomeScreen(
+    selectedAccountId: String?,
+    onAccountSelected: (String) -> Unit,
     accountsViewModel: AccountsViewModel = koinViewModel(),
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     statsViewModel: StatisticsViewModel = koinViewModel(),
@@ -56,7 +58,6 @@ fun HomeScreen(
     val overviewResult by statsViewModel.overview.collectAsStateWithLifecycle()
     val categoryComparisonResult by statsViewModel.categoryComparisons.collectAsStateWithLifecycle()
     val isBalanceHidden by settingsViewModel.isBalanceHidden.collectAsStateWithLifecycle()
-    val defaultAccountId by settingsViewModel.defaultAccountId.collectAsStateWithLifecycle()
     val isMpesaListenerEnabled by settingsViewModel.isMpesaListenerEnabled.collectAsStateWithLifecycle()
     val isEquityListenerEnabled by settingsViewModel.isEquityListenerEnabled.collectAsStateWithLifecycle()
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
@@ -66,6 +67,11 @@ fun HomeScreen(
 
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
     var syncErrorMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(selectedAccountId) {
+        accountsViewModel.selectAccount(selectedAccountId)
+    }
+
 
     LaunchedEffect(importState) {
         if (importState is Result.Success) {
@@ -108,24 +114,17 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                val effectiveDefaultAccountId = defaultAccountId ?: (accountsResult as? Result.Success)?.data?.find { it.type != AccountType.GENERAL }?.id
-                
-                val selectedAccount = (selectedAccountResult as? Result.Success)?.data
-                if (selectedAccount != null) {
-                    logger.debug("HomeScreen", "Rendering CurrentBalanceCard for ${selectedAccount.name} (type=${selectedAccount.type})")
-                }
-
                 CurrentBalanceCardWrapper(
                     accountsResult = accountsResult,
                     selectedAccountResult = selectedAccountResult,
-                    defaultAccountId = effectiveDefaultAccountId,
+                    defaultAccountId = selectedAccountId,
                     isBalanceHidden = isBalanceHidden,
                     isMpesaAutoSyncEnabled = isMpesaListenerEnabled,
                     isEquityAutoSyncEnabled = isEquityListenerEnabled,
                     importState = importState,
                     syncProgress = importProgress,
                     onAccountSelected = { accountId -> 
-                        accountsViewModel.selectAccount(accountId)
+                        onAccountSelected(accountId)
                         // Cancel existing sync and clear progress if we switch accounts
                         transactionsViewModel.cancelImport()
                     },

@@ -8,7 +8,15 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val accountModule = module {
-    single { AccountsApi(get(), getProperty("baseUrl")) }
+    single { AccountsApi(client = get(), baseUrl = getProperty("baseUrl")) }
     single<AccountRepository> { AccountRepositoryImpl(get()) }
-    viewModel { AccountsViewModel(get(), get(), get(), get(), get()) }
+    viewModel {
+        AccountsViewModel(
+            repo = get(),
+            globalRefreshManager = get(),
+            settingsDataSource = get(),
+            clearAllUserDataUseCase = get(),
+            biometricAuthenticator = get()
+        )
+    }
 }

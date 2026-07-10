@@ -43,6 +43,9 @@ import com.fintrack.shared.feature.transaction.ui.addtransaction.AddTransactionS
 import com.fintrack.shared.feature.transaction.ui.category.CategoryManagementScreen
 import com.fintrack.shared.feature.transaction.ui.home.HomeScreen
 import com.fintrack.shared.feature.transaction.ui.transactionlist.TransactionListScreen
+import org.koin.compose.viewmodel.koinViewModel
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope?> { null }
@@ -55,8 +58,11 @@ fun AppNavigation(
     paddingValues: PaddingValues,
     onUpdateAppBarState: (AppBarState) -> Unit,
     authViewModel: AuthViewModel,
+    mainViewModel: MainViewModel = koinViewModel(),
     onLogout: () -> Unit = {},
 ) {
+    val selectedAccountId by mainViewModel.selectedAccountId.collectAsStateWithLifecycle()
+
     println("LOGIN_DEBUG: AppNavigation recomposing. isAuthenticated: $isAuthenticated")
     
     val startDestination = remember(isAuthenticated) {
@@ -151,6 +157,8 @@ fun AppNavigation(
                         }
                     }
                     HomeScreen(
+                        selectedAccountId = selectedAccountId,
+                        onAccountSelected = { mainViewModel.onAccountSelected(it) },
                         paddingValues = paddingValues,
                         animatedVisibilityScope = this,
                         onEditTransaction = { transactionId ->

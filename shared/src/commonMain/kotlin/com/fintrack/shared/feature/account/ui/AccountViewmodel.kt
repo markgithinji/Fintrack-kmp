@@ -49,29 +49,6 @@ class AccountsViewModel(
                 reloadAccounts(force = true, showLoading = false)
             }
         }
-        
-        viewModelScope.launch {
-            settingsDataSource.defaultAccountId
-                .collect { id ->
-                    val currentId = repo.selectedAccountId.value
-                    if (id != null && currentId == null) {
-                        selectAccount(id)
-                    }
-                }
-        }
-
-        viewModelScope.launch {
-            repo.selectedAccountId
-                .collect { id ->
-                    logger.debug("AccountsViewModel", "Selected account ID changed: $id")
-                    if (id != null) {
-                        val currentSelectedId = (_selectedAccount.value as? Result.Success)?.data?.id
-                        if (id != currentSelectedId) {
-                            loadAccountById(id)
-                        }
-                    }
-                }
-        }
 
         reloadAccounts(force = false)
     }
@@ -88,37 +65,24 @@ class AccountsViewModel(
 
             val result = repo.getAccounts()
             _accounts.value = result
-
-            when (result) {
-                is Result.Success -> {
-                    if (result.data.isNotEmpty()) {
-                        val currentId = repo.selectedAccountId.value
-                        val defaultId = settingsDataSource.defaultAccountId.value
-                        
-                        val targetId = currentId ?: defaultId
-                        val preservedAccount = result.data.find { it.id == targetId }
-                        
-                        if (preservedAccount != null) {
-                            _selectedAccount.value = Result.Success(preservedAccount)
-                            if (currentId == null) repo.setSelectedAccountId(preservedAccount.id)
-                        } else {
-                            val mpesaAccount = result.data.find { it.type == AccountType.MPESA }
-                            val fallback = mpesaAccount ?: result.data.first()
-                            _selectedAccount.value = Result.Success(fallback)
-                            if (currentId == null) repo.setSelectedAccountId(fallback.id)
-                        }
-                    } else {
-                        _selectedAccount.value = Result.Error(Exception("No accounts available"))
-                    }
+            
+            // If we have a selected account, update it from the new list if possible
+            val currentSelectedId = (_selectedAccount.value as? Result.Success)?.data?.id
+            if (result is Result.Success && currentSelectedId != null) {
+                val updatedAccount = result.data.find { it.id == currentSelectedId }
+                if (updatedAccount != null) {
+                    _selectedAccount.value = Result.Success(updatedAccount)
                 }
-                is Result.Error -> _selectedAccount.value = result
-                else -> Unit
             }
         }
     }
 
-    fun selectAccount(id: String) {
-        repo.setSelectedAccountId(id)
+    fun selectAccount(id: String?) {
+        if (id == null) {
+            _selectedAccount.value = Result.Loading
+            return
+        }
+        loadAccountById(id)
     }
 
     private fun loadAccountById(id: String) {
