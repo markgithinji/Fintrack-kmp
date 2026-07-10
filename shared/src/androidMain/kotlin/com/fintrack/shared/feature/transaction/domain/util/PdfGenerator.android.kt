@@ -5,9 +5,7 @@ import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import java.io.ByteArrayOutputStream
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
 actual fun generatePdfBytes(transactions: List<Transaction>): ByteArray {
     val pdfDocument = PdfDocument()
     val paint = Paint()

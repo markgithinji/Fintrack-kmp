@@ -2,7 +2,6 @@ package com.fintrack.shared.feature.account.data.model
 
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.model.AccountType
-import kotlin.time.ExperimentalTime
 
 fun Account.toCreateRequest(): CreateAccountRequest = CreateAccountRequest(
     name = this.name,
@@ -16,7 +15,6 @@ fun Account.toUpdateRequest(): UpdateAccountRequest = UpdateAccountRequest(
     balance = this.balance
 )
 
-@OptIn(ExperimentalTime::class)
 fun AccountDto.toDomain(): Account = Account(
     id = this.id ?: "",   // Empty string for new inserts
     name = this.name,

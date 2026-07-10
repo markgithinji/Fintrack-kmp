@@ -1,9 +1,7 @@
 package com.fintrack.shared.feature.transaction.data.model
 
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
 fun TransactionDto.toDomain(): Transaction =
     Transaction(
         id = id,
@@ -18,7 +16,6 @@ fun TransactionDto.toDomain(): Transaction =
         balance = balance
     )
 
-@OptIn(ExperimentalTime::class)
 fun Transaction.toCreateRequest(): CreateTransactionRequest {
     return CreateTransactionRequest(
         accountId = this.accountId,

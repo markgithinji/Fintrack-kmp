@@ -2,12 +2,10 @@ package com.fintrack.shared.feature.transaction.util
 
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-@OptIn(ExperimentalTime::class)
 object MpesaParser {
     // Basic regex components
     private const val CODE = """([A-Z0-9]{10})"""

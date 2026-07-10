@@ -45,9 +45,8 @@ import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountsScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),

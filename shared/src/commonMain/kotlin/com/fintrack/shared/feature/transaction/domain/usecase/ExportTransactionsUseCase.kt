@@ -9,7 +9,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 class ExportTransactionsUseCase(
     private val repository: TransactionRepository,
@@ -17,7 +16,6 @@ class ExportTransactionsUseCase(
 ) {
     private val json = Json { prettyPrint = true }
 
-    @OptIn(ExperimentalTime::class)
     suspend operator fun invoke(
         format: ExportFormat = ExportFormat.CSV,
         startDate: String? = null,
@@ -51,7 +49,6 @@ class ExportTransactionsUseCase(
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     private fun generateCsv(transactions: List<com.fintrack.shared.feature.transaction.domain.model.Transaction>): String {
         val csv = StringBuilder()
         csv.append("Date,Category,Amount,Transaction Fees,Total,Type,Account,Description\n")

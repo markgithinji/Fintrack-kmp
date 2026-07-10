@@ -12,7 +12,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -98,7 +97,6 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     private suspend fun getSpendingForYesterday(): Double {
         val timeZone = TimeZone.currentSystemDefault()
         val today = Clock.System.now().toLocalDateTime(timeZone).date
@@ -118,7 +116,6 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
         } else 0.0
     }
 
-    @OptIn(ExperimentalTime::class)
     private suspend fun getSpendingForLastWeek(): Double {
         val timeZone = TimeZone.currentSystemDefault()
         val today = Clock.System.now().toLocalDateTime(timeZone).date

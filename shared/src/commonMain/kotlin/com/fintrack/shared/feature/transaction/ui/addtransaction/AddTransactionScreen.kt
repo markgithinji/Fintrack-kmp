@@ -67,13 +67,12 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.Instant
-import kotlin.time.ExperimentalTime
 
 enum class NumpadTarget {
     Amount, TransactionCost
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class, ExperimentalTime::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun AddTransactionScreen(
     transactionId: String? = null,

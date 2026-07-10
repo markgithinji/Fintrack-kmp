@@ -1,9 +1,8 @@
 package com.fintrack.shared.feature.account.domain.model
 
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-data class Account @OptIn(ExperimentalTime::class) constructor(
+data class Account(
     val id: String,
     val name: String,
     val balance: Double? = null,

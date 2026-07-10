@@ -2,11 +2,10 @@ package com.fintrack.shared.feature.account.data.model
 
 import com.fintrack.shared.feature.account.domain.model.AccountType
 import kotlinx.serialization.Serializable
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 @Serializable
-data class AccountDto @OptIn(ExperimentalTime::class) constructor(
+data class AccountDto(
     val id: String? = null,
     val name: String,
     val balance: Double? = null,

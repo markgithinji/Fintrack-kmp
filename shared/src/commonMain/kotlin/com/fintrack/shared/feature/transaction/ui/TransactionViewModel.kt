@@ -28,10 +28,9 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-@OptIn(FlowPreview::class, ExperimentalTime::class)
+@OptIn(FlowPreview::class)
 class TransactionViewModel(
     private val repo: TransactionRepository,
     private val validateTransactionUseCase: ValidateTransactionUseCase,

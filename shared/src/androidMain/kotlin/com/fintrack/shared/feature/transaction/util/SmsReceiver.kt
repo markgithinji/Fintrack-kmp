@@ -27,7 +27,6 @@ import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.util.concurrent.TimeUnit
-import kotlin.time.ExperimentalTime
 
 class SmsReceiver : BroadcastReceiver(), KoinComponent {
     private val accountRepository: AccountRepository by inject()
@@ -35,7 +34,6 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
     private val notificationService: NotificationService by inject()
     private val logger = KMPLogger()
 
-    @OptIn(ExperimentalTime::class)
     override fun onReceive(context: Context?, intent: Intent?) {
         if (intent?.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION || context == null) return
 

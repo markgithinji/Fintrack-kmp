@@ -1,11 +1,10 @@
 package com.fintrack.shared.feature.transaction.domain.model
 
 import kotlinx.serialization.Serializable
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 @Serializable
-data class Transaction @OptIn(ExperimentalTime::class) constructor(
+data class Transaction(
     val id: String? = null,
     val accountId: String,
     val isIncome: Boolean,

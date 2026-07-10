@@ -12,9 +12,7 @@ import com.fintrack.shared.feature.core.util.safeApiCall
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
 class AccountRepositoryImpl(
     private val api: AccountsApi
 ) : AccountRepository {

@@ -7,9 +7,8 @@ import platform.CoreGraphics.*
 import platform.Foundation.*
 import platform.UIKit.*
 import platform.CoreText.*
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class, ExperimentalForeignApi::class)
+@OptIn(ExperimentalForeignApi::class)
 actual fun generatePdfBytes(transactions: List<Transaction>): ByteArray {
     val data = NSMutableData.create()
     UIGraphicsBeginPDFContextToData(data, CGRectZero.readValue(), null)

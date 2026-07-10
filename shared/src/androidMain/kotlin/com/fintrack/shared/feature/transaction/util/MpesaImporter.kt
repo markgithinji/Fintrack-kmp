@@ -10,7 +10,6 @@ import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepo
 import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import kotlin.time.Instant
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -22,7 +21,6 @@ class MpesaImporter(
 ) : TransactionImporter {
     private val logger = KMPLogger()
 
-    @OptIn(ExperimentalTime::class)
     override suspend fun importHistory(onProgress: (Float) -> Unit): Unit = withContext(Dispatchers.IO) {
         logger.info("SYNC_FLOW", "MpesaImporter: importHistory started")
         onProgress(0.05f)

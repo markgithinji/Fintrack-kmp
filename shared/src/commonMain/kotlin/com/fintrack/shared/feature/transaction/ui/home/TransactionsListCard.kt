@@ -71,7 +71,6 @@ import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -399,7 +398,6 @@ private fun TransactionsListContent(
     }
 }
 
-@OptIn(ExperimentalTime::class)
 @Composable
 fun TransactionRow(
     transaction: Transaction,

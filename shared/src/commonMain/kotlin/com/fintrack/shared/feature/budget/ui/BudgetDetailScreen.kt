@@ -151,9 +151,8 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class, ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun BudgetDetailScreen(
     budgetId: String?,
@@ -437,7 +436,6 @@ fun BudgetDetailScreen(
     }
 }
 
-@OptIn(ExperimentalTime::class)
 private fun computeInitialFormState(
     budgetId: String?,
     selectedBudgetResult: Result<BudgetWithStatus>?,
@@ -670,7 +668,6 @@ fun AccountChip(
     }
 }
 
-@OptIn(ExperimentalTime::class)
 @Composable
 fun PeriodSelectionSection(
     startDate: LocalDate?,

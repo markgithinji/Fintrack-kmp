@@ -22,9 +22,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
 class BudgetViewModel(
     private val repo: BudgetRepository,
     private val validationUseCase: BudgetValidationUseCase,

@@ -3,11 +3,9 @@ package com.fintrack.shared.feature.transaction.domain.usecase
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 class CreateTransactionUseCase {
-    @OptIn(ExperimentalTime::class)
     operator fun invoke(
         amount: String,
         transactionCost: String = "0",

@@ -40,7 +40,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -117,7 +116,7 @@ fun TransactionListScreen(
     )
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalTime::class)
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun TransactionListContent(
     transactionCounts: Result<TransactionCountSummary>,
