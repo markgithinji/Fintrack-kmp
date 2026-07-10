@@ -41,8 +41,16 @@ class BudgetApi(
         client.delete("$baseUrl/budgets/$id")
     }
 
-    suspend fun getBudgets(): List<BudgetWithStatusDto> {
-        val response: ApiResponse<List<BudgetWithStatusDto>> = client.get("$baseUrl/budgets").body()
+    suspend fun getBudgets(
+        limit: Int = 20,
+        offset: Long = 0,
+        accountId: String? = null
+    ): List<BudgetWithStatusDto> {
+        val response: ApiResponse<List<BudgetWithStatusDto>> = client.get("$baseUrl/budgets") {
+            parameter("limit", limit)
+            parameter("offset", offset)
+            accountId?.let { parameter("accountId", it) }
+        }.body()
         return response.result
     }
 

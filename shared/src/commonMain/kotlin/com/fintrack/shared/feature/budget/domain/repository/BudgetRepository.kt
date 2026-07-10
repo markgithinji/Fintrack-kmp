@@ -7,7 +7,12 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface BudgetRepository {
     val budgets: StateFlow<Result<List<BudgetWithStatus>>>
-    suspend fun getBudgets(forceRefresh: Boolean = false): Result<List<BudgetWithStatus>>
+    suspend fun getBudgets(
+        forceRefresh: Boolean = false,
+        limit: Int = 20,
+        offset: Long = 0,
+        accountId: String? = null
+    ): Result<List<BudgetWithStatus>>
     suspend fun getBudgetById(id: String): Result<BudgetWithStatus>
     suspend fun addOrUpdateBudget(budget: Budget): Result<Budget>
     suspend fun deleteBudget(id: String): Result<Unit>

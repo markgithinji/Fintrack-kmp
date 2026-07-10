@@ -20,16 +20,28 @@ class BudgetRepositoryImpl(
     private val _budgets = MutableStateFlow<Result<List<BudgetWithStatus>>>(Result.Loading)
     override val budgets: StateFlow<Result<List<BudgetWithStatus>>> = _budgets.asStateFlow()
 
-    override suspend fun getBudgets(forceRefresh: Boolean): Result<List<BudgetWithStatus>> {
-        if (!forceRefresh && _budgets.value is Result.Success) {
+    override suspend fun getBudgets(
+        forceRefresh: Boolean,
+        limit: Int,
+        offset: Long,
+        accountId: String?
+    ): Result<List<BudgetWithStatus>> {
+        if (!forceRefresh && _budgets.value is Result.Success && offset == 0L) {
             return _budgets.value
         }
         
         val result = safeApiCall {
-            val budgetsWithStatusDto = api.getBudgets()
+            val budgetsWithStatusDto = api.getBudgets(limit = limit, offset = offset, accountId = accountId)
             budgetsWithStatusDto.map { it.toDomain() }
         }
-        _budgets.value = result
+
+        if (offset == 0L) {
+            _budgets.value = result
+        } else if (result is Result.Success) {
+            val currentList = (_budgets.value as? Result.Success)?.data ?: emptyList()
+            _budgets.value = Result.Success(currentList + result.data)
+        }
+
         return result
     }
 

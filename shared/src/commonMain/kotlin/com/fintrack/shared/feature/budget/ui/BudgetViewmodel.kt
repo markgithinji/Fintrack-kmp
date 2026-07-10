@@ -163,7 +163,20 @@ class BudgetViewModel(
 
     fun reloadBudgets(force: Boolean = true) {
         viewModelScope.launch {
-            repo.getBudgets(forceRefresh = force)
+            repo.getBudgets(forceRefresh = force, limit = 20, offset = 0)
+        }
+    }
+
+    fun loadMoreBudgets() {
+        val currentBudgets = budgets.value
+        if (currentBudgets is Result.Success) {
+            viewModelScope.launch {
+                repo.getBudgets(
+                    forceRefresh = true,
+                    limit = 20,
+                    offset = currentBudgets.data.size.toLong()
+                )
+            }
         }
     }
 
