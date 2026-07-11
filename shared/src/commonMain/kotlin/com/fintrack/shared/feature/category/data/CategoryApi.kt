@@ -13,16 +13,15 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
 class CategoryApi(
-    private val client: HttpClient,
-    private val baseUrl: String
+    private val client: HttpClient
 ) {
     suspend fun getCategories(): List<CategoryDto> {
-        val response: ApiResponse<List<CategoryDto>> = client.get("$baseUrl/categories").body()
+        val response: ApiResponse<List<CategoryDto>> = client.get("categories").body()
         return response.result
     }
 
     suspend fun addCategory(name: String, isExpense: Boolean, iconName: String? = null): CategoryDto {
-        val response: ApiResponse<CategoryDto> = client.post("$baseUrl/categories") {
+        val response: ApiResponse<CategoryDto> = client.post("categories") {
             contentType(ContentType.Application.Json)
             setBody(CreateCategoryRequest(name, isExpense, iconName))
         }.body()
@@ -30,6 +29,6 @@ class CategoryApi(
     }
 
     suspend fun deleteCategory(id: String) {
-        client.delete("$baseUrl/categories/$id")
+        client.delete("categories/$id")
     }
 }

@@ -10,7 +10,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val budgetModule = module {
-    single { BudgetApi(get(), getProperty("baseUrl")) }
+    single { BudgetApi(get()) }
     single<BudgetRepository> { BudgetRepositoryImpl(get()) }
     single { BudgetValidationUseCase() }
     single { CheckBudgetThresholdsUseCase(get(), get(), get()) }

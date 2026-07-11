@@ -82,7 +82,7 @@ class ApiClient(
                             logger.info(LogTags.AUTH, "Attempting to refresh token...")
                             // Note: Ktor's bearer auth automatically excludes the refresh request 
                             // from further auth interceptors to avoid infinite loops.
-                            val response = client.post("$baseUrl/auth/refresh") {
+                            val response = client.post("auth/refresh") {
                                 contentType(ContentType.Application.Json)
                                 setBody(mapOf("refreshToken" to refreshToken))
                             }.body<AuthResponseDto>()
@@ -120,7 +120,10 @@ class ApiClient(
             }
 
             expectSuccess = true
-            defaultRequest { contentType(ContentType.Application.Json) }
+            defaultRequest { 
+                url(baseUrl.takeIf { it.endsWith("/") } ?: "$baseUrl/")
+                contentType(ContentType.Application.Json) 
+            }
         }.apply {
             NetworkMonitorInterceptor(logger).setupNetworkMonitoring(this)
         }

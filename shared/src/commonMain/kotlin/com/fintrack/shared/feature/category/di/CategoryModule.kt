@@ -8,7 +8,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val categoryModule = module {
-    single { CategoryApi(get(), getProperty("baseUrl")) }
+    single { CategoryApi(get()) }
     single<CategoryRepository> { CategoryRepositoryImpl(get()) }
 
     viewModel {

@@ -17,12 +17,11 @@ import io.ktor.http.contentType
 
 
 class BudgetApi(
-    private val client: HttpClient,
-    private val baseUrl: String
+    private val client: HttpClient
 ) {
 
     suspend fun addBudget(request: CreateBudgetRequest): BudgetWithStatusDto {
-        val response: ApiResponse<BudgetWithStatusDto> = client.post("$baseUrl/budgets") {
+        val response: ApiResponse<BudgetWithStatusDto> = client.post("budgets") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
@@ -30,7 +29,7 @@ class BudgetApi(
     }
 
     suspend fun updateBudget(id: String, request: UpdateBudgetRequest): BudgetWithStatusDto {
-        val response: ApiResponse<BudgetWithStatusDto> = client.put("$baseUrl/budgets/$id") {
+        val response: ApiResponse<BudgetWithStatusDto> = client.put("budgets/$id") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
@@ -38,7 +37,7 @@ class BudgetApi(
     }
 
     suspend fun deleteBudget(id: String) {
-        client.delete("$baseUrl/budgets/$id")
+        client.delete("budgets/$id")
     }
 
     suspend fun getBudgets(
@@ -46,7 +45,7 @@ class BudgetApi(
         offset: Long = 0,
         accountId: String? = null
     ): List<BudgetWithStatusDto> {
-        val response: ApiResponse<List<BudgetWithStatusDto>> = client.get("$baseUrl/budgets") {
+        val response: ApiResponse<List<BudgetWithStatusDto>> = client.get("budgets") {
             parameter("limit", limit)
             parameter("offset", offset)
             accountId?.let { parameter("accountId", it) }
@@ -55,12 +54,12 @@ class BudgetApi(
     }
 
     suspend fun getBudgetById(id: String): BudgetWithStatusDto {
-        val response: ApiResponse<BudgetWithStatusDto> = client.get("$baseUrl/budgets/$id").body()
+        val response: ApiResponse<BudgetWithStatusDto> = client.get("budgets/$id").body()
         return response.result
     }
 
     suspend fun deleteAllBudgets(accountIds: List<String>? = null) {
-        client.delete("$baseUrl/budgets/clear") {
+        client.delete("budgets/clear") {
             accountIds?.forEach { parameter("accountId", it) }
         }
     }

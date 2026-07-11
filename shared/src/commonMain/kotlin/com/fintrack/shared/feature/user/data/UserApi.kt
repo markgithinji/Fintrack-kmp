@@ -13,16 +13,15 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
 class UserApi(
-    private val client: HttpClient,
-    private val baseUrl: String
+    private val client: HttpClient
 ) {
     suspend fun getUserProfile(): UserDto {
-        val response: ApiResponse<UserDto> = client.get("$baseUrl/users/me").body()
+        val response: ApiResponse<UserDto> = client.get("users/me").body()
         return response.result
     }
 
     suspend fun updateProfile(name: String, email: String): UserDto {
-        val response: ApiResponse<UserDto> = client.put("$baseUrl/users/me") {
+        val response: ApiResponse<UserDto> = client.put("users/me") {
             contentType(ContentType.Application.Json)
             setBody(UserDto(name = name, email = email))
         }.body()
@@ -30,7 +29,7 @@ class UserApi(
     }
 
     suspend fun updateTrackedCategories(categories: List<String>): UserDto {
-        val response: ApiResponse<UserDto> = client.put("$baseUrl/users/preferences/tracked-categories") {
+        val response: ApiResponse<UserDto> = client.put("users/preferences/tracked-categories") {
             contentType(ContentType.Application.Json)
             setBody(TrackedCategoriesRequest(categories))
         }.body()
@@ -38,6 +37,6 @@ class UserApi(
     }
 
     suspend fun deleteUser() {
-        client.delete("$baseUrl/users/me")
+        client.delete("users/me")
     }
 }

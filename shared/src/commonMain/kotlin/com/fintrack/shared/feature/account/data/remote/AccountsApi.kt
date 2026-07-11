@@ -15,17 +15,16 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
 class AccountsApi(
-    private val client: HttpClient,
-    private val baseUrl: String
+    private val client: HttpClient
 ) {
 
     suspend fun getAccounts(): List<AccountDto> {
-        val response: ApiResponse<List<AccountDto>> = client.get("$baseUrl/accounts").body()
+        val response: ApiResponse<List<AccountDto>> = client.get("accounts").body()
         return response.result
     }
 
     suspend fun addAccount(request: CreateAccountRequest): AccountDto {
-        val response: ApiResponse<AccountDto> = client.post("$baseUrl/accounts") {
+        val response: ApiResponse<AccountDto> = client.post("accounts") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
@@ -33,7 +32,7 @@ class AccountsApi(
     }
 
     suspend fun updateAccount(id: String, request: UpdateAccountRequest): AccountDto {
-        val response: ApiResponse<AccountDto> = client.put("$baseUrl/accounts/$id") {
+        val response: ApiResponse<AccountDto> = client.put("accounts/$id") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
@@ -41,11 +40,11 @@ class AccountsApi(
     }
 
     suspend fun deleteAccount(id: String) {
-        client.delete("$baseUrl/accounts/$id")
+        client.delete("accounts/$id")
     }
 
     suspend fun getAccountById(id: String): AccountDto {
-        val response: ApiResponse<AccountDto> = client.get("$baseUrl/accounts/$id").body()
+        val response: ApiResponse<AccountDto> = client.get("accounts/$id").body()
         return response.result
     }
 }

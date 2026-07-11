@@ -16,7 +16,7 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val authModule = module {
-    single { AuthApi(client = get(), baseUrl = ApiConfig.BASE_URL) }
+    single { AuthApi(get()) }
     single<TokenDataSource> { createTokenDataSource() }
     singleOf(::AuthRepositoryImpl) { bind<AuthRepository>() }
     singleOf(::RegisterValidationUseCase)

@@ -10,7 +10,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val userModule = module {
-    single { UserApi(client = get(), baseUrl = getProperty("baseUrl")) }
+    single { UserApi(get()) }
     single<UserRepository> { UserRepositoryImpl(get()) }
     single { DeleteAccountUseCase(userRepository = get(), authRepository = get()) }
     single { ProfileValidationUseCase() }

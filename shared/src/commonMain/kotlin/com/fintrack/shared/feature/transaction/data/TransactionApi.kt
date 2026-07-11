@@ -17,8 +17,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
 class TransactionApi(
-    private val client: HttpClient,
-    private val baseUrl: String
+    private val client: HttpClient
 ) {
     suspend fun getTransactions(
         limit: Int = 20,
@@ -33,7 +32,7 @@ class TransactionApi(
         endDate: String? = null,
         hasTransactionCost: Boolean? = null
     ): PaginatedTransactionDto {
-        val response: ApiResponse<PaginatedTransactionDto> = client.get("$baseUrl/transactions") {
+        val response: ApiResponse<PaginatedTransactionDto> = client.get("transactions") {
             parameter("limit", limit)
             parameter("sortBy", sortBy)
             parameter("order", order)
@@ -50,7 +49,7 @@ class TransactionApi(
     }
 
     suspend fun addTransaction(request: CreateTransactionRequest): TransactionDto {
-        val response: ApiResponse<TransactionDto> = client.post("$baseUrl/transactions") {
+        val response: ApiResponse<TransactionDto> = client.post("transactions") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
@@ -58,33 +57,33 @@ class TransactionApi(
     }
 
     suspend fun addTransactions(requests: List<CreateTransactionRequest>): Unit {
-        client.post("$baseUrl/transactions/batch") {
+        client.post("transactions/batch") {
             contentType(ContentType.Application.Json)
             setBody(requests)
         }
     }
 
     suspend fun importMpesaTransactions(requests: List<CreateTransactionRequest>): Unit {
-        client.post("$baseUrl/transactions/mpesa") {
+        client.post("transactions/mpesa") {
             contentType(ContentType.Application.Json)
             setBody(requests)
         }
     }
 
     suspend fun importEquityTransactions(requests: List<CreateTransactionRequest>): Unit {
-        client.post("$baseUrl/transactions/equity") {
+        client.post("transactions/equity") {
             contentType(ContentType.Application.Json)
             setBody(requests)
         }
     }
 
     suspend fun getTransaction(id: String): TransactionDto {
-        val response: ApiResponse<TransactionDto> = client.get("$baseUrl/transactions/$id").body()
+        val response: ApiResponse<TransactionDto> = client.get("transactions/$id").body()
         return response.result
     }
 
     suspend fun updateTransaction(id: String, request: CreateTransactionRequest): TransactionDto {
-        val response: ApiResponse<TransactionDto> = client.put("$baseUrl/transactions/$id") {
+        val response: ApiResponse<TransactionDto> = client.put("transactions/$id") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
@@ -92,17 +91,17 @@ class TransactionApi(
     }
 
     suspend fun deleteTransaction(id: String) {
-        client.delete("$baseUrl/transactions/$id")
+        client.delete("transactions/$id")
     }
 
     suspend fun deleteAllTransactions(accountIds: List<String>? = null) {
-        client.delete("$baseUrl/transactions/clear") {
+        client.delete("transactions/clear") {
             accountIds?.forEach { parameter("accountId", it) }
         }
     }
 
     suspend fun getRecurringBills(): List<RecurringBill> {
-        val response: ApiResponse<List<RecurringBill>> = client.get("$baseUrl/transactions/recurring/detect").body()
+        val response: ApiResponse<List<RecurringBill>> = client.get("transactions/recurring/detect").body()
         return response.result
     }
 }

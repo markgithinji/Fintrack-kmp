@@ -16,51 +16,50 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 
 class AuthApi(
-    private val client: HttpClient,
-    private val baseUrl: String
+    private val client: HttpClient
 ) {
 
     suspend fun login(request: LoginRequest): AuthResponseDto {
-        return client.post("$baseUrl/auth/login") {
+        return client.post("auth/login") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
     }
 
     suspend fun register(request: RegisterRequest): AuthResponseDto {
-        return client.post("$baseUrl/auth/register") {
+        return client.post("auth/register") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
     }
 
     suspend fun getUserById(userId: String, token: String): AuthResponseDto {
-        return client.get("$baseUrl/users/$userId") {
+        return client.get("users/$userId") {
             header(HttpHeaders.Authorization, "Bearer $token")
         }.body()
     }
 
     suspend fun validateToken(): AuthValidationResponse {
-        return client.get("$baseUrl/auth/validate") {
+        return client.get("auth/validate") {
         }.body()
     }
 
     suspend fun refresh(refreshToken: String): AuthResponseDto {
-        return client.post("$baseUrl/auth/refresh") {
+        return client.post("auth/refresh") {
             contentType(ContentType.Application.Json)
             setBody(mapOf("refreshToken" to refreshToken))
         }.body()
     }
 
     suspend fun logout(refreshToken: String?) {
-        client.post("$baseUrl/auth/logout") {
+        client.post("auth/logout") {
             contentType(ContentType.Application.Json)
             setBody(mapOf("refreshToken" to refreshToken))
         }
     }
 
     suspend fun changePassword(request: ChangePasswordRequest) {
-        client.post("$baseUrl/auth/change-password") {
+        client.post("auth/change-password") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }

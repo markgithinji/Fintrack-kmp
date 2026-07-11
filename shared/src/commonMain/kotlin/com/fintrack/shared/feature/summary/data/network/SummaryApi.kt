@@ -16,15 +16,14 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 
 class SummaryApi(
-    private val client: HttpClient,
-    private val baseUrl: String
+    private val client: HttpClient
 ) {
     suspend fun getHighlightsSummary(
         accountId: String? = null,
         period: String? = null
     ): HighlightsSummaryDto {
         val response: ApiResponse<HighlightsSummaryDto> =
-            client.get("$baseUrl/transactions/summary/highlights") {
+            client.get("transactions/summary/highlights") {
                 accountId?.let { parameter("accountId", it) }
                 period?.let { parameter("period", it) }
             }.body()
@@ -39,7 +38,7 @@ class SummaryApi(
         accountId: String? = null
     ): DistributionSummaryDto {
         val response: ApiResponse<DistributionSummaryDto> =
-            client.get("$baseUrl/transactions/summary/distribution") {
+            client.get("transactions/summary/distribution") {
                 parameter("period", period)
                 type?.let { parameter("type", it) }
                 start?.let { parameter("start", it) }
@@ -51,7 +50,7 @@ class SummaryApi(
 
     suspend fun getAvailableWeeks(accountId: String? = null): AvailableWeeksDto {
         val response: ApiResponse<AvailableWeeksDto> =
-            client.get("$baseUrl/transactions/summary/available-weeks") {
+            client.get("transactions/summary/available-weeks") {
                 accountId?.let { parameter("accountId", it) }
             }.body()
         return response.result
@@ -59,7 +58,7 @@ class SummaryApi(
 
     suspend fun getAvailableMonths(accountId: String? = null): AvailableMonthsDto {
         val response: ApiResponse<AvailableMonthsDto> =
-            client.get("$baseUrl/transactions/summary/available-months") {
+            client.get("transactions/summary/available-months") {
                 accountId?.let { parameter("accountId", it) }
             }.body()
         return response.result
@@ -67,7 +66,7 @@ class SummaryApi(
 
     suspend fun getAvailableYears(accountId: String? = null): AvailableYearsDto {
         val response: ApiResponse<AvailableYearsDto> =
-            client.get("$baseUrl/transactions/summary/available-years") {
+            client.get("transactions/summary/available-years") {
                 accountId?.let { parameter("accountId", it) }
             }.body()
         return response.result
@@ -75,7 +74,7 @@ class SummaryApi(
 
     suspend fun getOverviewSummary(accountId: String? = null): OverviewSummaryDto {
         val response: ApiResponse<OverviewSummaryDto> =
-            client.get("$baseUrl/transactions/summary/overview") {
+            client.get("transactions/summary/overview") {
                 accountId?.let { parameter("accountId", it) }
             }.body()
         return response.result
@@ -86,7 +85,7 @@ class SummaryApi(
         period: String? = null
     ): CategoryComparisonSummaryDto {
         val response: ApiResponse<CategoryComparisonSummaryDto> =
-            client.get("$baseUrl/transactions/summary/category-comparison") {
+            client.get("transactions/summary/category-comparison") {
                 accountId?.let { parameter("accountId", it) }
                 period?.let { parameter("period", it) }
             }.body()
@@ -102,7 +101,7 @@ class SummaryApi(
         hasTransactionCost: Boolean? = null
     ): TransactionCountSummaryDto {
         val response: ApiResponse<TransactionCountSummaryDto> =
-            client.get("$baseUrl/transactions/summary/counts") {
+            client.get("transactions/summary/counts") {
                 parameter("accountId", accountId)
                 isIncome?.let { parameter("isIncome", it) }
                 category?.let { parameter("category", it) }
@@ -115,7 +114,7 @@ class SummaryApi(
 
     suspend fun getProfileMetrics(): ProfileMetricsDto {
         val response: ApiResponse<ProfileMetricsDto> =
-            client.get("$baseUrl/transactions/summary/profile-metrics").body()
+            client.get("transactions/summary/profile-metrics").body()
         return response.result
     }
 }
