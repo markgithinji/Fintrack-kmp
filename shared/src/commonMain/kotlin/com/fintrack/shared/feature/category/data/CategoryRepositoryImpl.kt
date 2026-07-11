@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.update
 class CategoryRepositoryImpl(
     private val api: CategoryApi
 ) : CategoryRepository {
-    private val _categories = MutableStateFlow<List<Category>>(Category.allCategories)
+    private val _categories = MutableStateFlow(Category.allCategories)
     
     override fun getCategories(): StateFlow<List<Category>> = _categories.asStateFlow()
 

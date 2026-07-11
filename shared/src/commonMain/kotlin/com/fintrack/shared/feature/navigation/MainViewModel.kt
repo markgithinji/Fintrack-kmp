@@ -3,14 +3,14 @@ package com.fintrack.shared.feature.navigation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.budget.domain.usecase.CheckBudgetThresholdsUseCase
+import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.transaction.domain.usecase.SyncRecurringBillsUseCase
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -21,14 +21,14 @@ class MainViewModel(
     private val settingsDataSource: SettingsDataSource,
     private val userRepository: UserRepository,
     private val checkBudgetThresholdsUseCase: CheckBudgetThresholdsUseCase,
-    private val syncRecurringBillsUseCase: SyncRecurringBillsUseCase
+    private val syncRecurringBillsUseCase: SyncRecurringBillsUseCase,
+    private val refreshManager: GlobalRefreshManager
 ) : ViewModel() {
 
     private val _selectedAccountId = MutableStateFlow<String?>(null)
     val selectedAccountId: StateFlow<String?> = _selectedAccountId.asStateFlow()
 
-    private val _refreshEvent = MutableSharedFlow<Unit>(replay = 0)
-    val refreshEvent: SharedFlow<Unit> = _refreshEvent.asSharedFlow()
+    val refreshEvent: Flow<Unit> = refreshManager.refreshEvent
 
     // Global states that multiple screens care about
     val isBalanceHidden = settingsDataSource.isBalanceHidden
@@ -74,7 +74,7 @@ class MainViewModel(
 
     fun triggerGlobalRefresh() {
         viewModelScope.launch {
-            _refreshEvent.emit(Unit)
+            refreshManager.triggerRefresh()
             // Maintenance tasks that react to data changes
             checkBudgets()
             syncBills()

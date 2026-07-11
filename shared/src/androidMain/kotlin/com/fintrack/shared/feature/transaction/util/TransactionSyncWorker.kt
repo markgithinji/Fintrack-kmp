@@ -42,13 +42,13 @@ class TransactionSyncWorker(
             val transaction = Json.decodeFromString<Transaction>(transactionJson)
             logger.info("TransactionSyncWorker", "Syncing transaction: ${transaction.externalId}")
             
-            val result = transactionRepository.addTransaction(transaction, triggerRefresh = false)
+            val result = transactionRepository.addTransaction(transaction)
             
-            if (result is com.fintrack.shared.feature.core.util.Result.Success) {
+            if (result is Result.Success) {
                 logger.info("TransactionSyncWorker", "Successfully synced: ${transaction.externalId}")
                 Result.success()
             } else {
-                val error = (result as com.fintrack.shared.feature.core.util.Result.Error).exception
+                val error = (result as Result.Error).exception
                 logger.error("TransactionSyncWorker", "Failed to sync: ${error.message}")
                 // If it's a network error, retry. If it's a 4xx error, maybe fail.
                 Result.retry()

@@ -13,12 +13,10 @@ import com.fintrack.shared.feature.transaction.domain.model.RecurringBill
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 class TransactionRepositoryImpl(
-    private val api: TransactionApi
+    private val api: TransactionApi,
 ) : TransactionRepository {
 
     private val logger = KMPLogger()
@@ -27,13 +25,6 @@ class TransactionRepositoryImpl(
         private const val PAGE_SIZE = 20
         private const val INITIAL_LOAD_SIZE = 20
         private const val PREFETCH_DISTANCE = 10
-    }
-
-    private val _refreshSignal = MutableSharedFlow<Unit>(replay = 0)
-    override val refreshSignal: Flow<Unit> = _refreshSignal.asSharedFlow()
-
-    override suspend fun triggerRefresh() {
-        _refreshSignal.emit(Unit)
     }
 
     override suspend fun getTransactions(
@@ -67,27 +58,19 @@ class TransactionRepositoryImpl(
             transactions to paginated.nextCursor
         }
 
-    override suspend fun addTransaction(transaction: Transaction, triggerRefresh: Boolean): Result<Transaction> {
-        val result = safeApiCall {
+    override suspend fun addTransaction(transaction: Transaction): Result<Transaction> {
+        return safeApiCall {
             val createRequest = transaction.toCreateRequest()
             val dto = api.addTransaction(createRequest)
             dto.toDomain()
         }
-        if (result is Result.Success && triggerRefresh) {
-            triggerRefresh()
-        }
-        return result
     }
 
-    override suspend fun addTransactions(transactions: List<Transaction>, triggerRefresh: Boolean): Result<Unit> {
-        val result = safeApiCall {
+    override suspend fun addTransactions(transactions: List<Transaction>): Result<Unit> {
+        return safeApiCall {
             val requests = transactions.map { it.toCreateRequest() }
             api.addTransactions(requests)
         }
-        if (result is Result.Success && triggerRefresh) {
-            triggerRefresh()
-        }
-        return result
     }
 
     override suspend fun importMpesaTransactions(transactions: List<Transaction>): Result<Unit> {
@@ -98,8 +81,8 @@ class TransactionRepositoryImpl(
         }
         if (result is Result.Success) {
             logger.debug("SYNC_FLOW", "Repository: importMpesaTransactions success")
-            triggerRefresh()
-        } else if (result is Result.Error) {
+        }
+        if (result is Result.Error) {
             logger.error("SYNC_FLOW", "Repository: importMpesaTransactions failed", result.exception)
         }
         return result
@@ -113,7 +96,6 @@ class TransactionRepositoryImpl(
         }
         if (result is Result.Success) {
             logger.debug("SYNC_FLOW", "Repository: importEquityTransactions success")
-            triggerRefresh()
         } else if (result is Result.Error) {
             logger.error("SYNC_FLOW", "Repository: importEquityTransactions failed", result.exception)
         }
@@ -142,33 +124,21 @@ class TransactionRepositoryImpl(
         }
 
     override suspend fun updateTransaction(id: String, transaction: Transaction): Result<Transaction> {
-        val result = safeApiCall {
+        return safeApiCall {
             api.updateTransaction(id, transaction.toCreateRequest()).toDomain()
         }
-        if (result is Result.Success) {
-            triggerRefresh()
-        }
-        return result
     }
 
     override suspend fun deleteTransaction(id: String): Result<Unit> {
-        val result = safeApiCall {
+        return safeApiCall {
             api.deleteTransaction(id)
         }
-        if (result is Result.Success) {
-            triggerRefresh()
-        }
-        return result
     }
 
     override suspend fun deleteAllTransactions(accountIds: List<String>?): Result<Unit> {
-        val result = safeApiCall {
+        return safeApiCall {
             api.deleteAllTransactions(accountIds)
         }
-        if (result is Result.Success) {
-            triggerRefresh()
-        }
-        return result
     }
 
     override suspend fun getRecurringBills(): Result<List<RecurringBill>> = safeApiCall {

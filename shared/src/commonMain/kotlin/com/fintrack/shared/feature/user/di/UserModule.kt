@@ -12,12 +12,19 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val userModule = module {
-    single { UserApi(get(), getProperty("baseUrl")) }
+    single { UserApi(client = get(), baseUrl = getProperty("baseUrl")) }
     single<UserRepository> { UserRepositoryImpl(get()) }
-    single { GetUserProfileUseCase(get()) }
-    single { UpdateProfileUseCase(get()) }
-    single { DeleteAccountUseCase(get(), get()) }
+    single { GetUserProfileUseCase(repository = get()) }
+    single { UpdateProfileUseCase(repository = get()) }
+    single { DeleteAccountUseCase(userRepository = get(), authRepository = get()) }
     single { ProfileValidationUseCase() }
 
-    viewModel { ProfileViewModel(get(), get(), get(), get()) }
+    viewModel {
+        ProfileViewModel(
+            getUserProfileUseCase = get(),
+            updateProfileUseCase = get(),
+            validationUseCase = get(),
+            summaryRepository = get()
+        )
+    }
 }

@@ -22,9 +22,9 @@ interface TransactionRepository {
         hasTransactionCost: Boolean? = null
     ): Result<Pair<List<Transaction>, String?>>
 
-    suspend fun addTransaction(transaction: Transaction, triggerRefresh: Boolean = true): Result<Transaction>
+    suspend fun addTransaction(transaction: Transaction): Result<Transaction>
 
-    suspend fun addTransactions(transactions: List<Transaction>, triggerRefresh: Boolean = true): Result<Unit>
+    suspend fun addTransactions(transactions: List<Transaction>): Result<Unit>
 
     suspend fun importMpesaTransactions(transactions: List<Transaction>): Result<Unit>
 
@@ -54,7 +54,4 @@ interface TransactionRepository {
         endDate: String? = null,
         hasTransactionCost: Boolean? = null
     ): Flow<PagingData<Transaction>>
-
-    suspend fun triggerRefresh()
-    val refreshSignal: Flow<Unit>
 }

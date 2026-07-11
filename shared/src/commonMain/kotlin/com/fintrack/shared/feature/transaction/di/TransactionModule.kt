@@ -14,15 +14,15 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val transactionModule = module {
-    single { TransactionApi(get(), getProperty("baseUrl")) }
+    single { TransactionApi(client = get(), baseUrl = getProperty("baseUrl")) }
     single<TransactionRepository> { TransactionRepositoryImpl(get()) }
 
     single { ValidateTransactionUseCase() }
     single { CreateTransactionUseCase() }
-    single { ExportTransactionsUseCase(get(), get()) }
-    single { SyncRecurringBillsUseCase(get(), get(), get()) }
+    single { ExportTransactionsUseCase(repository = get(), fileSaver = get()) }
+    single { SyncRecurringBillsUseCase(transactionRepository = get(), settingsDataSource = get(), notificationService = get()) }
 
-    single { createTransactionImporter(get(), get()) }
+    single { createTransactionImporter(transactionRepository = get(), accountRepository = get()) }
 
     viewModel {
         TransactionViewModel(
@@ -30,7 +30,8 @@ val transactionModule = module {
             validateTransactionUseCase = get(),
             createTransactionUseCase = get(),
             getCategoriesUseCase = get(),
-            transactionImporter = get()
+            transactionImporter = get(),
+            refreshManager = get()
         )
     }
 }

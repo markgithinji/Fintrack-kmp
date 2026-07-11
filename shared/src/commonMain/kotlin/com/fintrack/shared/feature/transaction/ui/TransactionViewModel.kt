@@ -10,6 +10,7 @@ import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.category.domain.usecase.GetCategoriesUseCase
+import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.usecase.CreateTransactionUseCase
@@ -38,7 +39,8 @@ class TransactionViewModel(
     private val validateTransactionUseCase: ValidateTransactionUseCase,
     private val createTransactionUseCase: CreateTransactionUseCase,
     private val getCategoriesUseCase: GetCategoriesUseCase,
-    private val transactionImporter: TransactionImporter
+    private val transactionImporter: TransactionImporter,
+    private val refreshManager: GlobalRefreshManager
 ) : ViewModel() {
 
     private val _categories = MutableStateFlow<List<Category>>(Category.allCategories)
@@ -89,7 +91,7 @@ class TransactionViewModel(
 
     init {
         viewModelScope.launch {
-            repo.refreshSignal
+            refreshManager.refreshEvent
                 .debounce(500)
                 .collect {
                     lastLoadedRecentAccountId?.let { loadRecentTransactions(it, force = true) }
@@ -340,7 +342,7 @@ class TransactionViewModel(
         }
 
         lastPagingParams = newParams
-        val flow = repo.refreshSignal
+        val flow = refreshManager.refreshEvent
             .onStart { emit(Unit) }
             .flatMapLatest {
                 repo.getTransactionsPagingFlow(
