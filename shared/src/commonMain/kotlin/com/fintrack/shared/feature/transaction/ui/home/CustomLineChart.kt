@@ -27,6 +27,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
@@ -92,7 +93,7 @@ fun CustomLineChart(
 
     val density = LocalDensity.current
     val minSpacingDp = 48.dp
-    val totalChartWidthDp = (minSpacingDp * (sortedData.size - 1).coerceAtLeast(0)) + 80.dp
+    val totalChartWidthDp = (minSpacingDp * (sortedData.size - 1).coerceAtLeast(0)) + 32.dp
     val selectionLineColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
 
     Box(
@@ -140,6 +141,12 @@ fun CustomLineChart(
 
             // Scrollable Area
             val scrollState = rememberScrollState()
+            
+            // Auto-scroll to the end to show latest data
+            LaunchedEffect(sortedData) {
+                scrollState.scrollTo(Int.MAX_VALUE)
+            }
+
             var viewportWidth by remember { mutableStateOf(0f) }
 
             Box(
@@ -149,8 +156,8 @@ fun CustomLineChart(
                     .onGloballyPositioned { viewportWidth = it.size.width.toFloat() }
                     .horizontalScroll(scrollState)
             ) {
-                val paddingStart = 24.dp
-                val paddingEnd = 48.dp
+                val paddingStart = 0.dp
+                val paddingEnd = 32.dp
 
                 Box(
                     modifier = Modifier
@@ -186,6 +193,18 @@ fun CustomLineChart(
                             val x = index * spacingX
                             val yIncome = height - (day.income.toFloat() / maxValue) * height
                             val yExpense = height - (day.expense.toFloat() / maxValue) * height
+                            val date = try { LocalDate.parse(day.date) } catch(_: Exception) { null }
+
+                            // Month Transition Marker
+                            if (date != null && date.day == 1 && index > 0) {
+                                drawLine(
+                                    color = Color.LightGray.copy(alpha = 0.4f),
+                                    start = Offset(x, 0f),
+                                    end = Offset(x, height),
+                                    strokeWidth = 1.dp.toPx(),
+                                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+                                )
+                            }
 
                             if (index == 0) {
                                 incomePath.moveTo(x, yIncome)
@@ -209,11 +228,27 @@ fun CustomLineChart(
                             }
 
                             // X-axis Labels
-                            val dateLabel = day.date.split("-").last()
+                            val isFirstDayOfMonth = date?.day == 1
+                            val isFirstPoint = index == 0
+                            
+                            val dateLabel = if (date != null && (isFirstDayOfMonth || isFirstPoint)) {
+                                val monthName = date.month.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
+                                "${date.day} $monthName"
+                            } else {
+                                day.date.split("-").last()
+                            }
+
                             val textLayoutResult = textMeasurer.measure(dateLabel, labelStyle)
+                            val textWidth = textLayoutResult.size.width.toFloat()
+                            val labelX = when (index) {
+                                0 -> x // Start align first label
+                                sortedData.size - 1 -> x - textWidth // End align last label
+                                else -> x - textWidth / 2 // Center align others
+                            }
+                            
                             drawText(
                                 textLayoutResult = textLayoutResult,
-                                topLeft = Offset(x - textLayoutResult.size.width / 2, height + 8.dp.toPx())
+                                topLeft = Offset(labelX, height + 8.dp.toPx())
                             )
                         }
 

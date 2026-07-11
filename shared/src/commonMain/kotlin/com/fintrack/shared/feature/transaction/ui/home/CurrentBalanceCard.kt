@@ -511,7 +511,7 @@ private fun CurrentBalanceSuccessState(
                         onClick = { onToggleBalanceVisibility(!isBalanceHidden) },
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(28.dp)
                     ) {
                         AnimatedContent(
                             targetState = isBalanceHidden,
@@ -526,7 +526,7 @@ private fun CurrentBalanceSuccessState(
                                     imageVector = if (hidden) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                                     contentDescription = if (hidden) "Show Balance" else "Hide Balance",
                                     tint = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(14.dp)
                                 )
                             }
                         }
