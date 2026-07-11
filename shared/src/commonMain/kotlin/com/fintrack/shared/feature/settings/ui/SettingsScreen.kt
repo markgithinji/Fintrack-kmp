@@ -98,6 +98,7 @@ fun SettingsScreen(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val trackedCategories by viewModel.trackedCategories.collectAsStateWithLifecycle()
     val allCategories by viewModel.allCategories.collectAsStateWithLifecycle()
+    val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
 
     val changePasswordFormState by viewModel.changePasswordFormState.collectAsStateWithLifecycle()
     val changePasswordState by viewModel.changePasswordState.collectAsStateWithLifecycle()
@@ -122,8 +123,8 @@ fun SettingsScreen(
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
 
-    LaunchedEffect(Unit) {
-        mainViewModel.refreshEvent.collect {
+    LaunchedEffect(refreshTrigger) {
+        if (refreshTrigger > 0) {
             viewModel.reloadBudgets(force = true, showLoading = false)
         }
     }

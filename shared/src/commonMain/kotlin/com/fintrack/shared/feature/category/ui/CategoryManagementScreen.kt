@@ -58,11 +58,12 @@ fun CategoryManagementScreen(
     mainViewModel: com.fintrack.shared.feature.navigation.MainViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
     var toastMessage by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(Unit) {
-        mainViewModel.refreshEvent.collect {
+    LaunchedEffect(refreshTrigger) {
+        if (refreshTrigger > 0) {
             viewModel.refresh()
         }
     }

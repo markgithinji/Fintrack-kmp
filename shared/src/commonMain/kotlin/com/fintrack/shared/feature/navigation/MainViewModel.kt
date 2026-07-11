@@ -6,9 +6,7 @@ import com.fintrack.shared.feature.budget.domain.usecase.CheckBudgetThresholdsUs
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.transaction.domain.usecase.SyncRecurringBillsUseCase
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,9 +24,6 @@ class MainViewModel(
 
     private val _selectedAccountId = MutableStateFlow<String?>(null)
     val selectedAccountId: StateFlow<String?> = _selectedAccountId.asStateFlow()
-
-    private val _refreshEvent = MutableSharedFlow<Unit>(replay = 0)
-    val refreshEvent: SharedFlow<Unit> = _refreshEvent.asSharedFlow()
 
     private val _refreshTrigger = MutableStateFlow(0)
     val refreshTrigger: StateFlow<Int> = _refreshTrigger.asStateFlow()
@@ -77,7 +72,6 @@ class MainViewModel(
 
     fun triggerGlobalRefresh() {
         viewModelScope.launch {
-            _refreshEvent.emit(Unit)
             _refreshTrigger.value++
             // Maintenance tasks that react to data changes
             checkBudgets()
