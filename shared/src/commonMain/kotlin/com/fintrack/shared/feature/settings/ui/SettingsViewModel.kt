@@ -8,7 +8,7 @@ import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.settings.domain.model.ExportFormat
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import com.fintrack.shared.feature.settings.domain.util.NotificationService
-import com.fintrack.shared.feature.core.domain.usecase.ClearAllUserDataUseCase
+import com.fintrack.shared.feature.settings.domain.usecase.ClearAllUserDataUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ExportTransactionsUseCase
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.auth.domain.repository.AuthRepository

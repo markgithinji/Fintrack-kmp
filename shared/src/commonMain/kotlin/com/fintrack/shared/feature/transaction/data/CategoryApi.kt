@@ -1,6 +1,6 @@
 package com.fintrack.shared.feature.transaction.data
 
-import com.fintrack.shared.feature.core.data.domain.ApiResponse
+import com.fintrack.shared.feature.core.data.model.ApiResponse
 import com.fintrack.shared.feature.transaction.data.model.CategoryDto
 import com.fintrack.shared.feature.transaction.data.model.CreateCategoryRequest
 import io.ktor.client.HttpClient

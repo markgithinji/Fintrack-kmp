@@ -99,6 +99,26 @@ Fintrack KMP prioritizes a fluid user experience with high-quality animations an
 
 ---
 
+## 🛠️ Development Setup
+
+To connect the app to a local instance of the backend during development:
+
+1. **Find your Local IP**: On your host machine (laptop), find your local IP address (e.g., `192.168.x.x`).
+2. **Update API Config**: 
+   - Open `shared/src/commonMain/kotlin/com/fintrack/shared/feature/core/data/remote/ApiConfig.kt`.
+   - Update the `DEVELOPMENT` environment URL with your IP:
+     ```kotlin
+     Environment.DEVELOPMENT -> "http://192.168.100.96:8080" // Replace with your laptop IP
+     ```
+3. **Android Network Security**:
+   - Open `androidApp/src/main/res/xml/network_security_config.xml`.
+   - Ensure your IP is listed under the `<domain-config>` to allow cleartext traffic:
+     ```xml
+     <domain includeSubdomains="true">192.168.100.96</domain>
+     ```
+
+---
+
 ## 🔗 Backend Integration
 
 This app connects to the [Fintrack Ktor Backend](https://github.com/markgithinji/Fintrack-ktor) which provides:

@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.core.domain.usecase
+package com.fintrack.shared.feature.settings.domain.usecase
 
 import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.core.util.Result

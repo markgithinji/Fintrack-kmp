@@ -1,7 +1,7 @@
 package com.fintrack.shared.feature.core.util
 
-import com.fintrack.shared.feature.core.data.domain.ApiException
-import com.fintrack.shared.feature.core.data.domain.AuthErrorType
+import com.fintrack.shared.feature.core.data.model.ApiException
+import com.fintrack.shared.feature.core.data.model.AuthErrorType
 import com.fintrack.shared.feature.core.data.remote.model.ErrorResponse
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.logger.LogTags

@@ -43,12 +43,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -60,10 +58,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.ui.theme.AuthGold
-import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.feature.auth.domain.model.AuthState
-import com.fintrack.shared.feature.core.data.domain.ApiException
-import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
+import com.fintrack.shared.feature.core.data.model.ApiException
+import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
 import com.fintrack.shared.feature.auth.ui.common.SocialLoginButton

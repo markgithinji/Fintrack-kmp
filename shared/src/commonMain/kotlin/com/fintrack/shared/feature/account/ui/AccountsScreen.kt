@@ -37,8 +37,8 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
-import com.fintrack.shared.feature.core.data.domain.ApiException
-import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
+import com.fintrack.shared.feature.core.data.model.ApiException
+import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.transaction.ui.home.AccountIcon

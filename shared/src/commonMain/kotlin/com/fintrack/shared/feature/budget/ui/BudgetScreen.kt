@@ -65,7 +65,7 @@ fun BudgetScreen(
     onAddBudget: () -> Unit = {},
     onBudgetClick: (BudgetWithStatus) -> Unit
 ) {
-    val sharedTransitionScope = com.fintrack.shared.feature.navigation.LocalSharedTransitionScope.current
+    val sharedTransitionScope = LocalSharedTransitionScope.current
         ?: throw IllegalStateException("No SharedTransitionScope found")
 
     val budgets by viewModel.budgets.collectAsStateWithLifecycle()

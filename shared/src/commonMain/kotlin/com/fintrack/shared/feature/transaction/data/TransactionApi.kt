@@ -1,7 +1,7 @@
 package com.fintrack.shared.feature.transaction.data
 
-import com.fintrack.shared.feature.core.data.domain.ApiResponse
-import com.fintrack.shared.feature.core.data.domain.PaginatedTransactionDto
+import com.fintrack.shared.feature.core.data.model.ApiResponse
+import com.fintrack.shared.feature.core.data.model.PaginatedTransactionDto
 import com.fintrack.shared.feature.transaction.data.model.CreateTransactionRequest
 import com.fintrack.shared.feature.transaction.data.model.TransactionDto
 import com.fintrack.shared.feature.transaction.domain.model.RecurringBill

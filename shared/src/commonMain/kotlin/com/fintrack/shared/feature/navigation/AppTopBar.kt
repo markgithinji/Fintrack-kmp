@@ -34,7 +34,7 @@ fun AddTransactionFAB(
         onClick = onClick,
         modifier = Modifier
             .size(60.dp)
-            .offset(y = 60.dp) // Maintain your specific layout offset
+            .offset(y = 60.dp)
             .then(modifier),
         containerColor = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,

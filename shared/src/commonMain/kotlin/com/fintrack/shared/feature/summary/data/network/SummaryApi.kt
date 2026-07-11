@@ -1,10 +1,9 @@
 package com.fintrack.shared.feature.summary.data.network
 
-import com.fintrack.shared.feature.core.data.domain.ApiResponse
+import com.fintrack.shared.feature.core.data.model.ApiResponse
 import com.fintrack.shared.feature.summary.data.model.AvailableMonthsDto
 import com.fintrack.shared.feature.summary.data.model.AvailableWeeksDto
 import com.fintrack.shared.feature.summary.data.model.AvailableYearsDto
-import com.fintrack.shared.feature.summary.data.model.CategoryComparisonDto
 import com.fintrack.shared.feature.summary.data.model.CategoryComparisonSummaryDto
 import com.fintrack.shared.feature.summary.data.model.DistributionSummaryDto
 import com.fintrack.shared.feature.summary.data.model.HighlightsSummaryDto

@@ -1,23 +1,18 @@
 package com.fintrack.shared.feature.transaction.ui.addtransaction
 
 import androidx.compose.animation.*
-import androidx.compose.animation.SharedTransitionScope.OverlayClip
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import com.fintrack.shared.feature.settings.ui.LocalCurrency
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.navigation.MainViewModel
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.staggeredgrid.LazyHorizontalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Notes
@@ -26,15 +21,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,23 +31,19 @@ import com.fintrack.shared.ui.theme.PinkExpense
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.ui.AccountSelectionSection
-import com.fintrack.shared.feature.core.data.domain.ApiException
-import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
+import com.fintrack.shared.feature.core.data.model.ApiException
+import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.ui.*
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.settings.domain.util.format
-import com.fintrack.shared.feature.settings.ui.LocalCurrency
 import com.fintrack.shared.feature.settings.ui.LocalTimeFormat
-import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.navigation.AppBarState
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
-import com.fintrack.shared.feature.transaction.ui.util.toColor
-import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import kotlinx.coroutines.delay
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -67,7 +51,6 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
-import kotlin.time.Instant
 
 enum class NumpadTarget {
     Amount, TransactionCost

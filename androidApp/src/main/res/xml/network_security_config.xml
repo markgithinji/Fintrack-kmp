@@ -6,7 +6,7 @@
         <domain includeSubdomains="true">192.168.1.21</domain>
         <domain includeSubdomains="true">192.168.100.8</domain>
         <domain includeSubdomains="true">192.168.1.11</domain>
-        <domain includeSubdomains="true">192.168.100.96</domain>
+        <domain includeSubdomains="true">192.168.100.96</domain> <!-- Laptop IP for local development -->
         <domain includeSubdomains="true">192.168.1.10</domain>
         <domain includeSubdomains="true">localhost</domain>
     </domain-config>

@@ -26,8 +26,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.fintrack.shared.feature.core.data.domain.ApiException
-import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
+import com.fintrack.shared.feature.core.data.model.ApiException
+import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import org.koin.compose.viewmodel.koinViewModel

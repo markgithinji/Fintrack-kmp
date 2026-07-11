@@ -11,7 +11,7 @@ object ApiConfig {
 
     val BASE_URL: String
         get() = when (currentEnvironment) {
-            Environment.DEVELOPMENT -> "http://192.168.100.96:8080" // host machine (laptop) ip address
+            Environment.DEVELOPMENT -> "http://192.168.100.96:8080" // Change this to your laptop's local IP address
             Environment.STAGING -> "https://staging-api.example.com"
             Environment.PRODUCTION -> "https://api.example.com"
         }

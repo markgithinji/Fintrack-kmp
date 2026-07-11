@@ -1,6 +1,6 @@
 package com.fintrack.shared.feature.user.data
 
-import com.fintrack.shared.feature.core.data.domain.ApiResponse
+import com.fintrack.shared.feature.core.data.model.ApiResponse
 import com.fintrack.shared.feature.user.data.model.TrackedCategoriesRequest
 import com.fintrack.shared.feature.user.data.model.UserDto
 import io.ktor.client.HttpClient

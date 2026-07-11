@@ -6,7 +6,7 @@ import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.account.domain.usecase.GetAccountsUseCase
-import com.fintrack.shared.feature.core.domain.usecase.ClearAllUserDataUseCase
+import com.fintrack.shared.feature.settings.domain.usecase.ClearAllUserDataUseCase
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
