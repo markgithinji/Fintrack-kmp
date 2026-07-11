@@ -5,7 +5,7 @@ import kotlinx.datetime.LocalDate
 
 data class Budget(
     val id: String? = null,
-    val accountId: String,
+    val accountIds: List<String>,
     val name: String,
     val categories: List<Category>,
     val limit: Double,

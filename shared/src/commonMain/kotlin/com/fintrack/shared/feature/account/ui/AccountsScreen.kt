@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.account.domain.model.Account
+import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.ui.CommonErrorState

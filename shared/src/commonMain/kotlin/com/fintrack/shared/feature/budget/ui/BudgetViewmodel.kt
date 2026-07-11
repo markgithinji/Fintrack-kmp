@@ -63,7 +63,7 @@ class BudgetViewModel(
                 categories = formState.selectedCategories,
                 startDate = formState.startDate,
                 endDate = formState.endDate,
-                selectedAccount = formState.selectedAccount
+                selectedAccounts = formState.selectedAccounts
             )
         }
         .stateIn(
@@ -99,8 +99,19 @@ class BudgetViewModel(
         }
     }
 
-    fun setAccount(account: Account?) {
-        _formState.update { it.copy(selectedAccount = account) }
+    fun setAccounts(accounts: Set<Account>) {
+        _formState.update { it.copy(selectedAccounts = accounts) }
+    }
+
+    fun toggleAccount(account: Account) {
+        _formState.update { state ->
+            val updatedAccounts = if (state.selectedAccounts.contains(account)) {
+                state.selectedAccounts - account
+            } else {
+                state.selectedAccounts + account
+            }
+            state.copy(selectedAccounts = updatedAccounts)
+        }
     }
 
     fun setName(name: String) {
@@ -170,7 +181,7 @@ class BudgetViewModel(
             categories = currentForm.selectedCategories,
             startDate = currentForm.startDate,
             endDate = currentForm.endDate,
-            selectedAccount = currentForm.selectedAccount
+            selectedAccounts = currentForm.selectedAccounts
         )
 
         // Handle validation result with when statement
@@ -187,7 +198,7 @@ class BudgetViewModel(
                     _saveState.value = SaveState.Loading
                     val budget = Budget(
                         id = currentForm.id,
-                        accountId = currentForm.selectedAccount!!.id,
+                        accountIds = currentForm.selectedAccounts.map { it.id },
                         name = currentForm.name,
                         categories = currentForm.selectedCategories.toList(),
                         limit = currentForm.amount.toDoubleOrNull() ?: 0.0,

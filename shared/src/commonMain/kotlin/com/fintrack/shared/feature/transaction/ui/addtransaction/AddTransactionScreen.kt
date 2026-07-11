@@ -330,7 +330,7 @@ fun AddTransactionScreen(
             )
         }
 
-        androidx.compose.animation.AnimatedVisibility(
+        AnimatedVisibility(
             visible = showNumpad,
             modifier = Modifier.align(Alignment.BottomCenter),
             enter = slideInVertically { it } + fadeIn(),

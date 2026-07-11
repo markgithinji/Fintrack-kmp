@@ -8,7 +8,7 @@ import com.fintrack.shared.feature.category.domain.model.Category
 fun BudgetDto.toDomain(): Budget =
     Budget(
         id = id,
-        accountId = accountId,
+        accountIds = accountIds,
         name = name,
         categories = categories.map { n -> Category.fromName(n, isExpense) },
         limit = limit,
@@ -18,7 +18,7 @@ fun BudgetDto.toDomain(): Budget =
     )
 
 fun Budget.toCreateRequest(): CreateBudgetRequest = CreateBudgetRequest(
-    accountId = this.accountId,
+    accountIds = this.accountIds,
     name = this.name,
     categories = this.categories.map { it.name },
     limit = this.limit,
@@ -28,7 +28,7 @@ fun Budget.toCreateRequest(): CreateBudgetRequest = CreateBudgetRequest(
 )
 
 fun Budget.toUpdateRequest(): UpdateBudgetRequest = UpdateBudgetRequest(
-    accountId = this.accountId,
+    accountIds = this.accountIds,
     name = this.name,
     categories = this.categories.map { it.name },
     limit = this.limit,

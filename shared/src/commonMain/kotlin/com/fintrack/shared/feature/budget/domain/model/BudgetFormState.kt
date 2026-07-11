@@ -12,5 +12,5 @@ data class BudgetFormState(
     val isExpense: Boolean = true,
     val startDate: LocalDate? = null,
     val endDate: LocalDate? = null,
-    val selectedAccount: Account? = null
+    val selectedAccounts: Set<Account> = emptySet()
 )

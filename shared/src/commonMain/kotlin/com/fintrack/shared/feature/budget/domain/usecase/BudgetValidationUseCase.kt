@@ -12,14 +12,14 @@ class BudgetValidationUseCase {
         categories: Set<Category>,
         startDate: LocalDate?,
         endDate: LocalDate?,
-        selectedAccount: Account?
+        selectedAccounts: Set<Account>
     ): ValidationResult {
         val limit = amount.toDoubleOrNull() ?: 0.0
 
         return when {
             name.isBlank() -> ValidationResult.Error("Budget name is required")
             limit <= 0 -> ValidationResult.Error("Valid amount is required")
-            selectedAccount == null -> ValidationResult.Error("Please select an account for this budget")
+            selectedAccounts.isEmpty() -> ValidationResult.Error("Please select at least one account for this budget")
             categories.isEmpty() -> ValidationResult.Error("At least one category is required")
             startDate == null -> ValidationResult.Error("Start date is required")
             endDate == null -> ValidationResult.Error("End date is required")

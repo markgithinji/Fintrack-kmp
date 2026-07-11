@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CreateBudgetRequest(
-    val accountId: String,
+    val accountIds: List<String>,
     val name: String,
     val categories: List<String>,
     val limit: Double,

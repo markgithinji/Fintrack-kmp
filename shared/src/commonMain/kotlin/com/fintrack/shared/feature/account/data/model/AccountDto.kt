@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.account.data.model
 
+import com.fintrack.shared.feature.account.domain.model.AccountType
 import kotlinx.serialization.Serializable
 import kotlin.time.Instant
 

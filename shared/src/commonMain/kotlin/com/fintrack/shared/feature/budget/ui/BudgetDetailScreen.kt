@@ -250,10 +250,10 @@ fun BudgetDetailScreen(
                             onFocus = { showNumpad = false }
                         )
 
-                        AccountSelectionSection(
+                        MultiAccountSelectionSection(
                             accountsResult = accountsResult,
-                            selectedAccount = formState.selectedAccount,
-                            onAccountSelected = { viewModel.setAccount(it) },
+                            selectedAccounts = formState.selectedAccounts,
+                            onAccountToggle = { viewModel.toggleAccount(it) },
                             onRetry = { accountsViewModel.reloadAccounts() }
                         )
 
@@ -399,7 +399,6 @@ private fun computeInitialFormState(
     val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
     val isAccountsSuccess = accountsResult is Result.Success
     val accountsData = if (isAccountsSuccess) accountsResult.data else emptyList()
-    val firstExpenseCategory = allCategories.firstOrNull { it.isExpense } ?: Category.expenseCategories.firstOrNull()
 
     return if (budgetId == null) {
         BudgetFormState(
@@ -408,14 +407,19 @@ private fun computeInitialFormState(
             selectedCategories = emptySet(),
             isExpense = true,
             startDate = today,
-            endDate = today.plus(DatePeriod(months = 1)),
-            selectedAccount = null
+            endDate = today + DatePeriod(months = 1),
+            selectedAccounts = emptySet()
         )
     } else {
         when (selectedBudgetResult) {
             is Result.Success -> {
                 val budgetWithStatus = selectedBudgetResult.data
                 val budget = budgetWithStatus.budget
+                val budgetAccounts = if (isAccountsSuccess) {
+                    accountsData.filter { it.id in budget.accountIds }.toSet()
+                } else {
+                    emptySet()
+                }
                 BudgetFormState(
                     id = budget.id,
                     name = budget.name,
@@ -426,11 +430,7 @@ private fun computeInitialFormState(
                     isExpense = budget.isExpense,
                     startDate = budget.startDate,
                     endDate = budget.endDate,
-                    selectedAccount = if (isAccountsSuccess) {
-                        accountsData.firstOrNull { it.id == budget.accountId }
-                    } else {
-                        null
-                    }
+                    selectedAccounts = budgetAccounts
                 )
             }
             else -> BudgetFormState()
@@ -538,6 +538,125 @@ fun AccountSelectionSection(
                                 account = account,
                                 isSelected = selectedAccountId == account.id,
                                 onClick = { onAccountSelected(account) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MultiAccountSelectionSection(
+    accountsResult: Result<List<Account>>,
+    selectedAccounts: Set<Account>,
+    onAccountToggle: (Account) -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Select Accounts",
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.sp
+            )
+            
+            Text(
+                text = "${selectedAccounts.size} selected",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        when (accountsResult) {
+            is Result.Loading -> {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(80.dp)
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+            }
+
+            is Result.Error -> {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Failed to load accounts",
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Button(
+                            onClick = onRetry,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = accountChipBorder
+                            )
+                        ) {
+                            Text("Retry")
+                        }
+                    }
+                }
+            }
+
+            is Result.Success -> {
+                if (accountsResult.data.isEmpty()) {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(80.dp)
+                        ) {
+                            Text(
+                                text = "No accounts available. Create an account first.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                } else {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(horizontal = 4.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(accountsResult.data) { account ->
+                            AccountChip(
+                                account = account,
+                                isSelected = selectedAccounts.any { it.id == account.id },
+                                onClick = { onAccountToggle(account) }
                             )
                         }
                     }

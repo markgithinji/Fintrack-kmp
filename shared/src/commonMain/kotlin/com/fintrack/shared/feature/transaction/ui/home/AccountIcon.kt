@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.Money
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.fintrack.shared.feature.account.domain.model.AccountType
 
 sealed class AccountIcon(val icon: ImageVector, val color: Color) {
     object Bank : AccountIcon(Icons.Default.AccountBalance, Color(0xFF1976D2))
