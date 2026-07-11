@@ -108,17 +108,6 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                             .build()
 
                         WorkManager.getInstance(context).enqueue(syncRequest)
-
-                        // Schedule a debounced refresh
-                        val refreshRequest = OneTimeWorkRequestBuilder<RefreshWorker>()
-                            .setInitialDelay(2, TimeUnit.SECONDS)
-                            .build()
-
-                        WorkManager.getInstance(context).enqueueUniqueWork(
-                            RefreshWorker.UNIQUE_WORK_NAME,
-                            ExistingWorkPolicy.REPLACE,
-                            refreshRequest
-                        )
                     } else {
                         logger.warning("SmsReceiver", "Failed to parse ${if (isMpesa) "M-Pesa" else "Equity"} message: $fullMessage")
                     }

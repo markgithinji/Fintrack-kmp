@@ -10,7 +10,6 @@ import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
-import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.usecase.CreateTransactionUseCase
@@ -39,8 +38,7 @@ class TransactionViewModel(
     private val categoryRepo: CategoryRepository,
     private val validateTransactionUseCase: ValidateTransactionUseCase,
     private val createTransactionUseCase: CreateTransactionUseCase,
-    private val transactionImporter: TransactionImporter,
-    private val refreshManager: GlobalRefreshManager
+    private val transactionImporter: TransactionImporter
 ) : ViewModel() {
 
     private val _categories = MutableStateFlow<List<Category>>(Category.allCategories)
@@ -90,14 +88,6 @@ class TransactionViewModel(
     private var importJob: Job? = null
 
     init {
-        viewModelScope.launch {
-            refreshManager.refreshEvent
-                .debounce(500)
-                .collect {
-                    lastLoadedRecentAccountId?.let { loadRecentTransactions(it, force = true) }
-                    refreshCategories()
-                }
-        }
         viewModelScope.launch {
             categoryRepo.getCategories().collect {
                 _categories.value = it
@@ -342,10 +332,7 @@ class TransactionViewModel(
         }
 
         lastPagingParams = newParams
-        val flow = refreshManager.refreshEvent
-            .onStart { emit(Unit) }
-            .flatMapLatest {
-                repo.getTransactionsPagingFlow(
+        val flow = repo.getTransactionsPagingFlow(
                     accountId = accountId,
                     isIncome = isIncome,
                     category = category,
@@ -353,7 +340,6 @@ class TransactionViewModel(
                     endDate = endDate,
                     hasTransactionCost = hasTransactionCost
                 )
-            }
             .cachedIn(viewModelScope)
         
         cachedPagingFlow = flow

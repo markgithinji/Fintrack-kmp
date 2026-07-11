@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fintrack.shared.feature.navigation.MainViewModel
 import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.TabType
 import org.koin.compose.viewmodel.koinViewModel
@@ -50,8 +51,9 @@ import com.fintrack.shared.ui.theme.PinkExpense
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun StatisticsScreen(
+    selectedAccountId: String? = null,
     viewModel: StatisticsViewModel = koinViewModel(),
-    accountsViewModel: AccountsViewModel = koinViewModel(),
+    mainViewModel: MainViewModel = koinViewModel(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onCategoryClick: (category: String, isIncome: Boolean, startDate: String?, endDate: String?, accountId: String?) -> Unit = { _, _, _, _, _ -> }
@@ -63,18 +65,30 @@ fun StatisticsScreen(
     val availableYears by viewModel.availableYears.collectAsStateWithLifecycle()
     val highlights by viewModel.highlights.collectAsStateWithLifecycle()
     val distributionResult by viewModel.distribution.collectAsStateWithLifecycle()
-    val selectedAccountResult by accountsViewModel.selectedAccount.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
 
     val safePeriod = selectedPeriod ?: remember(availableWeeks, availableMonths, availableYears) {
         getDefaultPeriod(availableWeeks, availableMonths, availableYears)
     }
 
-    LaunchedEffect(selectedAccountResult) {
-        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-        viewModel.loadAvailablePeriods(accountId)
-        viewModel.loadOverview(accountId)
-        viewModel.loadCategoryComparisons(accountId)
+    LaunchedEffect(Unit) {
+        mainViewModel.refreshEvent.collect {
+            viewModel.loadAvailablePeriods(selectedAccountId, force = true)
+            viewModel.loadOverview(selectedAccountId, force = true)
+            viewModel.loadCategoryComparisons(selectedAccountId, force = true)
+            
+            val yearCode = safePeriod.code.split("-").firstOrNull() ?: safePeriod.code
+            viewModel.loadHighlights(selectedAccountId, yearCode, force = true)
+        }
+    }
+
+    LaunchedEffect(selectedAccountId, safePeriod) {
+        viewModel.loadAvailablePeriods(selectedAccountId)
+        viewModel.loadOverview(selectedAccountId)
+        viewModel.loadCategoryComparisons(selectedAccountId)
+        
+        val yearCode = safePeriod.code.split("-").firstOrNull() ?: safePeriod.code
+        viewModel.loadHighlights(selectedAccountId, yearCode)
     }
 
     Column(
@@ -92,8 +106,7 @@ fun StatisticsScreen(
             TabSwitcher(
                 selectedTab = selectedTab,
                 onTabSelected = { 
-                    val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-                    viewModel.onTabChanged(it, accountId) 
+                    viewModel.onTabChanged(it, selectedAccountId)
                 }
             )
         }
@@ -115,9 +128,8 @@ fun StatisticsScreen(
                     tabType = selectedTab,
                     highlightsResult = highlights,
                     loadHighlights = { 
-                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
                         val yearCode = selectedPeriod?.code?.split("-")?.firstOrNull() ?: selectedPeriod?.code
-                        viewModel.loadHighlights(accountId, yearCode, force = true)
+                        viewModel.loadHighlights(selectedAccountId, yearCode, force = true)
                     }
                 )
             }
@@ -132,34 +144,28 @@ fun StatisticsScreen(
                     availableYears = availableYears,
                     animatedVisibilityScope = animatedVisibilityScope,
                     onWeekSelected = { week -> 
-                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-                        viewModel.onPeriodChanged(Period.Week(week), accountId) 
+                        viewModel.onPeriodChanged(Period.Week(week), selectedAccountId) 
                     },
                     onMonthSelected = { month -> 
-                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-                        viewModel.onPeriodChanged(Period.Month(month), accountId) 
+                        viewModel.onPeriodChanged(Period.Month(month), selectedAccountId) 
                     },
                     onYearSelected = { year -> 
-                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-                        viewModel.onPeriodChanged(Period.Year(year), accountId) 
+                        viewModel.onPeriodChanged(Period.Year(year), selectedAccountId) 
                     },
                     onPeriodSelected = { period -> 
-                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-                        viewModel.onPeriodChanged(period, accountId) 
+                        viewModel.onPeriodChanged(period, selectedAccountId) 
                     },
                     onRetry = {
-                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-                        viewModel.reloadDistributionForCurrentSelection(accountId, force = true)
+                        viewModel.reloadDistributionForCurrentSelection(selectedAccountId, force = true)
                     },
                     onCategoryClick = { category ->
                         val dateRange = safePeriod.getDateRange()
-                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
                         onCategoryClick(
                             category,
                             selectedTab is TabType.Income,
                             dateRange?.first,
                             dateRange?.second,
-                            accountId
+                            selectedAccountId
                         )
                     }
                 )

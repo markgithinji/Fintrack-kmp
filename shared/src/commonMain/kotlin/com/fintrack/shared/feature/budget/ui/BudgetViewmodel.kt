@@ -74,6 +74,7 @@ class BudgetViewModel(
 
     init {
         reloadBudgets(force = false)
+        
         viewModelScope.launch {
             categoryRepo.getCategories().collect { cats ->
                 _categories.value = cats
@@ -211,7 +212,8 @@ class BudgetViewModel(
     fun removeBudget(id: String) {
         viewModelScope.launch {
             _deleteResult.value = Result.Loading
-            _deleteResult.value = repo.deleteBudget(id)
+            val result = repo.deleteBudget(id)
+            _deleteResult.value = result
         }
     }
 

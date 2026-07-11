@@ -92,6 +92,8 @@ fun HomeScreen(
                 transactionsViewModel.loadRecentTransactions(id, force = true)
                 statsViewModel.loadOverview(id, force = true)
                 statsViewModel.loadCategoryComparisons(id, force = true)
+                statsViewModel.loadHighlights(id, force = true)
+                transactionsViewModel.refreshCategories()
             }
         }
     }

@@ -2,7 +2,6 @@ package com.fintrack.shared.feature.summary.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary
@@ -29,34 +28,8 @@ import kotlinx.coroutines.launch
 
 @OptIn(FlowPreview::class)
 class StatisticsViewModel(
-    private val repo: SummaryRepository,
-    private val refreshManager: GlobalRefreshManager
+    private val repo: SummaryRepository
 ) : ViewModel() {
-
-    init {
-        viewModelScope.launch {
-            refreshManager.refreshEvent
-                .debounce(500)
-                .collect {
-                    // Force reload all data when global refresh is triggered
-                    loadHighlights(lastHighlightsAccountId, lastHighlightsPeriod, force = true)
-                    loadAvailablePeriods(lastAvailablePeriodsAccountId, force = true)
-                    loadOverview(lastOverviewAccountId, force = true)
-                    loadCategoryComparisons(lastCategoryComparisonAccountId, force = true)
-                    
-                    lastTransactionCountsAccountId?.let { accountId ->
-                        loadTransactionCounts(
-                            accountId = accountId,
-                            isIncome = lastTransactionCountsIsIncome,
-                            category = lastTransactionCountsCategory,
-                            start = lastTransactionCountsStart,
-                            end = lastTransactionCountsEnd,
-                            force = true
-                        )
-                    }
-                }
-        }
-    }
 
     private val _highlights = MutableStateFlow<Result<StatisticsSummary>>(Result.Loading)
     val highlights: StateFlow<Result<StatisticsSummary>> = _highlights

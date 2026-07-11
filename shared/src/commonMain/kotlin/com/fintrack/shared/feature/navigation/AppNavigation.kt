@@ -205,6 +205,7 @@ fun AppNavigation(
                         }
                     }
                     StatisticsScreen(
+                        selectedAccountId = selectedAccountId,
                         paddingValues = paddingValues,
                         animatedVisibilityScope = this,
                         onCategoryClick = { category, isIncome, startDate, endDate, accountId ->

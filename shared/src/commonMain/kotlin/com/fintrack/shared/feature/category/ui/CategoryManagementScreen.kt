@@ -54,11 +54,18 @@ import org.koin.compose.viewmodel.koinViewModel
 fun CategoryManagementScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
     onNavigateBack: () -> Unit,
-    viewModel: CategoryManagementViewModel = koinViewModel()
+    viewModel: CategoryManagementViewModel = koinViewModel(),
+    mainViewModel: com.fintrack.shared.feature.navigation.MainViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
     var toastMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        mainViewModel.refreshEvent.collect {
+            viewModel.refresh()
+        }
+    }
 
     LaunchedEffect(state.error) {
         if (state.error != null && state.categories.isNotEmpty()) {
