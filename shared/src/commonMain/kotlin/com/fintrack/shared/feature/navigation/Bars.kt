@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -69,21 +70,21 @@ fun TopBar(
 data class BottomNavItem(
     val title: String,
     val icon: ImageVector,
-    val route: String
+    val route: Any
 )
 
 
 @Composable
 fun BottomBar(navController: NavHostController) {
     val items = listOf(
-        BottomNavItem("Home", Icons.Default.Home, Screen.Home.route),
-        BottomNavItem("Stats", Icons.Default.BarChart, Screen.Statistics.route),
-        BottomNavItem("Budget", Icons.Default.Info, Screen.Budget.route),
-        BottomNavItem("Profile", Icons.Default.Person, Screen.Profile.route)
+        BottomNavItem("Home", Icons.Default.Home, Screen.Home),
+        BottomNavItem("Stats", Icons.Default.BarChart, Screen.Statistics),
+        BottomNavItem("Budget", Icons.Default.Info, Screen.Budget),
+        BottomNavItem("Profile", Icons.Default.Person, Screen.Profile)
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    val currentDestination = navBackStackEntry?.destination
 
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
@@ -95,7 +96,7 @@ fun BottomBar(navController: NavHostController) {
                 Spacer(modifier = Modifier.width(72.dp))
             }
 
-            val isSelected = currentRoute == item.route
+            val isSelected = currentDestination?.hasRoute(item.route::class) == true
 
             NavigationBarItem(
                 selected = isSelected,

@@ -28,6 +28,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
 
@@ -35,7 +37,7 @@ import com.fintrack.shared.feature.auth.ui.AuthViewModel
 @Composable
 fun MainAppScaffold(
     isAuthenticated: Boolean,
-    currentRoute: String?,
+    currentDestination: NavDestination?,
     navController: NavHostController,
     authViewModel: AuthViewModel,
     onLogout: () -> Unit = {}
@@ -44,35 +46,25 @@ fun MainAppScaffold(
     var appBarState by remember { mutableStateOf(AppBarState(title = "Home")) }
 
     // Show bars only if not on login/register screens
-    val showTopBar = remember(currentRoute) {
-        if (currentRoute == null) return@remember true
-        when (currentRoute) {
-            Screen.Login.route -> false
-            Screen.Register.route -> false
-            else -> true
-        }
+    val showTopBar = remember(currentDestination) {
+        if (currentDestination == null) return@remember true
+        !(currentDestination.hasRoute<Screen.Login>() || currentDestination.hasRoute<Screen.Register>())
     }
 
-    val showBottomBar = remember(currentRoute) {
-        if (currentRoute == null) return@remember true
-        when (currentRoute) {
-            Screen.Home.route -> true
-            Screen.Statistics.route -> true
-            Screen.Budget.route -> true
-            Screen.Profile.route -> true
-            else -> false
-        }
+    val showBottomBar = remember(currentDestination) {
+        if (currentDestination == null) return@remember true
+        currentDestination.hasRoute<Screen.Home>() ||
+        currentDestination.hasRoute<Screen.Statistics>() ||
+        currentDestination.hasRoute<Screen.Budget>() ||
+        currentDestination.hasRoute<Screen.Profile>()
     }
 
-    val showFAB = remember(currentRoute) {
-        if (currentRoute == null) return@remember true
-        when (currentRoute) {
-            Screen.Home.route -> true
-            Screen.Statistics.route -> true
-            Screen.Budget.route -> true
-            Screen.Profile.route -> true
-            else -> false
-        }
+    val showFAB = remember(currentDestination) {
+        if (currentDestination == null) return@remember true
+        currentDestination.hasRoute<Screen.Home>() ||
+        currentDestination.hasRoute<Screen.Statistics>() ||
+        currentDestination.hasRoute<Screen.Budget>() ||
+        currentDestination.hasRoute<Screen.Profile>()
     }
 
     SharedTransitionLayout {
@@ -95,7 +87,7 @@ fun MainAppScaffold(
                 floatingActionButton = {
                     if (showFAB) {
                         AddTransactionFAB(
-                            onClick = { navController.navigate(Screen.AddTransaction.createRoute()) }
+                            onClick = { navController.navigate(Screen.AddTransaction()) }
                         )
                     }
                 },

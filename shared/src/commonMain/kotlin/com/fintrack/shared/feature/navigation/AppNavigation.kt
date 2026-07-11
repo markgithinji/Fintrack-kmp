@@ -15,20 +15,17 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
-import androidx.savedstate.read
+import androidx.navigation.toRoute
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import com.fintrack.shared.feature.auth.ui.LoginScreen
 import com.fintrack.shared.feature.auth.ui.RegisterScreen
@@ -65,8 +62,8 @@ fun AppNavigation(
 
     println("LOGIN_DEBUG: AppNavigation recomposing. isAuthenticated: $isAuthenticated")
     
-    val startDestination = remember(isAuthenticated) {
-        if (isAuthenticated) Screen.Home.route else Screen.Login.route 
+    val startDestination: Any = remember(isAuthenticated) {
+        if (isAuthenticated) Screen.Home else Screen.Login 
     }
 
     SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
@@ -76,14 +73,14 @@ fun AppNavigation(
                 startDestination = startDestination,
                 modifier = Modifier.fillMaxSize(),
                 enterTransition = {
-                    val isToAuth = (targetState.destination.route == Screen.Login.route || 
-                                 targetState.destination.route == Screen.Register.route)
-                    val isFromAuth = (initialState.destination.route == Screen.Login.route || 
-                                   initialState.destination.route == Screen.Register.route)
+                    val isToAuth = (targetState.destination.hasRoute<Screen.Login>() || 
+                                 targetState.destination.hasRoute<Screen.Register>())
+                    val isFromAuth = (initialState.destination.hasRoute<Screen.Login>() || 
+                                   initialState.destination.hasRoute<Screen.Register>())
                     
-                    val isToMorphScreen = targetState.destination.route?.contains("budget_detail") == true ||
-                                         targetState.destination.route?.contains("transaction_list") == true ||
-                                         targetState.destination.route?.contains("add_transaction") == true
+                    val isToMorphScreen = targetState.destination.hasRoute<Screen.BudgetDetail>() ||
+                                         targetState.destination.hasRoute<Screen.TransactionList>() ||
+                                         targetState.destination.hasRoute<Screen.AddTransaction>()
 
                     if (isFromAuth && !isToAuth) { // Login success
                         scaleIn(initialScale = 0.9f, animationSpec = tween(600)) + fadeIn(animationSpec = tween(600))
@@ -101,14 +98,14 @@ fun AppNavigation(
                     }
                 },
                 exitTransition = {
-                    val isToAuth = targetState.destination.route == Screen.Login.route || 
-                                 targetState.destination.route == Screen.Register.route
-                    val isFromAuth = initialState.destination.route == Screen.Login.route || 
-                                   initialState.destination.route == Screen.Register.route
+                    val isToAuth = targetState.destination.hasRoute<Screen.Login>() || 
+                                 targetState.destination.hasRoute<Screen.Register>()
+                    val isFromAuth = initialState.destination.hasRoute<Screen.Login>() || 
+                                   initialState.destination.hasRoute<Screen.Register>()
                     
-                    val isFromMorphScreen = initialState.destination.route?.contains("budget_detail") == true ||
-                                           initialState.destination.route?.contains("transaction_list") == true ||
-                                           initialState.destination.route?.contains("add_transaction") == true
+                    val isFromMorphScreen = initialState.destination.hasRoute<Screen.BudgetDetail>() ||
+                                           initialState.destination.hasRoute<Screen.TransactionList>() ||
+                                           initialState.destination.hasRoute<Screen.AddTransaction>()
 
                     if (isFromAuth && !isToAuth) { // Login success
                         scaleOut(targetScale = 1.1f, animationSpec = tween(600)) + fadeOut(animationSpec = tween(600))
@@ -126,9 +123,9 @@ fun AppNavigation(
                     }
                 },
                 popEnterTransition = { 
-                    val isToMorphScreen = targetState.destination.route?.contains("budget_detail") == true ||
-                                         targetState.destination.route?.contains("transaction_list") == true ||
-                                         targetState.destination.route?.contains("add_transaction") == true
+                    val isToMorphScreen = targetState.destination.hasRoute<Screen.BudgetDetail>() ||
+                                         targetState.destination.hasRoute<Screen.TransactionList>() ||
+                                         targetState.destination.hasRoute<Screen.AddTransaction>()
                     
                     if (isToMorphScreen) {
                         fadeIn(animationSpec = tween(400))
@@ -137,9 +134,9 @@ fun AppNavigation(
                     }
                 },
                 popExitTransition = {
-                    val isFromMorphScreen = initialState.destination.route?.contains("budget_detail") == true ||
-                                           initialState.destination.route?.contains("transaction_list") == true ||
-                                           initialState.destination.route?.contains("add_transaction") == true
+                    val isFromMorphScreen = initialState.destination.hasRoute<Screen.BudgetDetail>() ||
+                                           initialState.destination.hasRoute<Screen.TransactionList>() ||
+                                           initialState.destination.hasRoute<Screen.AddTransaction>()
                     if (isFromMorphScreen) {
                         slideOutVertically(
                             targetOffsetY = { it },
@@ -150,7 +147,7 @@ fun AppNavigation(
                     }
                 }
             ) {
-                composable(Screen.Home.route) { backStackEntry ->
+                composable<Screen.Home> { backStackEntry ->
                     LaunchedEffect(backStackEntry.lifecycle.currentState) {
                         if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
                             onUpdateAppBarState(AppBarState(title = "Home"))
@@ -162,32 +159,22 @@ fun AppNavigation(
                         paddingValues = paddingValues,
                         animatedVisibilityScope = this,
                         onEditTransaction = { transactionId ->
-                            navController.navigate(Screen.AddTransaction.createRoute(transactionId))
+                            navController.navigate(Screen.AddTransaction(transactionId))
                         },
                         onCardClick = { accountId, isIncome ->
                             navController.navigate(
-                                Screen.TransactionList.createRoute(
-                                    accountId,
-                                    isIncome
+                                Screen.TransactionList(
+                                    accountId = accountId,
+                                    isIncome = isIncome
                                 )
                             )
                         }
                     )
                 }
 
-                composable(
-                    Screen.AddTransaction.route,
-                    arguments = listOf(
-                        navArgument("transactionId") {
-                            type = NavType.StringType
-                            nullable = true
-                            defaultValue = null
-                        }
-                    )
-                ) { backStackEntry ->
-                    val transactionId = backStackEntry.arguments?.read {
-                        if (contains("transactionId")) getString("transactionId") else null
-                    }
+                composable<Screen.AddTransaction> { backStackEntry ->
+                    val route: Screen.AddTransaction = backStackEntry.toRoute()
+                    val transactionId = route.transactionId
 
                     AddTransactionScreen(
                         transactionId = transactionId,
@@ -198,7 +185,7 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Screen.Statistics.route) { backStackEntry ->
+                composable<Screen.Statistics> { backStackEntry ->
                     LaunchedEffect(backStackEntry.lifecycle.currentState) {
                         if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
                             onUpdateAppBarState(AppBarState(title = "Statistics"))
@@ -211,7 +198,7 @@ fun AppNavigation(
                         onCategoryClick = { category, isIncome, startDate, endDate, accountId ->
                             val isTransactionCost = category == "Transaction Fees"
                             navController.navigate(
-                                Screen.TransactionList.createRoute(
+                                Screen.TransactionList(
                                     accountId = accountId,
                                     isIncome = if (isTransactionCost) null else isIncome,
                                     category = if (isTransactionCost) null else category,
@@ -224,7 +211,7 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Screen.Budget.route) { backStackEntry ->
+                composable<Screen.Budget> { backStackEntry ->
                     LaunchedEffect(backStackEntry.lifecycle.currentState) {
                         if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
                             onUpdateAppBarState(AppBarState(title = "Budget"))
@@ -234,11 +221,11 @@ fun AppNavigation(
                         paddingValues = paddingValues,
                         animatedVisibilityScope = this,
                         onAddBudget = {
-                            navController.navigate(Screen.BudgetDetail.createRoute(null))
+                            navController.navigate(Screen.BudgetDetail(null))
                         },
                         onBudgetClick = { budgetWithStatus ->
                             navController.navigate(
-                                Screen.BudgetDetail.createRoute(
+                                Screen.BudgetDetail(
                                     budgetWithStatus.budget.id
                                 )
                             )
@@ -246,7 +233,7 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Screen.Profile.route) { backStackEntry ->
+                composable<Screen.Profile> { backStackEntry ->
                     LaunchedEffect(backStackEntry.lifecycle.currentState) {
                         if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
                             onUpdateAppBarState(AppBarState(title = "Profile"))
@@ -254,15 +241,15 @@ fun AppNavigation(
                     }
                     ProfileScreen(
                         paddingValues = paddingValues,
-                        onNavigateToAccounts = { navController.navigate(Screen.Accounts.route) },
-                        onNavigateToCategories = { navController.navigate(Screen.Categories.route) },
-                        onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                        onNavigateToEditProfile = { navController.navigate(Screen.EditProfile.route) },
+                        onNavigateToAccounts = { navController.navigate(Screen.Accounts) },
+                        onNavigateToCategories = { navController.navigate(Screen.Categories) },
+                        onNavigateToSettings = { navController.navigate(Screen.Settings) },
+                        onNavigateToEditProfile = { navController.navigate(Screen.EditProfile) },
                         onLogout = onLogout
                     )
                 }
 
-                composable(Screen.EditProfile.route) { backStackEntry ->
+                composable<Screen.EditProfile> { backStackEntry ->
                     LaunchedEffect(backStackEntry.lifecycle.currentState) {
                         if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
                             onUpdateAppBarState(
@@ -279,7 +266,7 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Screen.Accounts.route) { backStackEntry ->
+                composable<Screen.Accounts> { backStackEntry ->
                     LaunchedEffect(backStackEntry.lifecycle.currentState) {
                         if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
                             onUpdateAppBarState(
@@ -294,7 +281,7 @@ fun AppNavigation(
                     AccountsScreen(paddingValues = paddingValues)
                 }
 
-                composable(Screen.Categories.route) { backStackEntry ->
+                composable<Screen.Categories> { backStackEntry ->
                     LaunchedEffect(backStackEntry.lifecycle.currentState) {
                         if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
                             onUpdateAppBarState(
@@ -312,7 +299,7 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Screen.Settings.route) { backStackEntry ->
+                composable<Screen.Settings> { backStackEntry ->
                     LaunchedEffect(backStackEntry.lifecycle.currentState) {
                         if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
                             onUpdateAppBarState(
@@ -329,18 +316,9 @@ fun AppNavigation(
                     )
                 }
 
-                composable(
-                    route = Screen.BudgetDetail.route,
-                    arguments = listOf(
-                        navArgument("budgetId") {
-                            type = NavType.StringType
-                        }
-                    )
-                ) { backStackEntry ->
-                    val budgetIdArg = backStackEntry.arguments?.read {
-                        if (contains("budgetId")) getString("budgetId") else null
-                    }
-                    val budgetId = if (budgetIdArg.isNullOrEmpty()) null else budgetIdArg
+                composable<Screen.BudgetDetail> { backStackEntry ->
+                    val route: Screen.BudgetDetail = backStackEntry.toRoute()
+                    val budgetId = route.budgetId
 
                     LaunchedEffect(budgetId, backStackEntry.lifecycle.currentState) {
                         if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
@@ -364,7 +342,7 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Screen.Login.route) { backStackEntry ->
+                composable<Screen.Login> { backStackEntry ->
                     LaunchedEffect(backStackEntry.lifecycle.currentState) {
                         if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
                             onUpdateAppBarState(AppBarState(title = "Login"))
@@ -373,13 +351,13 @@ fun AppNavigation(
                     LoginScreen(
                         viewModel = authViewModel,
                         onLoginSuccess = {
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(Screen.Login.route) { inclusive = true }
+                            navController.navigate(Screen.Home) {
+                                popUpTo(Screen.Login) { inclusive = true }
                             }
                         },
                         onSignUp = {
-                            navController.navigate(Screen.Register.route) {
-                                popUpTo(Screen.Login.route) { inclusive = true }
+                            navController.navigate(Screen.Register) {
+                                popUpTo(Screen.Login) { inclusive = true }
                             }
                         },
                         onForgotPassword = {
@@ -387,7 +365,7 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Screen.Register.route) { backStackEntry ->
+                composable<Screen.Register> { backStackEntry ->
                     LaunchedEffect(backStackEntry.lifecycle.currentState) {
                         if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
                             onUpdateAppBarState(
@@ -395,8 +373,8 @@ fun AppNavigation(
                                     title = "Create Account",
                                     showBackButton = true,
                                     onBack = {
-                                        navController.navigate(Screen.Login.route) {
-                                            popUpTo(Screen.Register.route) { inclusive = true }
+                                        navController.navigate(Screen.Login) {
+                                            popUpTo(Screen.Register) { inclusive = true }
                                         }
                                     }
                                 )
@@ -406,74 +384,26 @@ fun AppNavigation(
                     RegisterScreen(
                         viewModel = authViewModel,
                         onRegisterSuccess = {
-                            navController.navigate(Screen.Home.route) {
+                            navController.navigate(Screen.Home) {
                                 popUpTo(0) { inclusive = true }
                             }
                         },
                         onLogin = {
-                            navController.navigate(Screen.Login.route) {
-                                popUpTo(Screen.Register.route) { inclusive = true }
+                            navController.navigate(Screen.Login) {
+                                popUpTo(Screen.Register) { inclusive = true }
                             }
                         }
                     )
                 }
 
-                composable(
-                    route = Screen.TransactionList.route,
-                    arguments = listOf(
-                        navArgument("accountId") {
-                            type = NavType.StringType
-                            defaultValue = null
-                            nullable = true
-                        },
-                        navArgument("isIncome") {
-                            type = NavType.StringType
-                            defaultValue = null
-                            nullable = true
-                        },
-                        navArgument("category") {
-                            type = NavType.StringType
-                            defaultValue = null
-                            nullable = true
-                        },
-                        navArgument("startDate") {
-                            type = NavType.StringType
-                            defaultValue = null
-                            nullable = true
-                        },
-                        navArgument("endDate") {
-                            type = NavType.StringType
-                            defaultValue = null
-                            nullable = true
-                        },
-                        navArgument("hasTransactionCost") {
-                            type = NavType.StringType
-                            defaultValue = null
-                            nullable = true
-                        }
-                    )
-                ) { backStackEntry ->
-                    val accountId = backStackEntry.arguments?.read {
-                        if (contains("accountId")) getString("accountId") else null
-                    }
-                    val isIncomeStr = backStackEntry.arguments?.read {
-                        if (contains("isIncome")) getString("isIncome") else null
-                    }
-                    val isIncome: Boolean? = isIncomeStr?.toBooleanStrictOrNull()
-                    
-                    val category = backStackEntry.arguments?.read {
-                        if (contains("category")) getString("category") else null
-                    }
-                    val startDate = backStackEntry.arguments?.read {
-                        if (contains("startDate")) getString("startDate") else null
-                    }
-                    val endDate = backStackEntry.arguments?.read {
-                        if (contains("endDate")) getString("endDate") else null
-                    }
-                    val hasTransactionCostStr = backStackEntry.arguments?.read {
-                        if (contains("hasTransactionCost")) getString("hasTransactionCost") else null
-                    }
-                    val hasTransactionCost: Boolean? = hasTransactionCostStr?.toBooleanStrictOrNull()
+                composable<Screen.TransactionList> { backStackEntry ->
+                    val route: Screen.TransactionList = backStackEntry.toRoute()
+                    val accountId = route.accountId
+                    val isIncome = route.isIncome
+                    val category = route.category
+                    val startDate = route.startDate
+                    val endDate = route.endDate
+                    val hasTransactionCost = route.hasTransactionCost
 
                     LaunchedEffect(backStackEntry.lifecycle.currentState) {
                         if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
@@ -504,7 +434,7 @@ fun AppNavigation(
                         paddingValues = paddingValues,
                         animatedVisibilityScope = this,
                         onEditTransaction = { transactionId ->
-                            navController.navigate(Screen.AddTransaction.createRoute(transactionId))
+                            navController.navigate(Screen.AddTransaction(transactionId))
                         }
                     )
                 }

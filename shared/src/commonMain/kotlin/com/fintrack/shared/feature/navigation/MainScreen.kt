@@ -43,22 +43,22 @@ fun MainScreen(
                 // Use a stable NavController that persists across auth changes.
                 val navController = rememberNavController()
 
-                // Track current route
+                // Track current destination
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
+                val currentDestination = navBackStackEntry?.destination
 
                 // Handle initial navigation (e.g., from notifications)
                 LaunchedEffect(initialTransactionId, authStatusState) {
                     val auth = authStatusState
                     if (initialTransactionId != null && auth is AuthState.Success && auth.data == true) {
-                        navController.navigate(Screen.AddTransaction.createRoute(initialTransactionId))
+                        navController.navigate(Screen.AddTransaction(initialTransactionId))
                         onTransactionIdConsumed()
                     }
                 }
 
                 AuthOrchestrator(
                     authStatus = authStatusState,
-                    currentRoute = currentRoute,
+                    currentDestination = currentDestination,
                     navController = navController,
                     authViewModel = authViewModel,
                 )

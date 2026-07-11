@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
@@ -47,7 +48,7 @@ import org.koin.compose.koinInject
 @Composable
 fun AuthOrchestrator(
     authStatus: AuthState<Boolean>,
-    currentRoute: String?,
+    currentDestination: NavDestination?,
     navController: NavHostController,
     authViewModel: AuthViewModel
 ) {
@@ -78,7 +79,7 @@ fun AuthOrchestrator(
 
     // LOGIN_DEBUG: Log orchestration decision
     SideEffect {
-        println("LOGIN_DEBUG: AuthOrchestrator recomposing. authStatus: $authStatus, currentRoute: $currentRoute, isAppLocked: $isAppLocked")
+        println("LOGIN_DEBUG: AuthOrchestrator recomposing. authStatus: $authStatus, currentDestination: $currentDestination, isAppLocked: $isAppLocked")
     }
 
     if (isAppLocked) {
@@ -124,7 +125,7 @@ fun AuthOrchestrator(
                 // Clean transition to the main app
                 MainAppScaffold(
                     isAuthenticated = authStatus.data,
-                    currentRoute = currentRoute,
+                    currentDestination = currentDestination,
                     navController = navController,
                     authViewModel = authViewModel,
                     onLogout = { 
