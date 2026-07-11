@@ -34,11 +34,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.compose.GreenIncome
-import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
+import com.fintrack.shared.ui.theme.GreenIncome
+import com.fintrack.shared.ui.theme.PinkExpense
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)

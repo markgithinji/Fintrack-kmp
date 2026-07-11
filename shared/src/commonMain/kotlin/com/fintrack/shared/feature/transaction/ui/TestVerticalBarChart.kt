@@ -6,8 +6,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import com.example.compose.GreenIncome
-import com.example.compose.PinkExpense
+import com.fintrack.shared.ui.theme.GreenIncome
+import com.fintrack.shared.ui.theme.PinkExpense
+
 import network.chaintech.cmpcharts.axis.AxisProperties
 import network.chaintech.cmpcharts.common.components.Legends
 import network.chaintech.cmpcharts.common.extensions.formatNumber

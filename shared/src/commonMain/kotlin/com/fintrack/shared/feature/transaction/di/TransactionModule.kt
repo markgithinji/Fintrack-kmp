@@ -9,7 +9,6 @@ import com.fintrack.shared.feature.transaction.domain.usecase.SyncRecurringBills
 import com.fintrack.shared.feature.transaction.domain.usecase.ValidateTransactionUseCase
 import com.fintrack.shared.feature.transaction.domain.util.createTransactionImporter
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
-import com.fintrack.shared.feature.category.domain.usecase.GetCategoriesUseCase
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 

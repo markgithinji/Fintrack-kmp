@@ -150,7 +150,6 @@ fun SettingsScreen(
     LaunchedEffect(error) {
         error?.let { message ->
             toastMessage = message to true
-            viewModel.clearError()
         }
     }
 
