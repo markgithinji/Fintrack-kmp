@@ -58,7 +58,6 @@ fun HomeScreen(
     
     val logger = remember { KMPLogger() }
 
-    var showSmsPermissionRequest by remember { mutableStateOf(false) }
     var syncErrorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(selectedAccountId) {
@@ -136,7 +135,7 @@ fun HomeScreen(
                         transactionsViewModel.cancelImport()
                     },
                     onToggleBalanceVisibility = { settingsViewModel.setBalanceHidden(it) },
-                    onManualSync = { showSmsPermissionRequest = true },
+                    onManualSync = { transactionsViewModel.importTransactions() },
                     onSyncErrorClick = { message -> syncErrorMessage = message },
                     onRetry = {
                         accountsViewModel.reloadAccounts()
@@ -178,17 +177,6 @@ fun HomeScreen(
                 )
             }
         }
-
-        SmsPermissionLauncher(
-            trigger = showSmsPermissionRequest,
-            onResult = { granted ->
-                if (granted) {
-                    transactionsViewModel.importTransactions()
-                }
-                showSmsPermissionRequest = false
-            },
-            onDismissTrigger = { showSmsPermissionRequest = false }
-        )
 
         syncErrorMessage?.let { message ->
             MaterialToast(

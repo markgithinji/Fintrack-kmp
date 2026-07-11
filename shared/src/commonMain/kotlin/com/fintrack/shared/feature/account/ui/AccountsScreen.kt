@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -43,10 +44,7 @@ import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.navigation.toCurrencyString
 import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
 import com.fintrack.shared.feature.navigation.MainViewModel
-import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
-import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
 import com.fintrack.shared.feature.navigation.LocalBiometricAuthenticator
-import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -56,16 +54,14 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun AccountsScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
-    viewModel: AccountsViewModel = koinViewModel(),
+    accountsViewModel: AccountsViewModel = koinViewModel(),
     settingsViewModel: SettingsViewModel = koinViewModel(),
-    transactionsViewModel: TransactionViewModel = koinViewModel(),
     mainViewModel: MainViewModel = koinInject()
 ) {
-    val accountsState by viewModel.accounts.collectAsStateWithLifecycle()
-    val deleteResult by viewModel.deleteResult.collectAsStateWithLifecycle()
-    val saveResult by viewModel.saveResult.collectAsStateWithLifecycle()
-    val clearDataResult by viewModel.clearDataResult.collectAsStateWithLifecycle()
-    val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
+    val accountsState by accountsViewModel.accounts.collectAsStateWithLifecycle()
+    val deleteResult by accountsViewModel.deleteResult.collectAsStateWithLifecycle()
+    val saveResult by accountsViewModel.saveResult.collectAsStateWithLifecycle()
+    val clearDataResult by accountsViewModel.clearDataResult.collectAsStateWithLifecycle()
     val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
     
     val biometricAuthenticator = LocalBiometricAuthenticator.current
@@ -74,23 +70,12 @@ fun AccountsScreen(
     var showAccountDialog by remember { mutableStateOf<Account?>(null) }
     var isEditing by remember { mutableStateOf(false) }
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
-    var showSmsPermissionRequest by remember { mutableStateOf(false) }
 
-    val isOperating = (deleteResult is Result.Loading) || (saveResult is Result.Loading) || (clearDataResult is Result.Loading) || (importState is Result.Loading)
+    val isOperating = (deleteResult is Result.Loading) || (saveResult is Result.Loading) || (clearDataResult is Result.Loading)
 
     LaunchedEffect(refreshTrigger) {
         if (refreshTrigger > 0) {
-            viewModel.reloadAccounts(showLoading = false)
-        }
-    }
-
-    LaunchedEffect(importState) {
-        if (importState is Result.Success) {
-            toastMessage = "Sync completed successfully" to false
-            transactionsViewModel.resetImportState()
-        } else if (importState is Result.Error) {
-            toastMessage = ((importState as Result.Error).exception.message ?: "Sync failed") to true
-            transactionsViewModel.resetImportState()
+            accountsViewModel.reloadAccounts(showLoading = false)
         }
     }
 
@@ -101,13 +86,13 @@ fun AccountsScreen(
                 toastMessage = (if (isEditing) "Account updated" else "Account added") to false
                 // Dismiss dialog first before clearing results to avoid UI flicker
                 showAccountDialog = null
-                viewModel.clearResults()
+                accountsViewModel.clearResults()
             }
             is Result.Error -> {
                 val message = (result.exception as? ApiException)?.getUserFriendlyMessage()
                     ?: result.exception.message ?: "Error saving account"
                 toastMessage = message to true
-                viewModel.clearResults()
+                accountsViewModel.clearResults()
             }
             else -> Unit
         }
@@ -164,7 +149,7 @@ fun AccountsScreen(
                             modifier = Modifier.fillMaxSize(),
                             title = "Failed to load accounts",
                             error = state.exception,
-                            onRetry = { viewModel.reloadAccounts() }
+                            onRetry = { accountsViewModel.reloadAccounts() }
                         )
                     }
                 }
@@ -192,8 +177,7 @@ fun AccountsScreen(
             isEditing = isEditing,
             isLoading = saveResult is Result.Loading || saveResult is Result.Success || 
                         deleteResult is Result.Loading || deleteResult is Result.Success || 
-                        clearDataResult is Result.Loading || clearDataResult is Result.Success || 
-                        importState is Result.Loading,
+                        clearDataResult is Result.Loading || clearDataResult is Result.Success,
             deleteResult = deleteResult,
             clearDataResult = clearDataResult,
             accountType = account.type,
@@ -207,7 +191,7 @@ fun AccountsScreen(
                         subtitle = "Confirm your identity to delete this account"
                     )
                     if (authResult is BiometricResult.Success || authResult is BiometricResult.NotAvailable) {
-                        viewModel.removeAccount(account.id)
+                        accountsViewModel.removeAccount(account.id)
                     }
                 }
             },
@@ -218,13 +202,13 @@ fun AccountsScreen(
                         subtitle = "Confirm your identity to delete all transactions for this account"
                     )
                     if (authResult is BiometricResult.Success || authResult is BiometricResult.NotAvailable) {
-                        viewModel.clearAccountData(account.id)
+                        accountsViewModel.clearAccountData(account.id)
                     }
                 }
             },
-            onClearResults = { viewModel.clearResults() },
+            onClearResults = { accountsViewModel.clearResults() },
             onConfirm = { name, type, isDefault ->
-                viewModel.saveAccount(account.copy(name = name, type = type))
+                accountsViewModel.saveAccount(account.copy(name = name, type = type))
                 if (isDefault) {
                     settingsViewModel.setDefaultAccountId(account.id)
                 } else if (account.id == defaultAccountId) {
@@ -233,16 +217,6 @@ fun AccountsScreen(
             }
         )
     }
-    SmsPermissionLauncher(
-        trigger = showSmsPermissionRequest,
-        onResult = { granted ->
-            if (granted) {
-                transactionsViewModel.importTransactions()
-            }
-            showSmsPermissionRequest = false
-        },
-        onDismissTrigger = { showSmsPermissionRequest = false }
-    )
 }
 
 @Composable
@@ -657,7 +631,7 @@ fun AccountDialog(
 private fun AccountActionRow(
     title: String,
     subtitle: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     onClick: () -> Unit,
     enabled: Boolean,
     tint: Color = MaterialTheme.colorScheme.primary
@@ -717,7 +691,7 @@ private fun AccountActionRow(
 private fun AccountOptionRow(
     title: String,
     subtitle: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     enabled: Boolean
