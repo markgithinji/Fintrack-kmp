@@ -41,7 +41,7 @@ import com.fintrack.shared.feature.settings.domain.util.format
 import com.fintrack.shared.feature.navigation.LocalTimeFormat
 import com.fintrack.shared.feature.navigation.AppBarState
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
-import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import kotlinx.coroutines.delay

@@ -46,11 +46,11 @@ import com.fintrack.shared.feature.navigation.MainViewModel
 import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
 import com.fintrack.shared.feature.auth.ui.common.ErrorDialog
 import com.fintrack.shared.feature.core.domain.SaveState
-import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.transaction.ui.util.toColor
-import com.fintrack.shared.feature.transaction.ui.util.toIcon
+import com.fintrack.shared.feature.category.ui.util.toColor
+import com.fintrack.shared.feature.category.ui.util.toIcon
 import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
 import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult

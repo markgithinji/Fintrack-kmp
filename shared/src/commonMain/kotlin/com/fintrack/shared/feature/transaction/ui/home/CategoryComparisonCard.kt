@@ -51,10 +51,10 @@ import com.fintrack.shared.feature.navigation.toCurrencyString
 import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary
-import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
-import com.fintrack.shared.feature.transaction.ui.util.toColor
-import com.fintrack.shared.feature.transaction.ui.util.toIcon
+import com.fintrack.shared.feature.category.ui.util.toColor
+import com.fintrack.shared.feature.category.ui.util.toIcon
 
 @Composable
 fun CategoryComparisonCard(

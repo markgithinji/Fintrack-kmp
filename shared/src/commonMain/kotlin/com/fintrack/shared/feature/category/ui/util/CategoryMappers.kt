@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui.util
+package com.fintrack.shared.feature.category.ui.util
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
@@ -37,7 +37,7 @@ import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.Category
 
 
 fun Category.toIcon(): ImageVector = when (this.iconName ?: this.name) {

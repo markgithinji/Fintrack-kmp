@@ -1,6 +1,6 @@
-package com.fintrack.shared.feature.transaction.domain.repository
+package com.fintrack.shared.feature.category.domain.repository
 
-import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.Category
 import kotlinx.coroutines.flow.StateFlow
 
 interface CategoryRepository {

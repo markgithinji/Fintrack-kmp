@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.data.model
+package com.fintrack.shared.feature.category.data.model
 
 import kotlinx.serialization.Serializable
 

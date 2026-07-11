@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.domain.model
+package com.fintrack.shared.feature.category.domain.model
 
 data class Category(
     val id: String,

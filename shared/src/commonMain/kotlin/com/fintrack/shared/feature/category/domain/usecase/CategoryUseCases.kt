@@ -1,7 +1,7 @@
-package com.fintrack.shared.feature.transaction.domain.usecase
+package com.fintrack.shared.feature.category.domain.usecase
 
-import com.fintrack.shared.feature.transaction.domain.model.Category
-import com.fintrack.shared.feature.transaction.domain.repository.CategoryRepository
+import com.fintrack.shared.feature.category.domain.model.Category
+import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import kotlinx.coroutines.flow.Flow
 
 class GetCategoriesUseCase(private val repository: CategoryRepository) {

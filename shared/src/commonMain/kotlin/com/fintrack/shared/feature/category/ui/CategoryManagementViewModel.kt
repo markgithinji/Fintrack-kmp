@@ -1,11 +1,11 @@
-package com.fintrack.shared.feature.transaction.ui.category
+package com.fintrack.shared.feature.category.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fintrack.shared.feature.transaction.domain.model.Category
-import com.fintrack.shared.feature.transaction.domain.usecase.AddCategoryUseCase
-import com.fintrack.shared.feature.transaction.domain.usecase.DeleteCategoryUseCase
-import com.fintrack.shared.feature.transaction.domain.usecase.GetCategoriesUseCase
+import com.fintrack.shared.feature.category.domain.model.Category
+import com.fintrack.shared.feature.category.domain.usecase.AddCategoryUseCase
+import com.fintrack.shared.feature.category.domain.usecase.DeleteCategoryUseCase
+import com.fintrack.shared.feature.category.domain.usecase.GetCategoriesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

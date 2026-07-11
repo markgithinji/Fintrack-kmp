@@ -17,10 +17,10 @@ import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.user.domain.usecase.DeleteAccountUseCase
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
-import com.fintrack.shared.feature.transaction.domain.repository.CategoryRepository
+import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
-import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import kotlinx.coroutines.flow.*

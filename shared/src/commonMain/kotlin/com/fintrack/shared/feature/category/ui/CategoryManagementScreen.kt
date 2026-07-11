@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui.category
+package com.fintrack.shared.feature.category.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -40,11 +40,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.compose.GreenIncome
-import com.example.compose.PinkExpense
+import com.fintrack.shared.ui.theme.GreenIncome
+import com.fintrack.shared.ui.theme.PinkExpense
 import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
-import com.fintrack.shared.feature.transaction.domain.model.Category
-import com.fintrack.shared.feature.transaction.ui.util.toIcon
+import com.fintrack.shared.feature.category.domain.model.Category
+import com.fintrack.shared.feature.category.ui.util.toIcon
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import org.koin.compose.viewmodel.koinViewModel

@@ -1,7 +1,7 @@
 package com.fintrack.shared.feature.transaction.domain.usecase
 
 import com.fintrack.shared.feature.account.domain.model.Account
-import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import kotlin.time.Instant
 

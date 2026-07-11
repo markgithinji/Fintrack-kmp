@@ -3,7 +3,7 @@ package com.fintrack.shared.feature.budget.data.model
 import com.fintrack.shared.feature.budget.domain.model.Budget
 import com.fintrack.shared.feature.budget.domain.model.BudgetStatus
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
-import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.Category
 
 fun BudgetDto.toDomain(): Budget =
     Budget(

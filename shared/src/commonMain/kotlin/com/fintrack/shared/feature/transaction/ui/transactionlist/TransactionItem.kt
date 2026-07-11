@@ -34,17 +34,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.compose.GreenIncome
-import com.example.compose.PinkExpense
+import com.fintrack.shared.ui.theme.GreenIncome
+import com.fintrack.shared.ui.theme.PinkExpense
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.settings.domain.util.format
 import com.fintrack.shared.feature.navigation.LocalTimeFormat
 import com.fintrack.shared.feature.navigation.toCurrencyString
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
-import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
-import com.fintrack.shared.feature.transaction.ui.util.toColor
-import com.fintrack.shared.feature.transaction.ui.util.toIcon
+import com.fintrack.shared.feature.category.ui.util.toColor
+import com.fintrack.shared.feature.category.ui.util.toIcon
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 

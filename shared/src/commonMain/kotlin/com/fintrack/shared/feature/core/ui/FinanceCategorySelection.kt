@@ -20,9 +20,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fintrack.shared.feature.transaction.domain.model.Category
-import com.fintrack.shared.feature.transaction.ui.util.toColor
-import com.fintrack.shared.feature.transaction.ui.util.toIcon
+import com.fintrack.shared.feature.category.domain.model.Category
+import com.fintrack.shared.feature.category.ui.util.toColor
+import com.fintrack.shared.feature.category.ui.util.toIcon
 
 @Composable
 fun FinanceCategorySelection(

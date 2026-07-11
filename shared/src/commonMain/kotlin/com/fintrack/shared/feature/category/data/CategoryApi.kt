@@ -1,8 +1,8 @@
-package com.fintrack.shared.feature.transaction.data
+package com.fintrack.shared.feature.category.data
 
 import com.fintrack.shared.feature.core.data.model.ApiResponse
-import com.fintrack.shared.feature.transaction.data.model.CategoryDto
-import com.fintrack.shared.feature.transaction.data.model.CreateCategoryRequest
+import com.fintrack.shared.feature.category.data.model.CategoryDto
+import com.fintrack.shared.feature.category.data.model.CreateCategoryRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete

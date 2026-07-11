@@ -2,7 +2,7 @@ package com.fintrack.shared.feature.budget.domain.usecase
 
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.domain.ValidationResult
-import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.Category
 import kotlinx.datetime.LocalDate
 
 class BudgetValidationUseCase {

@@ -8,11 +8,11 @@ import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.Category
+import com.fintrack.shared.feature.category.domain.usecase.GetCategoriesUseCase
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.usecase.CreateTransactionUseCase
-import com.fintrack.shared.feature.transaction.domain.usecase.GetCategoriesUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ValidateTransactionUseCase
 import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
 import kotlinx.coroutines.CancellationException

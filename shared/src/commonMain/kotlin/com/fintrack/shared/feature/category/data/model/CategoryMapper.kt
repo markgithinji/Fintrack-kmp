@@ -1,6 +1,6 @@
-package com.fintrack.shared.feature.transaction.data.model
+package com.fintrack.shared.feature.category.data.model
 
-import com.fintrack.shared.feature.transaction.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.Category
 
 fun CategoryDto.toDomain(): Category = Category(
     id = id,
