@@ -26,10 +26,4 @@ class ChangePasswordValidationUseCase {
             else -> ValidationResult.Success
         }
     }
-
-    fun validateForm(currentPassword: String, newPassword: String, confirmPassword: String): Boolean {
-        return validateCurrentPassword(currentPassword) is ValidationResult.Success &&
-                validateNewPassword(newPassword) is ValidationResult.Success &&
-                validateConfirmPassword(newPassword, confirmPassword) is ValidationResult.Success
-    }
 }

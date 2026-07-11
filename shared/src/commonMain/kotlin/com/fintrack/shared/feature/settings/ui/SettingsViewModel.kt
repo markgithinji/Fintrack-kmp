@@ -13,7 +13,7 @@ import com.fintrack.shared.feature.settings.domain.util.NotificationService
 import com.fintrack.shared.feature.core.domain.usecase.ClearAllUserDataUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ExportTransactionsUseCase
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.auth.domain.usecase.ChangePasswordUseCase
+import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
 import com.fintrack.shared.feature.auth.domain.usecase.ChangePasswordValidationUseCase
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
@@ -36,7 +36,7 @@ class SettingsViewModel(
     private val exportTransactionsUseCase: ExportTransactionsUseCase,
     private val biometricAuthenticator: BiometricAuthenticator,
     private val notificationService: NotificationService,
-    private val changePasswordUseCase: ChangePasswordUseCase,
+    private val authRepository: AuthRepository,
     private val validationUseCase: ChangePasswordValidationUseCase,
     private val deleteAccountUseCase: DeleteAccountUseCase,
     private val userRepository: UserRepository,
@@ -487,7 +487,7 @@ class SettingsViewModel(
 
         viewModelScope.launch {
             _changePasswordState.value = SaveState.Loading
-            when (val result = changePasswordUseCase(form.currentPassword, form.newPassword)) {
+            when (val result = authRepository.changePassword(form.currentPassword, form.newPassword)) {
                 is Result.Success -> {
                     _changePasswordState.value = SaveState.Success(Unit)
                     _changePasswordFormState.value = ChangePasswordFormState()

@@ -54,9 +54,6 @@ class AuthViewModel(
     private val _loginFormState = MutableStateFlow(LoginFormState())
     val loginFormState: StateFlow<LoginFormState> = _loginFormState
 
-    val token: StateFlow<String?> = tokenDataSource.accessToken
-        .stateIn(viewModelScope, SharingStarted.Lazily, null)
-
     init {
         checkAuthenticationStatus()
         observeTokenChanges()
