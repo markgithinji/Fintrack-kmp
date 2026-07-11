@@ -12,7 +12,7 @@ import com.fintrack.shared.feature.budget.domain.usecase.BudgetValidationUseCase
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.category.domain.model.Category
-import com.fintrack.shared.feature.category.domain.usecase.GetCategoriesUseCase
+import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +26,7 @@ import kotlinx.datetime.LocalDate
 class BudgetViewModel(
     private val repo: BudgetRepository,
     private val validationUseCase: BudgetValidationUseCase,
-    private val getCategoriesUseCase: GetCategoriesUseCase
+    private val categoryRepo: CategoryRepository
 ) : ViewModel() {
 
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
@@ -75,7 +75,7 @@ class BudgetViewModel(
     init {
         reloadBudgets(force = false)
         viewModelScope.launch {
-            getCategoriesUseCase().collect { cats ->
+            categoryRepo.getCategories().collect { cats ->
                 _categories.value = cats
                 if (_formState.value.selectedCategories.isEmpty() && cats.isNotEmpty()) {
                     val firstExpense = cats.firstOrNull { it.isExpense }
@@ -91,7 +91,7 @@ class BudgetViewModel(
     fun refreshCategories() {
         viewModelScope.launch {
             try {
-                getCategoriesUseCase.refresh()
+                categoryRepo.refreshCategories()
             } catch (e: Exception) {
                 // Ignore
             }

@@ -9,7 +9,7 @@ import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.category.domain.model.Category
-import com.fintrack.shared.feature.category.domain.usecase.GetCategoriesUseCase
+import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
@@ -36,9 +36,9 @@ import kotlin.time.Instant
 @OptIn(FlowPreview::class)
 class TransactionViewModel(
     private val repo: TransactionRepository,
+    private val categoryRepo: CategoryRepository,
     private val validateTransactionUseCase: ValidateTransactionUseCase,
     private val createTransactionUseCase: CreateTransactionUseCase,
-    private val getCategoriesUseCase: GetCategoriesUseCase,
     private val transactionImporter: TransactionImporter,
     private val refreshManager: GlobalRefreshManager
 ) : ViewModel() {
@@ -99,7 +99,7 @@ class TransactionViewModel(
                 }
         }
         viewModelScope.launch {
-            getCategoriesUseCase().collect {
+            categoryRepo.getCategories().collect {
                 _categories.value = it
             }
         }
@@ -135,7 +135,7 @@ class TransactionViewModel(
     fun refreshCategories() {
         viewModelScope.launch {
             try {
-                getCategoriesUseCase.refresh()
+                categoryRepo.refreshCategories()
             } catch (e: Exception) {
                 // Ignore error here or log it
             }

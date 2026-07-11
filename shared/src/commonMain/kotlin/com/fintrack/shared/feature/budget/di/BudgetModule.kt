@@ -6,7 +6,6 @@ import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.budget.domain.usecase.BudgetValidationUseCase
 import com.fintrack.shared.feature.budget.domain.usecase.CheckBudgetThresholdsUseCase
 import com.fintrack.shared.feature.budget.ui.BudgetViewModel
-import com.fintrack.shared.feature.category.domain.usecase.GetCategoriesUseCase
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 

@@ -3,9 +3,7 @@ package com.fintrack.shared.feature.category.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.category.domain.model.Category
-import com.fintrack.shared.feature.category.domain.usecase.AddCategoryUseCase
-import com.fintrack.shared.feature.category.domain.usecase.DeleteCategoryUseCase
-import com.fintrack.shared.feature.category.domain.usecase.GetCategoriesUseCase
+import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,9 +19,7 @@ data class CategoryManagementState(
 )
 
 class CategoryManagementViewModel(
-    private val getCategoriesUseCase: GetCategoriesUseCase,
-    private val addCategoryUseCase: AddCategoryUseCase,
-    private val deleteCategoryUseCase: DeleteCategoryUseCase
+    private val repository: CategoryRepository
 ) : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
@@ -33,7 +29,7 @@ class CategoryManagementViewModel(
     val error = _error.asStateFlow()
 
     val state: StateFlow<CategoryManagementState> = combine(
-        getCategoriesUseCase(),
+        repository.getCategories(),
         _isLoading,
         _error
     ) { categories, loading, error ->
@@ -52,7 +48,7 @@ class CategoryManagementViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                getCategoriesUseCase.refresh()
+                repository.refreshCategories()
             } catch (e: Exception) {
                 _error.value = e.message
             } finally {
@@ -62,10 +58,14 @@ class CategoryManagementViewModel(
     }
 
     fun addCategory(name: String, isExpense: Boolean, iconName: String? = null) {
+        if (name.isBlank()) {
+            _error.value = "Category name cannot be empty"
+            return
+        }
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                addCategoryUseCase(name, isExpense, iconName)
+                repository.addCategory(name, isExpense, iconName)
             } catch (e: Exception) {
                 _error.value = e.message
             } finally {
@@ -78,7 +78,7 @@ class CategoryManagementViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                deleteCategoryUseCase(id)
+                repository.deleteCategory(id)
             } catch (e: Exception) {
                 _error.value = e.message
             } finally {
