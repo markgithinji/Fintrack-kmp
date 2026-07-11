@@ -17,9 +17,7 @@ val accountModule = module {
             repo = get(),
             getAccountsUseCase = get(),
             globalRefreshManager = get(),
-            settingsDataSource = get(),
-            clearAllUserDataUseCase = get(),
-            biometricAuthenticator = get()
+            clearAllUserDataUseCase = get()
         )
     }
 }

@@ -6,9 +6,6 @@ import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.account.domain.usecase.GetAccountsUseCase
-import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
-import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
-import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import com.fintrack.shared.feature.core.domain.usecase.ClearAllUserDataUseCase
 import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.core.util.Result
@@ -23,9 +20,7 @@ class AccountsViewModel(
     private val repo: AccountRepository,
     private val getAccountsUseCase: GetAccountsUseCase,
     private val globalRefreshManager: GlobalRefreshManager,
-    private val settingsDataSource: SettingsDataSource,
-    private val clearAllUserDataUseCase: ClearAllUserDataUseCase,
-    private val biometricAuthenticator: BiometricAuthenticator
+    private val clearAllUserDataUseCase: ClearAllUserDataUseCase
 ) : ViewModel() {
 
     private val logger = com.fintrack.shared.feature.core.logger.KMPLogger()
@@ -146,44 +141,26 @@ class AccountsViewModel(
         }
 
         viewModelScope.launch {
-            val authResult = biometricAuthenticator.authenticate(
-                title = "Delete Account",
-                subtitle = "Confirm your identity to delete this account"
-            )
-
-            if (authResult is BiometricResult.Success || authResult is BiometricResult.NotAvailable) {
-                _deleteResult.value = Result.Loading
-                val result = repo.deleteAccount(id)
-                _deleteResult.value = result
-                if (result is Result.Success) {
-                    // Update local state immediately for a smooth transition
-                    val currentResult = _accounts.value
-                    if (currentResult is Result.Success) {
-                        _accounts.value = Result.Success(currentResult.data.filter { it.id != id })
-                    }
-                    reloadAccounts(showLoading = false)
+            _deleteResult.value = Result.Loading
+            val result = repo.deleteAccount(id)
+            _deleteResult.value = result
+            if (result is Result.Success) {
+                // Update local state immediately for a smooth transition
+                val currentResult = _accounts.value
+                if (currentResult is Result.Success) {
+                    _accounts.value = Result.Success(currentResult.data.filter { it.id != id })
                 }
-            } else if (authResult is BiometricResult.Error) {
-                _deleteResult.value = Result.Error(Exception(authResult.message))
+                reloadAccounts(showLoading = false)
             }
         }
     }
 
     fun clearAccountData(id: String) {
         viewModelScope.launch {
-            val authResult = biometricAuthenticator.authenticate(
-                title = "Clear Account Data",
-                subtitle = "Confirm your identity to delete all transactions for this account"
-            )
-
-            if (authResult is BiometricResult.Success || authResult is BiometricResult.NotAvailable) {
-                _clearDataResult.value = Result.Loading
-                _clearDataResult.value = clearAllUserDataUseCase(listOf(id))
-                // Note: clearAllUserDataUseCase triggers globalRefreshManager, 
-                // which our init block observes to reload accounts without flickering.
-            } else if (authResult is BiometricResult.Error) {
-                _clearDataResult.value = Result.Error(Exception(authResult.message))
-            }
+            _clearDataResult.value = Result.Loading
+            _clearDataResult.value = clearAllUserDataUseCase(listOf(id))
+            // Note: clearAllUserDataUseCase triggers globalRefreshManager, 
+            // which our init block observes to reload accounts without flickering.
         }
     }
 

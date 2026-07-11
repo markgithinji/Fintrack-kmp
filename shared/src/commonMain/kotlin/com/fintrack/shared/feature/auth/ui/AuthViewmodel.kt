@@ -15,8 +15,6 @@ import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.logger.LogTags
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
-import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
-import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -31,7 +29,6 @@ class AuthViewModel(
     private val registerValidationUseCase: RegisterValidationUseCase,
     private val loginValidationUseCase: LoginValidationUseCase,
     private val settingsDataSource: SettingsDataSource,
-    private val biometricAuthenticator: BiometricAuthenticator,
     private val logger: KMPLogger
 ) : ViewModel() {
 
@@ -68,15 +65,7 @@ class AuthViewModel(
     }
 
     fun unlockWithBiometrics() {
-        viewModelScope.launch {
-            val result = biometricAuthenticator.authenticate(
-                title = "Unlock Fintrack",
-                subtitle = "Authenticate to access your account"
-            )
-            if (result is BiometricResult.Success) {
-                _isAppLocked.value = false
-            }
-        }
+        _isAppLocked.value = false
     }
 
     private fun observeTokenChanges() {

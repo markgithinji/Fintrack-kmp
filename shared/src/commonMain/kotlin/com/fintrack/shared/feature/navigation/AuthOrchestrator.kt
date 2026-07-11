@@ -35,8 +35,12 @@ import androidx.navigation.NavHostController
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import com.fintrack.shared.feature.auth.ui.LockScreen
+import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
+import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 @Composable
 fun AuthOrchestrator(
@@ -46,6 +50,8 @@ fun AuthOrchestrator(
     authViewModel: AuthViewModel
 ) {
     val isAppLocked by authViewModel.isAppLocked.collectAsStateWithLifecycle()
+    val biometricAuthenticator: BiometricAuthenticator = koinInject()
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     // Track the last error to determine if we are in a retry/transition flow.
     // Using this as a 'gate' avoids the flicker between Error -> Home -> Success -> Home.
@@ -75,7 +81,17 @@ fun AuthOrchestrator(
 
     if (isAppLocked) {
         LockScreen(
-            onUnlock = { authViewModel.unlockWithBiometrics() }
+            onUnlock = {
+                scope.launch {
+                    val result = biometricAuthenticator.authenticate(
+                        title = "Unlock Fintrack",
+                        subtitle = "Authenticate to access your account"
+                    )
+                    if (result is BiometricResult.Success) {
+                        authViewModel.unlockWithBiometrics()
+                    }
+                }
+            }
         )
         return
     }

@@ -51,11 +51,15 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
 import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
+import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
+import com.fintrack.shared.feature.settings.domain.util.BiometricResult
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -96,6 +100,9 @@ fun SettingsScreen(
     val changePasswordFormState by viewModel.changePasswordFormState.collectAsStateWithLifecycle()
     val changePasswordState by viewModel.changePasswordState.collectAsStateWithLifecycle()
     val deleteAccountState by viewModel.deleteAccountState.collectAsStateWithLifecycle()
+
+    val biometricAuthenticator: BiometricAuthenticator = koinInject()
+    val scope = rememberCoroutineScope()
     
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
@@ -435,7 +442,23 @@ fun SettingsScreen(
                             subtitle = "Use FaceID or Fingerprint",
                             icon = Icons.Default.Fingerprint,
                             checked = isBiometricEnabled,
-                            onCheckedChange = { viewModel.toggleBiometric(it) }
+                            onCheckedChange = { enabled ->
+                                if (enabled) {
+                                    scope.launch {
+                                        val result = biometricAuthenticator.authenticate(
+                                            title = "Enable Biometric",
+                                            subtitle = "Confirm your identity to enable biometric lock"
+                                        )
+                                        if (result is BiometricResult.Success) {
+                                            viewModel.toggleBiometric(true)
+                                        } else if (result is BiometricResult.Error) {
+                                            viewModel.setError(result.message)
+                                        }
+                                    }
+                                } else {
+                                    viewModel.toggleBiometric(false)
+                                }
+                            }
                         )
 
                         HorizontalDivider(
@@ -601,8 +624,19 @@ fun SettingsScreen(
             onFormatSelected = { viewModel.setExportFormat(it) },
             onDateRangeSelected = { start, end -> viewModel.setExportDateRange(start, end) },
             onExport = {
-                viewModel.exportTransactions()
-                showExportFormatDialog = false
+                scope.launch {
+                    val authResult = biometricAuthenticator.authenticate(
+                        title = "Export Data",
+                        subtitle = "Confirm your identity to export your transactions"
+                    )
+
+                    if (authResult is BiometricResult.Success || authResult is BiometricResult.NotAvailable) {
+                        viewModel.exportTransactions()
+                        showExportFormatDialog = false
+                    } else if (authResult is BiometricResult.Error) {
+                        viewModel.setError(authResult.message)
+                    }
+                }
             },
             onDismiss = { showExportFormatDialog = false }
         )
@@ -621,7 +655,21 @@ fun SettingsScreen(
             successMessage = "Your account and all associated data have been permanently deleted.",
             autoDismiss = false,
             onConfirm = {
-                viewModel.deleteAccount()
+                scope.launch {
+                    val authResult = biometricAuthenticator.authenticate(
+                        title = "Delete Account",
+                        subtitle = "This will permanently delete your account and all data"
+                    )
+
+                    when (authResult) {
+                        is BiometricResult.Success, BiometricResult.NotAvailable -> {
+                            viewModel.deleteAccount()
+                        }
+                        is BiometricResult.Error -> {
+                            viewModel.setError(authResult.message)
+                        }
+                    }
+                }
             },
             onDismiss = {
                 showDeleteAccountDialog = false

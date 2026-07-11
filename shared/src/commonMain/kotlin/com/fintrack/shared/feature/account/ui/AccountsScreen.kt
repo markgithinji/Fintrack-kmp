@@ -44,6 +44,10 @@ import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
+import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
+import com.fintrack.shared.feature.settings.domain.util.BiometricResult
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,6 +63,9 @@ fun AccountsScreen(
     val saveResult by viewModel.saveResult.collectAsStateWithLifecycle()
     val clearDataResult by viewModel.clearDataResult.collectAsStateWithLifecycle()
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
+    
+    val biometricAuthenticator: BiometricAuthenticator = koinInject()
+    val scope = rememberCoroutineScope()
     
     var showAccountDialog by remember { mutableStateOf<Account?>(null) }
     var isEditing by remember { mutableStateOf(false) }
@@ -170,8 +177,28 @@ fun AccountsScreen(
             isDefaultSelection = account.id == defaultAccountId,
             isOtherAccountDefault = isOtherAccountDefault,
             onDismiss = { if (!isOperating) showAccountDialog = null },
-            onDelete = { viewModel.removeAccount(account.id) },
-            onClearData = { viewModel.clearAccountData(account.id) },
+            onDelete = {
+                scope.launch {
+                    val authResult = biometricAuthenticator.authenticate(
+                        title = "Delete Account",
+                        subtitle = "Confirm your identity to delete this account"
+                    )
+                    if (authResult is BiometricResult.Success || authResult is BiometricResult.NotAvailable) {
+                        viewModel.removeAccount(account.id)
+                    }
+                }
+            },
+            onClearData = {
+                scope.launch {
+                    val authResult = biometricAuthenticator.authenticate(
+                        title = "Clear Account Data",
+                        subtitle = "Confirm your identity to delete all transactions for this account"
+                    )
+                    if (authResult is BiometricResult.Success || authResult is BiometricResult.NotAvailable) {
+                        viewModel.clearAccountData(account.id)
+                    }
+                }
+            },
             onClearResults = { viewModel.clearResults() },
             onConfirm = { name, type, isDefault ->
                 viewModel.saveAccount(account.copy(name = name, type = type))

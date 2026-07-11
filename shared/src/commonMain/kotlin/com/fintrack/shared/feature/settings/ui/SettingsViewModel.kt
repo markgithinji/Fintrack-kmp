@@ -7,8 +7,6 @@ import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.settings.domain.model.ExportFormat
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
-import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
-import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import com.fintrack.shared.feature.settings.domain.util.NotificationService
 import com.fintrack.shared.feature.core.domain.usecase.ClearAllUserDataUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ExportTransactionsUseCase
@@ -34,7 +32,6 @@ class SettingsViewModel(
     private val settingsDataSource: SettingsDataSource,
     private val clearAllUserDataUseCase: ClearAllUserDataUseCase,
     private val exportTransactionsUseCase: ExportTransactionsUseCase,
-    private val biometricAuthenticator: BiometricAuthenticator,
     private val notificationService: NotificationService,
     private val authRepository: AuthRepository,
     private val validationUseCase: ChangePasswordValidationUseCase,
@@ -206,19 +203,7 @@ class SettingsViewModel(
 
     fun toggleBiometric(enabled: Boolean) {
         viewModelScope.launch {
-            if (enabled) {
-                val result = biometricAuthenticator.authenticate(
-                    title = "Enable Biometric",
-                    subtitle = "Confirm your identity to enable biometric lock"
-                )
-                if (result is BiometricResult.Success) {
-                    settingsDataSource.setBiometricEnabled(true)
-                } else if (result is BiometricResult.Error) {
-                    _error.value = result.message
-                }
-            } else {
-                settingsDataSource.setBiometricEnabled(false)
-            }
+            settingsDataSource.setBiometricEnabled(enabled)
         }
     }
 
@@ -368,33 +353,24 @@ class SettingsViewModel(
 
     fun exportTransactions() {
         viewModelScope.launch {
-            val authResult = biometricAuthenticator.authenticate(
-                title = "Export Data",
-                subtitle = "Confirm your identity to export your transactions"
+            _exportResult.value = null
+            _isLoading.value = true
+            val format = settingsDataSource.exportFormat.value
+            val result = exportTransactionsUseCase(
+                format = format,
+                startDate = _exportStartDate.value,
+                endDate = _exportEndDate.value
             )
-
-            if (authResult is BiometricResult.Success || authResult is BiometricResult.NotAvailable) {
-                _exportResult.value = null
-                _isLoading.value = true
-                val format = settingsDataSource.exportFormat.value
-                val result = exportTransactionsUseCase(
-                    format = format,
-                    startDate = _exportStartDate.value,
-                    endDate = _exportEndDate.value
-                )
-                when (result) {
-                    is Result.Success -> {
-                        _exportResult.value = result.data
-                    }
-                    is Result.Error -> {
-                        _error.value = "Failed to export transactions"
-                    }
-                    else -> {}
+            when (result) {
+                is Result.Success -> {
+                    _exportResult.value = result.data
                 }
-                _isLoading.value = false
-            } else if (authResult is BiometricResult.Error) {
-                _error.value = authResult.message
+                is Result.Error -> {
+                    _error.value = "Failed to export transactions"
+                }
+                else -> {}
             }
+            _isLoading.value = false
         }
     }
 
@@ -403,34 +379,13 @@ class SettingsViewModel(
 
     fun deleteAccount() {
         viewModelScope.launch {
-            val authResult = biometricAuthenticator.authenticate(
-                title = "Delete Account",
-                subtitle = "This will permanently delete your account and all data"
-            )
-
-            when (authResult) {
-                is BiometricResult.Success -> {
-                    _deleteAccountState.value = SaveState.Loading
-                    val result = deleteAccountUseCase()
-                    if (result is Result.Error) {
-                        _deleteAccountState.value = SaveState.Error(result.exception)
-                        _error.value = "Failed to delete account"
-                    } else {
-                        _deleteAccountState.value = SaveState.Success(Unit)
-                    }
-                }
-                is BiometricResult.Error -> {
-                    _error.value = authResult.message
-                }
-                BiometricResult.NotAvailable -> {
-                    _deleteAccountState.value = SaveState.Loading
-                    val result = deleteAccountUseCase()
-                    if (result is Result.Error) {
-                        _deleteAccountState.value = SaveState.Error(result.exception)
-                    } else {
-                        _deleteAccountState.value = SaveState.Success(Unit)
-                    }
-                }
+            _deleteAccountState.value = SaveState.Loading
+            val result = deleteAccountUseCase()
+            if (result is Result.Error) {
+                _deleteAccountState.value = SaveState.Error(result.exception)
+                _error.value = "Failed to delete account"
+            } else {
+                _deleteAccountState.value = SaveState.Success(Unit)
             }
         }
     }
@@ -439,8 +394,8 @@ class SettingsViewModel(
         _deleteAccountState.value = SaveState.Idle
     }
 
-    fun clearError() {
-        _error.value = null
+    fun setError(message: String) {
+        _error.value = message
     }
 
     fun clearExportResult() {
