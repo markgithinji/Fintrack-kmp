@@ -13,7 +13,6 @@ import com.fintrack.shared.feature.transaction.domain.usecase.ExportTransactions
 import com.fintrack.shared.feature.transaction.domain.usecase.GetCategoriesUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.SyncRecurringBillsUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ValidateTransactionUseCase
-import com.fintrack.shared.feature.transaction.domain.util.BillReminderManager
 import com.fintrack.shared.feature.transaction.domain.util.createTransactionImporter
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import com.fintrack.shared.feature.transaction.ui.category.CategoryManagementViewModel
@@ -33,7 +32,6 @@ val transactionModule = module {
     single { DeleteCategoryUseCase(get()) }
     single { ExportTransactionsUseCase(get(), get()) }
     single { SyncRecurringBillsUseCase(get(), get(), get()) }
-    single(createdAtStart = true) { BillReminderManager(get(), get(), get()) }
 
     single { createTransactionImporter(get(), get()) }
 
@@ -43,8 +41,7 @@ val transactionModule = module {
             validateTransactionUseCase = get(),
             createTransactionUseCase = get(),
             getCategoriesUseCase = get(),
-            transactionImporter = get(),
-            globalRefreshManager = get()
+            transactionImporter = get()
         )
     }
 

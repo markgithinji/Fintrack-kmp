@@ -7,7 +7,6 @@ import androidx.paging.cachedIn
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.logger.KMPLogger
-import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
@@ -39,8 +38,7 @@ class TransactionViewModel(
     private val validateTransactionUseCase: ValidateTransactionUseCase,
     private val createTransactionUseCase: CreateTransactionUseCase,
     private val getCategoriesUseCase: GetCategoriesUseCase,
-    private val transactionImporter: TransactionImporter,
-    private val globalRefreshManager: GlobalRefreshManager
+    private val transactionImporter: TransactionImporter
 ) : ViewModel() {
 
     private val _categories = MutableStateFlow<List<Category>>(Category.allCategories)
@@ -91,7 +89,7 @@ class TransactionViewModel(
 
     init {
         viewModelScope.launch {
-            merge(globalRefreshManager.refreshEvent, repo.refreshSignal)
+            repo.refreshSignal
                 .debounce(500)
                 .collect {
                     lastLoadedRecentAccountId?.let { loadRecentTransactions(it, force = true) }
@@ -197,7 +195,6 @@ class TransactionViewModel(
                 val result = repo.addTransaction(transaction)
                 _saveState.value = when (result) {
                     is Result.Success -> {
-                        globalRefreshManager.triggerRefresh()
                         SaveState.Success(result.data)
                     }
                     is Result.Error -> SaveState.Error(result.exception)
@@ -242,7 +239,6 @@ class TransactionViewModel(
                 val result = repo.updateTransaction(id, transaction)
                 _saveState.value = when (result) {
                     is Result.Success -> {
-                        globalRefreshManager.triggerRefresh()
                         SaveState.Success(result.data)
                     }
                     is Result.Error -> SaveState.Error(result.exception)
@@ -278,7 +274,6 @@ class TransactionViewModel(
                 val result = repo.addTransaction(transaction)
                 _saveState.value = when (result) {
                     is Result.Success -> {
-                        globalRefreshManager.triggerRefresh()
                         SaveState.Success(result.data)
                     }
                     is Result.Error -> SaveState.Error(result.exception)
@@ -372,9 +367,6 @@ class TransactionViewModel(
             _deleteResult.value = Result.Loading
             val result = repo.deleteTransaction(id)
             _deleteResult.value = result
-            if (result is Result.Success) {
-                globalRefreshManager.triggerRefresh()
-            }
         }
     }
 
@@ -396,7 +388,6 @@ class TransactionViewModel(
                 }
                 logger.info("SYNC_FLOW", "Transaction import completed successfully")
                 _importState.value = Result.Success(Unit)
-                globalRefreshManager.triggerRefresh()
             } catch (e: Exception) {
                 if (e !is CancellationException) {
                     logger.error("SYNC_FLOW", "Transaction import failed", e)

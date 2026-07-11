@@ -23,7 +23,6 @@ import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
-import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalTime
@@ -40,7 +39,6 @@ class SettingsViewModel(
     private val categoryRepository: CategoryRepository,
     private val accountRepository: AccountRepository,
     private val budgetRepository: BudgetRepository,
-    private val globalRefreshManager: GlobalRefreshManager,
 ) : ViewModel() {
 
     private val logger = com.fintrack.shared.feature.core.logger.KMPLogger()
@@ -464,7 +462,6 @@ class SettingsViewModel(
         viewModelScope.launch {
             try {
                 userRepository.updateTrackedCategories(categories)
-                globalRefreshManager.triggerRefresh()
             } catch (e: Exception) {
                 _error.value = "Failed to update tracked categories: ${e.message}"
             }

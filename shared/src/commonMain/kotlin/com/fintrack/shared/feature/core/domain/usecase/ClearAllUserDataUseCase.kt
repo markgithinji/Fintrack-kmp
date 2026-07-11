@@ -1,14 +1,12 @@
 package com.fintrack.shared.feature.core.domain.usecase
 
 import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
-import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 
 class ClearAllUserDataUseCase(
     private val transactionRepository: TransactionRepository,
-    private val budgetRepository: BudgetRepository,
-    private val globalRefreshManager: GlobalRefreshManager
+    private val budgetRepository: BudgetRepository
 ) {
     suspend operator fun invoke(accountIds: List<String>? = null): Result<Unit> {
         // Clear transactions
@@ -18,9 +16,6 @@ class ClearAllUserDataUseCase(
         // Clear budgets
         val budgetResult = budgetRepository.deleteAllBudgets(accountIds)
         if (budgetResult is Result.Error) return budgetResult
-
-        // Trigger global refresh to update all screens
-        globalRefreshManager.triggerRefresh()
 
         return Result.Success(Unit)
     }

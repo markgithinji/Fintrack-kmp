@@ -10,7 +10,6 @@ import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.budget.domain.usecase.BudgetValidationUseCase
 import com.fintrack.shared.feature.core.domain.SaveState
-import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.usecase.GetCategoriesUseCase
@@ -26,8 +25,7 @@ import kotlinx.datetime.LocalDate
 class BudgetViewModel(
     private val repo: BudgetRepository,
     private val validationUseCase: BudgetValidationUseCase,
-    private val getCategoriesUseCase: GetCategoriesUseCase,
-    private val globalRefreshManager: GlobalRefreshManager
+    private val getCategoriesUseCase: GetCategoriesUseCase
 ) : ViewModel() {
 
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
@@ -78,12 +76,6 @@ class BudgetViewModel(
         )
 
     init {
-        viewModelScope.launch {
-            globalRefreshManager.refreshEvent.collect {
-                reloadBudgets(force = true)
-                refreshCategories()
-            }
-        }
         reloadBudgets(force = false)
         viewModelScope.launch {
             getCategoriesUseCase().collect { cats ->

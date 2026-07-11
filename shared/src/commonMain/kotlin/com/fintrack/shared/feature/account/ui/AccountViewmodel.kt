@@ -8,7 +8,6 @@ import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.account.domain.usecase.GetAccountsUseCase
 import com.fintrack.shared.feature.core.domain.usecase.ClearAllUserDataUseCase
 import com.fintrack.shared.feature.core.logger.KMPLogger
-import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.core.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +19,6 @@ import kotlinx.coroutines.launch
 class AccountsViewModel(
     private val repo: AccountRepository,
     private val getAccountsUseCase: GetAccountsUseCase,
-    private val globalRefreshManager: GlobalRefreshManager,
     private val clearAllUserDataUseCase: ClearAllUserDataUseCase
 ) : ViewModel() {
 
@@ -42,12 +40,6 @@ class AccountsViewModel(
     val clearDataResult: StateFlow<Result<Unit>?> = _clearDataResult.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            globalRefreshManager.refreshEvent.collect {
-                reloadAccounts(force = true, showLoading = false)
-            }
-        }
-
         reloadAccounts(force = false)
     }
 
@@ -128,7 +120,10 @@ class AccountsViewModel(
                     _selectedAccount.value = Result.Success(result.data)
                 }
 
-                globalRefreshManager.triggerRefresh()
+                // No more globalRefreshManager.triggerRefresh() here
+                // The UI should trigger it after calling saveAccount if needed, 
+                // or saveAccount could return something that triggers it.
+                // But the user said "the ui should call it".
                 reloadAccounts(showLoading = false)
             }
         }
@@ -160,8 +155,7 @@ class AccountsViewModel(
         viewModelScope.launch {
             _clearDataResult.value = Result.Loading
             _clearDataResult.value = clearAllUserDataUseCase(listOf(id))
-            // Note: clearAllUserDataUseCase triggers globalRefreshManager, 
-            // which our init block observes to reload accounts without flickering.
+            // The UI should trigger a global refresh after this succeeds.
         }
     }
 

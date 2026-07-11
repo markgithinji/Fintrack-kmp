@@ -7,6 +7,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import com.fintrack.shared.feature.settings.ui.LocalCurrency
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
+import com.fintrack.shared.feature.navigation.MainViewModel
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -78,6 +79,7 @@ fun AddTransactionScreen(
     transactionId: String? = null,
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     accountsViewModel: AccountsViewModel = koinViewModel(),
+    mainViewModel: MainViewModel = koinViewModel(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onBack: () -> Unit = {},
@@ -144,6 +146,7 @@ fun AddTransactionScreen(
 
     LaunchedEffect(deleteResult) {
         if (deleteResult is Result.Success) {
+            mainViewModel.triggerGlobalRefresh()
             onBack()
         }
     }
@@ -178,6 +181,7 @@ fun AddTransactionScreen(
 
     LaunchedEffect(saveState) {
         if (saveState is SaveState.Success<*>) {
+            mainViewModel.triggerGlobalRefresh()
             delay(1000)
             onBack()
             transactionsViewModel.resetSaveState()

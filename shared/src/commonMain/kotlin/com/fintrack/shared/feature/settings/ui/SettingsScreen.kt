@@ -42,6 +42,7 @@ import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
 import com.fintrack.shared.feature.core.ui.MaterialToast
+import com.fintrack.shared.feature.navigation.MainViewModel
 import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
 import com.fintrack.shared.feature.auth.ui.common.ErrorDialog
 import com.fintrack.shared.feature.core.domain.SaveState
@@ -66,7 +67,8 @@ import kotlinx.datetime.LocalDate
 @Composable
 fun SettingsScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
-    viewModel: SettingsViewModel = koinViewModel()
+    viewModel: SettingsViewModel = koinViewModel(),
+    mainViewModel: MainViewModel = koinViewModel()
 ) {
     val currentCurrency by viewModel.currency.collectAsStateWithLifecycle()
     val currentTheme by viewModel.theme.collectAsStateWithLifecycle()
@@ -119,6 +121,14 @@ fun SettingsScreen(
     var showBillReminderDaysDialog by remember { mutableStateOf(false) }
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+
+    LaunchedEffect(Unit) {
+        mainViewModel.refreshEvent.collect {
+            // Settings screen might not need to reload everything, 
+            // but let's ensure tracked categories and budgets are up to date if they depend on others
+            // For now, it's mostly about triggering refreshes FROM here.
+        }
+    }
 
     LaunchedEffect(changePasswordState) {
         if (changePasswordState is SaveState.Success) {
@@ -700,6 +710,7 @@ fun SettingsScreen(
             selectedCategories = trackedCategories,
             onCategoriesSelected = {
                 viewModel.updateTrackedCategories(it)
+                mainViewModel.triggerGlobalRefresh()
                 showTrackedCategoriesDialog = false
             },
             onDismiss = { showTrackedCategoriesDialog = false }

@@ -16,7 +16,6 @@ val accountModule = module {
         AccountsViewModel(
             repo = get(),
             getAccountsUseCase = get(),
-            globalRefreshManager = get(),
             clearAllUserDataUseCase = get()
         )
     }

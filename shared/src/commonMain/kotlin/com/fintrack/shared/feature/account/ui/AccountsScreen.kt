@@ -42,6 +42,7 @@ import com.fintrack.shared.feature.core.data.domain.getUserFriendlyMessage
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
+import com.fintrack.shared.feature.navigation.MainViewModel
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
 import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
@@ -56,7 +57,8 @@ fun AccountsScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
     viewModel: AccountsViewModel = koinViewModel(),
     settingsViewModel: SettingsViewModel = koinViewModel(),
-    transactionsViewModel: TransactionViewModel = koinViewModel()
+    transactionsViewModel: TransactionViewModel = koinViewModel(),
+    mainViewModel: MainViewModel = koinViewModel()
 ) {
     val accountsState by viewModel.accounts.collectAsStateWithLifecycle()
     val deleteResult by viewModel.deleteResult.collectAsStateWithLifecycle()
@@ -74,6 +76,12 @@ fun AccountsScreen(
 
     val isOperating = (deleteResult is Result.Loading) || (saveResult is Result.Loading) || (clearDataResult is Result.Loading) || (importState is Result.Loading)
 
+    LaunchedEffect(Unit) {
+        mainViewModel.refreshEvent.collect {
+            viewModel.reloadAccounts(force = true, showLoading = false)
+        }
+    }
+
     LaunchedEffect(importState) {
         if (importState is Result.Success) {
             toastMessage = "Sync completed successfully" to false
@@ -87,6 +95,7 @@ fun AccountsScreen(
     LaunchedEffect(saveResult) {
         when (val result = saveResult) {
             is Result.Success -> {
+                mainViewModel.triggerGlobalRefresh()
                 toastMessage = (if (isEditing) "Account updated" else "Account added") to false
                 // Dismiss dialog first before clearing results to avoid UI flicker
                 showAccountDialog = null
@@ -99,6 +108,18 @@ fun AccountsScreen(
                 viewModel.clearResults()
             }
             else -> Unit
+        }
+    }
+
+    LaunchedEffect(deleteResult) {
+        if (deleteResult is Result.Success) {
+            mainViewModel.triggerGlobalRefresh()
+        }
+    }
+
+    LaunchedEffect(clearDataResult) {
+        if (clearDataResult is Result.Success) {
+            mainViewModel.triggerGlobalRefresh()
         }
     }
 

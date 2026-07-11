@@ -34,6 +34,7 @@ import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
+import com.fintrack.shared.feature.navigation.MainViewModel
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
@@ -49,6 +50,7 @@ fun HomeScreen(
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     statsViewModel: StatisticsViewModel = koinViewModel(),
     settingsViewModel: SettingsViewModel = koinViewModel(),
+    mainViewModel: MainViewModel = koinViewModel(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onEditTransaction: (String) -> Unit,
@@ -79,6 +81,18 @@ fun HomeScreen(
         if (importState is Result.Success) {
             delay(1500)
             transactionsViewModel.resetImportState()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        mainViewModel.refreshEvent.collect {
+            accountsViewModel.reloadAccounts(force = true, showLoading = false)
+            val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+            accountId?.let { id ->
+                transactionsViewModel.loadRecentTransactions(id, force = true)
+                statsViewModel.loadOverview(id, force = true)
+                statsViewModel.loadCategoryComparisons(id, force = true)
+            }
         }
     }
 

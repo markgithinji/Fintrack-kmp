@@ -140,6 +140,7 @@ import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.navigation.AppBarState
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
+import com.fintrack.shared.feature.navigation.MainViewModel
 import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
 import com.fintrack.shared.feature.transaction.ui.util.toColor
 import com.fintrack.shared.feature.transaction.ui.util.toIcon
@@ -159,6 +160,7 @@ fun BudgetDetailScreen(
     budgetId: String?,
     viewModel: BudgetViewModel = koinViewModel(),
     accountsViewModel: AccountsViewModel = koinViewModel(),
+    mainViewModel: MainViewModel = koinViewModel(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onSave: () -> Unit,
@@ -215,6 +217,7 @@ fun BudgetDetailScreen(
 
     LaunchedEffect(saveState) {
         if (saveState is SaveState.Success) {
+            mainViewModel.triggerGlobalRefresh()
             delay(1000)
             onSave()
             viewModel.resetSaveState()
@@ -223,6 +226,7 @@ fun BudgetDetailScreen(
 
     LaunchedEffect(deleteResult) {
         if (deleteResult is Result.Success) {
+            mainViewModel.triggerGlobalRefresh()
             onBack()
         }
     }
