@@ -43,8 +43,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.compose.GreenIncome
-import com.example.compose.PinkExpense
+import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
+import com.fintrack.shared.feature.navigation.MainViewModel
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
@@ -52,12 +52,14 @@ import com.fintrack.shared.feature.settings.ui.toCurrencyString
 import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.CommonErrorState
+import com.fintrack.shared.ui.theme.GreenIncome
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun BudgetScreen(
     viewModel: BudgetViewModel = koinViewModel(),
+    mainViewModel: MainViewModel = koinViewModel(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onAddBudget: () -> Unit = {},
@@ -68,6 +70,12 @@ fun BudgetScreen(
 
     val budgets by viewModel.budgets.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
+
+    LaunchedEffect(Unit) {
+        mainViewModel.refreshEvent.collect {
+            viewModel.reloadBudgets(force = true, showLoading = false)
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.reloadBudgets(force = false)

@@ -16,6 +16,7 @@ import com.fintrack.shared.feature.transaction.domain.usecase.GetCategoriesUseCa
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -36,12 +37,8 @@ class BudgetViewModel(
             initialValue = emptyList()
         )
 
-    val budgets: StateFlow<Result<List<BudgetWithStatus>>> = repo.budgets
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = Result.Loading
-        )
+    private val _budgets = MutableStateFlow<Result<List<BudgetWithStatus>>>(Result.Loading)
+    val budgets: StateFlow<Result<List<BudgetWithStatus>>> = _budgets.asStateFlow()
 
     private val _saveState = MutableStateFlow<SaveState<Budget>>(SaveState.Idle)
     val saveState: StateFlow<SaveState<Budget>> = _saveState
@@ -151,22 +148,16 @@ class BudgetViewModel(
         _formState.value = formState
     }
 
-    fun reloadBudgets(force: Boolean = true) {
-        viewModelScope.launch {
-            repo.getBudgets(forceRefresh = force, limit = 20, offset = 0)
-        }
-    }
+    // Reload all budgets
+    fun reloadBudgets(force: Boolean = true, showLoading: Boolean = true) {
+        val currentBudgets = _budgets.value
+        if (!force && currentBudgets is Result.Success && currentBudgets.data.isNotEmpty()) return
 
-    fun loadMoreBudgets() {
-        val currentBudgets = budgets.value
-        if (currentBudgets is Result.Success) {
-            viewModelScope.launch {
-                repo.getBudgets(
-                    forceRefresh = true,
-                    limit = 20,
-                    offset = currentBudgets.data.size.toLong()
-                )
+        viewModelScope.launch {
+            if (showLoading) {
+                _budgets.value = Result.Loading
             }
+            _budgets.value = repo.getBudgets(accountId = null)
         }
     }
 

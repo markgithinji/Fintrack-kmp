@@ -19,7 +19,7 @@ class CheckBudgetThresholdsUseCase(
         val thresholds = settingsDataSource.budgetAlertThresholds.first()
         if (thresholds.isEmpty()) return
 
-        val result = budgetRepository.getBudgets(forceRefresh = true)
+        val result = budgetRepository.getBudgets()
         if (result is Result.Success) {
             val budgetWithStatus = result.data.find { it.budget.id == alertBudgetId } ?: return
             val status = budgetWithStatus.status

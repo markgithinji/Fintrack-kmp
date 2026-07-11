@@ -58,11 +58,28 @@ class SettingsViewModel(
             }
         }
         viewModelScope.launch {
-            budgetRepository.getBudgets(forceRefresh = false)
+            loadBudgets()
         }
     }
 
-    val budgets: StateFlow<Result<List<BudgetWithStatus>>> = budgetRepository.budgets
+    private val _budgets = MutableStateFlow<Result<List<BudgetWithStatus>>>(Result.Loading)
+    val budgets: StateFlow<Result<List<BudgetWithStatus>>> = _budgets.asStateFlow()
+
+    fun reloadBudgets(force: Boolean = true, showLoading: Boolean = true) {
+        val currentBudgets = _budgets.value
+        if (!force && currentBudgets is Result.Success && currentBudgets.data.isNotEmpty()) return
+
+        viewModelScope.launch {
+            if (showLoading) {
+                _budgets.value = Result.Loading
+            }
+            _budgets.value = budgetRepository.getBudgets()
+        }
+    }
+
+    private fun loadBudgets() {
+        reloadBudgets(force = false, showLoading = true)
+    }
 
     val theme: StateFlow<AppTheme> = settingsDataSource.theme
 

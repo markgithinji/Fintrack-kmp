@@ -124,9 +124,7 @@ fun SettingsScreen(
 
     LaunchedEffect(Unit) {
         mainViewModel.refreshEvent.collect {
-            // Settings screen might not need to reload everything, 
-            // but let's ensure tracked categories and budgets are up to date if they depend on others
-            // For now, it's mostly about triggering refreshes FROM here.
+            viewModel.reloadBudgets(force = true, showLoading = false)
         }
     }
 
