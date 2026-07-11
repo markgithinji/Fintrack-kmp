@@ -62,6 +62,7 @@ fun HomeScreen(
     val overviewResult by statsViewModel.overview.collectAsStateWithLifecycle()
     val categoryComparisonResult by statsViewModel.categoryComparisons.collectAsStateWithLifecycle()
     val isBalanceHidden by settingsViewModel.isBalanceHidden.collectAsStateWithLifecycle()
+    val defaultAccountId by settingsViewModel.defaultAccountId.collectAsStateWithLifecycle()
     val isMpesaListenerEnabled by settingsViewModel.isMpesaListenerEnabled.collectAsStateWithLifecycle()
     val isEquityListenerEnabled by settingsViewModel.isEquityListenerEnabled.collectAsStateWithLifecycle()
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
@@ -87,7 +88,7 @@ fun HomeScreen(
 
     LaunchedEffect(refreshTrigger) {
         if (refreshTrigger > 0) {
-            accountsViewModel.reloadAccounts(force = true, showLoading = false)
+            accountsViewModel.reloadAccounts( showLoading = false)
             val accountId = (selectedAccountResult as? Result.Success)?.data?.id
             accountId?.let { id ->
                 transactionsViewModel.loadRecentTransactions(id, force = true)
@@ -101,7 +102,7 @@ fun HomeScreen(
 
     LaunchedEffect(Unit) {
         if (accountsResult is Result.Error || (accountsResult is Result.Success && (accountsResult as Result.Success).data.isEmpty())) {
-            accountsViewModel.reloadAccounts(force = true)
+            accountsViewModel.reloadAccounts()
         }
         
         // Auto-sync transactions if enabled
@@ -136,7 +137,7 @@ fun HomeScreen(
                 CurrentBalanceCardWrapper(
                     accountsResult = accountsResult,
                     selectedAccountResult = selectedAccountResult,
-                    defaultAccountId = selectedAccountId,
+                    defaultAccountId = defaultAccountId,
                     isBalanceHidden = isBalanceHidden,
                     isMpesaAutoSyncEnabled = isMpesaListenerEnabled,
                     isEquityAutoSyncEnabled = isEquityListenerEnabled,
@@ -151,7 +152,7 @@ fun HomeScreen(
                     onManualSync = { showSmsPermissionRequest = true },
                     onSyncErrorClick = { message -> syncErrorMessage = message },
                     onRetry = {
-                        accountsViewModel.reloadAccounts(force = true)
+                        accountsViewModel.reloadAccounts()
                     }
                 )
             }
