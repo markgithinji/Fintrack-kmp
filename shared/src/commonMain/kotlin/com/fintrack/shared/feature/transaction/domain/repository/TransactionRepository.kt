@@ -46,6 +46,8 @@ interface TransactionRepository {
 
     suspend fun getRecurringBills(): Result<List<RecurringBill>>
 
+    val dataChangedEvent: Flow<Unit>
+
     fun getTransactionsPagingFlow(
         accountId: String?,
         isIncome: Boolean? = null,

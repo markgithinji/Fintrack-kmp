@@ -28,7 +28,8 @@ import kotlinx.coroutines.launch
 
 @OptIn(FlowPreview::class)
 class StatisticsViewModel(
-    private val repo: SummaryRepository
+    private val repo: SummaryRepository,
+    private val transactionRepository: com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 ) : ViewModel() {
 
     private val _highlights = MutableStateFlow<Result<StatisticsSummary>>(Result.Loading)
@@ -65,6 +66,25 @@ class StatisticsViewModel(
     private val _transactionCounts =
         MutableStateFlow<Result<TransactionCountSummary>>(Result.Loading)
     val transactionCounts: StateFlow<Result<TransactionCountSummary>> = _transactionCounts
+
+    init {
+        // Observe transaction changes to refresh all statistics
+        viewModelScope.launch {
+            transactionRepository.dataChangedEvent.collect {
+                // Refresh everything currently loaded
+                lastHighlightsAccountId?.let { id -> loadHighlights(id, lastHighlightsPeriod, force = true) }
+                lastOverviewAccountId?.let { id -> loadOverview(id, force = true) }
+                lastCategoryComparisonAccountId?.let { id -> loadCategoryComparisons(id, lastCategoryComparisonPeriod, force = true) }
+                lastAvailablePeriodsAccountId?.let { id -> loadAvailablePeriods(id, force = true) }
+                
+                // If counting transactions, refresh that too
+                lastTransactionCountsAccountId?.let { id -> 
+                    loadTransactionCounts(id, lastTransactionCountsIsIncome, lastTransactionCountsCategory, 
+                        lastTransactionCountsStart, lastTransactionCountsEnd, lastTransactionCountsHasCost, force = true) 
+                }
+            }
+        }
+    }
 
     val distribution: StateFlow<Result<DistributionSummary>> =
         combine(

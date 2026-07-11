@@ -16,7 +16,8 @@ val accountModule = module {
         AccountsViewModel(
             repo = get(),
             getAccountsUseCase = get(),
-            clearAllUserDataUseCase = get()
+            clearAllUserDataUseCase = get(),
+            transactionRepository = get()
         )
     }
 }

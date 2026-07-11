@@ -13,6 +13,8 @@ import com.fintrack.shared.feature.transaction.domain.model.RecurringBill
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 class TransactionRepositoryImpl(
@@ -20,6 +22,9 @@ class TransactionRepositoryImpl(
 ) : TransactionRepository {
 
     private val logger = KMPLogger()
+
+    private val _dataChangedEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    override val dataChangedEvent: Flow<Unit> = _dataChangedEvent.asSharedFlow()
 
     companion object {
         private const val PAGE_SIZE = 20
@@ -62,6 +67,7 @@ class TransactionRepositoryImpl(
         return safeApiCall {
             val createRequest = transaction.toCreateRequest()
             val dto = api.addTransaction(createRequest)
+            _dataChangedEvent.tryEmit(Unit)
             dto.toDomain()
         }
     }
@@ -70,6 +76,7 @@ class TransactionRepositoryImpl(
         return safeApiCall {
             val requests = transactions.map { it.toCreateRequest() }
             api.addTransactions(requests)
+            _dataChangedEvent.tryEmit(Unit)
         }
     }
 
@@ -81,6 +88,7 @@ class TransactionRepositoryImpl(
         }
         if (result is Result.Success) {
             logger.debug("SYNC_FLOW", "Repository: importMpesaTransactions success")
+            _dataChangedEvent.tryEmit(Unit)
         }
         if (result is Result.Error) {
             logger.error("SYNC_FLOW", "Repository: importMpesaTransactions failed", result.exception)
@@ -96,6 +104,7 @@ class TransactionRepositoryImpl(
         }
         if (result is Result.Success) {
             logger.debug("SYNC_FLOW", "Repository: importEquityTransactions success")
+            _dataChangedEvent.tryEmit(Unit)
         } else if (result is Result.Error) {
             logger.error("SYNC_FLOW", "Repository: importEquityTransactions failed", result.exception)
         }
@@ -125,19 +134,23 @@ class TransactionRepositoryImpl(
 
     override suspend fun updateTransaction(id: String, transaction: Transaction): Result<Transaction> {
         return safeApiCall {
-            api.updateTransaction(id, transaction.toCreateRequest()).toDomain()
+            val result = api.updateTransaction(id, transaction.toCreateRequest()).toDomain()
+            _dataChangedEvent.tryEmit(Unit)
+            result
         }
     }
 
     override suspend fun deleteTransaction(id: String): Result<Unit> {
         return safeApiCall {
             api.deleteTransaction(id)
+            _dataChangedEvent.tryEmit(Unit)
         }
     }
 
     override suspend fun deleteAllTransactions(accountIds: List<String>?): Result<Unit> {
         return safeApiCall {
             api.deleteAllTransactions(accountIds)
+            _dataChangedEvent.tryEmit(Unit)
         }
     }
 

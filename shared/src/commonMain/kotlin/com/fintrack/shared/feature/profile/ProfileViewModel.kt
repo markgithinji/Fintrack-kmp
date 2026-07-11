@@ -21,7 +21,8 @@ import kotlinx.coroutines.launch
 class ProfileViewModel(
     private val userRepository: UserRepository,
     private val validationUseCase: ProfileValidationUseCase,
-    private val summaryRepository: SummaryRepository
+    private val summaryRepository: SummaryRepository,
+    private val transactionRepository: com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 ) : ViewModel() {
 
     private val _profileState = MutableStateFlow<Result<User>>(
@@ -52,6 +53,13 @@ class ProfileViewModel(
                         state.copy(name = user.name, email = user.email)
                     }
                 }
+            }
+        }
+
+        // Observe transaction changes to refresh metrics
+        viewModelScope.launch {
+            transactionRepository.dataChangedEvent.collect {
+                refreshProfile()
             }
         }
     }

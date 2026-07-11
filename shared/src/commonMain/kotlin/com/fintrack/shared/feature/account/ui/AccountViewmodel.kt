@@ -19,7 +19,8 @@ import kotlinx.coroutines.launch
 class AccountsViewModel(
     private val repo: AccountRepository,
     private val getAccountsUseCase: GetAccountsUseCase,
-    private val clearAllUserDataUseCase: ClearAllUserDataUseCase
+    private val clearAllUserDataUseCase: ClearAllUserDataUseCase,
+    private val transactionRepository: com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 ) : ViewModel() {
 
     private val logger = KMPLogger()
@@ -41,6 +42,13 @@ class AccountsViewModel(
 
     init {
         reloadAccounts(force = false)
+        
+        // Observe transaction changes to refresh balances
+        viewModelScope.launch {
+            transactionRepository.dataChangedEvent.collect {
+                reloadAccounts(force = true, showLoading = false)
+            }
+        }
     }
 
     // Reload all accounts

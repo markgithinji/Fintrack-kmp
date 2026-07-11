@@ -94,6 +94,15 @@ class TransactionViewModel(
             }
         }
         
+        // Observe transaction changes to refresh recent transactions
+        viewModelScope.launch {
+            repo.dataChangedEvent.collect {
+                lastLoadedRecentAccountId?.let { id ->
+                    loadRecentTransactions(id, force = true)
+                }
+            }
+        }
+        
         refreshCategories()
     }
 

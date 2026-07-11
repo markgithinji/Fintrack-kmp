@@ -237,6 +237,7 @@ fun ProfileScreen(
                             horizontalArrangement = Arrangement.SpaceEvenly,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            val isLoading = metricsResult is Result.Loading
                             val metrics = (metricsResult as? Result.Success)?.data
                             val netWorth = metrics?.netWorth ?: 0.0
                             val savingsRate = metrics?.savingsRate
@@ -246,6 +247,7 @@ fun ProfileScreen(
                                 label = "Net Worth",
                                 value = netWorth.toCurrencyString(),
                                 icon = Icons.Default.AccountBalanceWallet,
+                                isLoading = isLoading,
                                 modifier = Modifier.weight(1f)
                             )
 
@@ -258,6 +260,7 @@ fun ProfileScreen(
                                 label = "Savings",
                                 value = if (savingsRate != null) "${savingsRate.toInt()}%" else "--",
                                 icon = Icons.AutoMirrored.Filled.TrendingUp,
+                                isLoading = isLoading,
                                 modifier = Modifier.weight(1f)
                             )
 
@@ -270,6 +273,7 @@ fun ProfileScreen(
                                 label = "Needs",
                                 value = if (essentialRatio != null) "${essentialRatio.toInt()}%" else "--",
                                 icon = Icons.Default.ReceiptLong,
+                                isLoading = isLoading,
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -327,6 +331,7 @@ private fun ProfileMetricItem(
     label: String,
     value: String,
     icon: ImageVector,
+    isLoading: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -341,12 +346,24 @@ private fun ProfileMetricItem(
             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
         )
         Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        
+        if (isLoading) {
+            AnimatedShimmerBox(
+                modifier = Modifier
+                    .width(48.dp)
+                    .height(18.dp)
+                    .clip(RoundedCornerShape(4.dp))
+            )
+        } else {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
