@@ -29,7 +29,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,7 +75,8 @@ data class BottomNavItem(
 
 
 @Composable
-fun BottomBar(navController: NavHostController, selectedAccountId: String?) {
+fun BottomBar(selectedAccountId: String?) {
+    val navController = LocalNavController.current
     val items = remember(selectedAccountId) {
         listOf(
             BottomNavItem("Home", Icons.Default.Home, selectedAccountId?.let { Screen.Home(it) } ?: Screen.Login),

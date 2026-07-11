@@ -49,11 +49,10 @@ import org.koin.compose.koinInject
 fun AuthOrchestrator(
     authStatus: AuthState<Boolean>,
     currentDestination: NavDestination?,
-    navController: NavHostController,
     authViewModel: AuthViewModel
 ) {
     val isAppLocked by authViewModel.isAppLocked.collectAsStateWithLifecycle()
-    val biometricAuthenticator: BiometricAuthenticator = koinInject()
+    val biometricAuthenticator = LocalBiometricAuthenticator.current
     val scope = rememberCoroutineScope()
 
     // Track the last error to determine if we are in a retry/transition flow.
@@ -126,7 +125,6 @@ fun AuthOrchestrator(
                 MainAppScaffold(
                     isAuthenticated = authStatus.data,
                     currentDestination = currentDestination,
-                    navController = navController,
                     authViewModel = authViewModel,
                     onLogout = { 
                         authViewModel.logout() 

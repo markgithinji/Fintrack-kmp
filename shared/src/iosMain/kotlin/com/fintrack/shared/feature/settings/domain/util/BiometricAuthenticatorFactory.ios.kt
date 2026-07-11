@@ -1,5 +1,13 @@
 package com.fintrack.shared.feature.settings.domain.util
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+
+@Composable
+actual fun rememberBiometricAuthenticator(): BiometricAuthenticator {
+    return remember { IOSBiometricAuthenticator() }
+}
+
 actual fun createBiometricAuthenticator(): BiometricAuthenticator {
     return IOSBiometricAuthenticator()
 }

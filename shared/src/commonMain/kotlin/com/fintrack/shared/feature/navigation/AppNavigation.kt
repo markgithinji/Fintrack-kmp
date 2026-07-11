@@ -22,7 +22,6 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
@@ -51,13 +50,13 @@ val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope?> { nu
 @Composable
 fun AppNavigation(
     isAuthenticated: Boolean,
-    navController: NavHostController,
     paddingValues: PaddingValues,
     onUpdateAppBarState: (AppBarState) -> Unit,
     authViewModel: AuthViewModel,
     mainViewModel: MainViewModel = koinViewModel(),
     onLogout: () -> Unit = {},
 ) {
+    val navController = LocalNavController.current
     val selectedAccountId by mainViewModel.selectedAccountId.collectAsStateWithLifecycle()
 
     println("LOGIN_DEBUG: AppNavigation recomposing. isAuthenticated: $isAuthenticated")

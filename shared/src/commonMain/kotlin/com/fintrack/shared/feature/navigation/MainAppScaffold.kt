@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavHostController
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -40,11 +39,11 @@ import org.koin.compose.viewmodel.koinViewModel
 fun MainAppScaffold(
     isAuthenticated: Boolean,
     currentDestination: NavDestination?,
-    navController: NavHostController,
     authViewModel: AuthViewModel,
     mainViewModel: MainViewModel = koinViewModel(),
     onLogout: () -> Unit = {}
 ) {
+    val navController = LocalNavController.current
     val selectedAccountId by mainViewModel.selectedAccountId.collectAsStateWithLifecycle()
     
     // State to update AppBar per screen
@@ -86,7 +85,7 @@ fun MainAppScaffold(
                 },
                 bottomBar = {
                     if (showBottomBar) {
-                        BottomBar(navController, selectedAccountId)
+                        BottomBar(selectedAccountId)
                     }
                 },
                 floatingActionButton = {
@@ -100,7 +99,6 @@ fun MainAppScaffold(
             ) { paddingValues ->
                 AppNavigation(
                     isAuthenticated = isAuthenticated,
-                    navController = navController,
                     paddingValues = paddingValues,
                     onUpdateAppBarState = { newState -> appBarState = newState },
                     authViewModel = authViewModel,

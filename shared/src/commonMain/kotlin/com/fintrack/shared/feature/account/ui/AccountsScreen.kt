@@ -45,6 +45,7 @@ import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
 import com.fintrack.shared.feature.navigation.MainViewModel
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
+import com.fintrack.shared.feature.navigation.LocalBiometricAuthenticator
 import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import kotlinx.coroutines.launch
@@ -67,7 +68,7 @@ fun AccountsScreen(
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
     val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
     
-    val biometricAuthenticator: BiometricAuthenticator = koinInject()
+    val biometricAuthenticator = LocalBiometricAuthenticator.current
     val scope = rememberCoroutineScope()
     
     var showAccountDialog by remember { mutableStateOf<Account?>(null) }

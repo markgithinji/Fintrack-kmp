@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
@@ -37,11 +36,9 @@ fun MainScreen(
             color = MaterialTheme.colorScheme.background,
         ) {
             AppStateProvider(viewModel = mainViewModel) {
+                val navController = LocalNavController.current
                 val authViewModel: AuthViewModel = koinViewModel()
                 val authStatusState by authViewModel.authStatus.collectAsStateWithLifecycle()
-
-                // Use a stable NavController that persists across auth changes.
-                val navController = rememberNavController()
 
                 // Track current destination
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -59,7 +56,6 @@ fun MainScreen(
                 AuthOrchestrator(
                     authStatus = authStatusState,
                     currentDestination = currentDestination,
-                    navController = navController,
                     authViewModel = authViewModel,
                 )
             }
