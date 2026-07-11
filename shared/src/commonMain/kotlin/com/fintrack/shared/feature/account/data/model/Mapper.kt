@@ -1,7 +1,6 @@
 package com.fintrack.shared.feature.account.data.model
 
 import com.fintrack.shared.feature.account.domain.model.Account
-import com.fintrack.shared.feature.account.domain.model.AccountType
 
 fun Account.toCreateRequest(): CreateAccountRequest = CreateAccountRequest(
     name = this.name,

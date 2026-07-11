@@ -2,7 +2,6 @@ package com.fintrack.shared.feature.transaction.util
 
 import android.content.Context
 import android.provider.Telephony
-import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result

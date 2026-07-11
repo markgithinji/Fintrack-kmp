@@ -10,5 +10,5 @@ import org.koin.dsl.module
 val summaryModule = module {
     single { SummaryApi(get()) }
     single<SummaryRepository> { SummaryRepositoryImpl(api = get()) }
-    viewModel { StatisticsViewModel(get(), get()) }
+    viewModel { StatisticsViewModel(get()) }
 }

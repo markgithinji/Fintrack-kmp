@@ -19,8 +19,7 @@ val userModule = module {
         ProfileViewModel(
             userRepository = get(),
             validationUseCase = get(),
-            summaryRepository = get(),
-            transactionRepository = get()
+            summaryRepository = get()
         )
     }
 }

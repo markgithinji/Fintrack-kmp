@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.logger.LogTags
 import com.fintrack.shared.feature.summary.domain.model.ProfileMetrics
 import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
@@ -21,8 +20,7 @@ import kotlinx.coroutines.launch
 class ProfileViewModel(
     private val userRepository: UserRepository,
     private val validationUseCase: ProfileValidationUseCase,
-    private val summaryRepository: SummaryRepository,
-    private val transactionRepository: com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
+    private val summaryRepository: SummaryRepository
 ) : ViewModel() {
 
     private val _profileState = MutableStateFlow<Result<User>>(
@@ -53,13 +51,6 @@ class ProfileViewModel(
                         state.copy(name = user.name, email = user.email)
                     }
                 }
-            }
-        }
-
-        // Observe transaction changes to refresh metrics
-        viewModelScope.launch {
-            transactionRepository.dataChangedEvent.collect {
-                refreshProfile()
             }
         }
     }

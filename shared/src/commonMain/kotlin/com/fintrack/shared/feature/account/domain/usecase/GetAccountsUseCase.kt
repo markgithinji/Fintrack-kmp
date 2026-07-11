@@ -7,10 +7,10 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.map
 
 class GetAccountsUseCase(
-    private val repository: AccountRepository
+    private val accountRepository: AccountRepository
 ) {
     suspend operator fun invoke(): Result<List<Account>> {
-        return repository.getAccounts().map { accounts ->
+        return accountRepository.getAccounts().map { accounts ->
             // Priority sorting:
             // 1. System/Default accounts first
             // 2. Within defaults, M-Pesa then Equity first

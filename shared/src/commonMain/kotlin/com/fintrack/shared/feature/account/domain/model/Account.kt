@@ -1,5 +1,7 @@
 package com.fintrack.shared.feature.account.domain.model
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlin.time.Instant
 
 data class Account(
@@ -12,3 +14,13 @@ data class Account(
     val type: AccountType = AccountType.GENERAL,
     val createdAt: Instant? = null
 )
+
+@Serializable
+enum class AccountType {
+    @SerialName("general")
+    GENERAL,
+    @SerialName("mpesa")
+    MPESA,
+    @SerialName("equity")
+    EQUITY
+}

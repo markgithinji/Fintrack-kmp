@@ -1,7 +1,6 @@
 package com.fintrack.shared.feature.transaction.domain.util
 
 import android.content.Context
-import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.core.util.Result

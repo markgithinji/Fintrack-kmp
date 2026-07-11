@@ -3,7 +3,6 @@ package com.fintrack.shared.feature.summary.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
@@ -13,7 +12,6 @@ import com.fintrack.shared.feature.summary.domain.model.TabType
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.domain.model.TransactionType
 import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
-import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -21,15 +19,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @OptIn(FlowPreview::class)
 class StatisticsViewModel(
-    private val repo: SummaryRepository,
-    private val transactionRepository: com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
+    private val repo: SummaryRepository
 ) : ViewModel() {
 
     private val _highlights = MutableStateFlow<Result<StatisticsSummary>>(Result.Loading)
@@ -66,25 +61,6 @@ class StatisticsViewModel(
     private val _transactionCounts =
         MutableStateFlow<Result<TransactionCountSummary>>(Result.Loading)
     val transactionCounts: StateFlow<Result<TransactionCountSummary>> = _transactionCounts
-
-    init {
-        // Observe transaction changes to refresh all statistics
-        viewModelScope.launch {
-            transactionRepository.dataChangedEvent.collect {
-                // Refresh everything currently loaded
-                lastHighlightsAccountId?.let { id -> loadHighlights(id, lastHighlightsPeriod, force = true) }
-                lastOverviewAccountId?.let { id -> loadOverview(id, force = true) }
-                lastCategoryComparisonAccountId?.let { id -> loadCategoryComparisons(id, lastCategoryComparisonPeriod, force = true) }
-                lastAvailablePeriodsAccountId?.let { id -> loadAvailablePeriods(id, force = true) }
-                
-                // If counting transactions, refresh that too
-                lastTransactionCountsAccountId?.let { id -> 
-                    loadTransactionCounts(id, lastTransactionCountsIsIncome, lastTransactionCountsCategory, 
-                        lastTransactionCountsStart, lastTransactionCountsEnd, lastTransactionCountsHasCost, force = true) 
-                }
-            }
-        }
-    }
 
     val distribution: StateFlow<Result<DistributionSummary>> =
         combine(

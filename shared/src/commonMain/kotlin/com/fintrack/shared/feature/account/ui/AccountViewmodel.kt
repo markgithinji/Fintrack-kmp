@@ -3,27 +3,20 @@ package com.fintrack.shared.feature.account.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.account.domain.model.Account
-import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.account.domain.usecase.GetAccountsUseCase
-import com.fintrack.shared.feature.settings.domain.usecase.ClearAllUserDataUseCase
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.settings.domain.usecase.ClearAllUserDataUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class AccountsViewModel(
     private val repo: AccountRepository,
     private val getAccountsUseCase: GetAccountsUseCase,
-    private val clearAllUserDataUseCase: ClearAllUserDataUseCase,
-    private val transactionRepository: com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
+    private val clearAllUserDataUseCase: ClearAllUserDataUseCase
 ) : ViewModel() {
-
-    private val logger = KMPLogger()
 
     private val _accounts = MutableStateFlow<Result<List<Account>>>(Result.Loading)
     val accounts: StateFlow<Result<List<Account>>> = _accounts
@@ -42,13 +35,6 @@ class AccountsViewModel(
 
     init {
         reloadAccounts(force = false)
-        
-        // Observe transaction changes to refresh balances
-        viewModelScope.launch {
-            transactionRepository.dataChangedEvent.collect {
-                reloadAccounts(force = true, showLoading = false)
-            }
-        }
     }
 
     // Reload all accounts
@@ -63,7 +49,7 @@ class AccountsViewModel(
 
             val result = getAccountsUseCase()
             _accounts.value = result
-            
+
             // If we have a selected account, update it from the new list if possible
             val currentSelectedId = (_selectedAccount.value as? Result.Success)?.data?.id
             if (result is Result.Success && currentSelectedId != null) {
@@ -89,14 +75,9 @@ class AccountsViewModel(
             val accounts = (_accounts.value as? Result.Success)?.data
             val account = accounts?.firstOrNull { it.id == id }
             if (account != null) {
-                logger.debug("AccountsViewModel", "Loading account from cache: ${account.name} (type=${account.type})")
                 _selectedAccount.value = Result.Success(account)
             } else {
-                logger.debug("AccountsViewModel", "Fetching account from repo: $id")
                 val result = repo.getAccountById(id)
-                if (result is Result.Success) {
-                    logger.debug("AccountsViewModel", "Fetched account: ${result.data.name} (type=${result.data.type})")
-                }
                 _selectedAccount.value = result
             }
         }
@@ -104,12 +85,10 @@ class AccountsViewModel(
 
     fun saveAccount(account: Account) {
         viewModelScope.launch {
-            logger.info("AccountsViewModel", "Saving account: ${account.name} (type=${account.type})")
             _saveResult.value = Result.Loading
             val result = repo.addOrUpdateAccount(account)
             _saveResult.value = result
             if (result is Result.Success) {
-                logger.info("AccountsViewModel", "Account saved successfully: ${result.data.name}")
                 // Update local state immediately for a smooth transition
                 val currentResult = _accounts.value
                 if (currentResult is Result.Success) {
@@ -124,7 +103,6 @@ class AccountsViewModel(
                 // If the updated account is the currently selected one, update it immediately
                 val currentSelectedId = (selectedAccount.value as? Result.Success)?.data?.id
                 if (result.data.id == currentSelectedId) {
-                    logger.debug("AccountsViewModel", "Updating current selected account state immediately")
                     _selectedAccount.value = Result.Success(result.data)
                 }
 

@@ -9,15 +9,14 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val accountModule = module {
-    single { AccountsApi(get()) }
-    single<AccountRepository> { AccountRepositoryImpl(get()) }
-    factory { GetAccountsUseCase(get()) }
+    single { AccountsApi(client = get()) }
+    single<AccountRepository> { AccountRepositoryImpl(accountsApi = get()) }
+    factory { GetAccountsUseCase(accountRepository = repository = get()) }
     viewModel {
         AccountsViewModel(
             repo = get(),
             getAccountsUseCase = get(),
-            clearAllUserDataUseCase = get(),
-            transactionRepository = get()
+            clearAllUserDataUseCase = get()
         )
     }
 }
