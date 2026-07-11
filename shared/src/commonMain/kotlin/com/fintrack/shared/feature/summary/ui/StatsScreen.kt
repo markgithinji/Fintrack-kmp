@@ -38,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.navigation.MainViewModel
 import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.TabType
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 import com.fintrack.shared.feature.core.util.Result
@@ -53,7 +54,7 @@ import com.fintrack.shared.ui.theme.PinkExpense
 fun StatisticsScreen(
     selectedAccountId: String? = null,
     viewModel: StatisticsViewModel = koinViewModel(),
-    mainViewModel: MainViewModel = koinViewModel(),
+    mainViewModel: MainViewModel = koinInject(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onCategoryClick: (category: String, isIncome: Boolean, startDate: String?, endDate: String?, accountId: String?) -> Unit = { _, _, _, _, _ -> }
@@ -65,14 +66,15 @@ fun StatisticsScreen(
     val availableYears by viewModel.availableYears.collectAsStateWithLifecycle()
     val highlights by viewModel.highlights.collectAsStateWithLifecycle()
     val distributionResult by viewModel.distribution.collectAsStateWithLifecycle()
+    val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
 
     val safePeriod = selectedPeriod ?: remember(availableWeeks, availableMonths, availableYears) {
         getDefaultPeriod(availableWeeks, availableMonths, availableYears)
     }
 
-    LaunchedEffect(Unit) {
-        mainViewModel.refreshEvent.collect {
+    LaunchedEffect(refreshTrigger) {
+        if (refreshTrigger > 0) {
             viewModel.loadAvailablePeriods(selectedAccountId, force = true)
             viewModel.loadOverview(selectedAccountId, force = true)
             viewModel.loadCategoryComparisons(selectedAccountId, force = true)

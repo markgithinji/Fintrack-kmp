@@ -38,6 +38,7 @@ import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -49,7 +50,7 @@ fun HomeScreen(
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     statsViewModel: StatisticsViewModel = koinViewModel(),
     settingsViewModel: SettingsViewModel = koinViewModel(),
-    mainViewModel: MainViewModel = koinViewModel(),
+    mainViewModel: MainViewModel = koinInject(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onEditTransaction: (String) -> Unit,
@@ -65,6 +66,7 @@ fun HomeScreen(
     val isEquityListenerEnabled by settingsViewModel.isEquityListenerEnabled.collectAsStateWithLifecycle()
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
     val importProgress by transactionsViewModel.importProgress.collectAsStateWithLifecycle()
+    val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
     
     val logger = remember { KMPLogger() }
 
@@ -83,8 +85,8 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        mainViewModel.refreshEvent.collect {
+    LaunchedEffect(refreshTrigger) {
+        if (refreshTrigger > 0) {
             accountsViewModel.reloadAccounts(force = true, showLoading = false)
             val accountId = (selectedAccountResult as? Result.Success)?.data?.id
             accountId?.let { id ->

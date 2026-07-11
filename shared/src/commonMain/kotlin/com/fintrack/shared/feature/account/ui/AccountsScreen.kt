@@ -58,13 +58,14 @@ fun AccountsScreen(
     viewModel: AccountsViewModel = koinViewModel(),
     settingsViewModel: SettingsViewModel = koinViewModel(),
     transactionsViewModel: TransactionViewModel = koinViewModel(),
-    mainViewModel: MainViewModel = koinViewModel()
+    mainViewModel: MainViewModel = koinInject()
 ) {
     val accountsState by viewModel.accounts.collectAsStateWithLifecycle()
     val deleteResult by viewModel.deleteResult.collectAsStateWithLifecycle()
     val saveResult by viewModel.saveResult.collectAsStateWithLifecycle()
     val clearDataResult by viewModel.clearDataResult.collectAsStateWithLifecycle()
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
+    val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
     
     val biometricAuthenticator: BiometricAuthenticator = koinInject()
     val scope = rememberCoroutineScope()
@@ -76,8 +77,8 @@ fun AccountsScreen(
 
     val isOperating = (deleteResult is Result.Loading) || (saveResult is Result.Loading) || (clearDataResult is Result.Loading) || (importState is Result.Loading)
 
-    LaunchedEffect(Unit) {
-        mainViewModel.refreshEvent.collect {
+    LaunchedEffect(refreshTrigger) {
+        if (refreshTrigger > 0) {
             viewModel.reloadAccounts(force = true, showLoading = false)
         }
     }

@@ -53,13 +53,14 @@ import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.ui.theme.GreenIncome
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun BudgetScreen(
     viewModel: BudgetViewModel = koinViewModel(),
-    mainViewModel: MainViewModel = koinViewModel(),
+    mainViewModel: MainViewModel = koinInject(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onAddBudget: () -> Unit = {},
@@ -69,10 +70,11 @@ fun BudgetScreen(
         ?: throw IllegalStateException("No SharedTransitionScope found")
 
     val budgets by viewModel.budgets.collectAsStateWithLifecycle()
+    val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
 
-    LaunchedEffect(Unit) {
-        mainViewModel.refreshEvent.collect {
+    LaunchedEffect(refreshTrigger) {
+        if (refreshTrigger > 0) {
             viewModel.reloadBudgets(force = true, showLoading = false)
         }
     }

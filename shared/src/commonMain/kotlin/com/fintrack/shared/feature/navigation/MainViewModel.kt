@@ -19,9 +19,9 @@ import kotlinx.coroutines.launch
 
 class MainViewModel(
     private val settingsDataSource: SettingsDataSource,
-    private val userRepository: UserRepository,
+    userRepository: UserRepository,
     private val checkBudgetThresholdsUseCase: CheckBudgetThresholdsUseCase,
-    private val syncRecurringBillsUseCase: SyncRecurringBillsUseCase
+    private val syncRecurringBillsUseCase: SyncRecurringBillsUseCase,
 ) : ViewModel() {
 
     private val _selectedAccountId = MutableStateFlow<String?>(null)
@@ -29,6 +29,9 @@ class MainViewModel(
 
     private val _refreshEvent = MutableSharedFlow<Unit>(replay = 0)
     val refreshEvent: SharedFlow<Unit> = _refreshEvent.asSharedFlow()
+
+    private val _refreshTrigger = MutableStateFlow(0)
+    val refreshTrigger: StateFlow<Int> = _refreshTrigger.asStateFlow()
 
     // Global states that multiple screens care about
     val isBalanceHidden = settingsDataSource.isBalanceHidden
@@ -42,7 +45,7 @@ class MainViewModel(
         // Initialize selected account from default settings if not already set
         viewModelScope.launch {
             settingsDataSource.defaultAccountId.collect { id ->
-                if (_selectedAccountId.value == null && id != null) {
+                if ((_selectedAccountId.value == null) && (id != null)) {
                     _selectedAccountId.value = id
                 }
             }
@@ -57,7 +60,7 @@ class MainViewModel(
             // React to settings changes for bills
             combine(
                 settingsDataSource.isBillReminderEnabled,
-                settingsDataSource.billReminderDaysBefore
+                settingsDataSource.billReminderDaysBefore,
             ) { enabled, days -> enabled to days }
                 .distinctUntilChanged()
                 .collectLatest { (enabled, _) ->
@@ -75,6 +78,7 @@ class MainViewModel(
     fun triggerGlobalRefresh() {
         viewModelScope.launch {
             _refreshEvent.emit(Unit)
+            _refreshTrigger.value++
             // Maintenance tasks that react to data changes
             checkBudgets()
             syncBills()
@@ -84,7 +88,7 @@ class MainViewModel(
     private suspend fun checkBudgets() {
         try {
             checkBudgetThresholdsUseCase()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Log error
         }
     }
@@ -92,7 +96,7 @@ class MainViewModel(
     private suspend fun syncBills() {
         try {
             syncRecurringBillsUseCase()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Log error
         }
     }
