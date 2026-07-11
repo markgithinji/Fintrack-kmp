@@ -43,124 +43,9 @@ class SettingsViewModel(
 
     private val logger = com.fintrack.shared.feature.core.logger.KMPLogger()
 
-    init {
-        viewModelScope.launch {
-            try {
-                categoryRepository.refreshCategories()
-            } catch (e: Exception) {
-                // Silently fail or log, handled by UI flow
-            }
-        }
-        viewModelScope.launch {
-            val result = accountRepository.getAccounts()
-            if (result is Result.Success) {
-                _accounts.value = result.data
-            }
-        }
-        viewModelScope.launch {
-            loadBudgets()
-        }
-    }
-
+    // State Flows
     private val _budgets = MutableStateFlow<Result<List<BudgetWithStatus>>>(Result.Loading)
     val budgets: StateFlow<Result<List<BudgetWithStatus>>> = _budgets.asStateFlow()
-
-    fun reloadBudgets(force: Boolean = true, showLoading: Boolean = true) {
-        val currentBudgets = _budgets.value
-        if (!force && currentBudgets is Result.Success && currentBudgets.data.isNotEmpty()) return
-
-        viewModelScope.launch {
-            if (showLoading) {
-                _budgets.value = Result.Loading
-            }
-            _budgets.value = budgetRepository.getBudgets()
-        }
-    }
-
-    private fun loadBudgets() {
-        reloadBudgets(force = false, showLoading = true)
-    }
-
-    val theme: StateFlow<AppTheme> = settingsDataSource.theme
-
-    val timeFormat: StateFlow<TimeFormat> = settingsDataSource.timeFormat
-
-    val currency: StateFlow<Currency> = settingsDataSource.currency
-
-    val isBalanceHidden: StateFlow<Boolean> = settingsDataSource.isBalanceHidden
-
-    val isReminderEnabled: StateFlow<Boolean> = settingsDataSource.isReminderEnabled
-
-    val isBiometricEnabled: StateFlow<Boolean> = settingsDataSource.isBiometricEnabled
-
-    val reminderTime: StateFlow<LocalTime> = settingsDataSource.reminderTime
-
-    val mpesaSimSlot: StateFlow<Int?> = settingsDataSource.mpesaSimSlot
-
-    val mpesaAccountId: StateFlow<String?> = settingsDataSource.mpesaAccountId
-
-    val isMpesaListenerEnabled: StateFlow<Boolean> = settingsDataSource.isMpesaListenerEnabled
-
-    val isEquityListenerEnabled: StateFlow<Boolean> = settingsDataSource.isEquityListenerEnabled
-
-    val budgetAlertsEnabled: StateFlow<Boolean> = settingsDataSource.budgetAlertsEnabled
-
-    val budgetAlertThresholds: StateFlow<Set<Int>> = settingsDataSource.budgetAlertThresholds
-
-    val alertBudgetId: StateFlow<String?> = settingsDataSource.alertBudgetId
-
-    val isBillReminderEnabled: StateFlow<Boolean> = settingsDataSource.isBillReminderEnabled
-
-    val billReminderDaysBefore: StateFlow<Int> = settingsDataSource.billReminderDaysBefore
-
-    val isDailySummaryEnabled: StateFlow<Boolean> = settingsDataSource.isDailySummaryEnabled
-
-    val isWeeklySummaryEnabled: StateFlow<Boolean> = settingsDataSource.isWeeklySummaryEnabled
-
-    val summaryNotificationTime: StateFlow<LocalTime> = settingsDataSource.summaryNotificationTime
-
-    val showDecimals: StateFlow<Boolean> = settingsDataSource.showDecimals
-
-    val defaultAccountId: StateFlow<String?> = settingsDataSource.defaultAccountId
-
-    val exportFormat: StateFlow<ExportFormat> = settingsDataSource.exportFormat
-
-    val trackedCategories: StateFlow<List<String>> = userRepository.getUserProfile()
-        .map { it?.trackedCategories ?: emptyList() }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = userRepository.getUserProfile().value?.trackedCategories ?: emptyList()
-        )
-
-    val allCategories: StateFlow<List<Category>> = categoryRepository.getCategories()
-        .map { categories ->
-            // Include both Expense and Income categories for tracking
-            // Filter out the technical 'transaction_cost' ID but keep our 'Transaction Fees' object
-            val filtered = categories.filter { it.id != "transaction_cost" }
-                .distinctBy { it.name.lowercase() to it.isExpense }
-                .sortedWith(
-                    compareByDescending<Category> { it.isDefault }
-                        .thenBy { !it.isExpense } // Expenses first, then Income
-                        .thenBy { it.name }
-                )
-            
-            listOf(Category.TransactionCost) + filtered
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = categoryRepository.getCategories().value.let { categories ->
-                val filtered = categories.filter { it.id != "transaction_cost" }
-                    .distinctBy { it.name.lowercase() to it.isExpense }
-                    .sortedWith(
-                        compareByDescending<Category> { it.isDefault }
-                            .thenBy { !it.isExpense }
-                            .thenBy { it.name }
-                    )
-                listOf(Category.TransactionCost) + filtered
-            }
-        )
 
     private val _accounts = MutableStateFlow<List<Account>>(emptyList())
     val accounts: StateFlow<List<Account>> = _accounts.asStateFlow()
@@ -188,6 +73,102 @@ class SettingsViewModel(
 
     private val _changePasswordFormState = MutableStateFlow(ChangePasswordFormState())
     val changePasswordFormState: StateFlow<ChangePasswordFormState> = _changePasswordFormState.asStateFlow()
+
+    private val _deleteAccountState = MutableStateFlow<SaveState<Unit>>(SaveState.Idle)
+    val deleteAccountState: StateFlow<SaveState<Unit>> = _deleteAccountState.asStateFlow()
+
+    // Settings Flows
+    val theme: StateFlow<AppTheme> = settingsDataSource.theme
+    val timeFormat: StateFlow<TimeFormat> = settingsDataSource.timeFormat
+    val currency: StateFlow<Currency> = settingsDataSource.currency
+    val isBalanceHidden: StateFlow<Boolean> = settingsDataSource.isBalanceHidden
+    val isReminderEnabled: StateFlow<Boolean> = settingsDataSource.isReminderEnabled
+    val isBiometricEnabled: StateFlow<Boolean> = settingsDataSource.isBiometricEnabled
+    val reminderTime: StateFlow<LocalTime> = settingsDataSource.reminderTime
+    val mpesaSimSlot: StateFlow<Int?> = settingsDataSource.mpesaSimSlot
+    val mpesaAccountId: StateFlow<String?> = settingsDataSource.mpesaAccountId
+    val isMpesaListenerEnabled: StateFlow<Boolean> = settingsDataSource.isMpesaListenerEnabled
+    val isEquityListenerEnabled: StateFlow<Boolean> = settingsDataSource.isEquityListenerEnabled
+    val budgetAlertsEnabled: StateFlow<Boolean> = settingsDataSource.budgetAlertsEnabled
+    val budgetAlertThresholds: StateFlow<Set<Int>> = settingsDataSource.budgetAlertThresholds
+    val alertBudgetId: StateFlow<String?> = settingsDataSource.alertBudgetId
+    val isBillReminderEnabled: StateFlow<Boolean> = settingsDataSource.isBillReminderEnabled
+    val billReminderDaysBefore: StateFlow<Int> = settingsDataSource.billReminderDaysBefore
+    val isDailySummaryEnabled: StateFlow<Boolean> = settingsDataSource.isDailySummaryEnabled
+    val isWeeklySummaryEnabled: StateFlow<Boolean> = settingsDataSource.isWeeklySummaryEnabled
+    val summaryNotificationTime: StateFlow<LocalTime> = settingsDataSource.summaryNotificationTime
+    val showDecimals: StateFlow<Boolean> = settingsDataSource.showDecimals
+    val defaultAccountId: StateFlow<String?> = settingsDataSource.defaultAccountId
+    val exportFormat: StateFlow<ExportFormat> = settingsDataSource.exportFormat
+
+    val trackedCategories: StateFlow<List<String>> = userRepository.getUserProfile()
+        .map { it?.trackedCategories ?: emptyList() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = userRepository.getUserProfile().value?.trackedCategories ?: emptyList()
+        )
+
+    val allCategories: StateFlow<List<Category>> = categoryRepository.getCategories()
+        .map { categories ->
+            val filtered = categories.filter { it.id != "transaction_cost" }
+                .distinctBy { it.name.lowercase() to it.isExpense }
+                .sortedWith(
+                    compareByDescending<Category> { it.isDefault }
+                        .thenBy { !it.isExpense }
+                        .thenBy { it.name }
+                )
+            listOf(Category.TransactionCost) + filtered
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = categoryRepository.getCategories().value.let { categories ->
+                val filtered = categories.filter { it.id != "transaction_cost" }
+                    .distinctBy { it.name.lowercase() to it.isExpense }
+                    .sortedWith(
+                        compareByDescending<Category> { it.isDefault }
+                            .thenBy { !it.isExpense }
+                            .thenBy { it.name }
+                    )
+                listOf(Category.TransactionCost) + filtered
+            }
+        )
+
+    init {
+        viewModelScope.launch {
+            try {
+                categoryRepository.refreshCategories()
+            } catch (e: Exception) {
+                // Silently fail
+            }
+        }
+        viewModelScope.launch {
+            val result = accountRepository.getAccounts()
+            if (result is Result.Success) {
+                _accounts.value = result.data
+            }
+        }
+        viewModelScope.launch {
+            loadBudgets()
+        }
+    }
+
+    fun reloadBudgets(force: Boolean = true, showLoading: Boolean = true) {
+        val currentBudgets = _budgets.value
+        if (!force && currentBudgets is Result.Success && currentBudgets.data.isNotEmpty()) return
+
+        viewModelScope.launch {
+            if (showLoading) {
+                _budgets.value = Result.Loading
+            }
+            _budgets.value = budgetRepository.getBudgets()
+        }
+    }
+
+    private fun loadBudgets() {
+        reloadBudgets(force = false, showLoading = true)
+    }
 
     fun setTheme(theme: AppTheme) {
         viewModelScope.launch {
@@ -388,9 +369,6 @@ class SettingsViewModel(
             _isLoading.value = false
         }
     }
-
-    private val _deleteAccountState = MutableStateFlow<SaveState<Unit>>(SaveState.Idle)
-    val deleteAccountState: StateFlow<SaveState<Unit>> = _deleteAccountState.asStateFlow()
 
     fun deleteAccount() {
         viewModelScope.launch {
