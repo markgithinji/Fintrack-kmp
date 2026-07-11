@@ -21,9 +21,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,7 +53,7 @@ fun AuthOrchestrator(
 ) {
     val isAppLocked by authViewModel.isAppLocked.collectAsStateWithLifecycle()
     val biometricAuthenticator: BiometricAuthenticator = koinInject()
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
 
     // Track the last error to determine if we are in a retry/transition flow.
     // Using this as a 'gate' avoids the flicker between Error -> Home -> Success -> Home.
@@ -75,7 +77,7 @@ fun AuthOrchestrator(
     }
 
     // LOGIN_DEBUG: Log orchestration decision
-    androidx.compose.runtime.SideEffect {
+    SideEffect {
         println("LOGIN_DEBUG: AuthOrchestrator recomposing. authStatus: $authStatus, currentRoute: $currentRoute, isAppLocked: $isAppLocked")
     }
 

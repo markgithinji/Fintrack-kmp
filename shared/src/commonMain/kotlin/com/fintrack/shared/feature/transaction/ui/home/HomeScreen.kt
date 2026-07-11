@@ -27,9 +27,11 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
-import com.example.compose.backgroundGray
+import com.fintrack.shared.ui.theme.backgroundGray
 import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
+import com.fintrack.shared.feature.core.logger.KMPLogger
+import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
@@ -63,7 +65,7 @@ fun HomeScreen(
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
     val importProgress by transactionsViewModel.importProgress.collectAsStateWithLifecycle()
     
-    val logger = remember { com.fintrack.shared.feature.core.logger.KMPLogger() }
+    val logger = remember { KMPLogger() }
 
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
     var syncErrorMessage by remember { mutableStateOf<String?>(null) }
@@ -184,7 +186,7 @@ fun HomeScreen(
         )
 
         syncErrorMessage?.let { message ->
-            com.fintrack.shared.feature.core.ui.MaterialToast(
+            MaterialToast(
                 message = message,
                 isError = true,
                 onDismiss = { syncErrorMessage = null },

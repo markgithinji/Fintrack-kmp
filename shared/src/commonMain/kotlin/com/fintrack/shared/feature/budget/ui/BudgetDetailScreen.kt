@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.budget.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import com.fintrack.shared.feature.settings.ui.LocalCurrency
 import com.fintrack.shared.feature.settings.ui.toCurrencyString
@@ -105,12 +106,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.compose.GreenIncome
-import com.example.compose.PinkExpense
-import com.example.compose.accountChipBorder
-import com.example.compose.accountChipSelectedBg
-import com.example.compose.currencyTextColor
-import com.example.compose.incomeButtonColor
+import com.fintrack.shared.ui.theme.GreenIncome
+import com.fintrack.shared.ui.theme.PinkExpense
+import com.fintrack.shared.ui.theme.accountChipBorder
+import com.fintrack.shared.ui.theme.accountChipSelectedBg
+import com.fintrack.shared.ui.theme.currencyTextColor
+import com.fintrack.shared.ui.theme.incomeButtonColor
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.domain.model.Budget
@@ -387,7 +388,7 @@ fun BudgetDetailScreen(
         }
 
         // Custom Numpad
-        androidx.compose.animation.AnimatedVisibility(
+        AnimatedVisibility(
             visible = showNumpad,
             modifier = Modifier.align(Alignment.BottomCenter),
             enter = slideInVertically { it } + fadeIn(),

@@ -15,8 +15,11 @@ import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepo
 import com.fintrack.shared.feature.transaction.domain.usecase.CreateTransactionUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.GetCategoriesUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ValidateTransactionUseCase
+import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,7 +39,7 @@ class TransactionViewModel(
     private val validateTransactionUseCase: ValidateTransactionUseCase,
     private val createTransactionUseCase: CreateTransactionUseCase,
     private val getCategoriesUseCase: GetCategoriesUseCase,
-    private val transactionImporter: com.fintrack.shared.feature.transaction.domain.util.TransactionImporter,
+    private val transactionImporter: TransactionImporter,
     private val globalRefreshManager: GlobalRefreshManager
 ) : ViewModel() {
 
@@ -83,8 +86,8 @@ class TransactionViewModel(
 
     private var hasAutoSynced = false
     private var lastLoadedRecentAccountId: String? = null
-    private var recentTransactionsJob: kotlinx.coroutines.Job? = null
-    private var importJob: kotlinx.coroutines.Job? = null
+    private var recentTransactionsJob: Job? = null
+    private var importJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -395,7 +398,7 @@ class TransactionViewModel(
                 _importState.value = Result.Success(Unit)
                 globalRefreshManager.triggerRefresh()
             } catch (e: Exception) {
-                if (e !is kotlinx.coroutines.CancellationException) {
+                if (e !is CancellationException) {
                     logger.error("SYNC_FLOW", "Transaction import failed", e)
                     _importState.value = Result.Error(e)
                 } else {

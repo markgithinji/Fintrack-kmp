@@ -7,6 +7,7 @@ import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.account.domain.usecase.GetAccountsUseCase
 import com.fintrack.shared.feature.core.domain.usecase.ClearAllUserDataUseCase
+import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.GlobalRefreshManager
 import com.fintrack.shared.feature.core.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +24,7 @@ class AccountsViewModel(
     private val clearAllUserDataUseCase: ClearAllUserDataUseCase
 ) : ViewModel() {
 
-    private val logger = com.fintrack.shared.feature.core.logger.KMPLogger()
+    private val logger = KMPLogger()
 
     private val _accounts = MutableStateFlow<Result<List<Account>>>(Result.Loading)
     val accounts: StateFlow<Result<List<Account>>> = _accounts

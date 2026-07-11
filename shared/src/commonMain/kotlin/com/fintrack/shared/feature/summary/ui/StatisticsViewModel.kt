@@ -16,6 +16,7 @@ import com.fintrack.shared.feature.summary.domain.model.TransactionType
 import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -111,7 +112,7 @@ class StatisticsViewModel(
 
     private var lastHighlightsAccountId: String? = null
     private var lastHighlightsPeriod: String? = null
-    private var highlightsJob: kotlinx.coroutines.Job? = null
+    private var highlightsJob: Job? = null
 
     fun loadHighlights(accountId: String? = null, period: String? = null, force: Boolean = false) {
         if (period == null && lastHighlightsPeriod != null && !force) {
@@ -140,8 +141,8 @@ class StatisticsViewModel(
 
     private var lastIncomeDistributionParams: String? = null
     private var lastExpenseDistributionParams: String? = null
-    private var incomeDistributionJob: kotlinx.coroutines.Job? = null
-    private var expenseDistributionJob: kotlinx.coroutines.Job? = null
+    private var incomeDistributionJob: Job? = null
+    private var expenseDistributionJob: Job? = null
 
     private fun loadDistribution(
         weekOrMonthCode: String,

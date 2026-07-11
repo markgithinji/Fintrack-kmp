@@ -1500,7 +1500,7 @@ fun TrackedCategoriesSelectionDialog(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Sticky Reset Button
-                androidx.compose.animation.AnimatedVisibility(
+                AnimatedVisibility(
                     visible = currentSelection.isNotEmpty(),
                     enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
                     exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut()

@@ -1,4 +1,4 @@
-package com.example.compose
+package com.fintrack.shared.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Finance App Colors - Light Theme

@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class AuthViewModel(
@@ -84,7 +85,7 @@ class AuthViewModel(
                         
                         // If we are currently logging in or just succeeded, delay to let UI show success
                         if (_loginState.value !is AuthState.Idle || _registerState.value !is AuthState.Idle) {
-                            kotlinx.coroutines.delay(1000)
+                            delay(1000)
                         }
 
                         _authStatus.value = AuthState.Success(true)
@@ -103,15 +104,6 @@ class AuthViewModel(
         )
     }
 
-    fun validateLoginEmail() {
-        val currentState = _loginFormState.value
-        val emailError = when (val result = loginValidationUseCase.validateEmail(currentState.email)) {
-            is ValidationResult.Error -> result.message
-            is ValidationResult.Success -> null
-        }
-        _loginFormState.value = currentState.copy(emailError = emailError)
-    }
-
     fun updateLoginPassword(password: String) {
         val currentState = _loginFormState.value
         _loginFormState.value = currentState.copy(
@@ -119,15 +111,6 @@ class AuthViewModel(
             passwordError = null, // Clear error when typing
             isFormValid = loginValidationUseCase.validateForm(currentState.email, password)
         )
-    }
-
-    fun validateLoginPassword() {
-        val currentState = _loginFormState.value
-        val passwordError = when (val result = loginValidationUseCase.validatePassword(currentState.password)) {
-            is ValidationResult.Error -> result.message
-            is ValidationResult.Success -> null
-        }
-        _loginFormState.value = currentState.copy(passwordError = passwordError)
     }
 
     fun login() {
@@ -142,7 +125,7 @@ class AuthViewModel(
                     _loginState.value = AuthState.Success(result.data)
                     
                     // Delay setting the global auth status to give the UI time to show success state
-                    kotlinx.coroutines.delay(1000)
+                    delay(1000)
 
                     _authStatus.value = AuthState.Success(true)
                 }
@@ -269,7 +252,7 @@ class AuthViewModel(
                     _registerState.value = AuthState.Success(result.data)
                     
                     // Delay setting the global auth status to give the UI time to show success state
-                    kotlinx.coroutines.delay(1000)
+                    delay(1000)
 
                     _authStatus.value = AuthState.Success(true)
                 }
