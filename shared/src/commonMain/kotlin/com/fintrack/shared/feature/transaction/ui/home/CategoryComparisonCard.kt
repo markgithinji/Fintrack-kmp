@@ -47,7 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.settings.ui.toCurrencyString
+import com.fintrack.shared.feature.navigation.toCurrencyString
 import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary

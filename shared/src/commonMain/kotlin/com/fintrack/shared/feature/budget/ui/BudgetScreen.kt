@@ -48,7 +48,7 @@ import com.fintrack.shared.feature.navigation.MainViewModel
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
-import com.fintrack.shared.feature.settings.ui.toCurrencyString
+import com.fintrack.shared.feature.navigation.toCurrencyString
 import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.CommonErrorState

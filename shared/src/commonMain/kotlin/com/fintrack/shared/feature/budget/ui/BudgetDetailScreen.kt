@@ -1,8 +1,8 @@
 package com.fintrack.shared.feature.budget.ui
 
 import androidx.compose.animation.AnimatedVisibility
-import com.fintrack.shared.feature.settings.ui.LocalCurrency
-import com.fintrack.shared.feature.settings.ui.toCurrencyString
+import com.fintrack.shared.feature.navigation.LocalCurrency
+import com.fintrack.shared.feature.navigation.toCurrencyString
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateColorAsState

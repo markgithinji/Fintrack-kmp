@@ -33,6 +33,9 @@ class MainViewModel(
     // Global states that multiple screens care about
     val isBalanceHidden = settingsDataSource.isBalanceHidden
     val currency = settingsDataSource.currency
+    val theme = settingsDataSource.theme
+    val showDecimals = settingsDataSource.showDecimals
+    val timeFormat = settingsDataSource.timeFormat
     val userProfile = userRepository.getUserProfile()
 
     init {

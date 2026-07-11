@@ -60,7 +60,7 @@ import com.fintrack.shared.ui.theme.SegmentColor3
 import com.fintrack.shared.ui.theme.SegmentColor4
 import com.fintrack.shared.ui.theme.SegmentColor5
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.settings.ui.toCurrencyString
+import com.fintrack.shared.feature.navigation.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.Highlight
 import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.model.TabType

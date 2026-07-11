@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.settings.ui
+package com.fintrack.shared.feature.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -24,8 +24,8 @@ fun Double.toCurrencyString(): String {
 }
 
 @Composable
-fun CurrencyProvider(
-    viewModel: SettingsViewModel = koinViewModel(),
+fun AppStateProvider(
+    viewModel: MainViewModel = koinViewModel(),
     content: @Composable () -> Unit
 ) {
     val currency by viewModel.currency.collectAsStateWithLifecycle()

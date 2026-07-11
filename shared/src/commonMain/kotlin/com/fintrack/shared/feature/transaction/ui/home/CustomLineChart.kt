@@ -45,7 +45,7 @@ import androidx.compose.ui.unit.sp
 import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.shortDayName
-import com.fintrack.shared.feature.settings.ui.toCurrencyString
+import com.fintrack.shared.feature.navigation.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.DaySummary
 import kotlinx.datetime.LocalDate
 import kotlin.math.roundToInt

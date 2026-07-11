@@ -38,8 +38,8 @@ import com.example.compose.GreenIncome
 import com.example.compose.PinkExpense
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.settings.domain.util.format
-import com.fintrack.shared.feature.settings.ui.LocalTimeFormat
-import com.fintrack.shared.feature.settings.ui.toCurrencyString
+import com.fintrack.shared.feature.navigation.LocalTimeFormat
+import com.fintrack.shared.feature.navigation.toCurrencyString
 import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
 import com.fintrack.shared.feature.transaction.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction

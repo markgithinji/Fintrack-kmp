@@ -35,7 +35,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
 import com.fintrack.shared.feature.summary.domain.model.DaySummary
 import com.fintrack.shared.feature.core.util.shortDayName
-import com.fintrack.shared.feature.settings.ui.toCurrencyString
+import com.fintrack.shared.feature.navigation.toCurrencyString
 import kotlinx.datetime.LocalDate
 
 @Composable

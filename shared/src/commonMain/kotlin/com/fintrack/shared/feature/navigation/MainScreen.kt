@@ -14,8 +14,6 @@ import androidx.navigation.compose.rememberNavController
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
-import com.fintrack.shared.feature.settings.ui.CurrencyProvider
-import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.ui.theme.FinanceTrackerTheme
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -23,9 +21,9 @@ import org.koin.compose.viewmodel.koinViewModel
 fun MainScreen(
     initialTransactionId: String? = null,
     onTransactionIdConsumed: () -> Unit = {},
+    mainViewModel: MainViewModel = koinViewModel()
 ) {
-    val settingsViewModel: SettingsViewModel = koinViewModel()
-    val appTheme by settingsViewModel.theme.collectAsStateWithLifecycle()
+    val appTheme by mainViewModel.theme.collectAsStateWithLifecycle()
     
     val isDarkTheme = when (appTheme) {
         AppTheme.LIGHT -> false
@@ -38,7 +36,7 @@ fun MainScreen(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background,
         ) {
-            CurrencyProvider {
+            AppStateProvider(viewModel = mainViewModel) {
                 val authViewModel: AuthViewModel = koinViewModel()
                 val authStatusState by authViewModel.authStatus.collectAsStateWithLifecycle()
 
