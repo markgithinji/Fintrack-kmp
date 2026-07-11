@@ -189,20 +189,23 @@ fun AppNavigation(
                 }
 
                 composable<Screen.Statistics> { backStackEntry ->
+                    val route: Screen.Statistics = backStackEntry.toRoute()
+                    val accountId = route.accountId
+
                     LaunchedEffect(backStackEntry.lifecycle.currentState) {
                         if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
                             onUpdateAppBarState(AppBarState(title = "Statistics"))
                         }
                     }
                     StatisticsScreen(
-                        selectedAccountId = selectedAccountId,
+                        selectedAccountId = accountId,
                         paddingValues = paddingValues,
                         animatedVisibilityScope = this,
-                        onCategoryClick = { category, isIncome, startDate, endDate, accountId ->
+                        onCategoryClick = { category, isIncome, startDate, endDate, accountIdParam ->
                             val isTransactionCost = category == "Transaction Fees"
                             navController.navigate(
                                 Screen.TransactionList(
-                                    accountId = accountId,
+                                    accountId = accountIdParam ?: accountId,
                                     isIncome = if (isTransactionCost) null else isIncome,
                                     category = if (isTransactionCost) null else category,
                                     startDate = startDate,

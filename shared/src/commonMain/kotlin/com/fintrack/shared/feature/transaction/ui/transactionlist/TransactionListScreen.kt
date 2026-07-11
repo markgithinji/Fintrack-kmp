@@ -44,7 +44,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun TransactionListScreen(
-    accountId: String? = null,
+    accountId: String,
     isIncome: Boolean? = null,
     category: String? = null,
     startDate: String? = null,
@@ -84,7 +84,7 @@ fun TransactionListScreen(
 
     LaunchedEffect(accountId, isIncome, category, startDate, endDate, hasTransactionCost) {
         statisticsViewModel.loadTransactionCounts(
-            accountId = accountId ?: "",
+            accountId = accountId,
             isIncome = isIncome,
             category = category,
             start = startDate,

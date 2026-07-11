@@ -52,12 +52,12 @@ import com.fintrack.shared.ui.theme.PinkExpense
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun StatisticsScreen(
-    selectedAccountId: String? = null,
+    selectedAccountId: String,
     viewModel: StatisticsViewModel = koinViewModel(),
     mainViewModel: MainViewModel = koinInject(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
-    onCategoryClick: (category: String, isIncome: Boolean, startDate: String?, endDate: String?, accountId: String?) -> Unit = { _, _, _, _, _ -> }
+    onCategoryClick: (category: String, isIncome: Boolean, startDate: String?, endDate: String?, accountId: String) -> Unit = { _, _, _, _, _ -> }
 ) {
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
     val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle()

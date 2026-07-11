@@ -10,7 +10,7 @@ sealed interface Screen {
     data class AddTransaction(val transactionId: String? = null) : Screen
 
     @Serializable
-    data object Statistics : Screen
+    data class Statistics(val accountId: String) : Screen
 
     @Serializable
     data object Budget : Screen
@@ -41,7 +41,7 @@ sealed interface Screen {
 
     @Serializable
     data class TransactionList(
-        val accountId: String? = null,
+        val accountId: String,
         val isIncome: Boolean? = null,
         val category: String? = null,
         val startDate: String? = null,
