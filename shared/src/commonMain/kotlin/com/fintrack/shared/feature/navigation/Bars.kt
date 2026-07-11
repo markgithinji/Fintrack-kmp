@@ -22,6 +22,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
@@ -75,13 +76,15 @@ data class BottomNavItem(
 
 
 @Composable
-fun BottomBar(navController: NavHostController) {
-    val items = listOf(
-        BottomNavItem("Home", Icons.Default.Home, Screen.Home),
-        BottomNavItem("Stats", Icons.Default.BarChart, Screen.Statistics),
-        BottomNavItem("Budget", Icons.Default.Info, Screen.Budget),
-        BottomNavItem("Profile", Icons.Default.Person, Screen.Profile)
-    )
+fun BottomBar(navController: NavHostController, selectedAccountId: String?) {
+    val items = remember(selectedAccountId) {
+        listOf(
+            BottomNavItem("Home", Icons.Default.Home, selectedAccountId?.let { Screen.Home(it) } ?: Screen.Login),
+            BottomNavItem("Stats", Icons.Default.BarChart, Screen.Statistics),
+            BottomNavItem("Budget", Icons.Default.Info, Screen.Budget),
+            BottomNavItem("Profile", Icons.Default.Person, Screen.Profile)
+        )
+    }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination

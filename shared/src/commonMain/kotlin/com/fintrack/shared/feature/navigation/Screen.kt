@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 sealed interface Screen {
     @Serializable
-    data object Home : Screen
+    data class Home(val accountId: String) : Screen
 
     @Serializable
     data class AddTransaction(val transactionId: String? = null) : Screen

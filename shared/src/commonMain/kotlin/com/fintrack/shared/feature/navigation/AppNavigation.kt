@@ -62,8 +62,8 @@ fun AppNavigation(
 
     println("LOGIN_DEBUG: AppNavigation recomposing. isAuthenticated: $isAuthenticated")
     
-    val startDestination: Any = remember(isAuthenticated) {
-        if (isAuthenticated) Screen.Home else Screen.Login 
+    val startDestination: Any = remember(isAuthenticated, selectedAccountId) {
+        if (isAuthenticated && selectedAccountId != null) Screen.Home(selectedAccountId!!) else Screen.Login 
     }
 
     SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
@@ -148,23 +148,26 @@ fun AppNavigation(
                 }
             ) {
                 composable<Screen.Home> { backStackEntry ->
+                    val route: Screen.Home = backStackEntry.toRoute()
+                    val accountId = route.accountId
+
                     LaunchedEffect(backStackEntry.lifecycle.currentState) {
                         if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
                             onUpdateAppBarState(AppBarState(title = "Home"))
                         }
                     }
                     HomeScreen(
-                        selectedAccountId = selectedAccountId,
+                        selectedAccountId = accountId,
                         onAccountSelected = { mainViewModel.onAccountSelected(it) },
                         paddingValues = paddingValues,
                         animatedVisibilityScope = this,
                         onEditTransaction = { transactionId ->
                             navController.navigate(Screen.AddTransaction(transactionId))
                         },
-                        onCardClick = { accountId, isIncome ->
+                        onCardClick = { accountIdParam, isIncome ->
                             navController.navigate(
                                 Screen.TransactionList(
-                                    accountId = accountId,
+                                    accountId = accountIdParam,
                                     isIncome = isIncome
                                 )
                             )
@@ -351,8 +354,10 @@ fun AppNavigation(
                     LoginScreen(
                         viewModel = authViewModel,
                         onLoginSuccess = {
-                            navController.navigate(Screen.Home) {
-                                popUpTo(Screen.Login) { inclusive = true }
+                            if (selectedAccountId != null) {
+                                navController.navigate(Screen.Home(selectedAccountId!!)) {
+                                    popUpTo(Screen.Login) { inclusive = true }
+                                }
                             }
                         },
                         onSignUp = {
@@ -384,8 +389,10 @@ fun AppNavigation(
                     RegisterScreen(
                         viewModel = authViewModel,
                         onRegisterSuccess = {
-                            navController.navigate(Screen.Home) {
-                                popUpTo(0) { inclusive = true }
+                            if (selectedAccountId != null) {
+                                navController.navigate(Screen.Home(selectedAccountId!!)) {
+                                    popUpTo(0) { inclusive = true }
+                                }
                             }
                         },
                         onLogin = {

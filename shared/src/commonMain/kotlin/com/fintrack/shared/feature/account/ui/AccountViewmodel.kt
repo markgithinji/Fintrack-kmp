@@ -58,15 +58,7 @@ class AccountsViewModel(
         }
     }
 
-    fun selectAccount(id: String?) {
-        if (id == null) {
-            _selectedAccount.value = Result.Loading
-            return
-        }
-        loadAccountById(id)
-    }
-
-    private fun loadAccountById(id: String) {
+    fun selectAccount(id: String) {
         viewModelScope.launch {
             _selectedAccount.value = Result.Loading
             val accounts = (_accounts.value as? Result.Success)?.data

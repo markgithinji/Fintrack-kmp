@@ -28,10 +28,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -40,8 +42,11 @@ fun MainAppScaffold(
     currentDestination: NavDestination?,
     navController: NavHostController,
     authViewModel: AuthViewModel,
+    mainViewModel: MainViewModel = koinViewModel(),
     onLogout: () -> Unit = {}
 ) {
+    val selectedAccountId by mainViewModel.selectedAccountId.collectAsStateWithLifecycle()
+    
     // State to update AppBar per screen
     var appBarState by remember { mutableStateOf(AppBarState(title = "Home")) }
 
@@ -81,7 +86,7 @@ fun MainAppScaffold(
                 },
                 bottomBar = {
                     if (showBottomBar) {
-                        BottomBar(navController)
+                        BottomBar(navController, selectedAccountId)
                     }
                 },
                 floatingActionButton = {
@@ -99,6 +104,7 @@ fun MainAppScaffold(
                     paddingValues = paddingValues,
                     onUpdateAppBarState = { newState -> appBarState = newState },
                     authViewModel = authViewModel,
+                    mainViewModel = mainViewModel,
                     onLogout = onLogout
                 )
             }

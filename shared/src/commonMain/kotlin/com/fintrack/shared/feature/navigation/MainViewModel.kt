@@ -71,7 +71,7 @@ class MainViewModel(
         }
     }
 
-    fun onAccountSelected(id: String?) {
+    fun onAccountSelected(id: String) {
         _selectedAccountId.value = id
     }
 
