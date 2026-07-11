@@ -79,7 +79,7 @@ fun AccountsScreen(
 
     LaunchedEffect(refreshTrigger) {
         if (refreshTrigger > 0) {
-            viewModel.reloadAccounts(force = true, showLoading = false)
+            viewModel.reloadAccounts(showLoading = false)
         }
     }
 

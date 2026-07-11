@@ -73,7 +73,7 @@ class BudgetViewModel(
         )
 
     init {
-        reloadBudgets(force = false)
+        reloadBudgets(showLoading = true)
         
         viewModelScope.launch {
             categoryRepo.getCategories().collect { cats ->
@@ -160,11 +160,8 @@ class BudgetViewModel(
         _formState.value = formState
     }
 
-    // Reload all budgets
-    fun reloadBudgets(force: Boolean = true, showLoading: Boolean = true) {
-        val currentBudgets = _budgets.value
-        if (!force && currentBudgets is Result.Success && currentBudgets.data.isNotEmpty()) return
-
+    // Reload all budgets from the server
+    fun reloadBudgets(showLoading: Boolean = true) {
         viewModelScope.launch {
             if (showLoading) {
                 _budgets.value = Result.Loading
@@ -210,6 +207,7 @@ class BudgetViewModel(
                     val result = repo.addOrUpdateBudget(budget)
                     _saveState.value = when (result) {
                         is Result.Success -> {
+                            reloadBudgets(showLoading = false)
                             SaveState.Success(result.data)
                         }
                         is Result.Error -> SaveState.Error(result.exception)
@@ -225,6 +223,9 @@ class BudgetViewModel(
             _deleteResult.value = Result.Loading
             val result = repo.deleteBudget(id)
             _deleteResult.value = result
+            if (result is Result.Success) {
+                reloadBudgets(showLoading = false)
+            }
         }
     }
 

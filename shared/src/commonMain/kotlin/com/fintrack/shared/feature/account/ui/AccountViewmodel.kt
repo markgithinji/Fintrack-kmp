@@ -34,14 +34,11 @@ class AccountsViewModel(
     val clearDataResult: StateFlow<Result<Unit>?> = _clearDataResult.asStateFlow()
 
     init {
-        reloadAccounts(force = false)
+        reloadAccounts(showLoading = true)
     }
 
-    // Reload all accounts
-    fun reloadAccounts(force: Boolean = true, showLoading: Boolean = true) {
-        val currentAccounts = _accounts.value
-        if (!force && currentAccounts is Result.Success && currentAccounts.data.isNotEmpty()) return
-
+    // Reload all accounts from the server
+    fun reloadAccounts(showLoading: Boolean = true) {
         viewModelScope.launch {
             if (showLoading) {
                 _accounts.value = Result.Loading
@@ -106,10 +103,6 @@ class AccountsViewModel(
                     _selectedAccount.value = Result.Success(result.data)
                 }
 
-                // No more globalRefreshManager.triggerRefresh() here
-                // The UI should trigger it after calling saveAccount if needed, 
-                // or saveAccount could return something that triggers it.
-                // But the user said "the ui should call it".
                 reloadAccounts(showLoading = false)
             }
         }

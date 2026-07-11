@@ -75,13 +75,12 @@ fun BudgetScreen(
 
     LaunchedEffect(refreshTrigger) {
         if (refreshTrigger > 0) {
-            viewModel.reloadBudgets(force = true, showLoading = false)
+            viewModel.reloadBudgets(showLoading = false)
         }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.reloadBudgets(force = false)
-    }
+    // The ViewModel init block handles the initial load
+    // so no need to call reloadBudgets() here.
 
     Box(
         modifier = Modifier
