@@ -415,19 +415,18 @@ class SettingsViewModel(
 
     fun changePassword() {
         val form = _changePasswordFormState.value
-        val currentPasswordResult = validationUseCase.validateCurrentPassword(form.currentPassword)
-        val newPasswordResult = validationUseCase.validateNewPassword(form.newPassword)
-        val confirmPasswordResult = validationUseCase.validateConfirmPassword(form.newPassword, form.confirmPassword)
+        val validationResult = validationUseCase(
+            currentPassword = form.currentPassword,
+            newPassword = form.newPassword,
+            confirmPassword = form.confirmPassword
+        )
 
-        val hasError = listOf(currentPasswordResult, newPasswordResult, confirmPasswordResult)
-            .any { it is ValidationResult.Error }
-
-        if (hasError) {
+        if (!validationResult.isValid) {
             _changePasswordFormState.update {
                 it.copy(
-                    currentPasswordError = (currentPasswordResult as? ValidationResult.Error)?.message,
-                    newPasswordError = (newPasswordResult as? ValidationResult.Error)?.message,
-                    confirmPasswordError = (confirmPasswordResult as? ValidationResult.Error)?.message
+                    currentPasswordError = (validationResult.currentPasswordResult as? ValidationResult.Error)?.message,
+                    newPasswordError = (validationResult.newPasswordResult as? ValidationResult.Error)?.message,
+                    confirmPasswordError = (validationResult.confirmPasswordResult as? ValidationResult.Error)?.message
                 )
             }
             return

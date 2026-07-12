@@ -4,7 +4,22 @@ import com.fintrack.shared.feature.core.domain.ValidationResult
 
 class RegisterValidationUseCase {
 
-    fun validateName(name: String): ValidationResult {
+    operator fun invoke(
+        name: String,
+        email: String,
+        password: String,
+        confirmPassword: String
+    ): RegisterValidationResult {
+        return RegisterValidationResult(
+            nameResult = validateName(name),
+            emailResult = validateEmail(email),
+            passwordResult = validatePassword(password),
+            confirmPasswordResult = validateConfirmPassword(password, confirmPassword),
+            passwordStrength = calculatePasswordStrength(password)
+        )
+    }
+
+    private fun validateName(name: String): ValidationResult {
         return when {
             name.isBlank() -> ValidationResult.Error("Name is required")
             name.length < 2 -> ValidationResult.Error("Name must be at least 2 characters")
@@ -13,7 +28,7 @@ class RegisterValidationUseCase {
         }
     }
 
-    fun validateEmail(email: String): ValidationResult {
+    private fun validateEmail(email: String): ValidationResult {
         return when {
             email.isBlank() -> ValidationResult.Error("Email is required")
             !isValidEmail(email) -> ValidationResult.Error("Invalid email format")
@@ -22,7 +37,7 @@ class RegisterValidationUseCase {
         }
     }
 
-    fun validatePassword(password: String): ValidationResult {
+    private fun validatePassword(password: String): ValidationResult {
         return when {
             password.isBlank() -> ValidationResult.Error("Password is required")
             password.length < 8 -> ValidationResult.Error("Password must be at least 8 characters")
@@ -33,7 +48,7 @@ class RegisterValidationUseCase {
         }
     }
 
-    fun validateConfirmPassword(password: String, confirmPassword: String): ValidationResult {
+    private fun validateConfirmPassword(password: String, confirmPassword: String): ValidationResult {
         return when {
             confirmPassword.isBlank() -> ValidationResult.Error("Please confirm your password")
             password != confirmPassword -> ValidationResult.Error("Passwords do not match")
@@ -41,19 +56,7 @@ class RegisterValidationUseCase {
         }
     }
 
-    fun validateForm(
-        name: String,
-        email: String,
-        password: String,
-        confirmPassword: String
-    ): Boolean {
-        return validateName(name) is ValidationResult.Success &&
-                validateEmail(email) is ValidationResult.Success &&
-                validatePassword(password) is ValidationResult.Success &&
-                validateConfirmPassword(password, confirmPassword) is ValidationResult.Success
-    }
-
-    fun calculatePasswordStrength(password: String): String {
+    private fun calculatePasswordStrength(password: String): String {
         if (password.isEmpty()) return "None"
 
         val hasMinLength = password.length >= 8
@@ -74,4 +77,17 @@ class RegisterValidationUseCase {
         val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\$"
         return email.matches(emailRegex.toRegex())
     }
+}
+
+data class RegisterValidationResult(
+    val nameResult: ValidationResult = ValidationResult.Success,
+    val emailResult: ValidationResult = ValidationResult.Success,
+    val passwordResult: ValidationResult = ValidationResult.Success,
+    val confirmPasswordResult: ValidationResult = ValidationResult.Success,
+    val passwordStrength: String = "None"
+) {
+    val isValid: Boolean = nameResult is ValidationResult.Success &&
+            emailResult is ValidationResult.Success &&
+            passwordResult is ValidationResult.Success &&
+            confirmPasswordResult is ValidationResult.Success
 }
