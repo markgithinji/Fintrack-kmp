@@ -149,7 +149,14 @@ fun AddTransactionScreen(
                 transactionsViewModel.onTransactionCostChange(transaction.transactionCost.toString().removeSuffix(".0"))
                 transactionsViewModel.onDescriptionChange(transaction.description ?: "")
                 isIncome = transaction.isIncome
-                transactionsViewModel.onCategoryChange(Category.fromName(transaction.category, !transaction.isIncome))
+                
+                val category = if (transaction.categoryId != null) {
+                    Category.fromId(transaction.categoryId, name = transaction.category, isExpense = !transaction.isIncome)
+                } else {
+                    Category.fromName(transaction.category, isExpense = !transaction.isIncome)
+                }
+                transactionsViewModel.onCategoryChange(category)
+
                 dateTime = transaction.dateTime
                 transactionsViewModel.onAccountChange(accounts.find { it.id == transaction.accountId })
                 

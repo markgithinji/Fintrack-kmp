@@ -2,18 +2,19 @@ package com.fintrack.shared.feature.budget.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlin.time.Clock
 import com.fintrack.shared.feature.account.domain.model.Account
-import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.budget.domain.model.Budget
 import com.fintrack.shared.feature.budget.domain.model.BudgetFormState
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.budget.domain.usecase.BudgetValidationUseCase
-import com.fintrack.shared.feature.core.domain.SaveState
-import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.category.data.LocalCategoryDataSource
 import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.category.domain.usecase.SyncCategoriesUseCase
+import com.fintrack.shared.feature.core.domain.SaveState
+import com.fintrack.shared.feature.core.domain.ValidationResult
+import com.fintrack.shared.feature.core.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +23,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -37,108 +37,102 @@ class BudgetViewModel(
 ) : ViewModel() {
 
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
-    val categories: StateFlow<List<Category>> = _categories
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    val categories: StateFlow<List<Category>> = _categories.asStateFlow()
 
     private val _budgets = MutableStateFlow<Result<List<BudgetWithStatus>>>(Result.Loading)
     val budgets: StateFlow<Result<List<BudgetWithStatus>>> = _budgets.asStateFlow()
 
     private val _saveState = MutableStateFlow<SaveState<Budget>>(SaveState.Idle)
-    val saveState: StateFlow<SaveState<Budget>> = _saveState
+    val saveState: StateFlow<SaveState<Budget>> = _saveState.asStateFlow()
 
     private val _deleteResult = MutableStateFlow<Result<Unit>?>(null)
-    val deleteResult: StateFlow<Result<Unit>?> = _deleteResult
+    val deleteResult: StateFlow<Result<Unit>?> = _deleteResult.asStateFlow()
 
     private val _selectedBudget = MutableStateFlow<Result<BudgetWithStatus>>(Result.Loading)
-    val selectedBudget: StateFlow<Result<BudgetWithStatus>> = _selectedBudget
+    val selectedBudget: StateFlow<Result<BudgetWithStatus>> = _selectedBudget.asStateFlow()
 
     private val _validationError = MutableStateFlow<String?>(null)
-    val validationError: StateFlow<String?> = _validationError
+    val validationError: StateFlow<String?> = _validationError.asStateFlow()
 
     private val _formState = MutableStateFlow(BudgetFormState())
-    val formState: StateFlow<BudgetFormState> = _formState
+    val formState: StateFlow<BudgetFormState> = _formState.asStateFlow()
 
-    private var hasInitializedNewBudget = false
+    private var hasInitializedForm = false
 
-    val validationState: StateFlow<ValidationResult> = _formState
-        .map { formState ->
-            validationUseCase(
-                name = formState.name,
-                amount = formState.amount,
-                categories = formState.selectedCategories,
-                startDate = formState.startDate,
-                endDate = formState.endDate,
-                selectedAccounts = formState.selectedAccounts
-            )
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = ValidationResult.Error("") // Initial error state
+    val validationState: StateFlow<ValidationResult> = _formState.map { state ->
+        validationUseCase(
+            name = state.name,
+            amount = state.amount,
+            categories = state.selectedCategories,
+            startDate = state.startDate,
+            endDate = state.endDate,
+            selectedAccounts = state.selectedAccounts
         )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = ValidationResult.Error("Initializing...")
+    )
 
     init {
-        reloadBudgets(showLoading = true)
-        
         viewModelScope.launch {
-            localCategoryDataSource.categories.collect { cats ->
-                _categories.value = cats
-                // Only set default category if we are creating a NEW budget 
-                // and haven't selected any categories yet.
-                if (_formState.value.id == null && 
-                    _formState.value.selectedCategories.isEmpty() && 
-                    cats.isNotEmpty() && 
-                    !hasInitializedNewBudget) {
-                    
-                    val firstExpense = cats.firstOrNull { it.isExpense }
-                    if (firstExpense != null) {
-                        _formState.update { it.copy(selectedCategories = setOf(firstExpense)) }
-                    }
-                }
+            localCategoryDataSource.categories.collect {
+                _categories.value = it
             }
         }
-        refreshCategories()
+        reloadBudgets()
     }
 
     fun initializeForm(budgetId: String?, availableAccounts: List<Account>) {
+        if (hasInitializedForm && _formState.value.id == budgetId) return
+
         if (budgetId == null) {
-            if (!hasInitializedNewBudget) {
-                val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-                _formState.value = BudgetFormState(
-                    name = "",
-                    amount = "",
-                    selectedCategories = emptySet(),
-                    isExpense = true,
-                    startDate = today,
-                    endDate = today + DatePeriod(months = 1),
-                    selectedAccounts = emptySet()
-                )
-                hasInitializedNewBudget = true
-            }
+            _formState.value = computeInitialFormState()
+            hasInitializedForm = true
         } else {
             val currentSelected = _selectedBudget.value
             if (currentSelected is Result.Success) {
-                val budget = currentSelected.data.budget
-                val budgetAccounts = availableAccounts.filter { it.id in budget.accountIds }.toSet()
-                
-                _formState.value = BudgetFormState(
-                    id = budget.id,
-                    name = budget.name,
-                    amount = budget.limit.toLong().toString().let { if (it == "0") "" else it },
-                    selectedCategories = budget.categories.map { budgetCat ->
-                        _categories.value.find { it.name == budgetCat.name && it.isExpense == budgetCat.isExpense } ?: budgetCat
-                    }.toSet(),
-                    isExpense = budget.isExpense,
-                    startDate = budget.startDate,
-                    endDate = budget.endDate,
-                    selectedAccounts = budgetAccounts
-                )
+                _formState.value = computeEditFormState(currentSelected.data.budget, availableAccounts)
+                hasInitializedForm = true
             }
         }
+    }
+
+    private fun computeInitialFormState(): BudgetFormState {
+        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        return BudgetFormState(
+            name = "",
+            amount = "",
+            selectedCategories = emptySet(),
+            isExpense = true,
+            startDate = today,
+            endDate = today + DatePeriod(months = 1),
+            selectedAccounts = emptySet()
+        )
+    }
+
+    private fun computeEditFormState(budget: Budget, availableAccounts: List<Account>): BudgetFormState {
+        val budgetAccounts = availableAccounts.filter { it.id in budget.accountIds }.toSet()
+        val allCategories = _categories.value
+
+        return BudgetFormState(
+            id = budget.id,
+            name = budget.name,
+            amount = budget.limit.let { limit ->
+                when {
+                    limit == 0.0 -> ""
+                    limit == limit.toLong().toDouble() -> limit.toLong().toString()
+                    else -> limit.toString()
+                }
+            },
+            selectedCategories = budget.categories.map { budgetCat ->
+                allCategories.find { it.id == budgetCat.id } ?: budgetCat
+            }.toSet(),
+            isExpense = budget.isExpense,
+            startDate = budget.startDate,
+            endDate = budget.endDate,
+            selectedAccounts = budgetAccounts
+        )
     }
 
     fun refreshCategories() {
@@ -149,8 +143,8 @@ class BudgetViewModel(
 
     fun toggleAccount(account: Account) {
         _formState.update { state ->
-            val updatedAccounts = if (state.selectedAccounts.contains(account)) {
-                state.selectedAccounts - account
+            val updatedAccounts = if (state.selectedAccounts.any { it.id == account.id }) {
+                state.selectedAccounts.filterNot { it.id == account.id }.toSet()
             } else {
                 state.selectedAccounts + account
             }
@@ -168,23 +162,7 @@ class BudgetViewModel(
 
     fun setIsExpense(isExpense: Boolean) {
         _formState.update { current ->
-            val updatedCategories = if (isExpense != current.isExpense) {
-                // Reset categories when type changes
-                val expenseCategories = _categories.value.filter { it.isExpense }
-                val incomeCategories = _categories.value.filter { !it.isExpense }
-                
-                val firstCategory = if (isExpense && expenseCategories.isNotEmpty()) {
-                    expenseCategories[0]
-                } else if (!isExpense && incomeCategories.isNotEmpty()) {
-                    incomeCategories[0]
-                } else {
-                    null
-                }
-                if (firstCategory != null) setOf(firstCategory) else emptySet()
-            } else {
-                current.selectedCategories
-            }
-
+            val updatedCategories = current.selectedCategories.filter { it.isExpense == isExpense }.toSet()
             current.copy(
                 isExpense = isExpense,
                 selectedCategories = updatedCategories
@@ -200,7 +178,6 @@ class BudgetViewModel(
         _formState.update { it.copy(startDate = startDate, endDate = endDate) }
     }
 
-    // Reload all budgets from the server
     fun reloadBudgets(showLoading: Boolean = true) {
         viewModelScope.launch {
             if (showLoading) {
@@ -221,39 +198,33 @@ class BudgetViewModel(
             selectedAccounts = currentForm.selectedAccounts
         )
 
-        // Handle validation result with when statement
-        when (validation) {
-            is ValidationResult.Error -> {
-                _validationError.value = validation.message
-                return
-            }
+        if (validation is ValidationResult.Error) {
+            _validationError.value = validation.message
+            return
+        }
 
-            is ValidationResult.Success -> {
-                _validationError.value = null
-                // Continue with saving
-                viewModelScope.launch {
-                    _saveState.value = SaveState.Loading
-                    val budget = Budget(
-                        id = currentForm.id,
-                        accountIds = currentForm.selectedAccounts.map { it.id },
-                        name = currentForm.name,
-                        categories = currentForm.selectedCategories.toList(),
-                        limit = currentForm.amount.toDoubleOrNull() ?: 0.0,
-                        isExpense = currentForm.isExpense,
-                        startDate = currentForm.startDate!!,
-                        endDate = currentForm.endDate!!
-                    )
+        _validationError.value = null
+        viewModelScope.launch {
+            _saveState.value = SaveState.Loading
+            val budget = Budget(
+                id = currentForm.id,
+                accountIds = currentForm.selectedAccounts.map { it.id },
+                name = currentForm.name,
+                categories = currentForm.selectedCategories.toList(),
+                limit = currentForm.amount.toDoubleOrNull() ?: 0.0,
+                isExpense = currentForm.isExpense,
+                startDate = currentForm.startDate!!,
+                endDate = currentForm.endDate!!
+            )
 
-                    val result = budgetRepository.addOrUpdateBudget(budget)
-                    _saveState.value = when (result) {
-                        is Result.Success -> {
-                            reloadBudgets(showLoading = false)
-                            SaveState.Success(result.data)
-                        }
-                        is Result.Error -> SaveState.Error(result.exception)
-                        is Result.Loading -> SaveState.Loading
-                    }
+            val result = budgetRepository.addOrUpdateBudget(budget)
+            _saveState.value = when (result) {
+                is Result.Success -> {
+                    reloadBudgets(showLoading = false)
+                    SaveState.Success(result.data)
                 }
+                is Result.Error -> SaveState.Error(result.exception)
+                is Result.Loading -> SaveState.Loading
             }
         }
     }
@@ -270,9 +241,6 @@ class BudgetViewModel(
     }
 
     fun loadBudgetById(id: String) {
-        val current = _selectedBudget.value
-        if (current is Result.Success && current.data.budget.id == id) return
-
         viewModelScope.launch {
             _selectedBudget.value = Result.Loading
             _selectedBudget.value = budgetRepository.getBudgetById(id)

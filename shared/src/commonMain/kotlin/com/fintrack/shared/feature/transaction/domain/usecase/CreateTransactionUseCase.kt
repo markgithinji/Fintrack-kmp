@@ -25,6 +25,7 @@ class CreateTransactionUseCase {
             transactionCost = parsedCost,
             isIncome = isIncome,
             category = category?.name ?: return null,
+            categoryId = category.id,
             description = description.takeIf { it.isNotBlank() },
             dateTime = dateTime
         )

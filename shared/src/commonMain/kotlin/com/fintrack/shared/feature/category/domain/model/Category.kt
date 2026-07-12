@@ -69,8 +69,10 @@ data class Category(
         fun fromName(name: String, isExpense: Boolean): Category =
             allCategories.find { it.name == name && it.isExpense == isExpense }
                 ?: Category(id = "custom_$name", name = name, isExpense = isExpense)
-        
-        fun fromId(id: String): Category? = 
+
+        fun fromId(id: String, name: String? = null, isExpense: Boolean = true, knownCategories: List<Category> = emptyList()): Category =
             allCategories.find { it.id == id }
+                ?: knownCategories.find { it.id == id }
+                ?: Category(id = id, name = name ?: "Unknown", isExpense = isExpense)
     }
 }

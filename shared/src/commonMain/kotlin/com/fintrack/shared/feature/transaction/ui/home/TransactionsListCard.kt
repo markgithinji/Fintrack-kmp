@@ -404,7 +404,11 @@ fun TransactionRow(
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val category = Category.fromName(transaction.category, isExpense = !transaction.isIncome)
+    val category = if (transaction.categoryId != null) {
+        Category.fromId(transaction.categoryId, name = transaction.category, isExpense = !transaction.isIncome)
+    } else {
+        Category.fromName(transaction.category, isExpense = !transaction.isIncome)
+    }
     val isExpense = !transaction.isIncome
     val amountColor = if (isExpense) PinkExpense else GreenIncome
     val timeFormat = LocalTimeFormat.current
