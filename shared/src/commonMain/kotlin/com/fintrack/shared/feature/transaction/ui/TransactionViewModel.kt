@@ -8,8 +8,9 @@ import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.category.data.LocalCategoryDataSource
 import com.fintrack.shared.feature.category.domain.model.Category
-import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
+import com.fintrack.shared.feature.category.domain.usecase.SyncCategoriesUseCase
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.usecase.CreateTransactionUseCase
@@ -35,7 +36,8 @@ import kotlin.time.Instant
 @OptIn(FlowPreview::class)
 class TransactionViewModel(
     private val repo: TransactionRepository,
-    private val categoryRepo: CategoryRepository,
+    private val localCategoryDataSource: LocalCategoryDataSource,
+    private val syncCategoriesUseCase: SyncCategoriesUseCase,
     private val validateTransactionUseCase: ValidateTransactionUseCase,
     private val createTransactionUseCase: CreateTransactionUseCase,
     private val transactionImporter: TransactionImporter
@@ -89,7 +91,7 @@ class TransactionViewModel(
 
     init {
         viewModelScope.launch {
-            categoryRepo.getCategories().collect {
+            localCategoryDataSource.categories.collect {
                 _categories.value = it
             }
         }
@@ -124,11 +126,7 @@ class TransactionViewModel(
 
     fun refreshCategories() {
         viewModelScope.launch {
-            try {
-                categoryRepo.refreshCategories()
-            } catch (e: Exception) {
-                // Ignore error here or log it
-            }
+            syncCategoriesUseCase()
         }
     }
 

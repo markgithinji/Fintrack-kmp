@@ -17,7 +17,8 @@ import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.user.domain.usecase.DeleteAccountUseCase
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
-import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
+import com.fintrack.shared.feature.category.data.LocalCategoryDataSource
+import com.fintrack.shared.feature.category.domain.usecase.SyncCategoriesUseCase
 import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.category.domain.model.Category
@@ -36,7 +37,8 @@ class SettingsViewModel(
     private val validationUseCase: ChangePasswordValidationUseCase,
     private val deleteAccountUseCase: DeleteAccountUseCase,
     private val userRepository: UserRepository,
-    private val categoryRepository: CategoryRepository,
+    private val localCategoryDataSource: LocalCategoryDataSource,
+    private val syncCategoriesUseCase: SyncCategoriesUseCase,
     private val accountRepository: AccountRepository,
     private val budgetRepository: BudgetRepository,
 ) : ViewModel() {
@@ -109,7 +111,7 @@ class SettingsViewModel(
             initialValue = userRepository.getUserProfile().value?.trackedCategories ?: emptyList()
         )
 
-    val allCategories: StateFlow<List<Category>> = categoryRepository.getCategories()
+    val allCategories: StateFlow<List<Category>> = localCategoryDataSource.categories
         .map { categories ->
             val filtered = categories.filter { it.id != "transaction_cost" }
                 .distinctBy { it.name.lowercase() to it.isExpense }
@@ -123,7 +125,7 @@ class SettingsViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = categoryRepository.getCategories().value.let { categories ->
+            initialValue = localCategoryDataSource.categories.value.let { categories ->
                 val filtered = categories.filter { it.id != "transaction_cost" }
                     .distinctBy { it.name.lowercase() to it.isExpense }
                     .sortedWith(
@@ -137,11 +139,7 @@ class SettingsViewModel(
 
     init {
         viewModelScope.launch {
-            try {
-                categoryRepository.refreshCategories()
-            } catch (e: Exception) {
-                // Silently fail
-            }
+            syncCategoriesUseCase()
         }
         viewModelScope.launch {
             val result = accountRepository.getAccounts()

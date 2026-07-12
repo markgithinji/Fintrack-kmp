@@ -1,11 +1,10 @@
 package com.fintrack.shared.feature.category.domain.repository
 
 import com.fintrack.shared.feature.category.domain.model.Category
-import kotlinx.coroutines.flow.StateFlow
+import com.fintrack.shared.feature.core.util.Result
 
 interface CategoryRepository {
-    fun getCategories(): StateFlow<List<Category>>
-    suspend fun refreshCategories()
-    suspend fun addCategory(name: String, isExpense: Boolean, iconName: String? = null): Category
-    suspend fun deleteCategory(id: String)
+    suspend fun getCategories(): Result<List<Category>>
+    suspend fun addCategory(name: String, isExpense: Boolean, iconName: String? = null): Result<Category>
+    suspend fun deleteCategory(id: String): Result<Unit>
 }

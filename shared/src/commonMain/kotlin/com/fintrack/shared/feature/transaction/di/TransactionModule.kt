@@ -26,7 +26,8 @@ val transactionModule = module {
     viewModel {
         TransactionViewModel(
             repo = get(),
-            categoryRepo = get(),
+            localCategoryDataSource = get(),
+            syncCategoriesUseCase = get(),
             validateTransactionUseCase = get(),
             createTransactionUseCase = get(),
             transactionImporter = get()

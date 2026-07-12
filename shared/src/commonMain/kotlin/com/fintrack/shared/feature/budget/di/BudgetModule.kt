@@ -20,5 +20,12 @@ val budgetModule = module {
             notificationService = get()
         )
     }
-    viewModel { BudgetViewModel(budgetRepository = get(), validationUseCase = get(), categoryRepo = get()) }
+    viewModel { 
+        BudgetViewModel(
+            budgetRepository = get(), 
+            validationUseCase = get(), 
+            localCategoryDataSource = get(),
+            syncCategoriesUseCase = get()
+        ) 
+    }
 }

@@ -69,7 +69,6 @@ import fintrack.shared.generated.resources.Res
 import fintrack.shared.generated.resources.apple_signIn_icon
 import fintrack.shared.generated.resources.fintrack_app_icon
 import fintrack.shared.generated.resources.google_signIn_icon
-import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 

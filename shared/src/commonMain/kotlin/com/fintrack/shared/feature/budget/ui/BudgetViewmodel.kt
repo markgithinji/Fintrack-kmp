@@ -11,8 +11,9 @@ import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.budget.domain.usecase.BudgetValidationUseCase
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.category.data.LocalCategoryDataSource
 import com.fintrack.shared.feature.category.domain.model.Category
-import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
+import com.fintrack.shared.feature.category.domain.usecase.SyncCategoriesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +27,8 @@ import kotlinx.datetime.LocalDate
 class BudgetViewModel(
     private val budgetRepository: BudgetRepository,
     private val validationUseCase: BudgetValidationUseCase,
-    private val categoryRepo: CategoryRepository
+    private val localCategoryDataSource: LocalCategoryDataSource,
+    private val syncCategoriesUseCase: SyncCategoriesUseCase
 ) : ViewModel() {
 
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
@@ -76,7 +78,7 @@ class BudgetViewModel(
         reloadBudgets(showLoading = true)
         
         viewModelScope.launch {
-            categoryRepo.getCategories().collect { cats ->
+            localCategoryDataSource.categories.collect { cats ->
                 _categories.value = cats
                 if (_formState.value.selectedCategories.isEmpty() && cats.isNotEmpty()) {
                     val firstExpense = cats.firstOrNull { it.isExpense }
@@ -91,7 +93,7 @@ class BudgetViewModel(
 
     fun refreshCategories() {
         viewModelScope.launch {
-            categoryRepo.refreshCategories()
+            syncCategoriesUseCase()
         }
     }
 

@@ -2,8 +2,14 @@ package com.fintrack.shared.feature.category.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fintrack.shared.feature.category.data.LocalCategoryDataSource
 import com.fintrack.shared.feature.category.domain.model.Category
-import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
+import com.fintrack.shared.feature.category.domain.usecase.AddCategoryUseCase
+import com.fintrack.shared.feature.category.domain.usecase.DeleteCategoryUseCase
+import com.fintrack.shared.feature.category.domain.usecase.SyncCategoriesUseCase
+import com.fintrack.shared.feature.core.data.model.ApiException
+import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
+import com.fintrack.shared.feature.core.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +25,10 @@ data class CategoryManagementState(
 )
 
 class CategoryManagementViewModel(
-    private val repository: CategoryRepository
+    private val localDataSource: LocalCategoryDataSource,
+    private val syncCategoriesUseCase: SyncCategoriesUseCase,
+    private val addCategoryUseCase: AddCategoryUseCase,
+    private val deleteCategoryUseCase: DeleteCategoryUseCase
 ) : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
@@ -29,7 +38,7 @@ class CategoryManagementViewModel(
     val error = _error.asStateFlow()
 
     val state: StateFlow<CategoryManagementState> = combine(
-        repository.getCategories(),
+        localDataSource.categories,
         _isLoading,
         _error
     ) { categories, loading, error ->
@@ -47,13 +56,15 @@ class CategoryManagementViewModel(
     fun refresh() {
         viewModelScope.launch {
             _isLoading.value = true
-            try {
-                repository.refreshCategories()
-            } catch (e: Exception) {
-                _error.value = e.message
-            } finally {
-                _isLoading.value = false
+            when (val result = syncCategoriesUseCase()) {
+                is Result.Error -> {
+                    val exception = result.exception
+                    _error.value = (exception as? ApiException)?.getUserFriendlyMessage()
+                        ?: exception.message ?: "Failed to refresh categories"
+                }
+                else -> { /* Success or Loading handled elsewhere */ }
             }
+            _isLoading.value = false
         }
     }
 
@@ -64,26 +75,32 @@ class CategoryManagementViewModel(
         }
         viewModelScope.launch {
             _isLoading.value = true
-            try {
-                repository.addCategory(name, isExpense, iconName)
-            } catch (e: Exception) {
-                _error.value = e.message
-            } finally {
-                _isLoading.value = false
+            when (val result = addCategoryUseCase(name, isExpense, iconName)) {
+                is Result.Error -> {
+                    val exception = result.exception
+                    _error.value = (exception as? ApiException)?.getUserFriendlyMessage()
+                        ?: exception.message ?: "Failed to add category"
+                }
+                is Result.Success -> { /* List will auto-update via repository flow */ }
+                else -> {}
             }
+            _isLoading.value = false
         }
     }
 
     fun deleteCategory(id: String) {
         viewModelScope.launch {
             _isLoading.value = true
-            try {
-                repository.deleteCategory(id)
-            } catch (e: Exception) {
-                _error.value = e.message
-            } finally {
-                _isLoading.value = false
+            when (val result = deleteCategoryUseCase(id)) {
+                is Result.Error -> {
+                    val exception = result.exception
+                    _error.value = (exception as? ApiException)?.getUserFriendlyMessage()
+                        ?: exception.message ?: "Failed to delete category"
+                }
+                is Result.Success -> { /* List will auto-update via repository flow */ }
+                else -> {}
             }
+            _isLoading.value = false
         }
     }
 
