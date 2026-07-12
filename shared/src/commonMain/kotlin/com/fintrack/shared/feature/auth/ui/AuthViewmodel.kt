@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 
 class AuthViewModel(
     private val repository: AuthRepository,
+    private val userRepository: com.fintrack.shared.feature.user.domain.repository.UserRepository,
     private val tokenDataSource: TokenDataSource,
     private val registerValidationUseCase: RegisterValidationUseCase,
     private val loginValidationUseCase: LoginValidationUseCase,
@@ -121,6 +122,11 @@ class AuthViewModel(
         viewModelScope.launch {
             when (val result = repository.login(formState.email, formState.password)) {
                 is Result.Success -> {
+                    // Refresh user profile before proceeding
+                    try {
+                        userRepository.refreshProfile()
+                    } catch (_: Exception) {}
+
                     // Set login state to success to show success on button
                     _loginState.value = AuthState.Success(result.data)
                     
@@ -248,6 +254,11 @@ class AuthViewModel(
             when (val result =
                 repository.register(formState.name, formState.email, formState.password)) {
                 is Result.Success -> {
+                    // Refresh user profile before proceeding
+                    try {
+                        userRepository.refreshProfile()
+                    } catch (_: Exception) {}
+
                     // Set register state to success to show success on button
                     _registerState.value = AuthState.Success(result.data)
                     
@@ -286,6 +297,11 @@ class AuthViewModel(
             when (val result = repository.validateToken(currentToken)) {
                 is Result.Success -> {
                     if (result.data) {
+                        // Refresh profile on successful token validation (app start)
+                        try {
+                            userRepository.refreshProfile()
+                        } catch (_: Exception) {}
+
                         _authStatus.value = AuthState.Success(true)
                     } else {
                         logger.warning(LogTags.AUTH, "Token validation failed (invalid token). Clearing session.")

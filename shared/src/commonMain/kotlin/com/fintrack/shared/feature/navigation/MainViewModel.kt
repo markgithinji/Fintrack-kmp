@@ -6,9 +6,10 @@ import com.fintrack.shared.feature.budget.domain.usecase.CheckBudgetThresholdsUs
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.transaction.domain.usecase.SyncRecurringBillsUseCase
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
+import com.fintrack.shared.feature.account.domain.usecase.GetAccountsUseCase
+import com.fintrack.shared.feature.core.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -17,13 +18,18 @@ import kotlinx.coroutines.launch
 
 class MainViewModel(
     private val settingsDataSource: SettingsDataSource,
+    private val tokenDataSource: com.fintrack.shared.feature.auth.domain.datasource.TokenDataSource,
     userRepository: UserRepository,
+    private val getAccountsUseCase: GetAccountsUseCase,
     private val checkBudgetThresholdsUseCase: CheckBudgetThresholdsUseCase,
     private val syncRecurringBillsUseCase: SyncRecurringBillsUseCase,
 ) : ViewModel() {
 
     private val _selectedAccountId = MutableStateFlow<String?>(null)
     val selectedAccountId: StateFlow<String?> = _selectedAccountId.asStateFlow()
+
+    private val _isInitializing = MutableStateFlow(true)
+    val isInitializing: StateFlow<Boolean> = _isInitializing.asStateFlow()
 
     private val _refreshTrigger = MutableStateFlow(0)
     val refreshTrigger: StateFlow<Int> = _refreshTrigger.asStateFlow()
@@ -37,13 +43,32 @@ class MainViewModel(
     val userProfile = userRepository.getUserProfile()
 
     init {
-        // Initialize selected account from default settings if not already set
+        println("NAV_DEBUG: MainViewModel initializing")
+        // Initialize selected account from default settings or first available account
         viewModelScope.launch {
-            settingsDataSource.defaultAccountId.collect { id ->
-                if ((_selectedAccountId.value == null) && (id != null)) {
-                    _selectedAccountId.value = id
+            _isInitializing.value = true
+            combine(
+                tokenDataSource.accessToken,
+                settingsDataSource.defaultAccountId
+            ) { token, defaultId -> token to defaultId }
+                .collectLatest { (token, defaultId) ->
+                    println("NAV_DEBUG: combine triggered. hasToken: ${token != null}, defaultId: $defaultId")
+                    if (token != null) {
+                        if (defaultId != null) {
+                            println("NAV_DEBUG: Using defaultId: $defaultId")
+                            _selectedAccountId.value = defaultId
+                            _isInitializing.value = false
+                        } else if (_selectedAccountId.value == null) {
+                            println("NAV_DEBUG: No defaultId, fetching first account")
+                            fetchAndSelectFirstAccount()
+                            _isInitializing.value = false
+                        }
+                    } else {
+                        println("NAV_DEBUG: No token, clearing selectedAccountId")
+                        _selectedAccountId.value = null
+                        _isInitializing.value = false
+                    }
                 }
-            }
         }
 
         // Maintenance tasks
@@ -63,6 +88,27 @@ class MainViewModel(
                         syncBills()
                     }
                 }
+        }
+    }
+
+    private suspend fun fetchAndSelectFirstAccount() {
+        println("NAV_DEBUG: fetchAndSelectFirstAccount starting")
+        when (val result = getAccountsUseCase()) {
+            is Result.Success -> {
+                val firstAccount = result.data.firstOrNull()
+                println("NAV_DEBUG: fetchAndSelectFirstAccount success. Found: ${firstAccount?.name}")
+                if (firstAccount != null) {
+                    _selectedAccountId.value = firstAccount.id
+                    // Optionally set this as default if none exists
+                    settingsDataSource.setDefaultAccountId(firstAccount.id)
+                }
+            }
+            is Result.Error -> {
+                println("NAV_DEBUG: fetchAndSelectFirstAccount error: ${result.exception.message}")
+            }
+            is Result.Loading -> {
+                println("NAV_DEBUG: fetchAndSelectFirstAccount loading")
+            }
         }
     }
 

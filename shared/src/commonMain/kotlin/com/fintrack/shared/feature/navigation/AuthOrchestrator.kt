@@ -78,7 +78,7 @@ fun AuthOrchestrator(
 
     // LOGIN_DEBUG: Log orchestration decision
     SideEffect {
-        println("LOGIN_DEBUG: AuthOrchestrator recomposing. authStatus: $authStatus, currentDestination: $currentDestination, isAppLocked: $isAppLocked")
+        println("NAV_DEBUG: AuthOrchestrator recomposing. authStatus: $authStatus, currentDestination: $currentDestination, isAppLocked: $isAppLocked")
     }
 
     if (isAppLocked) {

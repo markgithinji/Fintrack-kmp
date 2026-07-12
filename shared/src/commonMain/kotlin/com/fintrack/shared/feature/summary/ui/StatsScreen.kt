@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,7 +53,7 @@ import com.fintrack.shared.ui.theme.PinkExpense
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun StatisticsScreen(
-    selectedAccountId: String,
+    selectedAccountId: String?,
     viewModel: StatisticsViewModel = koinViewModel(),
     mainViewModel: MainViewModel = koinInject(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
@@ -74,7 +75,7 @@ fun StatisticsScreen(
     }
 
     LaunchedEffect(refreshTrigger) {
-        if (refreshTrigger > 0) {
+        if (refreshTrigger > 0 && selectedAccountId != null) {
             viewModel.loadAvailablePeriods(selectedAccountId, force = true)
             viewModel.loadOverview(selectedAccountId, force = true)
             viewModel.loadCategoryComparisons(selectedAccountId, force = true)
@@ -85,12 +86,21 @@ fun StatisticsScreen(
     }
 
     LaunchedEffect(selectedAccountId, safePeriod) {
-        viewModel.loadAvailablePeriods(selectedAccountId)
-        viewModel.loadOverview(selectedAccountId)
-        viewModel.loadCategoryComparisons(selectedAccountId)
-        
-        val yearCode = safePeriod.code.split("-").firstOrNull() ?: safePeriod.code
-        viewModel.loadHighlights(selectedAccountId, yearCode)
+        if (selectedAccountId != null) {
+            viewModel.loadAvailablePeriods(selectedAccountId)
+            viewModel.loadOverview(selectedAccountId)
+            viewModel.loadCategoryComparisons(selectedAccountId)
+            
+            val yearCode = safePeriod.code.split("-").firstOrNull() ?: safePeriod.code
+            viewModel.loadHighlights(selectedAccountId, yearCode)
+        }
+    }
+
+    if (selectedAccountId == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
     }
 
     Column(

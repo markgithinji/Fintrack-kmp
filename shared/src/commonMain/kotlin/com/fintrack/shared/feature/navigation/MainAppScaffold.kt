@@ -52,7 +52,6 @@ fun MainAppScaffold(
     onLogout: () -> Unit = {}
 ) {
     val navController = LocalNavController.current
-    val selectedAccountId by mainViewModel.selectedAccountId.collectAsStateWithLifecycle()
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
@@ -107,7 +106,7 @@ fun MainAppScaffold(
                 },
                 bottomBar = {
                     if (showBottomBar) {
-                        BottomBar(selectedAccountId)
+                        BottomBar()
                     }
                 },
                 floatingActionButton = {

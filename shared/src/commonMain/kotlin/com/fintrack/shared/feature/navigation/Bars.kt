@@ -75,12 +75,12 @@ data class BottomNavItem(
 
 
 @Composable
-fun BottomBar(selectedAccountId: String?) {
+fun BottomBar() {
     val navController = LocalNavController.current
-    val items = remember(selectedAccountId) {
+    val items = remember {
         listOf(
-            BottomNavItem("Home", Icons.Default.Home, selectedAccountId?.let { Screen.Home(it) } ?: Screen.Login),
-            BottomNavItem("Stats", Icons.Default.BarChart, selectedAccountId?.let { Screen.Statistics(it) } ?: Screen.Login),
+            BottomNavItem("Home", Icons.Default.Home, Screen.Home()),
+            BottomNavItem("Stats", Icons.Default.BarChart, Screen.Statistics()),
             BottomNavItem("Budget", Icons.Default.Info, Screen.Budget),
             BottomNavItem("Profile", Icons.Default.Person, Screen.Profile)
         )

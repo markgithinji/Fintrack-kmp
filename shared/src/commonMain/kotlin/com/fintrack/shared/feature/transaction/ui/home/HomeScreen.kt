@@ -9,10 +9,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
@@ -31,7 +36,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun HomeScreen(
-    selectedAccountId: String,
+    selectedAccountId: String?,
     onAccountSelected: (String) -> Unit,
     accountsViewModel: AccountsViewModel = koinViewModel(),
     transactionsViewModel: TransactionViewModel = koinViewModel(),
@@ -56,12 +61,58 @@ fun HomeScreen(
     val importProgress by transactionsViewModel.importProgress.collectAsStateWithLifecycle()
     val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
     
+    println("NAV_DEBUG: HomeScreen recomposing. selectedAccountId: $selectedAccountId, accountsResult: ${accountsResult::class.simpleName}")
+
     val logger = remember { KMPLogger() }
 
     var syncErrorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(selectedAccountId) {
-        accountsViewModel.selectAccount(selectedAccountId)
+        println("NAV_DEBUG: HomeScreen LaunchedEffect(selectedAccountId) triggered: $selectedAccountId")
+        selectedAccountId?.let { accountsViewModel.selectAccount(it) }
+    }
+
+    if (selectedAccountId == null && (accountsResult !is Result.Success || (accountsResult as Result.Success).data.isEmpty())) {
+        println("NAV_DEBUG: HomeScreen showing loading/empty state. selectedAccountId is null")
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            if (accountsResult is Result.Loading) {
+                CircularProgressIndicator()
+            } else {
+                // You could show a "No Accounts Found" screen here with a button to go to Accounts
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AccountBalanceWallet,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "No account found",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Create your first account to start tracking your finances.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = { onAccountSelected("") }, // Navigates to accounts indirectly via callback
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Add First Account")
+                    }
+                }
+            }
+        }
+        return
     }
 
 

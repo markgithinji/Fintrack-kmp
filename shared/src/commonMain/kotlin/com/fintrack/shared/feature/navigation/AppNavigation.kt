@@ -59,10 +59,12 @@ fun AppNavigation(
     val navController = LocalNavController.current
     val selectedAccountId by mainViewModel.selectedAccountId.collectAsStateWithLifecycle()
 
-    println("LOGIN_DEBUG: AppNavigation recomposing. isAuthenticated: $isAuthenticated")
+    println("NAV_DEBUG: AppNavigation recomposing. isAuthenticated: $isAuthenticated, selectedAccountId: $selectedAccountId")
     
-    val startDestination: Any = remember(isAuthenticated, selectedAccountId) {
-        if (isAuthenticated && selectedAccountId != null) Screen.Home(selectedAccountId!!) else Screen.Login 
+    val startDestination: Any = remember(isAuthenticated) {
+        val dest = if (isAuthenticated) Screen.Home() else Screen.Login
+        println("NAV_DEBUG: startDestination decided: $dest")
+        dest
     }
 
     SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
@@ -148,7 +150,7 @@ fun AppNavigation(
             ) {
                 composable<Screen.Home> { backStackEntry ->
                     val route: Screen.Home = backStackEntry.toRoute()
-                    val accountId = route.accountId
+                    val accountId = route.accountId ?: selectedAccountId
 
                     LaunchedEffect(backStackEntry.lifecycle.currentState) {
                         if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
@@ -166,7 +168,7 @@ fun AppNavigation(
                         onCardClick = { accountIdParam, isIncome ->
                             navController.navigate(
                                 Screen.TransactionList(
-                                    accountId = accountIdParam,
+                                    accountId = accountIdParam ?: accountId ?: "",
                                     isIncome = isIncome
                                 )
                             )
@@ -189,7 +191,7 @@ fun AppNavigation(
 
                 composable<Screen.Statistics> { backStackEntry ->
                     val route: Screen.Statistics = backStackEntry.toRoute()
-                    val accountId = route.accountId
+                    val accountId = route.accountId ?: selectedAccountId
 
                     LaunchedEffect(backStackEntry.lifecycle.currentState) {
                         if (backStackEntry.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
@@ -204,7 +206,7 @@ fun AppNavigation(
                             val isTransactionCost = category == "Transaction Fees"
                             navController.navigate(
                                 Screen.TransactionList(
-                                    accountId = accountIdParam ?: accountId,
+                                    accountId = accountIdParam ?: accountId ?: "",
                                     isIncome = if (isTransactionCost) null else isIncome,
                                     category = if (isTransactionCost) null else category,
                                     startDate = startDate,
@@ -356,11 +358,7 @@ fun AppNavigation(
                     LoginScreen(
                         viewModel = authViewModel,
                         onLoginSuccess = {
-                            if (selectedAccountId != null) {
-                                navController.navigate(Screen.Home(selectedAccountId!!)) {
-                                    popUpTo(Screen.Login) { inclusive = true }
-                                }
-                            }
+                            // Handled by AuthOrchestrator and AppNavigation startDestination logic
                         },
                         onSignUp = {
                             navController.navigate(Screen.Register) {
@@ -391,11 +389,7 @@ fun AppNavigation(
                     RegisterScreen(
                         viewModel = authViewModel,
                         onRegisterSuccess = {
-                            if (selectedAccountId != null) {
-                                navController.navigate(Screen.Home(selectedAccountId!!)) {
-                                    popUpTo(0) { inclusive = true }
-                                }
-                            }
+                            // Handled by AuthOrchestrator and AppNavigation startDestination logic
                         },
                         onLogin = {
                             navController.navigate(Screen.Login) {
