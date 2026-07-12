@@ -13,13 +13,13 @@ import com.fintrack.shared.feature.core.util.safeApiCall
 import kotlinx.coroutines.flow.firstOrNull
 
 class AuthRepositoryImpl(
-    private val api: AuthApi,
+    private val authApi: AuthApi,
     private val tokenDataSource: TokenDataSource
 ) : AuthRepository {
 
     override suspend fun login(email: String, password: String): Result<AuthResponse> =
         safeApiCall {
-            val authResponse = api.login(LoginRequest(email, password))
+            val authResponse = authApi.login(LoginRequest(email, password))
             val domainResponse = authResponse.toDomain()
             tokenDataSource.saveTokens(domainResponse.accessToken, domainResponse.refreshToken)
             domainResponse
@@ -31,7 +31,7 @@ class AuthRepositoryImpl(
         password: String
     ): Result<AuthResponse> =
         safeApiCall {
-            val authResponse = api.register(RegisterRequest(name, email, password))
+            val authResponse = authApi.register(RegisterRequest(name, email, password))
             val domainResponse = authResponse.toDomain()
             tokenDataSource.saveTokens(domainResponse.accessToken, domainResponse.refreshToken)
             domainResponse
@@ -39,13 +39,13 @@ class AuthRepositoryImpl(
 
     override suspend fun getUserById(userId: String, token: String): Result<AuthResponse> =
         safeApiCall {
-            val authResponse = api.getUserById(userId, token)
+            val authResponse = authApi.getUserById(userId, token)
             authResponse.toDomain()
         }
 
     override suspend fun validateToken(token: String): Result<Boolean> =
         safeApiCall {
-            val response = api.validateToken()
+            val response = authApi.validateToken()
             response.isValid
         }
 
@@ -53,14 +53,14 @@ class AuthRepositoryImpl(
         safeApiCall {
             val refreshToken = tokenDataSource.refreshToken.firstOrNull()
             if (refreshToken != null) {
-                api.logout(refreshToken)
+                authApi.logout(refreshToken)
             }
             tokenDataSource.clearTokens()
         }
 
     override suspend fun refreshToken(refreshToken: String): Result<AuthResponse> =
         safeApiCall {
-            val authResponse = api.refresh(refreshToken)
+            val authResponse = authApi.refresh(refreshToken)
             val domainResponse = authResponse.toDomain()
             tokenDataSource.saveTokens(domainResponse.accessToken, domainResponse.refreshToken)
             domainResponse
@@ -71,6 +71,6 @@ class AuthRepositoryImpl(
         newPassword: String
     ): Result<Unit> =
         safeApiCall {
-            api.changePassword(ChangePasswordRequest(currentPassword, newPassword))
+            authApi.changePassword(ChangePasswordRequest(currentPassword, newPassword))
         }
 }

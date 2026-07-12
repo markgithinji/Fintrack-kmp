@@ -22,17 +22,9 @@ class CheckBudgetThresholdsUseCase(
         val result = budgetRepository.getBudgets()
         if (result is Result.Success) {
             val budgetWithStatus = result.data.find { it.budget.id == alertBudgetId } ?: return
-            val status = budgetWithStatus.status
-            val percentageUsed = status.percentageUsed // Assuming this is 0.0 to 1.0 or 0 to 100?
             
-            // Let's check BudgetStatus definition again
-            // data class BudgetStatus(val percentageUsed: Double, ...)
-            
-            val percent = percentageUsed // If it's 0.0 to 100.0
-            // Usually percentageUsed is 0.0 to 1.0. Let's assume 0 to 100 based on my UI code.
-            // If it's 0.8, then 80%.
-            
-            val actualPercent = if (percent <= 1.0) percent * 100 else percent
+            // percentageUsed is 0.0 to 100.0 (e.g. 85.0 for 85%)
+            val actualPercent = budgetWithStatus.status.percentageUsed
 
             val thresholdReached = thresholds
                 .filter { it.toDouble() <= actualPercent }

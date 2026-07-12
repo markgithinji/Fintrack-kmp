@@ -79,9 +79,6 @@ fun BudgetScreen(
         }
     }
 
-    // The ViewModel init block handles the initial load
-    // so no need to call reloadBudgets() here.
-
     Box(
         modifier = Modifier
             .fillMaxSize()

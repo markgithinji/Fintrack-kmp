@@ -11,39 +11,39 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.safeApiCall
 
 class BudgetRepositoryImpl(
-    private val api: BudgetApi
+    private val budgetApi: BudgetApi
 ) : BudgetRepository {
 
     override suspend fun getBudgets(
         accountId: String?
     ): Result<List<BudgetWithStatus>> = safeApiCall {
-        val budgetsWithStatusDto = api.getBudgets(limit = 100, offset = 0, accountId = accountId)
+        val budgetsWithStatusDto = budgetApi.getBudgets(limit = 100, offset = 0, accountId = accountId)
         budgetsWithStatusDto.map { it.toDomain() }
     }
 
     override suspend fun getBudgetById(id: String): Result<BudgetWithStatus> =
         safeApiCall {
-            val budgetWithStatusDto = api.getBudgetById(id)
+            val budgetWithStatusDto = budgetApi.getBudgetById(id)
             budgetWithStatusDto.toDomain()
         }
 
     override suspend fun addOrUpdateBudget(budget: Budget): Result<Budget> = safeApiCall {
         if (budget.id == null) {
             val createRequest = budget.toCreateRequest()
-            val dto = api.addBudget(createRequest)
+            val dto = budgetApi.addBudget(createRequest)
             dto.budget.toDomain()
         } else {
             val updateRequest = budget.toUpdateRequest()
-            val dto = api.updateBudget(budget.id, updateRequest)
+            val dto = budgetApi.updateBudget(budget.id, updateRequest)
             dto.budget.toDomain()
         }
     }
 
     override suspend fun deleteBudget(id: String): Result<Unit> = safeApiCall {
-        api.deleteBudget(id)
+        budgetApi.deleteBudget(id)
     }
 
     override suspend fun deleteAllBudgets(accountIds: List<String>?): Result<Unit> = safeApiCall {
-        api.deleteAllBudgets(accountIds)
+        budgetApi.deleteAllBudgets(accountIds)
     }
 }

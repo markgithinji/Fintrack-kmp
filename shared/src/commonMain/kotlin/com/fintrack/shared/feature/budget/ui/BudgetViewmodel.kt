@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 
 class BudgetViewModel(
-    private val repo: BudgetRepository,
+    private val budgetRepository: BudgetRepository,
     private val validationUseCase: BudgetValidationUseCase,
     private val categoryRepo: CategoryRepository
 ) : ViewModel() {
@@ -91,16 +91,8 @@ class BudgetViewModel(
 
     fun refreshCategories() {
         viewModelScope.launch {
-            try {
-                categoryRepo.refreshCategories()
-            } catch (e: Exception) {
-                // Ignore
-            }
+            categoryRepo.refreshCategories()
         }
-    }
-
-    fun setAccounts(accounts: Set<Account>) {
-        _formState.update { it.copy(selectedAccounts = accounts) }
     }
 
     fun toggleAccount(account: Account) {
@@ -166,7 +158,7 @@ class BudgetViewModel(
             if (showLoading) {
                 _budgets.value = Result.Loading
             }
-            _budgets.value = repo.getBudgets(accountId = null)
+            _budgets.value = budgetRepository.getBudgets(accountId = null)
         }
     }
 
@@ -204,7 +196,7 @@ class BudgetViewModel(
                         endDate = currentForm.endDate!!
                     )
 
-                    val result = repo.addOrUpdateBudget(budget)
+                    val result = budgetRepository.addOrUpdateBudget(budget)
                     _saveState.value = when (result) {
                         is Result.Success -> {
                             reloadBudgets(showLoading = false)
@@ -221,7 +213,7 @@ class BudgetViewModel(
     fun removeBudget(id: String) {
         viewModelScope.launch {
             _deleteResult.value = Result.Loading
-            val result = repo.deleteBudget(id)
+            val result = budgetRepository.deleteBudget(id)
             _deleteResult.value = result
             if (result is Result.Success) {
                 reloadBudgets(showLoading = false)
@@ -235,7 +227,7 @@ class BudgetViewModel(
 
         viewModelScope.launch {
             _selectedBudget.value = Result.Loading
-            _selectedBudget.value = repo.getBudgetById(id)
+            _selectedBudget.value = budgetRepository.getBudgetById(id)
         }
     }
 
