@@ -80,32 +80,13 @@ fun AccountsScreen(
     }
 
     LaunchedEffect(saveResult) {
-        when (val result = saveResult) {
-            is Result.Success -> {
-                mainViewModel.triggerGlobalRefresh()
-                toastMessage = (if (isEditing) "Account updated" else "Account added") to false
-                // Dismiss dialog first before clearing results to avoid UI flicker
-                showAccountDialog = null
-                accountsViewModel.clearResults()
-            }
-            is Result.Error -> {
-                val message = (result.exception as? ApiException)?.getUserFriendlyMessage()
-                    ?: result.exception.message ?: "Error saving account"
-                toastMessage = message to true
-                accountsViewModel.clearResults()
-            }
-            else -> Unit
+        if (saveResult is Result.Success) {
+            toastMessage = (if (isEditing) "Account updated" else "Account added") to false
         }
     }
 
-    LaunchedEffect(deleteResult) {
-        if (deleteResult is Result.Success) {
-            mainViewModel.triggerGlobalRefresh()
-        }
-    }
-
-    LaunchedEffect(clearDataResult) {
-        if (clearDataResult is Result.Success) {
+    LaunchedEffect(saveResult, deleteResult, clearDataResult) {
+        if (saveResult is Result.Success || deleteResult is Result.Success || clearDataResult is Result.Success) {
             mainViewModel.triggerGlobalRefresh()
         }
     }
@@ -175,9 +156,10 @@ fun AccountsScreen(
         AccountDialog(
             account = account,
             isEditing = isEditing,
-            isLoading = saveResult is Result.Loading || saveResult is Result.Success || 
-                        deleteResult is Result.Loading || deleteResult is Result.Success || 
-                        clearDataResult is Result.Loading || clearDataResult is Result.Success,
+            isLoading = saveResult is Result.Loading || 
+                        deleteResult is Result.Loading || 
+                        clearDataResult is Result.Loading,
+            saveResult = saveResult,
             deleteResult = deleteResult,
             clearDataResult = clearDataResult,
             accountType = account.type,
@@ -394,6 +376,7 @@ fun AccountDialog(
     account: Account,
     isEditing: Boolean,
     isLoading: Boolean,
+    saveResult: Result<Account>?,
     deleteResult: Result<Unit>?,
     clearDataResult: Result<Unit>?,
     accountType: AccountType,
@@ -414,6 +397,18 @@ fun AccountDialog(
     val hasChanges = accountName != account.name || 
                      type != accountType || 
                      isDefault != isDefaultSelection
+
+    val saveError = (saveResult as? Result.Error)?.let {
+        (it.exception as? ApiException)?.getUserFriendlyMessage() 
+            ?: it.exception.message 
+            ?: "An error occurred"
+    }
+
+    LaunchedEffect(saveResult) {
+        if (saveResult is Result.Success) {
+            onDismiss()
+        }
+    }
 
     if (showClearDataConfirm) {
         ConfirmationDialog(
@@ -504,12 +499,17 @@ fun AccountDialog(
 
                 OutlinedTextField(
                     value = accountName,
-                    onValueChange = { accountName = it },
+                    onValueChange = { 
+                        accountName = it 
+                        if (saveResult is Result.Error) onClearResults()
+                    },
                     label = { Text("Account Name") },
                     placeholder = { Text("e.g. Personal Savings") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     enabled = !isLoading && !account.isDefault,
+                    isError = saveError != null,
+                    supportingText = saveError?.let { { Text(it) } },
                     shape = RoundedCornerShape(12.dp),
                     leadingIcon = {
                         Icon(
