@@ -364,12 +364,4 @@ class AuthViewModel(
             }
         }
     }
-
-    fun resetLoginState() {
-        _loginState.value = AuthState.Idle
-    }
-
-    fun resetRegisterState() {
-        _registerState.value = AuthState.Idle
-    }
 }

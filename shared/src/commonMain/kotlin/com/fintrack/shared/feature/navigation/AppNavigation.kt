@@ -15,6 +15,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -362,7 +363,8 @@ fun AppNavigation(
                             }
                         },
                         onForgotPassword = {
-                        }
+                        },
+                        modifier = Modifier.padding(paddingValues)
                     )
                 }
 
@@ -391,7 +393,8 @@ fun AppNavigation(
                             navController.navigate(Screen.Login) {
                                 popUpTo(Screen.Register) { inclusive = true }
                             }
-                        }
+                        },
+                        modifier = Modifier.padding(paddingValues)
                     )
                 }
 

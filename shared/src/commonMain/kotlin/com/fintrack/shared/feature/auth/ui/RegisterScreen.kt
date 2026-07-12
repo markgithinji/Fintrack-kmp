@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -118,7 +119,7 @@ fun RegisterScreen(
     LaunchedEffect(registerFormState.passwordError) { registerFormState.passwordError?.let { mostRecentValidationError = it } }
     LaunchedEffect(registerFormState.confirmPasswordError) { registerFormState.confirmPasswordError?.let { mostRecentValidationError = it } }
 
-    // Toast message state (for server errors)
+    // Toast message state
     var toastMessage by remember { mutableStateOf<String?>(null) }
 
     var passwordVisible by remember { mutableStateOf(value = false) }
@@ -126,21 +127,20 @@ fun RegisterScreen(
 
     val colorScheme = MaterialTheme.colorScheme
 
-    // Automatically request focus on the name field when the screen opens
-    LaunchedEffect(Unit) {
-        delay(300)
-        try {
-            nameFocusRequester.requestFocus()
-        } catch (e: Exception) {
-            println("LOGIN_DEBUG: Failed to request focus in Register: ${e.message}")
-        }
-    }
+//    // Automatically request focus on the name field when the screen opens
+//    LaunchedEffect(Unit) {
+//        delay(300)
+//        try {
+//            nameFocusRequester.requestFocus()
+//        } catch (e: Exception) {
+//            println("LOGIN_DEBUG: Failed to request focus in Register: ${e.message}")
+//        }
+//    }
 
     LaunchedEffect(registerState) {
         when (val state = registerState) {
             is AuthState.Success -> {
-                println("REGISTER_DEBUG: Registration successful, delaying 1s then navigating")
-                delay(1000)
+                println("REGISTER_DEBUG: Registration successful, calling onRegisterSuccess")
                 onRegisterSuccess()
             }
 
@@ -160,8 +160,9 @@ fun RegisterScreen(
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .verticalScroll(scrollState)
                 .background(colorScheme.background)
+                .verticalScroll(scrollState)
+                .imePadding()
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -206,7 +207,7 @@ fun RegisterScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(64.dp))
 
             // 2. Input Fields
             FinanceTextField(
@@ -450,13 +451,13 @@ fun RegisterScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // 7. Login Link
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 32.dp),
+                    .padding(bottom = 24.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {

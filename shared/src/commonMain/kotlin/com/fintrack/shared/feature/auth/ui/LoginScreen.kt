@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -110,9 +111,7 @@ fun LoginScreen(
     LaunchedEffect(loginState) {
         when (val state = loginState) {
             is AuthState.Success -> {
-                println("LOGIN_DEBUG: [4] Login successful in UI, delaying 1s then calling onLoginSuccess")
-                delay(1000) // Delay to show the success state on the button
-                println("LOGIN_DEBUG: [5] Calling onLoginSuccess()")
+                println("LOGIN_DEBUG: [4] Login successful in UI, calling onLoginSuccess")
                 onLoginSuccess()
             }
 
@@ -152,8 +151,9 @@ fun LoginScreen(
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .verticalScroll(scrollState)
                 .background(colorScheme.background)
+                .verticalScroll(scrollState)
+                .imePadding()
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -198,7 +198,7 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(64.dp))
 
             // 2. Input Fields
             FinanceTextField(
@@ -255,11 +255,11 @@ fun LoginScreen(
                 contentType = ContentType.Password
             )
 
-            // 3. Inline Validation Error (if any)
+            // 3. Inline Validation Error
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(24.dp), // Fixed height to prevent layout shift
+                    .height(24.dp),
                 contentAlignment = Alignment.CenterStart,
             ) {
                 Column {
