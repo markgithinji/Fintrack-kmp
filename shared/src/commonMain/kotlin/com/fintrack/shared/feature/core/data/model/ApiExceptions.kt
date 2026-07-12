@@ -26,6 +26,9 @@ enum class AuthErrorType {
     USER_ALREADY_EXISTS,
     WEAK_PASSWORD,
     SESSION_EXPIRED,
+    TOKEN_REVOKED,
+    TOKEN_EXPIRED,
+    INVALID_TOKEN,
     UNAUTHORIZED,
     UNKNOWN
 }
@@ -37,7 +40,10 @@ fun ApiException.getUserFriendlyMessage(): String = when (this) {
         AuthErrorType.INVALID_PASSWORD -> "The password you entered is incorrect."
         AuthErrorType.USER_ALREADY_EXISTS -> "An account with this email already exists."
         AuthErrorType.WEAK_PASSWORD -> "Your password is too weak. Try a stronger one."
-        AuthErrorType.SESSION_EXPIRED -> "Your session has expired. Please log in again."
+        AuthErrorType.SESSION_EXPIRED, 
+        AuthErrorType.TOKEN_EXPIRED -> "Your session has expired. Please log in again."
+        AuthErrorType.TOKEN_REVOKED -> "This session has been revoked. Please log in again."
+        AuthErrorType.INVALID_TOKEN -> "Invalid authentication. Please log in again."
         AuthErrorType.UNAUTHORIZED -> "You are not authorized to perform this action."
         AuthErrorType.UNKNOWN -> "An authentication error occurred. Please try again."
     }

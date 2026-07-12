@@ -153,7 +153,10 @@ private fun mapToAuthException(message: String, errorCode: String): ApiException
         "INVALID_PASSWORD" -> AuthErrorType.INVALID_PASSWORD
         "USER_ALREADY_EXISTS" -> AuthErrorType.USER_ALREADY_EXISTS
         "WEAK_PASSWORD" -> AuthErrorType.WEAK_PASSWORD
-        "SESSION_EXPIRED" -> AuthErrorType.SESSION_EXPIRED
+        "SESSION_EXPIRED", "REFRESH_TOKEN_EXPIRED" -> AuthErrorType.SESSION_EXPIRED
+        "TOKEN_REVOKED" -> AuthErrorType.TOKEN_REVOKED
+        "TOKEN_EXPIRED" -> AuthErrorType.TOKEN_EXPIRED
+        "INVALID_TOKEN", "INVALID_REFRESH_TOKEN" -> AuthErrorType.INVALID_TOKEN
         "UNAUTHORIZED" -> AuthErrorType.UNAUTHORIZED
         else -> return null
     }
