@@ -26,7 +26,6 @@ class ProfileViewModel(
     private val _profileState = MutableStateFlow<Result<User>>(
         userRepository.getUserProfile().value?.let { Result.Success(it) } ?: Result.Loading
     )
-    val profileState: StateFlow<Result<User>> = _profileState.asStateFlow()
 
     private val _metricsState = MutableStateFlow<Result<ProfileMetrics>>(Result.Loading)
     val metricsState: StateFlow<Result<ProfileMetrics>> = _metricsState.asStateFlow()
@@ -42,7 +41,6 @@ class ProfileViewModel(
     val formState: StateFlow<ProfileFormState> = _formState.asStateFlow()
 
     init {
-        // Collect from the repository flow and update our Result state
         viewModelScope.launch {
             userRepository.getUserProfile().collect { user ->
                 if (user != null) {

@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.navigation
+package com.fintrack.shared.feature.navigation.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -28,9 +28,6 @@ class MainViewModel(
     private val _selectedAccountId = MutableStateFlow<String?>(null)
     val selectedAccountId: StateFlow<String?> = _selectedAccountId.asStateFlow()
 
-    private val _isInitializing = MutableStateFlow(true)
-    val isInitializing: StateFlow<Boolean> = _isInitializing.asStateFlow()
-
     private val _refreshTrigger = MutableStateFlow(0)
     val refreshTrigger: StateFlow<Int> = _refreshTrigger.asStateFlow()
 
@@ -45,7 +42,6 @@ class MainViewModel(
     init {
         // Initialize selected account from default settings or first available account
         viewModelScope.launch {
-            _isInitializing.value = true
             combine(
                 tokenDataSource.accessToken,
                 settingsDataSource.defaultAccountId
@@ -54,14 +50,11 @@ class MainViewModel(
                     if (token != null) {
                         if (defaultId != null) {
                             _selectedAccountId.value = defaultId
-                            _isInitializing.value = false
                         } else if (_selectedAccountId.value == null) {
                             fetchAndSelectFirstAccount()
-                            _isInitializing.value = false
                         }
                     } else {
                         _selectedAccountId.value = null
-                        _isInitializing.value = false
                     }
                 }
         }

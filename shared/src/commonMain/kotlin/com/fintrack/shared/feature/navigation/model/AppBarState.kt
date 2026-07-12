@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.navigation
+package com.fintrack.shared.feature.navigation.model
 
 data class AppBarState(
     val title: String,

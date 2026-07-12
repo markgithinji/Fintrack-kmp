@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.navigation
+package com.fintrack.shared.feature.navigation.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +13,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
+import com.fintrack.shared.feature.navigation.model.Screen
 import com.fintrack.shared.ui.theme.FinanceTrackerTheme
 import org.koin.compose.viewmodel.koinViewModel
 

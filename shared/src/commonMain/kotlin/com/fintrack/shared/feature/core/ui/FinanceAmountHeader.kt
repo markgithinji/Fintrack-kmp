@@ -46,7 +46,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fintrack.shared.feature.navigation.LocalCurrency
+import com.fintrack.shared.feature.navigation.ui.LocalCurrency
 
 @Composable
 fun FinanceAmountHeader(
@@ -110,7 +110,6 @@ fun FinanceAmountHeader(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Increased touch target area for the amount
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

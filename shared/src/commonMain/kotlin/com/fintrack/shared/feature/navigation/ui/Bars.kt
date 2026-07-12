@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.navigation
+package com.fintrack.shared.feature.navigation.ui
 
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.fintrack.shared.feature.navigation.model.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

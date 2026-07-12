@@ -42,7 +42,7 @@ import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
 import com.fintrack.shared.feature.core.ui.MaterialToast
-import com.fintrack.shared.feature.navigation.MainViewModel
+import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
 import com.fintrack.shared.feature.auth.ui.common.ErrorDialog
 import com.fintrack.shared.feature.core.domain.SaveState

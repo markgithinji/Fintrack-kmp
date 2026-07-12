@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.navigation
+package com.fintrack.shared.feature.navigation.model
 
 import kotlinx.serialization.Serializable
 

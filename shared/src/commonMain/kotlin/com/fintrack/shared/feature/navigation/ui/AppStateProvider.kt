@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.navigation
+package com.fintrack.shared.feature.navigation.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -13,10 +13,8 @@ import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
-import com.fintrack.shared.feature.settings.domain.util.format
 import com.fintrack.shared.feature.settings.domain.util.rememberBiometricAuthenticator
 import com.fintrack.shared.feature.user.domain.model.User
-import kotlinx.datetime.LocalTime
 import org.koin.compose.viewmodel.koinViewModel
 
 val LocalCurrency = compositionLocalOf { Currency.KES }

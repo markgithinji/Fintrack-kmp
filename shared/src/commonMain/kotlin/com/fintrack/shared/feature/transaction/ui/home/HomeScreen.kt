@@ -25,7 +25,7 @@ import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.navigation.MainViewModel
+import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher

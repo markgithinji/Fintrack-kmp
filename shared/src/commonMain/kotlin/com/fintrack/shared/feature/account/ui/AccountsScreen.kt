@@ -72,9 +72,9 @@ import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.toRelativeString
-import com.fintrack.shared.feature.navigation.LocalBiometricAuthenticator
-import com.fintrack.shared.feature.navigation.MainViewModel
-import com.fintrack.shared.feature.navigation.toCurrencyString
+import com.fintrack.shared.feature.navigation.ui.LocalBiometricAuthenticator
+import com.fintrack.shared.feature.navigation.ui.MainViewModel
+import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.transaction.ui.home.AccountIcon

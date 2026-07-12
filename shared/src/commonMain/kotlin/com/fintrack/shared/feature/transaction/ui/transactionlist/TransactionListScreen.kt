@@ -31,7 +31,7 @@ import androidx.paging.LoadState
 import androidx.paging.compose.*
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsHeaderDate
-import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
+import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.domain.model.Transaction

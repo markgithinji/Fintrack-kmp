@@ -56,7 +56,7 @@ fun CategoryManagementScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
     onNavigateBack: () -> Unit,
     viewModel: CategoryManagementViewModel = koinViewModel(),
-    mainViewModel: com.fintrack.shared.feature.navigation.MainViewModel = koinViewModel()
+    mainViewModel: com.fintrack.shared.feature.navigation.ui.MainViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()

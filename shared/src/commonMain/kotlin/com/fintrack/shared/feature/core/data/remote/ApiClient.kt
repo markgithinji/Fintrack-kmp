@@ -124,8 +124,6 @@ class ApiClient(
                 url(baseUrl.takeIf { it.endsWith("/") } ?: "$baseUrl/")
                 contentType(ContentType.Application.Json) 
             }
-        }.apply {
-            NetworkMonitorInterceptor(logger).setupNetworkMonitoring(this)
         }
     }
 }

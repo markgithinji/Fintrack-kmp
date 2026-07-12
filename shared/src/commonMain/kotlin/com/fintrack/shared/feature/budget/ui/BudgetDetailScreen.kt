@@ -1,8 +1,8 @@
 package com.fintrack.shared.feature.budget.ui
 
 import androidx.compose.animation.AnimatedVisibility
-import com.fintrack.shared.feature.navigation.LocalCurrency
-import com.fintrack.shared.feature.navigation.toCurrencyString
+import com.fintrack.shared.feature.navigation.ui.LocalCurrency
+import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateColorAsState
@@ -90,9 +90,9 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
-import com.fintrack.shared.feature.navigation.AppBarState
-import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
-import com.fintrack.shared.feature.navigation.MainViewModel
+import com.fintrack.shared.feature.navigation.model.AppBarState
+import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
+import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
 import kotlinx.coroutines.delay
 import kotlinx.datetime.DatePeriod

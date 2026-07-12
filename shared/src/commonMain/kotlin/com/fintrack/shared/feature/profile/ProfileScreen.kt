@@ -139,11 +139,10 @@ fun ProfileScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Fixed height container for text details to prevent layout shifts
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(56.dp), // Slightly more compact fixed height
+                                .height(56.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             AnimatedContent(

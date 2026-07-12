@@ -4,8 +4,8 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import com.fintrack.shared.feature.navigation.toCurrencyString
-import com.fintrack.shared.feature.navigation.MainViewModel
+import com.fintrack.shared.feature.navigation.ui.toCurrencyString
+import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,9 +38,9 @@ import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.settings.domain.util.format
-import com.fintrack.shared.feature.navigation.LocalTimeFormat
-import com.fintrack.shared.feature.navigation.AppBarState
-import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
+import com.fintrack.shared.feature.navigation.ui.LocalTimeFormat
+import com.fintrack.shared.feature.navigation.model.AppBarState
+import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
 import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel

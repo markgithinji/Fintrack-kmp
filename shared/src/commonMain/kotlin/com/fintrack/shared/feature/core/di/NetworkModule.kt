@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.core.di
 
-//import com.fintrack.shared.feature.auth.data.local.createTokenDataStore
 import com.fintrack.shared.feature.core.data.remote.ApiClient
 import com.fintrack.shared.feature.core.data.remote.ApiConfig
 import com.fintrack.shared.feature.core.logger.KMPLogger
@@ -10,6 +9,12 @@ import org.koin.dsl.module
 
 val coreModule = module {
     single { KMPLogger() }
-    single<HttpClient> { ApiClient(get(), get(), ApiConfig.BASE_URL).httpClient }
+    single<HttpClient> {
+        ApiClient(
+            tokenDataSource = get(),
+            logger = get(),
+            baseUrl = ApiConfig.BASE_URL
+        ).httpClient
+    }
     single { createFileSaver() }
 }
