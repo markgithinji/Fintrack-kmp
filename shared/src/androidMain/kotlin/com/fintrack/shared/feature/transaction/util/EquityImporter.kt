@@ -9,6 +9,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -114,22 +115,19 @@ class EquityImporter(
             
             logger.info("SYNC_FLOW", "Equity import process completed successfully")
 
-            // Update account balance if we found one
-            if (latestBalance != null) {
-                logger.info("SYNC_FLOW", "Latest balance from Equity SMS: $latestBalance. Checking for discrepancy...")
-                val accountResult = accountRepository.getAccountById(accountId)
-                if (accountResult is Result.Success) {
-                    val account = accountResult.data
-                    val currentAppBalance = account.balance ?: 0.0
-                    val discrepancy = latestBalance - currentAppBalance
-                    
-                    if (kotlin.math.abs(discrepancy) > 0.01) {
-                        logger.info("SYNC_FLOW", "Equity balance discrepancy found: $discrepancy. Updating account balance to $latestBalance")
-                        accountRepository.addOrUpdateAccount(account.copy(balance = latestBalance))
-                    } else {
-                        logger.info("SYNC_FLOW", "Equity balance is in sync.")
-                    }
-                }
+            // Update account state (balance and last synced time)
+            val accountResult = accountRepository.getAccountById(accountId)
+            if (accountResult is Result.Success) {
+                val account = accountResult.data
+                val currentAppBalance = account.balance ?: 0.0
+                val newBalance = latestBalance ?: currentAppBalance
+                val now = Clock.System.now()
+                
+                logger.info("SYNC_FLOW", "Updating Equity account state. Balance: $newBalance, Synced: $now")
+                accountRepository.addOrUpdateAccount(account.copy(
+                    balance = newBalance,
+                    lastSyncedAt = now
+                ))
             }
 
             onProgress(1.0f)

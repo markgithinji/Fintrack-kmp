@@ -59,12 +59,8 @@ fun AppNavigation(
     val navController = LocalNavController.current
     val selectedAccountId by mainViewModel.selectedAccountId.collectAsStateWithLifecycle()
 
-    println("NAV_DEBUG: AppNavigation recomposing. isAuthenticated: $isAuthenticated, selectedAccountId: $selectedAccountId")
-    
     val startDestination: Any = remember(isAuthenticated) {
-        val dest = if (isAuthenticated) Screen.Home() else Screen.Login
-        println("NAV_DEBUG: startDestination decided: $dest")
-        dest
+        if (isAuthenticated) Screen.Home() else Screen.Login
     }
 
     SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {

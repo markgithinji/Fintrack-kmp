@@ -61,19 +61,15 @@ fun HomeScreen(
     val importProgress by transactionsViewModel.importProgress.collectAsStateWithLifecycle()
     val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
     
-    println("NAV_DEBUG: HomeScreen recomposing. selectedAccountId: $selectedAccountId, accountsResult: ${accountsResult::class.simpleName}")
-
     val logger = remember { KMPLogger() }
 
     var syncErrorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(selectedAccountId) {
-        println("NAV_DEBUG: HomeScreen LaunchedEffect(selectedAccountId) triggered: $selectedAccountId")
         selectedAccountId?.let { accountsViewModel.selectAccount(it) }
     }
 
     if (selectedAccountId == null && (accountsResult !is Result.Success || (accountsResult as Result.Success).data.isEmpty())) {
-        println("NAV_DEBUG: HomeScreen showing loading/empty state. selectedAccountId is null")
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             if (accountsResult is Result.Loading) {
                 CircularProgressIndicator()

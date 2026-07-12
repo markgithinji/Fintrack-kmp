@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
@@ -27,7 +28,7 @@ fun FintrackDatePickerDialog(
     onDismiss: () -> Unit,
 ) {
     val today = remember {
-        kotlin.time.Clock.System.now()
+        Clock.System.now()
             .toLocalDateTime(TimeZone.currentSystemDefault())
             .date
     }

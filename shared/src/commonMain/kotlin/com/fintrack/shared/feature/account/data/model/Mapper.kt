@@ -23,5 +23,6 @@ fun AccountDto.toDomain(): Account = Account(
     expense = this.expense,
     isDefault = this.isDefault ?: false,
     type = this.type ?: AccountType.GENERAL,
-    createdAt = this.createdAt
+    createdAt = this.createdAt,
+    lastSyncedAt = this.lastSyncedAt
 )

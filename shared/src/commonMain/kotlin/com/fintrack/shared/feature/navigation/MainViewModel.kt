@@ -43,7 +43,6 @@ class MainViewModel(
     val userProfile = userRepository.getUserProfile()
 
     init {
-        println("NAV_DEBUG: MainViewModel initializing")
         // Initialize selected account from default settings or first available account
         viewModelScope.launch {
             _isInitializing.value = true
@@ -52,19 +51,15 @@ class MainViewModel(
                 settingsDataSource.defaultAccountId
             ) { token, defaultId -> token to defaultId }
                 .collectLatest { (token, defaultId) ->
-                    println("NAV_DEBUG: combine triggered. hasToken: ${token != null}, defaultId: $defaultId")
                     if (token != null) {
                         if (defaultId != null) {
-                            println("NAV_DEBUG: Using defaultId: $defaultId")
                             _selectedAccountId.value = defaultId
                             _isInitializing.value = false
                         } else if (_selectedAccountId.value == null) {
-                            println("NAV_DEBUG: No defaultId, fetching first account")
                             fetchAndSelectFirstAccount()
                             _isInitializing.value = false
                         }
                     } else {
-                        println("NAV_DEBUG: No token, clearing selectedAccountId")
                         _selectedAccountId.value = null
                         _isInitializing.value = false
                     }
@@ -92,23 +87,16 @@ class MainViewModel(
     }
 
     private suspend fun fetchAndSelectFirstAccount() {
-        println("NAV_DEBUG: fetchAndSelectFirstAccount starting")
         when (val result = getAccountsUseCase()) {
             is Result.Success -> {
                 val firstAccount = result.data.firstOrNull()
-                println("NAV_DEBUG: fetchAndSelectFirstAccount success. Found: ${firstAccount?.name}")
                 if (firstAccount != null) {
                     _selectedAccountId.value = firstAccount.id
                     // Optionally set this as default if none exists
                     settingsDataSource.setDefaultAccountId(firstAccount.id)
                 }
             }
-            is Result.Error -> {
-                println("NAV_DEBUG: fetchAndSelectFirstAccount error: ${result.exception.message}")
-            }
-            is Result.Loading -> {
-                println("NAV_DEBUG: fetchAndSelectFirstAccount loading")
-            }
+            else -> Unit
         }
     }
 

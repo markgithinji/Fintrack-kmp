@@ -3,8 +3,21 @@ package com.fintrack.shared.feature.account.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
@@ -17,8 +30,26 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,18 +65,19 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.model.AccountType
-import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.core.ui.MaterialToast
-import com.fintrack.shared.feature.core.ui.CommonErrorState
-import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.data.model.ApiException
 import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
-import com.fintrack.shared.feature.settings.ui.SettingsViewModel
-import com.fintrack.shared.feature.navigation.toCurrencyString
-import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
-import com.fintrack.shared.feature.navigation.MainViewModel
+import com.fintrack.shared.feature.core.ui.CommonErrorState
+import com.fintrack.shared.feature.core.ui.ConfirmationDialog
+import com.fintrack.shared.feature.core.ui.MaterialToast
+import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.toRelativeString
 import com.fintrack.shared.feature.navigation.LocalBiometricAuthenticator
+import com.fintrack.shared.feature.navigation.MainViewModel
+import com.fintrack.shared.feature.navigation.toCurrencyString
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
+import com.fintrack.shared.feature.settings.ui.SettingsViewModel
+import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -63,15 +95,16 @@ fun AccountsScreen(
     val saveResult by accountsViewModel.saveResult.collectAsStateWithLifecycle()
     val clearDataResult by accountsViewModel.clearDataResult.collectAsStateWithLifecycle()
     val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
-    
+
     val biometricAuthenticator = LocalBiometricAuthenticator.current
     val scope = rememberCoroutineScope()
-    
+
     var showAccountDialog by remember { mutableStateOf<Account?>(null) }
     var isEditing by remember { mutableStateOf(false) }
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
 
-    val isOperating = (deleteResult is Result.Loading) || (saveResult is Result.Loading) || (clearDataResult is Result.Loading)
+    val isOperating =
+        (deleteResult is Result.Loading) || (saveResult is Result.Loading) || (clearDataResult is Result.Loading)
 
     LaunchedEffect(refreshTrigger) {
         if (refreshTrigger > 0) {
@@ -98,20 +131,25 @@ fun AccountsScreen(
             ) {
                 when (val state = accountsState) {
                     is Result.Loading -> {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
                             CircularProgressIndicator()
                         }
                     }
+
                     is Result.Success -> {
                         val defaultAccountId by settingsViewModel.defaultAccountId.collectAsStateWithLifecycle()
-                        val effectiveDefaultAccountId = defaultAccountId ?: state.data.find { it.type == AccountType.MPESA }?.id
-                        
+                        val effectiveDefaultAccountId =
+                            defaultAccountId ?: state.data.find { it.type == AccountType.MPESA }?.id
+
                         AccountList(
                             accounts = state.data,
                             defaultAccountId = effectiveDefaultAccountId,
                             topPadding = innerPadding.calculateTopPadding() + paddingValues.calculateTopPadding() - 4.dp,
                             bottomPadding = innerPadding.calculateBottomPadding() + paddingValues.calculateBottomPadding(),
-                            onEditAccount = { 
+                            onEditAccount = {
                                 if (!isOperating) {
                                     showAccountDialog = it
                                     isEditing = true
@@ -125,6 +163,7 @@ fun AccountsScreen(
                             }
                         )
                     }
+
                     is Result.Error -> {
                         CommonErrorState(
                             modifier = Modifier.fillMaxSize(),
@@ -152,13 +191,13 @@ fun AccountsScreen(
     showAccountDialog?.let { account ->
         val defaultAccountId by settingsViewModel.defaultAccountId.collectAsStateWithLifecycle()
         val isOtherAccountDefault = defaultAccountId != null && defaultAccountId != account.id
-        
+
         AccountDialog(
             account = account,
             isEditing = isEditing,
-            isLoading = saveResult is Result.Loading || 
-                        deleteResult is Result.Loading || 
-                        clearDataResult is Result.Loading,
+            isLoading = saveResult is Result.Loading ||
+                    deleteResult is Result.Loading ||
+                    clearDataResult is Result.Loading,
             saveResult = saveResult,
             deleteResult = deleteResult,
             clearDataResult = clearDataResult,
@@ -210,6 +249,8 @@ fun AccountList(
     onEditAccount: (Account) -> Unit,
     onAddAccount: () -> Unit
 ) {
+    val totalBalance = remember(accounts) { accounts.sumOf { it.balance ?: 0.0 } }
+
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
@@ -222,6 +263,21 @@ fun AccountList(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        item(span = { GridItemSpan(2) }) {
+            NetWorthHeader(totalBalance)
+        }
+
+        item(span = { GridItemSpan(2) }) {
+            Text(
+                text = "MY ACCOUNTS",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp,
+                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp, start = 4.dp)
+            )
+        }
+
         items(
             items = accounts,
             key = { it.id }
@@ -239,6 +295,53 @@ fun AccountList(
 }
 
 @Composable
+private fun NetWorthHeader(totalBalance: Double) {
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AccountBalanceWallet,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "TOTAL BALANCE",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = totalBalance.toCurrencyString(),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+@Composable
 fun AddAccountItem(
     onClick: () -> Unit
 ) {
@@ -250,12 +353,12 @@ fun AddAccountItem(
             width = 1.dp,
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
         ),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().height(110.dp)
     ) {
         Column(
-            modifier = Modifier
-                .padding(10.dp),
-            verticalArrangement = Arrangement.Center
+            modifier = Modifier.fillMaxSize().padding(10.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.Start
         ) {
             Box(
                 modifier = Modifier
@@ -280,11 +383,6 @@ fun AddAccountItem(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
-
-            Text(
-                text = " ",
-                style = MaterialTheme.typography.bodyLarge
-            )
         }
     }
 }
@@ -296,7 +394,7 @@ fun AccountItem(
     onEdit: () -> Unit
 ) {
     val accountIcon = AccountIcon.fromAccountType(account.type, account.name)
-    
+
     Surface(
         onClick = onEdit,
         shape = RoundedCornerShape(16.dp),
@@ -305,11 +403,10 @@ fun AccountItem(
             width = 1.dp,
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
         ),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().height(110.dp)
     ) {
         Column(
-            modifier = Modifier
-                .padding(10.dp),
+            modifier = Modifier.fillMaxSize().padding(10.dp),
             verticalArrangement = Arrangement.Center
         ) {
             Row(
@@ -359,13 +456,22 @@ fun AccountItem(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            
+
             Text(
                 text = (account.balance ?: 0.0).toCurrencyString(),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary
             )
+
+            account.lastSyncedAt?.let { lastSync ->
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Synced ${lastSync.toRelativeString()}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            }
         }
     }
 }
@@ -394,13 +500,13 @@ fun AccountDialog(
     var showClearDataConfirm by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
-    val hasChanges = accountName != account.name || 
-                     type != accountType || 
-                     isDefault != isDefaultSelection
+    val hasChanges = accountName != account.name ||
+            type != accountType ||
+            isDefault != isDefaultSelection
 
     val saveError = (saveResult as? Result.Error)?.let {
-        (it.exception as? ApiException)?.getUserFriendlyMessage() 
-            ?: it.exception.message 
+        (it.exception as? ApiException)?.getUserFriendlyMessage()
+            ?: it.exception.message
             ?: "An error occurred"
     }
 
@@ -482,7 +588,7 @@ fun AccountDialog(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    
+
                     if (isEditing && !account.isDefault) {
                         IconButton(
                             onClick = { showDeleteConfirm = true },
@@ -499,8 +605,8 @@ fun AccountDialog(
 
                 OutlinedTextField(
                     value = accountName,
-                    onValueChange = { 
-                        accountName = it 
+                    onValueChange = {
+                        accountName = it
                         if (saveResult is Result.Error) onClearResults()
                     },
                     label = { Text("Account Name") },
@@ -515,8 +621,10 @@ fun AccountDialog(
                         Icon(
                             imageVector = Icons.Default.AccountBalanceWallet,
                             contentDescription = null,
-                            tint = if (account.isDefault) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f) 
-                                   else MaterialTheme.colorScheme.primary
+                            tint = if (account.isDefault) MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                alpha = 0.38f
+                            )
+                            else MaterialTheme.colorScheme.primary
                         )
                     }
                 )
@@ -530,7 +638,7 @@ fun AccountDialog(
                         letterSpacing = 1.sp,
                         modifier = Modifier.padding(start = 4.dp)
                     )
-                    
+
                     Surface(
                         color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f),
                         shape = RoundedCornerShape(24.dp),
@@ -546,7 +654,7 @@ fun AccountDialog(
                                 subtitle = "Auto-track transactions",
                                 icon = Icons.Default.Smartphone,
                                 checked = type == AccountType.MPESA,
-                                onCheckedChange = { 
+                                onCheckedChange = {
                                     type = if (it) AccountType.MPESA else AccountType.GENERAL
                                     if (it && !isOtherAccountDefault) isDefault = true
                                 },
@@ -558,13 +666,14 @@ fun AccountDialog(
                                 subtitle = "Auto-track bank transactions",
                                 icon = Icons.Default.AccountBalance,
                                 checked = type == AccountType.EQUITY,
-                                onCheckedChange = { 
+                                onCheckedChange = {
                                     type = if (it) AccountType.EQUITY else AccountType.GENERAL
                                 },
                                 enabled = !isLoading
                             )
-                            
-                            val isDefaultLocked = type == AccountType.MPESA && !isOtherAccountDefault
+
+                            val isDefaultLocked =
+                                type == AccountType.MPESA && !isOtherAccountDefault
                             AccountOptionRow(
                                 title = "Set as Default",
                                 subtitle = if (isDefaultLocked) "M-Pesa is default when no other account is set" else "Loads this account first",
@@ -599,11 +708,17 @@ fun AccountDialog(
                     ) {
                         Text("Cancel", fontWeight = FontWeight.SemiBold)
                     }
-                    
+
                     Spacer(modifier = Modifier.width(8.dp))
-                    
+
                     Button(
-                        onClick = { if (accountName.isNotBlank()) onConfirm(accountName, type, isDefault) },
+                        onClick = {
+                            if (accountName.isNotBlank()) onConfirm(
+                                accountName,
+                                type,
+                                isDefault
+                            )
+                        },
                         enabled = accountName.isNotBlank() && !isLoading && (hasChanges || !isEditing),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
@@ -660,9 +775,9 @@ private fun AccountActionRow(
                 modifier = Modifier.size(18.dp)
             )
         }
-        
+
         Spacer(modifier = Modifier.width(16.dp))
-        
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
@@ -677,7 +792,7 @@ private fun AccountActionRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        
+
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
@@ -720,9 +835,9 @@ private fun AccountOptionRow(
                 modifier = Modifier.size(18.dp)
             )
         }
-        
+
         Spacer(modifier = Modifier.width(16.dp))
-        
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
