@@ -22,7 +22,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 
 class BudgetViewModel(
     private val budgetRepository: BudgetRepository,
@@ -57,6 +62,8 @@ class BudgetViewModel(
     private val _formState = MutableStateFlow(BudgetFormState())
     val formState: StateFlow<BudgetFormState> = _formState
 
+    private var hasInitializedNewBudget = false
+
     val validationState: StateFlow<ValidationResult> = _formState
         .map { formState ->
             validationUseCase(
@@ -80,7 +87,13 @@ class BudgetViewModel(
         viewModelScope.launch {
             localCategoryDataSource.categories.collect { cats ->
                 _categories.value = cats
-                if (_formState.value.selectedCategories.isEmpty() && cats.isNotEmpty()) {
+                // Only set default category if we are creating a NEW budget 
+                // and haven't selected any categories yet.
+                if (_formState.value.id == null && 
+                    _formState.value.selectedCategories.isEmpty() && 
+                    cats.isNotEmpty() && 
+                    !hasInitializedNewBudget) {
+                    
                     val firstExpense = cats.firstOrNull { it.isExpense }
                     if (firstExpense != null) {
                         _formState.update { it.copy(selectedCategories = setOf(firstExpense)) }
@@ -89,6 +102,43 @@ class BudgetViewModel(
             }
         }
         refreshCategories()
+    }
+
+    fun initializeForm(budgetId: String?, availableAccounts: List<Account>) {
+        if (budgetId == null) {
+            if (!hasInitializedNewBudget) {
+                val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+                _formState.value = BudgetFormState(
+                    name = "",
+                    amount = "",
+                    selectedCategories = emptySet(),
+                    isExpense = true,
+                    startDate = today,
+                    endDate = today + DatePeriod(months = 1),
+                    selectedAccounts = emptySet()
+                )
+                hasInitializedNewBudget = true
+            }
+        } else {
+            val currentSelected = _selectedBudget.value
+            if (currentSelected is Result.Success) {
+                val budget = currentSelected.data.budget
+                val budgetAccounts = availableAccounts.filter { it.id in budget.accountIds }.toSet()
+                
+                _formState.value = BudgetFormState(
+                    id = budget.id,
+                    name = budget.name,
+                    amount = budget.limit.toLong().toString().let { if (it == "0") "" else it },
+                    selectedCategories = budget.categories.map { budgetCat ->
+                        _categories.value.find { it.name == budgetCat.name && it.isExpense == budgetCat.isExpense } ?: budgetCat
+                    }.toSet(),
+                    isExpense = budget.isExpense,
+                    startDate = budget.startDate,
+                    endDate = budget.endDate,
+                    selectedAccounts = budgetAccounts
+                )
+            }
+        }
     }
 
     fun refreshCategories() {
@@ -148,10 +198,6 @@ class BudgetViewModel(
 
     fun setPeriod(startDate: LocalDate?, endDate: LocalDate?) {
         _formState.update { it.copy(startDate = startDate, endDate = endDate) }
-    }
-
-    fun setFormState(formState: BudgetFormState) {
-        _formState.value = formState
     }
 
     // Reload all budgets from the server

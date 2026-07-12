@@ -136,12 +136,11 @@ fun BudgetDetailScreen(
         showNumpad = false
     }
 
-    val initialFormState = remember(budgetId, selectedBudgetResult, accountsResult, allCategories) {
-        computeInitialFormState(budgetId, selectedBudgetResult, accountsResult, allCategories)
-    }
-
-    LaunchedEffect(initialFormState) {
-        viewModel.setFormState(initialFormState)
+    LaunchedEffect(budgetId, selectedBudgetResult, accountsResult, allCategories) {
+        if (accountsResult is Result.Success) {
+            val accountsData = (accountsResult as Result.Success<List<Account>>).data
+            viewModel.initializeForm(budgetId, accountsData)
+        }
     }
 
     LaunchedEffect(budgetId) {
@@ -387,54 +386,6 @@ fun BudgetDetailScreen(
                     .align(Alignment.BottomCenter)
                     .padding(bottom = paddingValues.calculateBottomPadding() + 84.dp)
             )
-        }
-    }
-}
-
-private fun computeInitialFormState(
-    budgetId: String?,
-    selectedBudgetResult: Result<BudgetWithStatus>?,
-    accountsResult: Result<List<Account>>,
-    allCategories: List<Category>
-): BudgetFormState {
-    val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-    val isAccountsSuccess = accountsResult is Result.Success
-    val accountsData = if (isAccountsSuccess) accountsResult.data else emptyList()
-
-    return if (budgetId == null) {
-        BudgetFormState(
-            name = "",
-            amount = "",
-            selectedCategories = emptySet(),
-            isExpense = true,
-            startDate = today,
-            endDate = today + DatePeriod(months = 1),
-            selectedAccounts = emptySet()
-        )
-    } else {
-        when (selectedBudgetResult) {
-            is Result.Success -> {
-                val budgetWithStatus = selectedBudgetResult.data
-                val budget = budgetWithStatus.budget
-                val budgetAccounts = if (isAccountsSuccess) {
-                    accountsData.filter { it.id in budget.accountIds }.toSet()
-                } else {
-                    emptySet()
-                }
-                BudgetFormState(
-                    id = budget.id,
-                    name = budget.name,
-                    amount = budget.limit.toLong().toString().let { if (it == "0") "" else it },
-                    selectedCategories = budget.categories.map { budgetCat ->
-                        allCategories.find { it.name == budgetCat.name && it.isExpense == budgetCat.isExpense } ?: budgetCat
-                    }.toSet(),
-                    isExpense = budget.isExpense,
-                    startDate = budget.startDate,
-                    endDate = budget.endDate,
-                    selectedAccounts = budgetAccounts
-                )
-            }
-            else -> BudgetFormState()
         }
     }
 }
