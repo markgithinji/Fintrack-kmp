@@ -46,6 +46,7 @@ import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
 import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.category.ui.util.toIcon
 import com.fintrack.shared.feature.core.ui.CommonErrorState
+import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -60,6 +61,7 @@ fun CategoryManagementScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
+    var categoryToDelete by remember { mutableStateOf<Category?>(null) }
     var toastMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(refreshTrigger) {
@@ -132,7 +134,7 @@ fun CategoryManagementScreen(
                         items(state.categories.filter { it.isExpense }) { category ->
                             CategoryItem(
                                 category = category,
-                                onDelete = { viewModel.deleteCategory(category.id) }
+                                onDelete = { categoryToDelete = category }
                             )
                         }
 
@@ -148,7 +150,7 @@ fun CategoryManagementScreen(
                         items(state.categories.filter { !it.isExpense }) { category ->
                             CategoryItem(
                                 category = category,
-                                onDelete = { viewModel.deleteCategory(category.id) }
+                                onDelete = { categoryToDelete = category }
                             )
                         }
                     }
@@ -175,6 +177,20 @@ fun CategoryManagementScreen(
                 viewModel.addCategory(name, isExpense)
                 showAddDialog = false
             }
+        )
+    }
+
+    categoryToDelete?.let { category ->
+        ConfirmationDialog(
+            title = "Delete Category?",
+            message = "Are you sure you want to delete '${category.name}'? This action cannot be undone.",
+            confirmLabel = "Delete",
+            isDestructive = true,
+            onConfirm = {
+                viewModel.deleteCategory(category.id)
+                categoryToDelete = null
+            },
+            onDismiss = { categoryToDelete = null }
         )
     }
 }
