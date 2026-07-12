@@ -86,6 +86,11 @@ fun LoginScreen(
     val focusManager = LocalFocusManager.current
     val emailFocusRequester = remember { FocusRequester() }
 
+    // Validation state
+    var mostRecentValidationError by remember { mutableStateOf<String?>(null) }
+    var emailTouched by remember { mutableStateOf(false) }
+    var passwordTouched by remember { mutableStateOf(false) }
+
     // Inline error visibility
     var toastMessage by remember { mutableStateOf<String?>(null) }
     var passwordVisible by remember { mutableStateOf(value = false) }
@@ -123,10 +128,25 @@ fun LoginScreen(
         }
     }
 
-    // Consolidate validation errors for inline display (optional)
-    val validationErrorMessage = remember(loginFormState) {
-        loginFormState.emailError ?: loginFormState.passwordError
+    // Consolidate validation errors for single display
+    val validationErrorMessage = remember(loginFormState, mostRecentValidationError) {
+        val allErrors = listOfNotNull(
+            loginFormState.emailError,
+            loginFormState.passwordError
+        )
+        
+        if (allErrors.isEmpty()) {
+            null
+        } else if (allErrors.contains(mostRecentValidationError)) {
+            mostRecentValidationError
+        } else {
+            allErrors.firstOrNull()
+        }
     }
+
+    // Update most recent error when form state errors change
+    LaunchedEffect(loginFormState.emailError) { loginFormState.emailError?.let { mostRecentValidationError = it } }
+    LaunchedEffect(loginFormState.passwordError) { loginFormState.passwordError?.let { mostRecentValidationError = it } }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -194,6 +214,10 @@ fun LoginScreen(
                 colorScheme = colorScheme,
                 isError = loginFormState.emailError != null,
                 errorMessage = null, // Consolidated in the error box
+                onFocusChanged = { isFocused ->
+                    if (isFocused) emailTouched = true
+                    if (!isFocused && emailTouched) viewModel.validateLoginEmail()
+                },
                 contentType = ContentType.EmailAddress,
                 modifier = Modifier.focusRequester(emailFocusRequester)
             )
@@ -210,7 +234,12 @@ fun LoginScreen(
                 keyboardActions = KeyboardActions(
                     onDone = {
                         focusManager.clearFocus()
-                        if (loginFormState.isFormValid) viewModel.login()
+                        if (loginFormState.isFormValid) {
+                            viewModel.login()
+                        } else {
+                            viewModel.validateLoginEmail()
+                            viewModel.validateLoginPassword()
+                        }
                     }
                 ),
                 isPassword = true,
@@ -219,6 +248,10 @@ fun LoginScreen(
                 colorScheme = colorScheme,
                 isError = loginFormState.passwordError != null,
                 errorMessage = null, // Consolidated in the error box
+                onFocusChanged = { isFocused ->
+                    if (isFocused) passwordTouched = true
+                    if (!isFocused && passwordTouched) viewModel.validateLoginPassword()
+                },
                 contentType = ContentType.Password
             )
 
@@ -275,7 +308,12 @@ fun LoginScreen(
                 onClick = {
                     println("LOGIN_DEBUG: [0] Login button clicked for email: ${loginFormState.email}")
                     focusManager.clearFocus()
-                    viewModel.login()
+                    if (!loginFormState.isFormValid) {
+                        viewModel.validateLoginEmail()
+                        viewModel.validateLoginPassword()
+                    } else {
+                        viewModel.login()
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
