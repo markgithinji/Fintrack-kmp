@@ -11,11 +11,9 @@ import com.fintrack.shared.feature.core.data.model.ApiException
 import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class CategoryManagementState(
@@ -31,80 +29,77 @@ class CategoryManagementViewModel(
     private val deleteCategoryUseCase: DeleteCategoryUseCase
 ) : ViewModel() {
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading = _isLoading.asStateFlow()
-
-    private val _error = MutableStateFlow<String?>(null)
-    val error = _error.asStateFlow()
-
-    val state: StateFlow<CategoryManagementState> = combine(
-        localDataSource.categories,
-        _isLoading,
-        _error
-    ) { categories, loading, error ->
-        CategoryManagementState(categories, loading, error)
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = CategoryManagementState(categories = Category.allCategories)
-    )
+    private val _state = MutableStateFlow(CategoryManagementState(categories = Category.allCategories))
+    val state: StateFlow<CategoryManagementState> = _state.asStateFlow()
 
     init {
+        // Collect external category updates and merge them into our unified state
+        viewModelScope.launch {
+            localDataSource.categories.collect { categories ->
+                _state.update { it.copy(categories = categories) }
+            }
+        }
         refresh()
     }
 
     fun refresh() {
         viewModelScope.launch {
-            _isLoading.value = true
+            _state.update { it.copy(isLoading = true) }
             when (val result = syncCategoriesUseCase()) {
                 is Result.Error -> {
                     val exception = result.exception
-                    _error.value = (exception as? ApiException)?.getUserFriendlyMessage()
-                        ?: exception.message ?: "Failed to refresh categories"
+                    _state.update { it.copy(
+                        error = (exception as? ApiException)?.getUserFriendlyMessage()
+                            ?: exception.message ?: "Failed to refresh categories"
+                    ) }
                 }
                 else -> { /* Success or Loading handled elsewhere */ }
             }
-            _isLoading.value = false
+            _state.update { it.copy(isLoading = false) }
         }
     }
 
     fun addCategory(name: String, isExpense: Boolean, iconName: String? = null) {
         if (name.isBlank()) {
-            _error.value = "Category name cannot be empty"
+            _state.update { it.copy(error = "Category name cannot be empty") }
             return
         }
         viewModelScope.launch {
-            _isLoading.value = true
+            _state.update { it.copy(isLoading = true) }
             when (val result = addCategoryUseCase(name, isExpense, iconName)) {
                 is Result.Error -> {
                     val exception = result.exception
-                    _error.value = (exception as? ApiException)?.getUserFriendlyMessage()
-                        ?: exception.message ?: "Failed to add category"
+                    _state.update { it.copy(
+                        error = (exception as? ApiException)?.getUserFriendlyMessage()
+                            ?: exception.message ?: "Failed to add category"
+                    ) }
                 }
                 is Result.Success -> { /* List will auto-update via repository flow */ }
                 else -> {}
             }
-            _isLoading.value = false
+            _state.update { it.copy(isLoading = false) }
         }
     }
 
     fun deleteCategory(id: String) {
         viewModelScope.launch {
-            _isLoading.value = true
+            _state.update { it.copy(isLoading = true) }
             when (val result = deleteCategoryUseCase(id)) {
                 is Result.Error -> {
                     val exception = result.exception
-                    _error.value = (exception as? ApiException)?.getUserFriendlyMessage()
-                        ?: exception.message ?: "Failed to delete category"
+                    _state.update { it.copy(
+                        error = (exception as? ApiException)?.getUserFriendlyMessage()
+                            ?: exception.message ?: "Failed to delete category"
+                    ) }
                 }
                 is Result.Success -> { /* List will auto-update via repository flow */ }
                 else -> {}
             }
-            _isLoading.value = false
+            _state.update { it.copy(isLoading = false) }
         }
     }
 
     fun clearError() {
-        _error.value = null
+        _state.update { it.copy(error = null) }
     }
 }
