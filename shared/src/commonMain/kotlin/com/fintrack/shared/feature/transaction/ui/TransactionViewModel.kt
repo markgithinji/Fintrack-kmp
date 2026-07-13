@@ -5,12 +5,12 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.fintrack.shared.feature.account.domain.model.Account
-import com.fintrack.shared.feature.core.domain.SaveState
-import com.fintrack.shared.feature.core.logger.KMPLogger
-import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.category.data.LocalCategoryDataSource
 import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.category.domain.usecase.SyncCategoriesUseCase
+import com.fintrack.shared.feature.core.domain.SaveState
+import com.fintrack.shared.feature.core.logger.KMPLogger
+import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.usecase.CreateTransactionUseCase
@@ -24,12 +24,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlin.time.Instant
 
@@ -43,7 +37,7 @@ class TransactionViewModel(
     private val transactionImporter: TransactionImporter
 ) : ViewModel() {
 
-    private val _categories = MutableStateFlow<List<Category>>(Category.allCategories)
+    private val _categories = MutableStateFlow(Category.allCategories)
     val categories: StateFlow<List<Category>> = _categories.asStateFlow()
 
     private val _amount = MutableStateFlow("")
@@ -95,7 +89,7 @@ class TransactionViewModel(
                 _categories.value = it
             }
         }
-        
+
         refreshCategories()
     }
 
@@ -137,7 +131,13 @@ class TransactionViewModel(
         category: Category?,
         selectedAccount: Account?
     ): Boolean {
-        val result = validateTransactionUseCase(amount, transactionCost, description, category, selectedAccount)
+        val result = validateTransactionUseCase(
+            amount,
+            transactionCost,
+            description,
+            category,
+            selectedAccount
+        )
 
         when (result) {
             is ValidateTransactionUseCase.TransactionValidationResult.Valid -> {
@@ -187,6 +187,7 @@ class TransactionViewModel(
                     is Result.Success -> {
                         SaveState.Success(result.data)
                     }
+
                     is Result.Error -> SaveState.Error(result.exception)
                     is Result.Loading -> SaveState.Loading
                 }
@@ -231,6 +232,7 @@ class TransactionViewModel(
                     is Result.Success -> {
                         SaveState.Success(result.data)
                     }
+
                     is Result.Error -> SaveState.Error(result.exception)
                     is Result.Loading -> SaveState.Loading
                 }
@@ -266,6 +268,7 @@ class TransactionViewModel(
                     is Result.Success -> {
                         SaveState.Success(result.data)
                     }
+
                     is Result.Error -> SaveState.Error(result.exception)
                     is Result.Loading -> SaveState.Loading
                 }
@@ -331,15 +334,15 @@ class TransactionViewModel(
 
         lastPagingParams = newParams
         val flow = repo.getTransactionsPagingFlow(
-                    accountId = accountId,
-                    isIncome = isIncome,
-                    category = category,
-                    startDate = startDate,
-                    endDate = endDate,
-                    hasTransactionCost = hasTransactionCost
-                )
+            accountId = accountId,
+            isIncome = isIncome,
+            category = category,
+            startDate = startDate,
+            endDate = endDate,
+            hasTransactionCost = hasTransactionCost
+        )
             .cachedIn(viewModelScope)
-        
+
         cachedPagingFlow = flow
         return flow
     }
@@ -357,7 +360,10 @@ class TransactionViewModel(
     }
 
     fun importTransactions() {
-        logger.info("SYNC_FLOW", "importTransactions triggered. Current state: ${_importState.value}")
+        logger.info(
+            "SYNC_FLOW",
+            "importTransactions triggered. Current state: ${_importState.value}"
+        )
         if (_importState.value is Result.Loading) {
             logger.info("SYNC_FLOW", "Already importing, skipping.")
             return

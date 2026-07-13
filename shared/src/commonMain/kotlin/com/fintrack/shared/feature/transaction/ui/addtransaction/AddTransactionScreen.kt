@@ -53,10 +53,6 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 
-enum class NumpadTarget {
-    Amount, TransactionCost
-}
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun AddTransactionScreen(
@@ -475,4 +471,8 @@ fun DateTimeSelectionSection(
             }
         }
     }
+}
+
+enum class NumpadTarget {
+    Amount, TransactionCost
 }

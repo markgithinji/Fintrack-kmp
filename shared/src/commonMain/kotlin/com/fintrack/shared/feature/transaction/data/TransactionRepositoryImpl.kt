@@ -16,16 +16,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 class TransactionRepositoryImpl(
-    private val api: TransactionApi,
+    private val transactionApi: TransactionApi,
 ) : TransactionRepository {
 
     private val logger = KMPLogger()
-
-    companion object {
-        private const val PAGE_SIZE = 20
-        private const val INITIAL_LOAD_SIZE = 20
-        private const val PREFETCH_DISTANCE = 10
-    }
 
     override suspend fun getTransactions(
         limit: Int,
@@ -41,7 +35,7 @@ class TransactionRepositoryImpl(
         hasTransactionCost: Boolean?
     ): Result<Pair<List<Transaction>, String?>> =
         safeApiCall {
-            val paginated = api.getTransactions(
+            val paginated = transactionApi.getTransactions(
                 limit = limit,
                 sortBy = sortBy,
                 order = order,
@@ -61,7 +55,7 @@ class TransactionRepositoryImpl(
     override suspend fun addTransaction(transaction: Transaction): Result<Transaction> {
         return safeApiCall {
             val createRequest = transaction.toCreateRequest()
-            val dto = api.addTransaction(createRequest)
+            val dto = transactionApi.addTransaction(createRequest)
             dto.toDomain()
         }
     }
@@ -69,7 +63,7 @@ class TransactionRepositoryImpl(
     override suspend fun addTransactions(transactions: List<Transaction>): Result<Unit> {
         return safeApiCall {
             val requests = transactions.map { it.toCreateRequest() }
-            api.addTransactions(requests)
+            transactionApi.addTransactions(requests)
         }
     }
 
@@ -77,7 +71,7 @@ class TransactionRepositoryImpl(
         logger.debug("SYNC_FLOW", "Repository: importMpesaTransactions called with ${transactions.size} transactions")
         val result = safeApiCall {
             val requests = transactions.map { it.toCreateRequest() }
-            api.importMpesaTransactions(requests)
+            transactionApi.importMpesaTransactions(requests)
         }
         if (result is Result.Success) {
             logger.debug("SYNC_FLOW", "Repository: importMpesaTransactions success")
@@ -92,7 +86,7 @@ class TransactionRepositoryImpl(
         logger.debug("SYNC_FLOW", "Repository: importEquityTransactions called with ${transactions.size} transactions")
         val result = safeApiCall {
             val requests = transactions.map { it.toCreateRequest() }
-            api.importEquityTransactions(requests)
+            transactionApi.importEquityTransactions(requests)
         }
         if (result is Result.Success) {
             logger.debug("SYNC_FLOW", "Repository: importEquityTransactions success")
@@ -104,7 +98,7 @@ class TransactionRepositoryImpl(
 
     override suspend fun getTransaction(id: String): Result<Transaction> =
         safeApiCall {
-            api.getTransaction(id).toDomain()
+            transactionApi.getTransaction(id).toDomain()
         }
 
     override suspend fun getAllTransactions(
@@ -114,7 +108,7 @@ class TransactionRepositoryImpl(
     ): Result<List<Transaction>> =
         safeApiCall {
             // Fetching with a large limit for export. 
-            val paginated = api.getTransactions(
+            val paginated = transactionApi.getTransactions(
                 limit = 2000,
                 startDate = startDate,
                 endDate = endDate,
@@ -125,25 +119,25 @@ class TransactionRepositoryImpl(
 
     override suspend fun updateTransaction(id: String, transaction: Transaction): Result<Transaction> {
         return safeApiCall {
-            val result = api.updateTransaction(id, transaction.toCreateRequest()).toDomain()
+            val result = transactionApi.updateTransaction(id, transaction.toCreateRequest()).toDomain()
             result
         }
     }
 
     override suspend fun deleteTransaction(id: String): Result<Unit> {
         return safeApiCall {
-            api.deleteTransaction(id)
+            transactionApi.deleteTransaction(id)
         }
     }
 
     override suspend fun deleteAllTransactions(accountIds: List<String>?): Result<Unit> {
         return safeApiCall {
-            api.deleteAllTransactions(accountIds)
+            transactionApi.deleteAllTransactions(accountIds)
         }
     }
 
     override suspend fun getRecurringBills(): Result<List<RecurringBill>> = safeApiCall {
-        api.getRecurringBills()
+        transactionApi.getRecurringBills()
     }
 
     override fun getTransactionsPagingFlow(
@@ -156,7 +150,7 @@ class TransactionRepositoryImpl(
     ): Flow<PagingData<Transaction>> {
         return createPager {
             TransactionPagingSource(
-                repo = this,
+                transactionApi = transactionApi,
                 accountId = accountId,
                 isIncome = isIncome,
                 category = category,
@@ -180,5 +174,11 @@ class TransactionRepositoryImpl(
             pagingSourceFactory = pagingSourceFactory
         ).flow
             .distinctUntilChanged()
+    }
+
+    companion object {
+        private const val PAGE_SIZE = 20
+        private const val INITIAL_LOAD_SIZE = 20
+        private const val PREFETCH_DISTANCE = 10
     }
 }
