@@ -90,7 +90,6 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
-import com.fintrack.shared.feature.navigation.model.AppBarState
 import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
 import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
@@ -114,8 +113,7 @@ fun BudgetDetailScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onSave: () -> Unit,
-    onBack: () -> Unit,
-    onUpdateAppBarState: (AppBarState) -> Unit
+    onBack: () -> Unit
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
         ?: throw IllegalStateException("No SharedTransitionScope found")
@@ -146,22 +144,6 @@ fun BudgetDetailScreen(
     LaunchedEffect(budgetId) {
         viewModel.resetDeleteResult()
         budgetId?.let { viewModel.loadBudgetById(it) }
-    }
-
-    LaunchedEffect(showNumpad, budgetId) {
-        onUpdateAppBarState(
-            AppBarState(
-                title = if (budgetId == null) "Add Budget" else "Edit Budget",
-                showBackButton = true,
-                onBack = {
-                    if (showNumpad) {
-                        showNumpad = false
-                    } else {
-                        onBack()
-                    }
-                }
-            )
-        )
     }
 
     LaunchedEffect(saveState) {

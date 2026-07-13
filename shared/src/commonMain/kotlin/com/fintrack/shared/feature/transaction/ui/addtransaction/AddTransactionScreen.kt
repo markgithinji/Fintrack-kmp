@@ -66,8 +66,7 @@ fun AddTransactionScreen(
     mainViewModel: MainViewModel = koinInject(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
-    onBack: () -> Unit = {},
-    onUpdateAppBarState: (AppBarState) -> Unit
+    onBack: () -> Unit = {}
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
         ?: throw IllegalStateException("No SharedTransitionScope found")
@@ -100,22 +99,6 @@ fun AddTransactionScreen(
 
     KMPBackHandler(enabled = showNumpad) {
         showNumpad = false
-    }
-
-    LaunchedEffect(showNumpad, transactionId) {
-        onUpdateAppBarState(
-            AppBarState(
-                title = if (transactionId.isNullOrBlank()) "Create Transaction" else "Edit Transaction",
-                showBackButton = true,
-                onBack = {
-                    if (showNumpad) {
-                        showNumpad = false
-                    } else {
-                        onBack()
-                    }
-                }
-            )
-        )
     }
 
     LaunchedEffect(transactionId) {
