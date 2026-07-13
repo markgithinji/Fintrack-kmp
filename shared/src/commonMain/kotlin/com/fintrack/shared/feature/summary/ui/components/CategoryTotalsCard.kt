@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,6 +27,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.filled.PieChart
@@ -37,6 +40,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -101,6 +105,10 @@ fun CategoryTotalsCardWithTabs(
     onMonthSelected: (String) -> Unit = {},
     onYearSelected: (String) -> Unit = {},
     onPeriodSelected: (Period) -> Unit = {},
+    onPreviousPeriod: () -> Unit = {},
+    onNextPeriod: () -> Unit = {},
+    hasPrevious: Boolean = true,
+    hasNext: Boolean = true,
     onCategoryClick: (String) -> Unit = {},
     onRetry: () -> Unit = {}
 ) {
@@ -159,16 +167,50 @@ fun CategoryTotalsCardWithTabs(
                     )
                 }
 
-                PeriodSelector(
-                    selectedPeriod = period,
-                    availableWeeks = availableWeeks,
-                    availableMonths = availableMonths,
-                    availableYears = availableYears,
-                    onWeekSelected = onWeekSelected,
-                    onMonthSelected = onMonthSelected,
-                    onYearSelected = onYearSelected,
-                    onPeriodSelected = onPeriodSelected
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = onPreviousPeriod,
+                        enabled = hasPrevious,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                            contentDescription = "Previous Period",
+                            modifier = Modifier.size(20.dp),
+                            tint = if (hasPrevious) 
+                                MaterialTheme.colorScheme.onSurfaceVariant 
+                            else 
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                        )
+                    }
+
+                    PeriodSelector(
+                        selectedPeriod = period,
+                        availableWeeks = availableWeeks,
+                        availableMonths = availableMonths,
+                        availableYears = availableYears,
+                        onWeekSelected = onWeekSelected,
+                        onMonthSelected = onMonthSelected,
+                        onYearSelected = onYearSelected,
+                        onPeriodSelected = onPeriodSelected
+                    )
+
+                    IconButton(
+                        onClick = onNextPeriod,
+                        enabled = hasNext,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = "Next Period",
+                            modifier = Modifier.size(20.dp),
+                            tint = if (hasNext) 
+                                MaterialTheme.colorScheme.onSurfaceVariant 
+                            else 
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -660,6 +702,12 @@ fun PeriodSelector(
         options.indexOf(selectedCode).coerceAtLeast(0)
     }
 
+    LaunchedEffect(currentType) {
+        // Reset scroll position when switching between Week/Month/Year tabs 
+        // to prevent being stuck at the bottom and to keep the menu stable.
+        scrollState.scrollTo(0)
+    }
+
     LaunchedEffect(expanded) {
         if (expanded && selectedIndex >= 0) {
             scrollState.scrollTo(selectedIndex * 120)
@@ -669,17 +717,20 @@ fun PeriodSelector(
     Box {
         Row(
             modifier = Modifier
+                .widthIn(min = 150.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 .clickable { expanded = true }
                 .padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
             Text(
                 text = formatPeriodCode(selectedCode ?: "Select", currentType),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                maxLines = 1
+                maxLines = 1,
+                textAlign = TextAlign.Center
             )
             Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(16.dp))
         }
@@ -689,10 +740,10 @@ fun PeriodSelector(
             onDismissRequest = { expanded = false },
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier
-                .width(150.dp)
+                .width(160.dp)
+                .height(350.dp)
                 .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
                 .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)), RoundedCornerShape(16.dp))
-                .heightIn(max = 320.dp)
         ) {
             // TimeSpan Tabs inside Dropdown (Fixed at top)
             Row(
@@ -741,7 +792,7 @@ fun PeriodSelector(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 250.dp)
+                    .weight(1f)
                     .drawWithContent {
                         drawContent()
                         if (scrollState.maxValue > 0) {
@@ -762,26 +813,39 @@ fun PeriodSelector(
                     }
                     .verticalScroll(scrollState)
             ) {
-                options.forEach { option ->
-                    val isItemSelected = option == selectedCode
-                    DropdownMenuItem(
-                        text = { 
-                            Text(
-                                text = formatPeriodCode(option, currentType), 
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = if (isItemSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isItemSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                            ) 
-                        },
-                        modifier = Modifier.background(
-                            if (isItemSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) 
-                            else Color.Transparent
-                        ),
-                        onClick = {
-                            onSelected(option)
-                            expanded = false
-                        }
-                    )
+                if (options.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize().padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No data",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    options.forEach { option ->
+                        val isItemSelected = option == selectedCode
+                        DropdownMenuItem(
+                            text = { 
+                                Text(
+                                    text = formatPeriodCode(option, currentType), 
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = if (isItemSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isItemSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                ) 
+                            },
+                            modifier = Modifier.background(
+                                if (isItemSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) 
+                                else Color.Transparent
+                            ),
+                            onClick = {
+                                onSelected(option)
+                                expanded = false
+                            }
+                        )
+                    }
                 }
             }
         }

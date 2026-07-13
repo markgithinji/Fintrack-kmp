@@ -65,6 +65,8 @@ fun StatisticsScreen(
     val availableYears by viewModel.availableYears.collectAsStateWithLifecycle()
     val highlights by viewModel.highlights.collectAsStateWithLifecycle()
     val distributionResult by viewModel.distribution.collectAsStateWithLifecycle()
+    val hasNextPeriod by viewModel.hasNextPeriod.collectAsStateWithLifecycle()
+    val hasPreviousPeriod by viewModel.hasPreviousPeriod.collectAsStateWithLifecycle()
     val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
 
@@ -152,6 +154,14 @@ fun StatisticsScreen(
                     onPeriodSelected = { period ->
                         viewModel.onPeriodChanged(period, selectedAccountId)
                     },
+                    onPreviousPeriod = {
+                        viewModel.navigateToPreviousPeriod(selectedAccountId)
+                    },
+                    onNextPeriod = {
+                        viewModel.navigateToNextPeriod(selectedAccountId)
+                    },
+                    hasNext = hasNextPeriod,
+                    hasPrevious = hasPreviousPeriod,
                     onRetry = {
                         viewModel.reloadDistributionForCurrentSelection(
                             selectedAccountId,
