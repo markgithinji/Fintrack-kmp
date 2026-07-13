@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.summary.ui
 
+import Period
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.core.util.Result
@@ -8,7 +9,6 @@ import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummar
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.Highlights
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
-import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.model.TabType
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary

@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.summary.ui
 
+import Period
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateColorAsState
@@ -39,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.navigation.ui.MainViewModel
-import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.TabType
 import com.fintrack.shared.feature.summary.ui.components.CategoryTotalsCardWithTabs
 import com.fintrack.shared.feature.summary.ui.components.SpendingHighlightsSection

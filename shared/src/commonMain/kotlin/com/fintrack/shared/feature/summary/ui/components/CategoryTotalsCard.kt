@@ -1,8 +1,16 @@
 package com.fintrack.shared.feature.summary.ui.components
 
 import Period
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -18,20 +26,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
@@ -50,6 +58,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,35 +70,28 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
+import com.fintrack.shared.feature.core.ui.CommonErrorState
+import com.fintrack.shared.feature.core.util.DateTimeUtils
+import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.formatAsShortDate
+import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
+import com.fintrack.shared.feature.navigation.ui.toCurrencyString
+import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
+import com.fintrack.shared.feature.summary.domain.model.TabType
 import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.ui.theme.PinkExpense
 import com.fintrack.shared.ui.theme.SegmentColor1
 import com.fintrack.shared.ui.theme.SegmentColor3
 import com.fintrack.shared.ui.theme.SegmentColor4
 import com.fintrack.shared.ui.theme.SegmentColor5
-import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
-import com.fintrack.shared.feature.core.ui.CommonErrorState
-import com.fintrack.shared.feature.core.util.DateTimeUtils
-import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.core.util.formatAsShortDate
-import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
-import com.fintrack.shared.feature.summary.domain.model.Period
-import com.fintrack.shared.feature.summary.domain.model.TabType
-import kotlinx.datetime.LocalDate
-
-import androidx.compose.runtime.saveable.rememberSaveable
-
-import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontStyle
-import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
-import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -114,8 +116,8 @@ fun CategoryTotalsCardWithTabs(
 ) {
     // Use rememberSaveable to maintain selection across navigation
     // Reset selection only when period or tab type changes
-    var selectedIndex by rememberSaveable(period.toString(), tabType.toString()) { 
-        mutableStateOf(-1) 
+    var selectedIndex by rememberSaveable(period.toString(), tabType.toString()) {
+        mutableStateOf(-1)
     }
     var showHelpDialog by remember { mutableStateOf(false) }
 
@@ -177,9 +179,9 @@ fun CategoryTotalsCardWithTabs(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                             contentDescription = "Previous Period",
                             modifier = Modifier.size(20.dp),
-                            tint = if (hasPrevious) 
-                                MaterialTheme.colorScheme.onSurfaceVariant 
-                            else 
+                            tint = if (hasPrevious)
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            else
                                 MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
                         )
                     }
@@ -204,9 +206,9 @@ fun CategoryTotalsCardWithTabs(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                             contentDescription = "Next Period",
                             modifier = Modifier.size(20.dp),
-                            tint = if (hasNext) 
-                                MaterialTheme.colorScheme.onSurfaceVariant 
-                            else 
+                            tint = if (hasNext)
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            else
                                 MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
                         )
                     }
@@ -220,9 +222,10 @@ fun CategoryTotalsCardWithTabs(
                 animationSpec = tween(durationMillis = 300),
                 label = "ChartContentFade"
             ) { result ->
-                Box(modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 450.dp)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 450.dp)
                 ) {
                     when (result) {
                         is Result.Loading -> {
@@ -249,7 +252,7 @@ fun CategoryTotalsCardWithTabs(
                             if (baseCategories.isEmpty() && (tabType !is TabType.Expense || result.data.totalTransactionCost <= 0.0)) {
                                 EmptyDistributionState()
                             } else {
-                                val displayModels = baseCategories.map { 
+                                val displayModels = baseCategories.map {
                                     CategoryDisplayModel(
                                         name = it.category,
                                         amount = it.total.toFloat(),
@@ -265,12 +268,13 @@ fun CategoryTotalsCardWithTabs(
                                         CategoryDisplayModel(
                                             name = "Transaction Fees",
                                             amount = result.data.totalTransactionCost.toFloat(),
-                                            count = 0 
+                                            count = 0
                                         )
                                     )
                                 }
 
-                                val totalAmount = displayModels.sumOf { it.amount.toDouble() }.toFloat()
+                                val totalAmount =
+                                    displayModels.sumOf { it.amount.toDouble() }.toFloat()
                                 val categorySums = displayModels.map { it.name to it.amount }
 
                                 val othersInsight = result.data.othersInsightSummary
@@ -388,7 +392,7 @@ fun LoadingDonutChartSection() {
                 "E" to 400f
             )
             val mockTotal = 4500f
-            
+
             LoadingInteractiveDonutWithText(
                 mockSegments = mockSegments,
                 mockTotal = mockTotal,
@@ -432,9 +436,13 @@ fun LoadingInteractiveDonutWithText(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             AnimatedShimmerBox(modifier = Modifier.size(24.dp).clip(CircleShape))
             Spacer(modifier = Modifier.height(8.dp))
-            AnimatedShimmerBox(modifier = Modifier.width(80.dp).height(14.dp).clip(RoundedCornerShape(4.dp)))
+            AnimatedShimmerBox(
+                modifier = Modifier.width(80.dp).height(14.dp).clip(RoundedCornerShape(4.dp))
+            )
             Spacer(modifier = Modifier.height(4.dp))
-            AnimatedShimmerBox(modifier = Modifier.width(120.dp).height(24.dp).clip(RoundedCornerShape(4.dp)))
+            AnimatedShimmerBox(
+                modifier = Modifier.width(120.dp).height(24.dp).clip(RoundedCornerShape(4.dp))
+            )
         }
     }
 }
@@ -456,12 +464,20 @@ fun LoadingCategoryList() {
             ) {
                 AnimatedShimmerBox(modifier = Modifier.size(10.dp).clip(CircleShape))
                 Spacer(Modifier.width(12.dp))
-                AnimatedShimmerBox(modifier = Modifier.width(120.dp).height(14.dp).clip(RoundedCornerShape(4.dp)))
+                AnimatedShimmerBox(
+                    modifier = Modifier.width(120.dp).height(14.dp).clip(RoundedCornerShape(4.dp))
+                )
                 Spacer(Modifier.weight(1f))
                 Column(horizontalAlignment = Alignment.End) {
-                    AnimatedShimmerBox(modifier = Modifier.width(80.dp).height(14.dp).clip(RoundedCornerShape(4.dp)))
+                    AnimatedShimmerBox(
+                        modifier = Modifier.width(80.dp).height(14.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                    )
                     Spacer(Modifier.height(2.dp))
-                    AnimatedShimmerBox(modifier = Modifier.width(40.dp).height(10.dp).clip(RoundedCornerShape(4.dp)))
+                    AnimatedShimmerBox(
+                        modifier = Modifier.width(40.dp).height(10.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                    )
                 }
             }
         }
@@ -483,7 +499,7 @@ fun CategoryList(
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val sortedModels = displayModels.sortedByDescending { it.amount }
-    
+
     // Categories that should always be shown if they exist
     val priorityNames = listOf("Transaction Fees", "Transaction Cost")
     val priorityModels = sortedModels.filter { it.name in priorityNames }
@@ -491,7 +507,7 @@ fun CategoryList(
 
     val topModelsList = mutableListOf<CategoryDisplayModel>()
     topModelsList.addAll(priorityModels)
-    
+
     val remainingSlots = (4 - topModelsList.size).coerceAtLeast(0)
     topModelsList.addAll(regularModels.take(remainingSlots))
 
@@ -499,7 +515,7 @@ fun CategoryList(
 
     val topNames = topModelsList.map { it.name }.toSet()
     val remainingModels = displayModels.filter { it.name !in topNames }
-    
+
     val displayList = topModelsList.toMutableList()
     val othersAmount = remainingModels.sumOf { it.amount.toDouble() }.toFloat()
     if (othersAmount > 0f) {
@@ -522,12 +538,16 @@ fun CategoryList(
         )
     }
 
-    Column(modifier = Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    Column(
+        modifier = Modifier.padding(top = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
         displayList.forEachIndexed { index, model ->
             val categoryName = model.name
             val amount = model.amount
             val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
-            val color = if (index < 4) segmentColors[index % segmentColors.size] else segmentColors.last()
+            val color =
+                if (index < 4) segmentColors[index % segmentColors.size] else segmentColors.last()
             val isSelected = selectedIndex == index
 
             Surface(
@@ -539,16 +559,22 @@ fun CategoryList(
                                 Modifier.sharedBounds(
                                     rememberSharedContentState(key = "header_card_$categoryName"),
                                     animatedVisibilityScope = animatedVisibilityScope,
-                                    clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(12.dp))
+                                    clipInOverlayDuringTransition = OverlayClip(
+                                        RoundedCornerShape(
+                                            12.dp
+                                        )
+                                    )
                                 )
                             }
                         } else Modifier
                     ),
                 shape = RoundedCornerShape(12.dp),
-                color = if (isSelected) color.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                color = if (isSelected) color.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface.copy(
+                    alpha = 0.5f
+                ),
                 onClick = {
                     onSelectedIndexChange(index)
-                    
+
                     val categoryFilter = if (categoryName == "Others") {
                         remainingModels.joinToString(",") { it.name }
                     } else {
@@ -587,17 +613,17 @@ fun CategoryList(
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.then(
-                                            if (sharedTransitionScope != null) {
-                                                with(sharedTransitionScope) {
-                                                    Modifier.sharedElement(
-                                                        rememberSharedContentState(key = "category_name_$categoryName"),
-                                                        animatedVisibilityScope = animatedVisibilityScope
-                                                    )
-                                                }
-                                            } else Modifier
-                                        )
+                                        if (sharedTransitionScope != null) {
+                                            with(sharedTransitionScope) {
+                                                Modifier.sharedElement(
+                                                    rememberSharedContentState(key = "category_name_$categoryName"),
+                                                    animatedVisibilityScope = animatedVisibilityScope
+                                                )
+                                            }
+                                        } else Modifier
+                                    )
                                 )
-                                
+
                                 if (model.trend != null && model.trend != "STABLE") {
                                     val isUp = model.trend == "UP"
                                     val trendText = when {
@@ -631,9 +657,10 @@ fun CategoryList(
                                     }
                                 }
                             }
-                            
+
                             if (model.count > 0) {
-                                val avgText = model.avgCount?.let { " · Usually ${it.toInt()}" } ?: ""
+                                val avgText =
+                                    model.avgCount?.let { " · Usually ${it.toInt()}" } ?: ""
                                 Text(
                                     text = "${model.count} times$avgText",
                                     style = MaterialTheme.typography.labelSmall,
@@ -656,7 +683,7 @@ fun CategoryList(
                             )
                         }
                     }
-                    
+
                     if (model.insights != null && model.insights.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(4.dp))
                         val insightText = if (categoryName == "Others" && othersInsight != null) {
@@ -693,9 +720,23 @@ fun PeriodSelector(
     val scrollState = rememberScrollState()
 
     val (options, selectedCode, onSelected, currentType) = when (selectedPeriod) {
-        is Period.Week -> Triple(availableWeeks, selectedPeriod.code, onWeekSelected).let { it.copy(fourth = TimeSpan.WEEK) }
-        is Period.Month -> Triple(availableMonths, selectedPeriod.code, onMonthSelected).let { it.copy(fourth = TimeSpan.MONTH) }
-        is Period.Year -> Triple(availableYears, selectedPeriod.code, onYearSelected).let { it.copy(fourth = TimeSpan.YEAR) }
+        is Period.Week -> Triple(availableWeeks, selectedPeriod.code, onWeekSelected).let {
+            it.copy(
+                fourth = TimeSpan.WEEK
+            )
+        }
+
+        is Period.Month -> Triple(
+            availableMonths,
+            selectedPeriod.code,
+            onMonthSelected
+        ).let { it.copy(fourth = TimeSpan.MONTH) }
+
+        is Period.Year -> Triple(availableYears, selectedPeriod.code, onYearSelected).let {
+            it.copy(
+                fourth = TimeSpan.YEAR
+            )
+        }
     }
 
     val selectedIndex = remember(options, selectedCode) {
@@ -743,7 +784,10 @@ fun PeriodSelector(
                 .width(160.dp)
                 .height(350.dp)
                 .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
-                .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)), RoundedCornerShape(16.dp))
+                .border(
+                    BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)),
+                    RoundedCornerShape(16.dp)
+                )
         ) {
             // TimeSpan Tabs inside Dropdown (Fixed at top)
             Row(
@@ -759,16 +803,32 @@ fun PeriodSelector(
                         TimeSpan.MONTH -> selectedPeriod is Period.Month
                         TimeSpan.YEAR -> selectedPeriod is Period.Year
                     }
+
+                    val tabBackgroundColor by animateColorAsState(
+                        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        animationSpec = tween(durationMillis = 200)
+                    )
+
+                    val tabContentColor by animateColorAsState(
+                        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                        animationSpec = tween(durationMillis = 200)
+                    )
+
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                            .background(tabBackgroundColor)
                             .clickable {
                                 when (span) {
-                                    TimeSpan.WEEK -> availableWeeks.firstOrNull()?.let { onPeriodSelected(Period.Week(it)) }
-                                    TimeSpan.MONTH -> availableMonths.firstOrNull()?.let { onPeriodSelected(Period.Month(it)) }
-                                    TimeSpan.YEAR -> availableYears.firstOrNull()?.let { onPeriodSelected(Period.Year(it)) }
+                                    TimeSpan.WEEK -> availableWeeks.firstOrNull()
+                                        ?.let { onPeriodSelected(Period.Week(it)) }
+
+                                    TimeSpan.MONTH -> availableMonths.firstOrNull()
+                                        ?.let { onPeriodSelected(Period.Month(it)) }
+
+                                    TimeSpan.YEAR -> availableYears.firstOrNull()
+                                        ?.let { onPeriodSelected(Period.Year(it)) }
                                 }
                             }
                             .padding(vertical = 8.dp),
@@ -777,7 +837,7 @@ fun PeriodSelector(
                         Text(
                             text = span.displayName,
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                            color = tabContentColor,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )
                     }
@@ -785,66 +845,75 @@ fun PeriodSelector(
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
-            
+
             val scrollbarColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
 
-            // Scrollable options
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .drawWithContent {
-                        drawContent()
-                        if (scrollState.maxValue > 0) {
-                            val viewPortHeight = size.height
-                            val contentHeight = viewPortHeight + scrollState.maxValue
-                            val scrollOffset = scrollState.value.toFloat()
-                            
-                            val knobHeight = (viewPortHeight / contentHeight) * viewPortHeight
-                            val knobStart = (scrollOffset / contentHeight) * viewPortHeight
-                            
-                            drawRoundRect(
-                                color = scrollbarColor,
-                                topLeft = Offset(size.width - 6.dp.toPx(), knobStart),
-                                size = Size(4.dp.toPx(), knobHeight),
-                                cornerRadius = CornerRadius(2.dp.toPx(), 2.dp.toPx())
+            // Scrollable options with transition animation
+            AnimatedContent(
+                targetState = options to currentType,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(150))
+                        .togetherWith(fadeOut(animationSpec = tween(100)))
+                },
+                label = "PeriodListAnimation",
+                modifier = Modifier.fillMaxWidth().weight(1f)
+            ) { (currentOptions, type) ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .drawWithContent {
+                            drawContent()
+                            if (scrollState.maxValue > 0) {
+                                val viewPortHeight = size.height
+                                val contentHeight = viewPortHeight + scrollState.maxValue
+                                val scrollOffset = scrollState.value.toFloat()
+
+                                val knobHeight = (viewPortHeight / contentHeight) * viewPortHeight
+                                val knobStart = (scrollOffset / contentHeight) * viewPortHeight
+
+                                drawRoundRect(
+                                    color = scrollbarColor,
+                                    topLeft = Offset(size.width - 6.dp.toPx(), knobStart),
+                                    size = Size(4.dp.toPx(), knobHeight),
+                                    cornerRadius = CornerRadius(2.dp.toPx(), 2.dp.toPx())
+                                )
+                            }
+                        }
+                        .verticalScroll(scrollState)
+                ) {
+                    if (currentOptions.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize().padding(24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No data",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                    }
-                    .verticalScroll(scrollState)
-            ) {
-                if (options.isEmpty()) {
-                    Box(
-                        modifier = Modifier.fillMaxSize().padding(24.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "No data",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                } else {
-                    options.forEach { option ->
-                        val isItemSelected = option == selectedCode
-                        DropdownMenuItem(
-                            text = { 
-                                Text(
-                                    text = formatPeriodCode(option, currentType), 
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = if (isItemSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isItemSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                                ) 
-                            },
-                            modifier = Modifier.background(
-                                if (isItemSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) 
-                                else Color.Transparent
-                            ),
-                            onClick = {
-                                onSelected(option)
-                                expanded = false
-                            }
-                        )
+                    } else {
+                        currentOptions.forEach { option ->
+                            val isItemSelected = option == selectedCode
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = formatPeriodCode(option, type),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = if (isItemSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isItemSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    )
+                                },
+                                modifier = Modifier.background(
+                                    if (isItemSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                                    else Color.Transparent
+                                ),
+                                onClick = {
+                                    onSelected(option)
+                                    expanded = false
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -870,6 +939,7 @@ private fun formatPeriodCode(code: String, type: TimeSpan): String {
                     }
                 } else code
             }
+
             TimeSpan.MONTH -> DateTimeUtils.formatMonthCode(code)
             TimeSpan.YEAR -> code
         }
@@ -941,7 +1011,7 @@ fun DistributionHelpDialog(
                     icon = Icons.AutoMirrored.Filled.TrendingUp,
                     iconColor = if (isIncome) GreenIncome else PinkExpense,
                     title = if (isIncome) "Growing" else "Rising (3 mo)",
-                    description = if (isIncome) 
+                    description = if (isIncome)
                         "This income has consistently increased over the last 3 months."
                     else "You've spent more in this category for 3 consecutive months."
                 )
@@ -950,7 +1020,7 @@ fun DistributionHelpDialog(
                     icon = Icons.AutoMirrored.Filled.TrendingDown,
                     iconColor = if (isIncome) PinkExpense else GreenIncome,
                     title = if (isIncome) "Dropping" else "Saving (3 mo)",
-                    description = if (isIncome) 
+                    description = if (isIncome)
                         "This income has consistently decreased over the last 3 months."
                     else "Great job! Your spending in this category has decreased for 3 consecutive months."
                 )

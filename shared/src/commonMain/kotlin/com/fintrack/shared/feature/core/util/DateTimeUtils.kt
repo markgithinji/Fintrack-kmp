@@ -1,8 +1,13 @@
 package com.fintrack.shared.feature.core.util
 
+import kotlin.time.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.isoDayNumber
+import kotlinx.datetime.number
 import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 
 object DateTimeUtils {
     /**
@@ -20,7 +25,7 @@ object DateTimeUtils {
 
             // ISO 8601 rule: Find Jan 4th of the year (always in Week 1)
             val jan4 = LocalDate(year, 1, 4)
-            val dayOfWeek = jan4.dayOfWeek.ordinal + 1 // Mon=1, Sun=7
+            val dayOfWeek = jan4.dayOfWeek.isoDayNumber // Mon=1, Sun=7
             
             // Find the Monday of that week
             val mondayOfWeek1 = jan4.plus(DatePeriod(days = -(dayOfWeek - 1)))
@@ -64,8 +69,8 @@ object DateTimeUtils {
             val parts = code.split("-")
             if (parts.size == 2) {
                 val year = parts[0]
-                val month = parts[1].toIntOrNull() ?: return code
-                val monthName = when (month) {
+                val monthNumber = parts[1].toIntOrNull() ?: return code
+                val monthName = when (monthNumber) {
                     1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
                     5 -> "May"; 6 -> "Jun"; 7 -> "Jul"; 8 -> "Aug"
                     9 -> "Sep"; 10 -> "Oct"; 11 -> "Nov"; 12 -> "Dec"
@@ -76,5 +81,43 @@ object DateTimeUtils {
         } catch (_: Exception) {
             code
         }
+    }
+
+    /**
+     * Gets the ISO 8601 week code for the current date (e.g., "2024-W25").
+     */
+    fun getCurrentWeekCode(): String {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        return getIsoWeekCode(now)
+    }
+
+    /**
+     * Gets the month code for the current date (e.g., "2024-06").
+     */
+    fun getCurrentMonthCode(): String {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        val monthStr = now.month.number.toString().padStart(2, '0')
+        return "${now.year}-$monthStr"
+    }
+
+    /**
+     * Calculates the ISO 8601 week code for a specific date.
+     */
+    fun getIsoWeekCode(date: LocalDate): String {
+        // Simple ISO week calculation:
+        // Find the Thursday of the week containing the date
+        val dayOfWeek = date.dayOfWeek.isoDayNumber
+        val thursday = date.plus(DatePeriod(days = 4 - dayOfWeek))
+        
+        // Week 1 is the week with the first Thursday
+        val year = thursday.year
+        val jan4 = LocalDate(year, 1, 4)
+        val jan4DayOfWeek = jan4.dayOfWeek.isoDayNumber
+        val firstMonday = jan4.plus(DatePeriod(days = -(jan4DayOfWeek - 1)))
+        
+        val daysDiff = thursday.toEpochDays() - firstMonday.toEpochDays()
+        val weekNumber = (daysDiff / 7) + 1
+        
+        return "$year-W${weekNumber.toString().padStart(2, '0')}"
     }
 }
