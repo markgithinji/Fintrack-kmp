@@ -276,7 +276,7 @@ fun MainAppScaffold(
                         onDismiss = { toastMessage = null },
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(bottom = if (showBottomBar) 84.dp else 32.dp)
+                            .padding(bottom = if (showBottomBar) 72.dp else 24.dp)
                     )
                 }
 

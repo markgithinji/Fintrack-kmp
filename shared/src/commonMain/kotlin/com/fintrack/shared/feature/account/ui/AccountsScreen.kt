@@ -149,12 +149,14 @@ fun AccountsScreen(
                         bottomPadding = paddingValues.calculateBottomPadding() + 32.dp,
                         onEditAccount = {
                             if (!isOperating) {
+                                accountsViewModel.clearResults()
                                 showAccountDialog = it
                                 isEditing = true
                             }
                         },
                         onAddAccount = {
                             if (!isOperating) {
+                                accountsViewModel.clearResults()
                                 showAccountDialog = Account(id = "", name = "")
                                 isEditing = false
                             }
@@ -180,7 +182,7 @@ fun AccountsScreen(
                 onDismiss = { toastMessage = null },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = paddingValues.calculateBottomPadding() + 84.dp)
+                    .padding(bottom = paddingValues.calculateBottomPadding() + 32.dp)
             )
         }
     }
@@ -201,7 +203,12 @@ fun AccountsScreen(
             accountType = account.type,
             isDefaultSelection = account.id == defaultAccountId,
             isOtherAccountDefault = isOtherAccountDefault,
-            onDismiss = { if (!isOperating) showAccountDialog = null },
+            onDismiss = {
+                if (!isOperating) {
+                    showAccountDialog = null
+                    accountsViewModel.clearResults()
+                }
+            },
             onDelete = {
                 scope.launch {
                     val authResult = biometricAuthenticator.authenticate(
@@ -491,11 +498,16 @@ fun AccountDialog(
     onClearResults: () -> Unit,
     onConfirm: (String, AccountType, Boolean) -> Unit
 ) {
-    var accountName by remember { mutableStateOf(account.name) }
-    var type by remember { mutableStateOf(accountType) }
-    var isDefault by remember { mutableStateOf(isDefaultSelection || (type == AccountType.MPESA && !isOtherAccountDefault)) }
+    var accountName by remember(account.id) { mutableStateOf(account.name) }
+    var type by remember(account.id) { mutableStateOf(accountType) }
+    var isDefault by remember(account.id) { 
+        mutableStateOf(isDefaultSelection || (type == AccountType.MPESA && !isOtherAccountDefault)) 
+    }
     var showClearDataConfirm by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    // Stay in loading state if save was successful to avoid flicker before dismissal
+    val isEffectivelyLoading = isLoading || saveResult is Result.Success
 
     val hasChanges = accountName != account.name ||
             type != accountType ||
@@ -655,7 +667,7 @@ fun AccountDialog(
                                     type = if (it) AccountType.MPESA else AccountType.GENERAL
                                     if (it && !isOtherAccountDefault) isDefault = true
                                 },
-                                enabled = !isLoading
+                                enabled = !isEffectivelyLoading
                             )
 
                             AccountOptionRow(
@@ -666,7 +678,7 @@ fun AccountDialog(
                                 onCheckedChange = {
                                     type = if (it) AccountType.EQUITY else AccountType.GENERAL
                                 },
-                                enabled = !isLoading
+                                enabled = !isEffectivelyLoading
                             )
 
                             val isDefaultLocked =
@@ -677,7 +689,7 @@ fun AccountDialog(
                                 icon = Icons.Default.Star,
                                 checked = isDefault,
                                 onCheckedChange = { isDefault = it },
-                                enabled = !isLoading && !isDefaultLocked
+                                enabled = !isEffectivelyLoading && !isDefaultLocked
                             )
 
                             if (isEditing) {
@@ -686,7 +698,7 @@ fun AccountDialog(
                                     subtitle = "Delete all transactions",
                                     icon = Icons.Default.Delete,
                                     onClick = { showClearDataConfirm = true },
-                                    enabled = !isLoading,
+                                    enabled = !isEffectivelyLoading,
                                     tint = MaterialTheme.colorScheme.error
                                 )
                             }
@@ -808,11 +820,21 @@ private fun AccountOptionRow(
     onCheckedChange: (Boolean) -> Unit,
     enabled: Boolean
 ) {
+    // Optimistic update state to prevent flicker
+    var internalChecked by remember(checked) { mutableStateOf(checked) }
+
+    fun handleToggle(newValue: Boolean) {
+        if (enabled && newValue != internalChecked) {
+            internalChecked = newValue
+            onCheckedChange(newValue)
+        }
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .clickable(enabled = enabled) { onCheckedChange(!checked) }
+            .clickable(enabled = enabled) { handleToggle(!internalChecked) }
             .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -820,7 +842,7 @@ private fun AccountOptionRow(
             modifier = Modifier
                 .size(36.dp)
                 .background(
-                    color = if (checked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                    color = if (internalChecked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                     shape = CircleShape
                 ),
             contentAlignment = Alignment.Center
@@ -828,7 +850,7 @@ private fun AccountOptionRow(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = if (internalChecked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -851,8 +873,8 @@ private fun AccountOptionRow(
         }
 
         Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
+            checked = internalChecked,
+            onCheckedChange = { handleToggle(it) },
             enabled = enabled,
             modifier = Modifier.scale(0.8f)
         )

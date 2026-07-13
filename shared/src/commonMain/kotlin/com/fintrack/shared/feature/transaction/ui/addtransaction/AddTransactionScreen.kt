@@ -330,7 +330,7 @@ fun AddTransactionScreen(
                 onDismiss = { transactionsViewModel.clearValidationError() },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = paddingValues.calculateBottomPadding() + 84.dp)
+                    .padding(bottom = paddingValues.calculateBottomPadding() + 32.dp)
             )
         }
 
@@ -343,7 +343,7 @@ fun AddTransactionScreen(
                 onDismiss = { transactionsViewModel.resetSaveState() },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = paddingValues.calculateBottomPadding() + 84.dp)
+                    .padding(bottom = paddingValues.calculateBottomPadding() + 32.dp)
             )
         }
     }

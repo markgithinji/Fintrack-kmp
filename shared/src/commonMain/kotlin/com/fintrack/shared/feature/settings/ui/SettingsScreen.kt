@@ -2061,8 +2061,18 @@ fun SettingsToggleItem(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
+    // Optimistic update state to prevent flicker
+    var internalChecked by remember(checked) { mutableStateOf(checked) }
+
+    fun handleToggle(newValue: Boolean) {
+        if (newValue != internalChecked) {
+            internalChecked = newValue
+            onCheckedChange(newValue)
+        }
+    }
+
     Surface(
-        onClick = { onCheckedChange(!checked) },
+        onClick = { handleToggle(!internalChecked) },
         modifier = Modifier.fillMaxWidth(),
         color = Color.Transparent
     ) {
@@ -2108,9 +2118,9 @@ fun SettingsToggleItem(
             }
             
             Switch(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
-                thumbContent = if (checked) {
+                checked = internalChecked,
+                onCheckedChange = { handleToggle(it) },
+                thumbContent = if (internalChecked) {
                     {
                         Icon(
                             imageVector = Icons.Default.Check,
