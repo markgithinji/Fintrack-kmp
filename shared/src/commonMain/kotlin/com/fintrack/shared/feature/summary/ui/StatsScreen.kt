@@ -114,7 +114,7 @@ fun StatisticsScreen(
                 .fillMaxSize()
                 .weight(1f),
             contentPadding = PaddingValues(
-                bottom = paddingValues.calculateBottomPadding() + 100.dp
+                bottom = paddingValues.calculateBottomPadding() + 32.dp
             ),
             state = listState,
             verticalArrangement = Arrangement.spacedBy(16.dp)

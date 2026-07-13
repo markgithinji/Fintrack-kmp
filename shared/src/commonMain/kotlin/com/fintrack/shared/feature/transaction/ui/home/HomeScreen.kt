@@ -166,7 +166,7 @@ fun HomeScreen(
                 start = 16.dp,
                 top = paddingValues.calculateTopPadding() + 16.dp,
                 end = 16.dp,
-                bottom = paddingValues.calculateBottomPadding() + 100.dp
+                bottom = paddingValues.calculateBottomPadding() + 32.dp
             ),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {

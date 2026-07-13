@@ -108,7 +108,7 @@ fun CategoryManagementScreen(
                             start = 16.dp, 
                             end = 16.dp, 
                             top = paddingValues.calculateTopPadding() + 12.dp, 
-                            bottom = paddingValues.calculateBottomPadding() + 100.dp
+                            bottom = paddingValues.calculateBottomPadding() + 32.dp
                         ),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)

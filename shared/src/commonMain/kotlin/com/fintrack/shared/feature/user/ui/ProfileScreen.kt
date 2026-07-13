@@ -73,7 +73,7 @@ fun ProfileScreen(
                 .fillMaxSize(),
             contentPadding = PaddingValues(
                 top = topPadding + 24.dp,
-                bottom = paddingValues.calculateBottomPadding() + 100.dp
+                bottom = paddingValues.calculateBottomPadding() + 16.dp
             )
         ) {
             item {

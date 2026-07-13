@@ -103,7 +103,7 @@ fun BudgetScreen(
                     state = listState,
                     contentPadding = PaddingValues(
                         top = paddingValues.calculateTopPadding(),
-                        bottom = paddingValues.calculateBottomPadding() + 100.dp
+                        bottom = paddingValues.calculateBottomPadding() + 32.dp
                     )
                 ) {
                     if (data.isNotEmpty()) {

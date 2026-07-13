@@ -146,7 +146,7 @@ fun AccountsScreen(
                         accounts = state.data,
                         defaultAccountId = effectiveDefaultAccountId,
                         topPadding = paddingValues.calculateTopPadding() + 12.dp,
-                        bottomPadding = paddingValues.calculateBottomPadding() + 100.dp,
+                        bottomPadding = paddingValues.calculateBottomPadding() + 32.dp,
                         onEditAccount = {
                             if (!isOperating) {
                                 showAccountDialog = it
