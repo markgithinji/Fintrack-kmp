@@ -80,15 +80,15 @@ class ProfileViewModel(
 
         viewModelScope.launch {
             _editState.value = SaveState.Loading
-            try {
-                userRepository.updateProfile(name, email)
-                _editState.value = SaveState.Success(Unit)
-                // State update is handled by the userProfile collector
-                userRepository.getUserProfile().value?.let {
-                    _profileState.value = Result.Success(it)
+            val result = userRepository.updateProfile(name, email)
+            
+            _editState.value = when (result) {
+                is Result.Success -> {
+                    _profileState.value = Result.Success(result.data)
+                    SaveState.Success(Unit)
                 }
-            } catch (e: Exception) {
-                _editState.value = SaveState.Error(e)
+                is Result.Error -> SaveState.Error(result.exception)
+                is Result.Loading -> SaveState.Loading
             }
         }
     }

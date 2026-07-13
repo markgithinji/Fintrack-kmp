@@ -138,9 +138,7 @@ class AuthViewModel(
             when (val result = repository.login(formState.email, formState.password)) {
                 is Result.Success -> {
                     // Refresh user profile before proceeding
-                    try {
-                        userRepository.refreshProfile()
-                    } catch (_: Exception) {}
+                    userRepository.refreshProfile()
 
                     // Set login state to success to show success on button
                     _loginState.value = AuthState.Success(result.data)
@@ -279,9 +277,7 @@ class AuthViewModel(
                 repository.register(formState.name, formState.email, formState.password)) {
                 is Result.Success -> {
                     // Refresh user profile before proceeding
-                    try {
-                        userRepository.refreshProfile()
-                    } catch (_: Exception) {}
+                    userRepository.refreshProfile()
 
                     // Set register state to success to show success on button
                     _registerState.value = AuthState.Success(result.data)
@@ -322,9 +318,7 @@ class AuthViewModel(
                 is Result.Success -> {
                     if (result.data) {
                         // Refresh profile on successful token validation (app start)
-                        try {
-                            userRepository.refreshProfile()
-                        } catch (_: Exception) {}
+                        userRepository.refreshProfile()
 
                         _authStatus.value = AuthState.Success(true)
                     } else {

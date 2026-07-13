@@ -2,6 +2,7 @@ package com.fintrack.shared.feature.user.data
 
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.safeApiCall
+import com.fintrack.shared.feature.user.data.model.toDomain
 import com.fintrack.shared.feature.user.domain.model.User
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
 import kotlinx.coroutines.flow.StateFlow
@@ -15,48 +16,39 @@ class UserRepositoryImpl(
 
     override fun getUserProfile(): StateFlow<User?> = _userProfile.asStateFlow()
 
-    override suspend fun refreshProfile() {
-        when (val result = safeApiCall { api.getUserProfile() }) {
+    override suspend fun refreshProfile(): Result<User> {
+        return when (val result = safeApiCall { api.getUserProfile() }) {
             is Result.Success -> {
-                val dto = result.data
-                _userProfile.value = User(
-                    name = dto.name,
-                    email = dto.email,
-                    trackedCategories = dto.trackedCategories
-                )
+                val user = result.data.toDomain()
+                _userProfile.value = user
+                Result.Success(user)
             }
-            is Result.Error -> throw result.exception
-            is Result.Loading -> {}
+            is Result.Error -> result
+            is Result.Loading -> Result.Loading
         }
     }
 
-    override suspend fun updateProfile(name: String, email: String) {
-        when (val result = safeApiCall { api.updateProfile(name, email) }) {
+    override suspend fun updateProfile(name: String, email: String): Result<User> {
+        return when (val result = safeApiCall { api.updateProfile(name, email) }) {
             is Result.Success -> {
-                val dto = result.data
-                _userProfile.value = User(
-                    name = dto.name,
-                    email = dto.email,
-                    trackedCategories = dto.trackedCategories
-                )
+                val user = result.data.toDomain()
+                _userProfile.value = user
+                Result.Success(user)
             }
-            is Result.Error -> throw result.exception
-            is Result.Loading -> {}
+            is Result.Error -> result
+            is Result.Loading -> Result.Loading
         }
     }
 
-    override suspend fun updateTrackedCategories(categories: List<String>) {
-        when (val result = safeApiCall { api.updateTrackedCategories(categories) }) {
+    override suspend fun updateTrackedCategories(categories: List<String>): Result<User> {
+        return when (val result = safeApiCall { api.updateTrackedCategories(categories) }) {
             is Result.Success -> {
-                val dto = result.data
-                _userProfile.value = User(
-                    name = dto.name,
-                    email = dto.email,
-                    trackedCategories = dto.trackedCategories
-                )
+                val user = result.data.toDomain()
+                _userProfile.value = user
+                Result.Success(user)
             }
-            is Result.Error -> throw result.exception
-            is Result.Loading -> {}
+            is Result.Error -> result
+            is Result.Loading -> Result.Loading
         }
     }
 

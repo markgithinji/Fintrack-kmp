@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.ui.theme.PinkExpense
-import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.ui.AccountSelectionSection
 import com.fintrack.shared.feature.core.data.model.ApiException
@@ -61,7 +60,7 @@ fun AddTransactionScreen(
     mainViewModel: MainViewModel = koinInject(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
         ?: throw IllegalStateException("No SharedTransitionScope found")
@@ -73,9 +72,9 @@ fun AddTransactionScreen(
     val allCategories by transactionsViewModel.categories.collectAsStateWithLifecycle()
     val formState by transactionsViewModel.formState.collectAsStateWithLifecycle()
 
-    var showDatePicker by remember { mutableStateOf(false) }
-    var showTimePicker by remember { mutableStateOf(false) }
-    var showNumpad by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(value = false) }
+    var showTimePicker by remember { mutableStateOf(value = false) }
+    var showNumpad by remember { mutableStateOf(value = false) }
     var numpadTarget by remember { mutableStateOf(NumpadTarget.Amount) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -244,7 +243,10 @@ fun AddTransactionScreen(
         ) {
             FinanceSaveButton(
                 saveState = saveState,
-                isFormValid = formState.amount.isNotBlank() && formState.selectedCategory != null && formState.selectedAccount != null && formState.description.isNotBlank(),
+                isFormValid = (formState.amount.isNotBlank() && 
+                             formState.selectedCategory != null && 
+                             formState.selectedAccount != null && 
+                             formState.description.isNotBlank()),
                 themeColor = themeColor,
                 contentColor = if (formState.isIncome) MaterialTheme.colorScheme.onTertiary else Color.White,
                 onSaveClick = { 

@@ -438,10 +438,9 @@ class SettingsViewModel(
 
     fun updateTrackedCategories(categories: List<String>) {
         viewModelScope.launch {
-            try {
-                userRepository.updateTrackedCategories(categories)
-            } catch (e: Exception) {
-                _error.value = "Failed to update tracked categories: ${e.message}"
+            val result = userRepository.updateTrackedCategories(categories)
+            if (result is Result.Error) {
+                _error.value = "Failed to update tracked categories: ${result.exception.message}"
             }
         }
     }
