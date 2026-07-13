@@ -7,7 +7,6 @@ import com.fintrack.shared.feature.summary.data.network.SummaryApi
 import com.fintrack.shared.feature.summary.domain.model.AvailableMonths
 import com.fintrack.shared.feature.summary.domain.model.AvailableWeeks
 import com.fintrack.shared.feature.summary.domain.model.AvailableYears
-import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
@@ -17,7 +16,7 @@ import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
 
 class SummaryRepositoryImpl(
-    private val api: SummaryApi
+    private val summaryApi: SummaryApi
 ) : SummaryRepository {
 
     override suspend fun getHighlightsSummary(
@@ -25,7 +24,7 @@ class SummaryRepositoryImpl(
         period: String?
     ): Result<StatisticsSummary> =
         safeApiCall {
-            api.getHighlightsSummary(accountId, period).toDomain()
+            summaryApi.getHighlightsSummary(accountId, period).toDomain()
         }
 
     override suspend fun getDistributionSummary(
@@ -36,27 +35,27 @@ class SummaryRepositoryImpl(
         accountId: String?
     ): Result<DistributionSummary> =
         safeApiCall {
-            api.getDistributionSummary(weekOrMonthCode, type, start, end, accountId).toDomain()
+            summaryApi.getDistributionSummary(weekOrMonthCode, type, start, end, accountId).toDomain()
         }
 
     override suspend fun getAvailableWeeks(accountId: String?): Result<AvailableWeeks> =
         safeApiCall {
-            api.getAvailableWeeks(accountId).toDomain()
+            summaryApi.getAvailableWeeks(accountId).toDomain()
         }
 
     override suspend fun getAvailableMonths(accountId: String?): Result<AvailableMonths> =
         safeApiCall {
-            api.getAvailableMonths(accountId).toDomain()
+            summaryApi.getAvailableMonths(accountId).toDomain()
         }
 
     override suspend fun getAvailableYears(accountId: String?): Result<AvailableYears> =
         safeApiCall {
-            api.getAvailableYears(accountId).toDomain()
+            summaryApi.getAvailableYears(accountId).toDomain()
         }
 
     override suspend fun getOverviewSummary(accountId: String?): Result<OverviewSummary> =
         safeApiCall {
-            api.getOverviewSummary(accountId).toDomain()
+            summaryApi.getOverviewSummary(accountId).toDomain()
         }
 
     override suspend fun getCategoryComparisons(
@@ -64,7 +63,7 @@ class SummaryRepositoryImpl(
         period: String?
     ): Result<CategoryComparisonSummary> =
         safeApiCall {
-            api.getCategoryComparisons(accountId, period).toDomain()
+            summaryApi.getCategoryComparisons(accountId, period).toDomain()
         }
 
     override suspend fun getTransactionCounts(
@@ -75,10 +74,10 @@ class SummaryRepositoryImpl(
         end: String?,
         hasTransactionCost: Boolean?
     ): Result<TransactionCountSummary> = safeApiCall {
-        api.getTransactionCounts(accountId, isIncome, category, start, end, hasTransactionCost).toDomain()
+        summaryApi.getTransactionCounts(accountId, isIncome, category, start, end, hasTransactionCost).toDomain()
     }
 
     override suspend fun getProfileMetrics(): Result<ProfileMetrics> = safeApiCall {
-        api.getProfileMetrics().toDomain()
+        summaryApi.getProfileMetrics().toDomain()
     }
 }

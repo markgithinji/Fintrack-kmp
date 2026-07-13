@@ -8,7 +8,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val summaryModule = module {
-    single { SummaryApi(get()) }
-    single<SummaryRepository> { SummaryRepositoryImpl(api = get()) }
-    viewModel { StatisticsViewModel(get()) }
+    single { SummaryApi(client = get()) }
+    single<SummaryRepository> { SummaryRepositoryImpl(summaryApi = get()) }
+    viewModel { StatisticsViewModel(summaryRepository = get()) }
 }

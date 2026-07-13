@@ -219,18 +219,6 @@ class SettingsViewModel(
         }
     }
 
-    fun setMpesaSimSlot(slot: Int?) {
-        viewModelScope.launch {
-            settingsDataSource.setMpesaSimSlot(slot)
-        }
-    }
-
-    fun setMpesaAccountId(accountId: String?) {
-        viewModelScope.launch {
-            settingsDataSource.setMpesaAccountId(accountId)
-        }
-    }
-
     fun setMpesaListenerEnabled(enabled: Boolean) {
         viewModelScope.launch {
             logger.info("SettingsViewModel", "Setting M-Pesa listener enabled: $enabled")

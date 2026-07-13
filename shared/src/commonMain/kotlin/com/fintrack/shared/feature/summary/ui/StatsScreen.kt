@@ -41,6 +41,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.TabType
+import com.fintrack.shared.feature.summary.ui.components.CategoryTotalsCardWithTabs
+import com.fintrack.shared.feature.summary.ui.components.SpendingHighlightsSection
 import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.ui.theme.PinkExpense
 import org.koin.compose.koinInject
@@ -135,8 +137,9 @@ fun StatisticsScreen(
                 SpendingHighlightsSection(
                     tabType = selectedTab,
                     highlightsResult = highlights,
-                    loadHighlights = { 
-                        val yearCode = selectedPeriod?.code?.split("-")?.firstOrNull() ?: selectedPeriod?.code
+                    loadHighlights = {
+                        val yearCode =
+                            selectedPeriod?.code?.split("-")?.firstOrNull() ?: selectedPeriod?.code
                         viewModel.loadHighlights(selectedAccountId, yearCode, force = true)
                     }
                 )
@@ -151,20 +154,23 @@ fun StatisticsScreen(
                     availableMonths = availableMonths,
                     availableYears = availableYears,
                     animatedVisibilityScope = animatedVisibilityScope,
-                    onWeekSelected = { week -> 
-                        viewModel.onPeriodChanged(Period.Week(week), selectedAccountId) 
+                    onWeekSelected = { week ->
+                        viewModel.onPeriodChanged(Period.Week(week), selectedAccountId)
                     },
-                    onMonthSelected = { month -> 
-                        viewModel.onPeriodChanged(Period.Month(month), selectedAccountId) 
+                    onMonthSelected = { month ->
+                        viewModel.onPeriodChanged(Period.Month(month), selectedAccountId)
                     },
-                    onYearSelected = { year -> 
-                        viewModel.onPeriodChanged(Period.Year(year), selectedAccountId) 
+                    onYearSelected = { year ->
+                        viewModel.onPeriodChanged(Period.Year(year), selectedAccountId)
                     },
-                    onPeriodSelected = { period -> 
-                        viewModel.onPeriodChanged(period, selectedAccountId) 
+                    onPeriodSelected = { period ->
+                        viewModel.onPeriodChanged(period, selectedAccountId)
                     },
                     onRetry = {
-                        viewModel.reloadDistributionForCurrentSelection(selectedAccountId, force = true)
+                        viewModel.reloadDistributionForCurrentSelection(
+                            selectedAccountId,
+                            force = true
+                        )
                     },
                     onCategoryClick = { category ->
                         val dateRange = safePeriod.getDateRange()

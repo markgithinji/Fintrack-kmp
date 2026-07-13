@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(FlowPreview::class)
 class StatisticsViewModel(
-    private val repo: SummaryRepository
+    private val summaryRepository: SummaryRepository
 ) : ViewModel() {
 
     private val _highlights = MutableStateFlow<Result<StatisticsSummary>>(Result.Loading)
@@ -54,9 +54,6 @@ class StatisticsViewModel(
     private val _categoryComparisons =
         MutableStateFlow<Result<CategoryComparisonSummary>>(Result.Loading)
     val categoryComparisons: StateFlow<Result<CategoryComparisonSummary>> = _categoryComparisons
-
-    private val _categoryComparisonPeriod = MutableStateFlow<String?>(null)
-    val categoryComparisonPeriod: StateFlow<String?> = _categoryComparisonPeriod
 
     private val _transactionCounts =
         MutableStateFlow<Result<TransactionCountSummary>>(Result.Loading)
@@ -103,7 +100,7 @@ class StatisticsViewModel(
             lastHighlightsAccountId = accountId
             lastHighlightsPeriod = period
             
-            _highlights.value = repo.getHighlightsSummary(accountId, period)
+            _highlights.value = summaryRepository.getHighlightsSummary(accountId, period)
         }
     }
 
@@ -145,7 +142,7 @@ class StatisticsViewModel(
                 targetFlow.value = Result.Loading
             }
             
-            targetFlow.value = repo.getDistributionSummary(
+            targetFlow.value = summaryRepository.getDistributionSummary(
                 weekOrMonthCode = weekOrMonthCode,
                 type = type.apiName,
                 start = start,
@@ -177,17 +174,17 @@ class StatisticsViewModel(
             try {
                 lastAvailablePeriodsAccountId = accountId
                 val weeksDeferred = viewModelScope.async {
-                    val result = repo.getAvailableWeeks(accountId)
+                    val result = summaryRepository.getAvailableWeeks(accountId)
                     if (result is Result.Success) result.data.weeks else emptyList()
                 }
 
                 val monthsDeferred = viewModelScope.async {
-                    val result = repo.getAvailableMonths(accountId)
+                    val result = summaryRepository.getAvailableMonths(accountId)
                     if (result is Result.Success) result.data.months else emptyList()
                 }
 
                 val yearsDeferred = viewModelScope.async {
-                    val result = repo.getAvailableYears(accountId)
+                    val result = summaryRepository.getAvailableYears(accountId)
                     if (result is Result.Success) result.data.years else emptyList()
                 }
 
@@ -232,7 +229,7 @@ class StatisticsViewModel(
                 _overview.value = Result.Loading
             }
             lastOverviewAccountId = accountId
-            _overview.value = repo.getOverviewSummary(accountId)
+            _overview.value = summaryRepository.getOverviewSummary(accountId)
         }
     }
 
@@ -261,7 +258,7 @@ class StatisticsViewModel(
                 _availableMonths.value.first()
             } else {
                 // Fetch available months if they aren't loaded yet
-                val result = repo.getAvailableMonths(accountId)
+                val result = summaryRepository.getAvailableMonths(accountId)
                 if (result is Result.Success && result.data.months.isNotEmpty()) {
                     val months = result.data.months
                     _availableMonths.value = months
@@ -271,12 +268,9 @@ class StatisticsViewModel(
                 }
             }
 
-            val result = repo.getCategoryComparisons(accountId, targetPeriod)
+            val result = summaryRepository.getCategoryComparisons(accountId, targetPeriod)
 
             _categoryComparisons.value = result
-            if (result is Result.Success) {
-                _categoryComparisonPeriod.value = result.data.period
-            }
         }
     }
 
@@ -368,7 +362,7 @@ class StatisticsViewModel(
             lastTransactionCountsStart = start
             lastTransactionCountsEnd = end
             lastTransactionCountsHasCost = hasCost
-            _transactionCounts.value = repo.getTransactionCounts(accountId, isIncome, category, start, end, hasCost)
+            _transactionCounts.value = summaryRepository.getTransactionCounts(accountId, isIncome, category, start, end, hasCost)
         }
     }
 }

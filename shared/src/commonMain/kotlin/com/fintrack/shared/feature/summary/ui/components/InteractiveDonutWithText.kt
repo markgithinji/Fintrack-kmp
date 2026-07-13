@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.summary.ui
+package com.fintrack.shared.feature.summary.ui.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -172,7 +171,7 @@ fun InteractiveDonutWithText(
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 40.dp) // Leave room for donut segments
+            modifier = Modifier.padding(horizontal = 40.dp)
         ) {
             if (!isShowingOverallTotal) {
                 val category = Category.fromName(displayText, isExpense = true)

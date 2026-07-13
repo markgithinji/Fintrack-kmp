@@ -17,7 +17,6 @@ val settingsModule = module {
     viewModel {
         SettingsViewModel(
             settingsDataSource = get(),
-            clearAllUserDataUseCase = get(),
             exportTransactionsUseCase = get(),
             notificationService = get(),
             authRepository = get(),

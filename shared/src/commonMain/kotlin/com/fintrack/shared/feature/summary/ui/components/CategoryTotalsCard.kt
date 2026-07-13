@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.summary.ui
+package com.fintrack.shared.feature.summary.ui.components
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
@@ -11,7 +11,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,23 +20,17 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -50,7 +43,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -67,10 +59,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.ui.theme.PinkExpense
 import com.fintrack.shared.ui.theme.SegmentColor1
@@ -92,7 +82,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontStyle
 import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 
@@ -377,7 +368,7 @@ fun LoadingInteractiveDonutWithText(
     Box(modifier = modifier.size(chartSize), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val strokeWidth = 36.dp.toPx()
-            val diameter = size.minDimension - 80.dp.toPx() // Match final chart diameter
+            val diameter = size.minDimension - 80.dp.toPx()
             var startAngle = -90f
 
             mockSegments.forEachIndexed { index, (_, amount) ->
@@ -461,8 +452,7 @@ fun CategoryList(
     
     val remainingSlots = (4 - topModelsList.size).coerceAtLeast(0)
     topModelsList.addAll(regularModels.take(remainingSlots))
-    
-    // Sort for consistent UI
+
     topModelsList.sortByDescending { it.amount }
 
     val topNames = topModelsList.map { it.name }.toSet()
@@ -636,7 +626,7 @@ fun CategoryList(
                             text = insightText,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                            fontStyle = FontStyle.Italic,
                             modifier = Modifier.padding(start = 22.dp)
                         )
                     }
@@ -672,8 +662,6 @@ fun PeriodSelector(
 
     LaunchedEffect(expanded) {
         if (expanded && selectedIndex >= 0) {
-            // DropdownMenuItem is roughly 48dp high.
-            // We use a safe estimate to scroll the selected item into view.
             scrollState.scrollTo(selectedIndex * 120)
         }
     }
@@ -959,7 +947,7 @@ fun DistributionHelpDialog(
 
 @Composable
 private fun HelpSection(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     iconColor: Color,
     title: String,
     description: String

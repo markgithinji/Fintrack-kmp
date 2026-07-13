@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.summary.ui
+package com.fintrack.shared.feature.summary.ui.components
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
@@ -46,6 +46,7 @@ import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
+import com.fintrack.shared.feature.summary.domain.model.Correlation
 import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
 import com.fintrack.shared.feature.summary.domain.model.TabType
 import com.fintrack.shared.feature.summary.ui.util.toFormattedDate
@@ -285,7 +286,7 @@ private fun SuccessContent(
 
 @Composable
 fun CorrelationCard(
-    correlation: com.fintrack.shared.feature.summary.domain.model.Correlation,
+    correlation: Correlation,
     color: Color
 ) {
     Card(
