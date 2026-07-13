@@ -3,8 +3,10 @@ package com.fintrack.shared.feature.summary.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
+import com.fintrack.shared.feature.summary.domain.model.Highlights
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
 import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
@@ -75,12 +77,53 @@ class StatisticsViewModel(
             initialValue = Result.Loading
         )
 
+    val hasNextPeriod: StateFlow<Boolean> = combine(
+        _selectedPeriod,
+        _availableWeeks,
+        _availableMonths,
+        _availableYears
+    ) { period, weeks, months, years ->
+        if (period == null) return@combine false
+        val list = when (period) {
+            is Period.Week -> weeks
+            is Period.Month -> months
+            is Period.Year -> years
+        }
+        val index = list.indexOf(period.code)
+        index > 0 // Newest first, so "Next" (forward in time) is index - 1
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
+    val hasPreviousPeriod: StateFlow<Boolean> = combine(
+        _selectedPeriod,
+        _availableWeeks,
+        _availableMonths,
+        _availableYears
+    ) { period, weeks, months, years ->
+        if (period == null) return@combine false
+        val list = when (period) {
+            is Period.Week -> weeks
+            is Period.Month -> months
+            is Period.Year -> years
+        }
+        val index = list.indexOf(period.code)
+        index != -1 && index < list.size - 1
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
     private var lastHighlightsAccountId: String? = null
     private var lastHighlightsPeriod: String? = null
     private var highlightsJob: Job? = null
 
     fun loadHighlights(accountId: String? = null, period: String? = null, force: Boolean = false) {
-        if (period == null && lastHighlightsPeriod != null && !force) {
+        if (period == null) {
+            _highlights.value = Result.Success(createEmptyStatisticsSummary())
             return
         }
 
@@ -165,7 +208,8 @@ class StatisticsViewModel(
 
     private var lastAvailablePeriodsAccountId: String? = null
     fun loadAvailablePeriods(accountId: String? = null, force: Boolean = false) {
-        if (!force && lastAvailablePeriodsAccountId == accountId && (_availableWeeks.value.isNotEmpty() || _availableMonths.value.isNotEmpty() || _availableYears.value.isNotEmpty())) {
+        val accountChanged = lastAvailablePeriodsAccountId != accountId
+        if (!force && !accountChanged && (_availableWeeks.value.isNotEmpty() || _availableMonths.value.isNotEmpty() || _availableYears.value.isNotEmpty())) {
             reloadDistributionForCurrentSelection(accountId, force = false)
             return
         }
@@ -197,8 +241,8 @@ class StatisticsViewModel(
                 _availableMonths.value = months
                 _availableYears.value = years
 
-                // Pick initial selection only if none exists
-                if (_selectedPeriod.value == null) {
+                // Reset selection if account changed or if nothing is selected
+                if (accountChanged || _selectedPeriod.value == null) {
                     _selectedPeriod.value = when {
                         weeks.isNotEmpty() -> Period.Week(weeks.first())
                         months.isNotEmpty() -> Period.Month(months.first())
@@ -213,6 +257,8 @@ class StatisticsViewModel(
                 _availableWeeks.value = emptyList()
                 _availableMonths.value = emptyList()
                 _availableYears.value = emptyList()
+                _selectedPeriod.value = null
+                reloadDistributionForCurrentSelection(accountId, force = force)
             }
         }
     }
@@ -284,6 +330,42 @@ class StatisticsViewModel(
         reloadDistributionForCurrentSelection(accountId, force = true)
     }
 
+    fun navigateToNextPeriod(accountId: String? = null) {
+        val current = _selectedPeriod.value ?: return
+        val list = when (current) {
+            is Period.Week -> _availableWeeks.value
+            is Period.Month -> _availableMonths.value
+            is Period.Year -> _availableYears.value
+        }
+        val currentIndex = list.indexOf(current.code)
+        if (currentIndex > 0) { // List is sorted descending (newest first)
+            val nextPeriod = when (current) {
+                is Period.Week -> Period.Week(list[currentIndex - 1])
+                is Period.Month -> Period.Month(list[currentIndex - 1])
+                is Period.Year -> Period.Year(list[currentIndex - 1])
+            }
+            onPeriodChanged(nextPeriod, accountId)
+        }
+    }
+
+    fun navigateToPreviousPeriod(accountId: String? = null) {
+        val current = _selectedPeriod.value ?: return
+        val list = when (current) {
+            is Period.Week -> _availableWeeks.value
+            is Period.Month -> _availableMonths.value
+            is Period.Year -> _availableYears.value
+        }
+        val currentIndex = list.indexOf(current.code)
+        if (currentIndex != -1 && currentIndex < list.size - 1) {
+            val prevPeriod = when (current) {
+                is Period.Week -> Period.Week(list[currentIndex + 1])
+                is Period.Month -> Period.Month(list[currentIndex + 1])
+                is Period.Year -> Period.Year(list[currentIndex + 1])
+            }
+            onPeriodChanged(prevPeriod, accountId)
+        }
+    }
+
     fun reloadDistributionForCurrentSelection(accountId: String? = null, force: Boolean = false) {
         val currentPeriod = _selectedPeriod.value
         if (currentPeriod != null) {
@@ -309,9 +391,12 @@ class StatisticsViewModel(
                 loadCategoryComparisons(accountId = accountId, period = periodCode, force = force)
             }
         } else {
-            // Clear distributions if no period is selected (e.g., after data deletion)
+            // Clear all summary states if no period is selected (e.g., empty account)
             lastIncomeDistributionParams = null
             lastExpenseDistributionParams = null
+            lastHighlightsPeriod = null
+            lastCategoryComparisonPeriod = null
+            
             _incomeDistribution.value = Result.Success(
                 DistributionSummary(
                     period = "",
@@ -326,8 +411,29 @@ class StatisticsViewModel(
                     expenseCategories = emptyList()
                 )
             )
+            _highlights.value = Result.Success(createEmptyStatisticsSummary())
+            _categoryComparisons.value = Result.Success(
+                CategoryComparisonSummary(
+                    period = "",
+                    isCurrent = false,
+                    data = emptyList<CategoryComparison>()
+                )
+            )
         }
     }
+
+    private fun createEmptyStatisticsSummary() = StatisticsSummary(
+        period = "",
+        incomeHighlights = createEmptyHighlights(),
+        expenseHighlights = createEmptyHighlights()
+    )
+
+    private fun createEmptyHighlights() = Highlights(
+        highestMonth = null,
+        highestCategory = null,
+        highestDay = null,
+        averagePerDay = 0.0
+    )
 
     private var lastTransactionCountsAccountId: String? = null
     private var lastTransactionCountsIsIncome: Boolean? = null
