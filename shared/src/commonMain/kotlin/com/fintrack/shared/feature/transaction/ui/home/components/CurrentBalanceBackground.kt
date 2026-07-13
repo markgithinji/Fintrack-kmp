@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui.home
+package com.fintrack.shared.feature.transaction.ui.home.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -11,7 +11,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Fill
 
 
 @Composable

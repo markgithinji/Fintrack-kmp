@@ -40,7 +40,7 @@ import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.model.AppBarState
 import com.fintrack.shared.feature.navigation.model.Screen
-import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
+import com.fintrack.shared.feature.core.ui.permission.SmsPermissionLauncher
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import org.koin.compose.viewmodel.koinViewModel
 

@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui.home
+package com.fintrack.shared.feature.transaction.ui.home.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -68,7 +69,7 @@ import kotlinx.datetime.LocalDate
 import kotlin.math.roundToInt
 
 @Composable
-fun CustomLineChart(
+fun LineChart(
     data: List<DaySummary>,
     modifier: Modifier = Modifier,
 ) {
@@ -349,7 +350,7 @@ fun CustomLineChart(
                         color = MaterialTheme.colorScheme.surface,
                         shape = RoundedCornerShape(12.dp),
                         shadowElevation = 8.dp,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                         modifier = Modifier
                             .widthIn(min = 120.dp)
                             .onSizeChanged { tooltipSize = it }

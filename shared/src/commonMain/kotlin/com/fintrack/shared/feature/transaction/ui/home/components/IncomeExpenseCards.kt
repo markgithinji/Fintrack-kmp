@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui.home
+package com.fintrack.shared.feature.transaction.ui.home.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope

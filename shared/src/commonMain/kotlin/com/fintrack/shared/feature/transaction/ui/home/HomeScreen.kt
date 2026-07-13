@@ -28,8 +28,12 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
-import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
+import com.fintrack.shared.feature.transaction.ui.home.components.CategoryComparisonCard
+import com.fintrack.shared.feature.transaction.ui.home.components.CurrentBalanceCardWrapper
+import com.fintrack.shared.feature.transaction.ui.home.components.IncomeExpenseCards
+import com.fintrack.shared.feature.transaction.ui.home.components.IncomeExpensesOverview
+import com.fintrack.shared.feature.transaction.ui.home.components.TransactionsListCard
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -176,7 +180,7 @@ fun HomeScreen(
                     isEquityAutoSyncEnabled = isEquityListenerEnabled,
                     importState = importState,
                     syncProgress = importProgress,
-                    onAccountSelected = { accountId -> 
+                    onAccountSelected = { accountId ->
                         onAccountSelected(accountId)
                         // Cancel existing sync and clear progress if we switch accounts
                         transactionsViewModel.cancelImport()

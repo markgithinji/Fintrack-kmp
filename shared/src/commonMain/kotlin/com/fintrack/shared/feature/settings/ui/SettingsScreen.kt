@@ -51,7 +51,8 @@ import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.category.ui.util.toColor
 import com.fintrack.shared.feature.category.ui.util.toIcon
-import com.fintrack.shared.feature.transaction.ui.SmsPermissionLauncher
+import com.fintrack.shared.feature.core.ui.permission.NotificationPermissionLauncher
+import com.fintrack.shared.feature.core.ui.permission.SmsPermissionLauncher
 import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import org.koin.compose.koinInject

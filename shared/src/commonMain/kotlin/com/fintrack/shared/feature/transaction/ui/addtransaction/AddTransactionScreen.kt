@@ -39,7 +39,6 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.settings.domain.util.format
 import com.fintrack.shared.feature.navigation.ui.LocalTimeFormat
-import com.fintrack.shared.feature.navigation.model.AppBarState
 import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
 import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction

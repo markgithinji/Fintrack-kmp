@@ -77,7 +77,7 @@ import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
-import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
+import com.fintrack.shared.feature.transaction.ui.home.components.AccountIcon
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel

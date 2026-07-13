@@ -1,6 +1,7 @@
-package com.fintrack.shared.feature.transaction.ui.home
+package com.fintrack.shared.feature.transaction.ui.home.components
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -58,6 +59,7 @@ import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
 import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.ui.theme.PinkExpense
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Month
 
 @Composable
 fun IncomeExpensesOverview(overviewResult: Result<OverviewSummary>) {
@@ -243,7 +245,7 @@ private fun OverviewSuccessState(
                     }
 
                     OverviewPeriod.Monthly -> {
-                        CustomLineChart(
+                        LineChart(
                             data = overview.monthlyOverview,
                             modifier = Modifier
                                 .fillMaxHeight()
@@ -484,7 +486,7 @@ fun BarChart(
                     }
 
                     // Popup Overlay
-                    androidx.compose.animation.AnimatedVisibility(
+                    AnimatedVisibility(
                         visible = selectedAmount != null,
                         enter = fadeIn() + scaleIn(),
                         exit = fadeOut() + scaleOut(),
@@ -559,17 +561,17 @@ private fun formatOverviewPeriod(
     }
 }
 
-private fun getMonthName(month: kotlinx.datetime.Month): String = when (month) {
-    kotlinx.datetime.Month.JANUARY -> "January"
-    kotlinx.datetime.Month.FEBRUARY -> "February"
-    kotlinx.datetime.Month.MARCH -> "March"
-    kotlinx.datetime.Month.APRIL -> "April"
-    kotlinx.datetime.Month.MAY -> "May"
-    kotlinx.datetime.Month.JUNE -> "June"
-    kotlinx.datetime.Month.JULY -> "July"
-    kotlinx.datetime.Month.AUGUST -> "August"
-    kotlinx.datetime.Month.SEPTEMBER -> "September"
-    kotlinx.datetime.Month.OCTOBER -> "October"
-    kotlinx.datetime.Month.NOVEMBER -> "November"
-    kotlinx.datetime.Month.DECEMBER -> "December"
+private fun getMonthName(month: Month): String = when (month) {
+    Month.JANUARY -> "January"
+    Month.FEBRUARY -> "February"
+    Month.MARCH -> "March"
+    Month.APRIL -> "April"
+    Month.MAY -> "May"
+    Month.JUNE -> "June"
+    Month.JULY -> "July"
+    Month.AUGUST -> "August"
+    Month.SEPTEMBER -> "September"
+    Month.OCTOBER -> "October"
+    Month.NOVEMBER -> "November"
+    Month.DECEMBER -> "December"
 }

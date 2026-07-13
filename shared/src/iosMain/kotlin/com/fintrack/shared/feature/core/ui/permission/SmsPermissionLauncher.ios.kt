@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.ui
+package com.fintrack.shared.feature.core.ui.permission
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect

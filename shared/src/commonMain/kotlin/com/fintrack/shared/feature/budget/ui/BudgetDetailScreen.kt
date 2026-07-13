@@ -70,8 +70,6 @@ import com.fintrack.shared.ui.theme.PinkExpense
 import com.fintrack.shared.ui.theme.accountChipBorder
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
-import com.fintrack.shared.feature.budget.domain.model.BudgetFormState
-import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.data.model.ApiException
 import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.ui.FinanceAmountHeader
@@ -88,11 +86,10 @@ import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
-import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
 import com.fintrack.shared.feature.navigation.ui.MainViewModel
-import com.fintrack.shared.feature.transaction.ui.home.AccountIcon
+import com.fintrack.shared.feature.transaction.ui.home.components.AccountIcon
 import kotlinx.coroutines.delay
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
