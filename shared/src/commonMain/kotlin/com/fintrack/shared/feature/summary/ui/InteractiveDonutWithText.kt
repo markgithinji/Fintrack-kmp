@@ -36,7 +36,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fintrack.shared.feature.navigation.toCurrencyString
 import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.category.ui.util.toIcon
 import kotlin.math.PI
@@ -45,6 +44,7 @@ import kotlin.math.atan2
 import kotlin.math.sqrt
 
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 
 @Composable
 fun InteractiveDonutWithText(

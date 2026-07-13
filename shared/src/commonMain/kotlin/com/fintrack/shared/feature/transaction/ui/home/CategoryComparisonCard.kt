@@ -46,15 +46,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.navigation.toCurrencyString
-import com.fintrack.shared.feature.core.util.formatToSinglePrecision
-import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
-import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary
 import com.fintrack.shared.feature.category.domain.model.Category
-import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.category.ui.util.toColor
 import com.fintrack.shared.feature.category.ui.util.toIcon
+import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
+import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.formatToSinglePrecision
+import com.fintrack.shared.feature.navigation.ui.toCurrencyString
+import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
+import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary
 
 @Composable
 fun CategoryComparisonCard(

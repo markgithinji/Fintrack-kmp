@@ -1,14 +1,12 @@
 package com.fintrack.shared.feature.summary.ui
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -24,15 +22,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.TrendingUp
-import androidx.compose.material.icons.filled.TrendingDown
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.filled.Today
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.TipsAndUpdates
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -40,7 +33,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,9 +41,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
+import com.fintrack.shared.feature.core.ui.CommonErrorState
+import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.navigation.ui.toCurrencyString
+import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
+import com.fintrack.shared.feature.summary.domain.model.TabType
+import com.fintrack.shared.feature.summary.ui.util.toFormattedDate
+import com.fintrack.shared.feature.summary.ui.util.toMonthName
 import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.ui.theme.PinkExpense
 import com.fintrack.shared.ui.theme.SegmentColor1
@@ -59,15 +57,6 @@ import com.fintrack.shared.ui.theme.SegmentColor2
 import com.fintrack.shared.ui.theme.SegmentColor3
 import com.fintrack.shared.ui.theme.SegmentColor4
 import com.fintrack.shared.ui.theme.SegmentColor5
-import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.navigation.toCurrencyString
-import com.fintrack.shared.feature.summary.domain.model.Highlight
-import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
-import com.fintrack.shared.feature.summary.domain.model.TabType
-import com.fintrack.shared.feature.summary.ui.util.toFormattedDate
-import com.fintrack.shared.feature.summary.ui.util.toMonthName
-import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
-import com.fintrack.shared.feature.core.ui.CommonErrorState
 
 @Composable
 fun SpendingHighlightsSection(
@@ -116,10 +105,10 @@ fun SpendingHighlightsSection(
                 Text(
                     text = extractYear(highlightsResult.data.period),
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (highlightsResult.data.isCurrent) 
-                                MaterialTheme.colorScheme.onSurfaceVariant 
-                            else 
-                                MaterialTheme.colorScheme.onSecondaryContainer,
+                    color = if (highlightsResult.data.isCurrent)
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    else
+                        MaterialTheme.colorScheme.onSecondaryContainer,
                     textAlign = TextAlign.End,
                     modifier = Modifier.padding(bottom = 2.dp)
                 )
@@ -136,7 +125,7 @@ fun SpendingHighlightsSection(
                     is Result.Loading -> {
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             LoadingHealthSummaryCard()
-                            
+
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 LoadingHighlightCard(modifier = Modifier.weight(1f))
                                 LoadingHighlightCard(modifier = Modifier.weight(1f))
@@ -201,7 +190,7 @@ private fun SuccessContent(
                 icon = Icons.Default.CalendarMonth,
                 color = SegmentColor3
             )
-            
+
             val volatility = highlights.highestCategory?.volatilityPercentage
             HighlightCard(
                 modifier = Modifier.weight(1f),
@@ -227,7 +216,7 @@ private fun SuccessContent(
             val ytdChange = highlights.ytdChangePercentage
             val currentYearTotal = if (isIncome) data.income else data.expense
             val yearLabel = extractYear(data.period).ifBlank { "Annual" }
-            
+
             HighlightCard(
                 modifier = Modifier.weight(1f),
                 title = "$yearLabel Total",
@@ -246,11 +235,12 @@ private fun SuccessContent(
                     "$prefix${it.toInt()}%" to if (isIncome) (if (it > 0) GreenIncome else PinkExpense) else (if (it > 0) PinkExpense else GreenIncome)
                 }
             )
-            
+
             val exceedMonth = highlights.projectedExceedMonth
             val projected = highlights.projectedTotal ?: 0.0
-            val progressPercent = if (projected > 0) (currentYearTotal / projected * 100).toInt() else 0
-            
+            val progressPercent =
+                if (projected > 0) (currentYearTotal / projected * 100).toInt() else 0
+
             HighlightCard(
                 modifier = Modifier.weight(1f),
                 title = "Annual Forecast",
@@ -582,9 +572,15 @@ private fun LoadingHealthMetricItem(modifier: Modifier = Modifier) {
     ) {
         AnimatedShimmerBox(modifier = Modifier.size(36.dp).clip(CircleShape))
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            AnimatedShimmerBox(modifier = Modifier.width(60.dp).height(10.dp).clip(RoundedCornerShape(4.dp)))
-            AnimatedShimmerBox(modifier = Modifier.width(40.dp).height(14.dp).clip(RoundedCornerShape(4.dp)))
-            AnimatedShimmerBox(modifier = Modifier.width(50.dp).height(10.dp).clip(RoundedCornerShape(4.dp)))
+            AnimatedShimmerBox(
+                modifier = Modifier.width(60.dp).height(10.dp).clip(RoundedCornerShape(4.dp))
+            )
+            AnimatedShimmerBox(
+                modifier = Modifier.width(40.dp).height(14.dp).clip(RoundedCornerShape(4.dp))
+            )
+            AnimatedShimmerBox(
+                modifier = Modifier.width(50.dp).height(10.dp).clip(RoundedCornerShape(4.dp))
+            )
         }
     }
 }
@@ -607,7 +603,10 @@ fun LoadingHighlightCard(modifier: Modifier = Modifier) {
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f), CircleShape),
+                    .background(
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                        CircleShape
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 AnimatedShimmerBox(

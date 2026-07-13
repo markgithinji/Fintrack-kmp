@@ -81,7 +81,6 @@ import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDate
-import com.fintrack.shared.feature.navigation.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.TabType
@@ -94,7 +93,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import com.fintrack.shared.feature.navigation.LocalSharedTransitionScope
+import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
+import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable

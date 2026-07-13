@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.navigation.ui
 
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -15,8 +14,7 @@ import com.fintrack.shared.feature.navigation.model.AppBarState
 
 @Composable
 fun AppTopBar(
-    appBarState: AppBarState,
-    onUpdateAppBarState: (AppBarState) -> Unit
+    appBarState: AppBarState
 ) {
     TopBar(
         title = appBarState.title,
@@ -32,10 +30,7 @@ fun AddTransactionFAB(
 ) {
     FloatingActionButton(
         onClick = onClick,
-        modifier = Modifier
-            .size(60.dp)
-            .offset(y = 60.dp)
-            .then(modifier),
+        modifier = modifier.size(60.dp),
         containerColor = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,
         shape = CircleShape
