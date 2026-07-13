@@ -71,18 +71,7 @@ fun AddTransactionScreen(
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
     val validationError by transactionsViewModel.validationError.collectAsStateWithLifecycle()
     val allCategories by transactionsViewModel.categories.collectAsStateWithLifecycle()
-    val selectedTransactionResult by transactionsViewModel.selectedTransaction.collectAsStateWithLifecycle()
-
-    val amount by transactionsViewModel.amount.collectAsStateWithLifecycle()
-    val transactionCost by transactionsViewModel.transactionCost.collectAsStateWithLifecycle()
-    val category by transactionsViewModel.selectedCategory.collectAsStateWithLifecycle()
-    val selectedAccount by transactionsViewModel.selectedAccount.collectAsStateWithLifecycle()
-    val description by transactionsViewModel.description.collectAsStateWithLifecycle()
-
-    var isIncome by remember { mutableStateOf(false) }
-    var dateTime by remember {
-        mutableStateOf(Clock.System.now())
-    }
+    val formState by transactionsViewModel.formState.collectAsStateWithLifecycle()
 
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -90,19 +79,21 @@ fun AddTransactionScreen(
     var numpadTarget by remember { mutableStateOf(NumpadTarget.Amount) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    var isDataLoaded by remember(transactionId) { mutableStateOf(false) }
-
     KMPBackHandler(enabled = showNumpad) {
         showNumpad = false
     }
 
-    LaunchedEffect(transactionId) {
+    LaunchedEffect(transactionId, accountsResult) {
         transactionsViewModel.resetDeleteResult()
         if (transactionId != null) {
-            transactionsViewModel.loadTransactionById(transactionId)
+            if (accountsResult is Result.Success) {
+                transactionsViewModel.loadTransactionById(
+                    transactionId,
+                    (accountsResult as Result.Success).data
+                )
+            }
         } else {
             transactionsViewModel.resetSelectedTransaction()
-            isDataLoaded = true
         }
     }
 
@@ -113,38 +104,8 @@ fun AddTransactionScreen(
         }
     }
 
-    LaunchedEffect(selectedTransactionResult, accountsResult) {
-        if (transactionId != null && 
-            selectedTransactionResult is Result.Success && 
-            !isDataLoaded) {
-            
-            val transaction = (selectedTransactionResult as Result.Success<Transaction>).data
-            
-            if (accountsResult is Result.Success) {
-                val accounts = (accountsResult as Result.Success<List<Account>>).data
-                
-                transactionsViewModel.onAmountChange(transaction.amount.toString().removeSuffix(".0"))
-                transactionsViewModel.onTransactionCostChange(transaction.transactionCost.toString().removeSuffix(".0"))
-                transactionsViewModel.onDescriptionChange(transaction.description ?: "")
-                isIncome = transaction.isIncome
-                
-                val category = if (transaction.categoryId != null) {
-                    Category.fromId(transaction.categoryId, name = transaction.category, isExpense = !transaction.isIncome)
-                } else {
-                    Category.fromName(transaction.category, isExpense = !transaction.isIncome)
-                }
-                transactionsViewModel.onCategoryChange(category)
-
-                dateTime = transaction.dateTime
-                transactionsViewModel.onAccountChange(accounts.find { it.id == transaction.accountId })
-                
-                isDataLoaded = true
-            }
-        }
-    }
-
     val themeColor by animateColorAsState(
-        targetValue = if (isIncome) GreenIncome else PinkExpense,
+        targetValue = if (formState.isIncome) GreenIncome else PinkExpense,
         animationSpec = tween(durationMillis = 500)
     )
 
@@ -165,9 +126,9 @@ fun AddTransactionScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             with(sharedTransitionScope) {
                 FinanceAmountHeader(
-                    amount = amount,
-                    label = if (isIncome) "Income Amount" else "Expense Amount",
-                    isIncome = isIncome,
+                    amount = formState.amount,
+                    label = if (formState.isIncome) "Income Amount" else "Expense Amount",
+                    isIncome = formState.isIncome,
                     themeColor = themeColor,
                     paddingValues = paddingValues,
                     onToggleNumpad = {
@@ -195,12 +156,12 @@ fun AddTransactionScreen(
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 FinanceTypeSection(
-                    isIncome = isIncome,
-                    onTypeChange = { isIncome = it }
+                    isIncome = formState.isIncome,
+                    onTypeChange = { transactionsViewModel.onTypeChange(it) }
                 )
 
                 TransactionCostSection(
-                    cost = transactionCost,
+                    cost = formState.transactionCost,
                     onClick = {
                         numpadTarget = NumpadTarget.TransactionCost
                         showNumpad = true
@@ -209,7 +170,7 @@ fun AddTransactionScreen(
 
                 AccountSelectionSection(
                     accountsResult = accountsResult,
-                    selectedAccount = selectedAccount,
+                    selectedAccount = formState.selectedAccount,
                     onAccountSelected = { transactionsViewModel.onAccountChange(it) },
                     onRetry = { accountsViewModel.reloadAccounts() }
                 )
@@ -217,15 +178,15 @@ fun AddTransactionScreen(
                 FinanceCategorySelection(
                     label = "Category",
                     categories = allCategories,
-                    selectedCategories = category?.let { setOf(it) } ?: emptySet(),
+                    selectedCategories = formState.selectedCategory?.let { setOf(it) } ?: emptySet(),
                     onCategorySelectionChange = { transactionsViewModel.onCategoryChange(it.firstOrNull()) },
-                    isExpense = !isIncome,
+                    isExpense = !formState.isIncome,
                     multiSelect = false
                 )
 
                 FinanceInputSection(
                     label = "Description",
-                    value = description,
+                    value = formState.description,
                     onValueChange = { transactionsViewModel.onDescriptionChange(it) },
                     placeholder = "Enter description",
                     icon = Icons.AutoMirrored.Filled.Notes,
@@ -234,7 +195,7 @@ fun AddTransactionScreen(
                 )
 
                 DateTimeSelectionSection(
-                    dateTime = dateTime.toLocalDateTime(TimeZone.currentSystemDefault()),
+                    dateTime = formState.dateTime.toLocalDateTime(TimeZone.currentSystemDefault()),
                     onDateClicked = { showDatePicker = true },
                     onTimeClicked = { showTimePicker = true }
                 )
@@ -283,32 +244,15 @@ fun AddTransactionScreen(
         ) {
             FinanceSaveButton(
                 saveState = saveState,
-                isFormValid = amount.isNotBlank() && category != null && selectedAccount != null && description.isNotBlank(),
+                isFormValid = formState.amount.isNotBlank() && formState.selectedCategory != null && formState.selectedAccount != null && formState.description.isNotBlank(),
                 themeColor = themeColor,
-                contentColor = if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White,
+                contentColor = if (formState.isIncome) MaterialTheme.colorScheme.onTertiary else Color.White,
                 onSaveClick = { 
                     showNumpad = false
                     if (transactionId != null) {
-                        transactionsViewModel.updateTransaction(
-                            id = transactionId,
-                            amount = amount,
-                            transactionCost = transactionCost,
-                            isIncome = isIncome,
-                            category = category,
-                            description = description,
-                            selectedAccount = selectedAccount,
-                            dateTime = dateTime
-                        )
+                        transactionsViewModel.updateTransaction(id = transactionId)
                     } else {
-                        transactionsViewModel.addTransaction(
-                            amount = amount,
-                            transactionCost = transactionCost,
-                            isIncome = isIncome,
-                            category = category,
-                            description = description,
-                            selectedAccount = selectedAccount,
-                            dateTime = dateTime
-                        )
+                        transactionsViewModel.addTransaction()
                     }
                 },
                 label = if (transactionId != null) "Update Transaction" else "Save Transaction",
@@ -326,22 +270,22 @@ fun AddTransactionScreen(
                 onNumberClick = { num ->
                     when (numpadTarget) {
                         NumpadTarget.Amount -> {
-                            if (num == "." && amount.contains(".")) return@FinanceNumpad
-                            if (amount.length < 12) transactionsViewModel.onAmountChange(amount + num)
+                            if (num == "." && formState.amount.contains(".")) return@FinanceNumpad
+                            if (formState.amount.length < 12) transactionsViewModel.onAmountChange(formState.amount + num)
                         }
                         NumpadTarget.TransactionCost -> {
-                            if (num == "." && transactionCost.contains(".")) return@FinanceNumpad
-                            if (transactionCost.length < 10) transactionsViewModel.onTransactionCostChange(transactionCost + num)
+                            if (num == "." && formState.transactionCost.contains(".")) return@FinanceNumpad
+                            if (formState.transactionCost.length < 10) transactionsViewModel.onTransactionCostChange(formState.transactionCost + num)
                         }
                     }
                 },
                 onBackspaceClick = {
                     when (numpadTarget) {
                         NumpadTarget.Amount -> {
-                            if (amount.isNotEmpty()) transactionsViewModel.onAmountChange(amount.dropLast(1))
+                            if (formState.amount.isNotEmpty()) transactionsViewModel.onAmountChange(formState.amount.dropLast(1))
                         }
                         NumpadTarget.TransactionCost -> {
-                            if (transactionCost.isNotEmpty()) transactionsViewModel.onTransactionCostChange(transactionCost.dropLast(1))
+                            if (formState.transactionCost.isNotEmpty()) transactionsViewModel.onTransactionCostChange(formState.transactionCost.dropLast(1))
                         }
                     }
                 },
@@ -350,11 +294,13 @@ fun AddTransactionScreen(
         }
 
         if (showDatePicker) {
-            val localDateTime = dateTime.toLocalDateTime(TimeZone.currentSystemDefault())
+            val localDateTime = formState.dateTime.toLocalDateTime(TimeZone.currentSystemDefault())
             FintrackDatePickerDialog(
                 initialDate = localDateTime.date,
                 onDateSelected = { selectedDate ->
-                    dateTime = LocalDateTime(date = selectedDate, time = localDateTime.time).toInstant(TimeZone.currentSystemDefault())
+                    transactionsViewModel.onDateTimeChange(
+                        LocalDateTime(date = selectedDate, time = localDateTime.time).toInstant(TimeZone.currentSystemDefault())
+                    )
                     showDatePicker = false
                 },
                 onDismiss = { showDatePicker = false }
@@ -362,11 +308,13 @@ fun AddTransactionScreen(
         }
 
         if (showTimePicker) {
-            val localDateTime = dateTime.toLocalDateTime(TimeZone.currentSystemDefault())
+            val localDateTime = formState.dateTime.toLocalDateTime(TimeZone.currentSystemDefault())
             FintrackTimePickerDialog(
                 initialTime = localDateTime.time,
                 onTimeSelected = { selectedTime ->
-                    dateTime = LocalDateTime(date = localDateTime.date, time = selectedTime).toInstant(TimeZone.currentSystemDefault())
+                    transactionsViewModel.onDateTimeChange(
+                        LocalDateTime(date = localDateTime.date, time = selectedTime).toInstant(TimeZone.currentSystemDefault())
+                    )
                     showTimePicker = false
                 },
                 onDismiss = { showTimePicker = false }

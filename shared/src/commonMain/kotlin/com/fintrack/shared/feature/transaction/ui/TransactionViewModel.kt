@@ -12,6 +12,7 @@ import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import com.fintrack.shared.feature.transaction.domain.model.TransactionFormState
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.usecase.CreateTransactionUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ValidateTransactionUseCase
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Instant
 
@@ -40,20 +42,8 @@ class TransactionViewModel(
     private val _categories = MutableStateFlow(Category.allCategories)
     val categories: StateFlow<List<Category>> = _categories.asStateFlow()
 
-    private val _amount = MutableStateFlow("")
-    val amount: StateFlow<String> = _amount.asStateFlow()
-
-    private val _transactionCost = MutableStateFlow("")
-    val transactionCost: StateFlow<String> = _transactionCost.asStateFlow()
-
-    private val _selectedCategory = MutableStateFlow<Category?>(null)
-    val selectedCategory: StateFlow<Category?> = _selectedCategory.asStateFlow()
-
-    private val _selectedAccount = MutableStateFlow<Account?>(null)
-    val selectedAccount: StateFlow<Account?> = _selectedAccount.asStateFlow()
-
-    private val _description = MutableStateFlow("")
-    val description: StateFlow<String> = _description.asStateFlow()
+    private val _formState = MutableStateFlow(TransactionFormState())
+    val formState: StateFlow<TransactionFormState> = _formState.asStateFlow()
 
     private val _recentTransactions = MutableStateFlow<Result<List<Transaction>>>(Result.Loading)
     val recentTransactions: StateFlow<Result<List<Transaction>>> = _recentTransactions
@@ -66,9 +56,6 @@ class TransactionViewModel(
 
     private val _validationError = MutableStateFlow<String?>(null)
     val validationError: StateFlow<String?> = _validationError
-
-    private val _selectedTransaction = MutableStateFlow<Result<Transaction>>(Result.Loading)
-    val selectedTransaction: StateFlow<Result<Transaction>> = _selectedTransaction
 
     private val _importState = MutableStateFlow<Result<Unit>?>(null)
     val importState: StateFlow<Result<Unit>?> = _importState
@@ -94,27 +81,37 @@ class TransactionViewModel(
     }
 
     fun onAmountChange(newAmount: String) {
-        _amount.value = newAmount
+        _formState.update { it.copy(amount = newAmount) }
         _validationError.value = null
     }
 
     fun onTransactionCostChange(newCost: String) {
-        _transactionCost.value = newCost
+        _formState.update { it.copy(transactionCost = newCost) }
         _validationError.value = null
     }
 
     fun onCategoryChange(newCategory: Category?) {
-        _selectedCategory.value = newCategory
+        _formState.update { it.copy(selectedCategory = newCategory) }
         _validationError.value = null
     }
 
     fun onAccountChange(newAccount: Account?) {
-        _selectedAccount.value = newAccount
+        _formState.update { it.copy(selectedAccount = newAccount) }
         _validationError.value = null
     }
 
     fun onDescriptionChange(newDescription: String) {
-        _description.value = newDescription
+        _formState.update { it.copy(description = newDescription) }
+        _validationError.value = null
+    }
+
+    fun onTypeChange(isIncome: Boolean) {
+        _formState.update { it.copy(isIncome = isIncome) }
+        _validationError.value = null
+    }
+
+    fun onDateTimeChange(dateTime: Instant) {
+        _formState.update { it.copy(dateTime = dateTime) }
         _validationError.value = null
     }
 
@@ -152,28 +149,28 @@ class TransactionViewModel(
         }
     }
 
-    fun addTransaction(
-        amount: String,
-        transactionCost: String,
-        isIncome: Boolean,
-        category: Category?,
-        description: String,
-        selectedAccount: Account?,
-        dateTime: Instant
-    ) {
+    fun addTransaction() {
+        val state = _formState.value
         // Validate first
-        if (!validateTransaction(amount, transactionCost, description, category, selectedAccount)) {
+        if (!validateTransaction(
+                state.amount,
+                state.transactionCost,
+                state.description,
+                state.selectedCategory,
+                state.selectedAccount
+            )
+        ) {
             return
         }
 
         val transaction = createTransactionUseCase(
-            amount = amount,
-            transactionCost = transactionCost,
-            isIncome = isIncome,
-            category = category,
-            description = description,
-            selectedAccount = selectedAccount,
-            dateTime = dateTime
+            amount = state.amount,
+            transactionCost = state.transactionCost,
+            isIncome = state.isIncome,
+            category = state.selectedCategory,
+            description = state.description,
+            selectedAccount = state.selectedAccount,
+            dateTime = state.dateTime
         ) ?: return
 
         // Save transaction
@@ -197,29 +194,28 @@ class TransactionViewModel(
         }
     }
 
-    fun updateTransaction(
-        id: String,
-        amount: String,
-        transactionCost: String,
-        isIncome: Boolean,
-        category: Category?,
-        description: String,
-        selectedAccount: Account?,
-        dateTime: Instant
-    ) {
+    fun updateTransaction(id: String) {
+        val state = _formState.value
         // Validate first
-        if (!validateTransaction(amount, transactionCost, description, category, selectedAccount)) {
+        if (!validateTransaction(
+                state.amount,
+                state.transactionCost,
+                state.description,
+                state.selectedCategory,
+                state.selectedAccount
+            )
+        ) {
             return
         }
 
         val transaction = createTransactionUseCase(
-            amount = amount,
-            transactionCost = transactionCost,
-            isIncome = isIncome,
-            category = category,
-            description = description,
-            selectedAccount = selectedAccount,
-            dateTime = dateTime
+            amount = state.amount,
+            transactionCost = state.transactionCost,
+            isIncome = state.isIncome,
+            category = state.selectedCategory,
+            description = state.description,
+            selectedAccount = state.selectedAccount,
+            dateTime = state.dateTime
         )?.copy(id = id) ?: return
 
         viewModelScope.launch {
@@ -242,40 +238,43 @@ class TransactionViewModel(
         }
     }
 
-    fun loadTransactionById(id: String) {
-        val current = _selectedTransaction.value
-        if (current is Result.Success && current.data.id == id) return
+    private var loadedTransactionId: String? = null
+
+    fun loadTransactionById(id: String, accounts: List<Account>) {
+        if (loadedTransactionId == id) return
 
         viewModelScope.launch {
-            _selectedTransaction.value = Result.Loading
-            _selectedTransaction.value = repo.getTransaction(id)
+            val result = repo.getTransaction(id)
+
+            if (result is Result.Success) {
+                val transaction = result.data
+                loadedTransactionId = transaction.id
+                val category = if (transaction.categoryId != null) {
+                    Category.fromId(
+                        transaction.categoryId,
+                        name = transaction.category,
+                        isExpense = !transaction.isIncome
+                    )
+                } else {
+                    Category.fromName(transaction.category, isExpense = !transaction.isIncome)
+                }
+
+                _formState.value = TransactionFormState(
+                    amount = transaction.amount.toString().removeSuffix(".0"),
+                    transactionCost = transaction.transactionCost.toString().removeSuffix(".0"),
+                    isIncome = transaction.isIncome,
+                    selectedCategory = category,
+                    selectedAccount = accounts.find { it.id == transaction.accountId },
+                    description = transaction.description ?: "",
+                    dateTime = transaction.dateTime
+                )
+            }
         }
     }
 
     fun resetSelectedTransaction() {
-        _selectedTransaction.value = Result.Loading
-    }
-
-    // Keeping the old method for backward compatibility
-    fun addTransaction(transaction: Transaction) {
-        viewModelScope.launch {
-            _saveState.value = SaveState.Idle
-            _saveState.value = SaveState.Loading
-
-            try {
-                val result = repo.addTransaction(transaction)
-                _saveState.value = when (result) {
-                    is Result.Success -> {
-                        SaveState.Success(result.data)
-                    }
-
-                    is Result.Error -> SaveState.Error(result.exception)
-                    is Result.Loading -> SaveState.Loading
-                }
-            } catch (e: Exception) {
-                _saveState.value = SaveState.Error(e)
-            }
-        }
+        loadedTransactionId = null
+        _formState.value = TransactionFormState()
     }
 
     fun loadRecentTransactions(accountId: String?, force: Boolean = false) {

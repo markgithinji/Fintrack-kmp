@@ -1,7 +1,6 @@
 package com.fintrack.shared.feature.transaction.ui.home.components
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -361,7 +360,7 @@ fun BarChart(
     val totalBarHeightPx = with(density) { totalBarHeight.toPx() }
 
     var selectedAmount by remember { mutableStateOf<Double?>(null) }
-    var selectedColor by remember { mutableStateOf<Color>(Color.Transparent) }
+    var selectedColor by remember { mutableStateOf(Color.Transparent) }
     var touchOffset by remember { mutableStateOf(Offset.Zero) }
     var barsWidth by remember { mutableStateOf(0f) }
 
@@ -428,16 +427,20 @@ fun BarChart(
                                 val incomeTop = totalBarHeightPx - incomeH
                                 val expenseTop = incomeTop - expenseH
 
-                                if (offset.y in (expenseTop - 10.dp.toPx())..incomeTop) {
-                                    selectedAmount = day.expense
-                                    selectedColor = PinkExpense
-                                    touchOffset = offset
-                                } else if (offset.y in incomeTop..(totalBarHeightPx + 10.dp.toPx())) {
-                                    selectedAmount = day.income
-                                    selectedColor = GreenIncome
-                                    touchOffset = offset
-                                } else {
-                                    selectedAmount = null
+                                when (offset.y) {
+                                    in (expenseTop - 10.dp.toPx())..incomeTop -> {
+                                        selectedAmount = day.expense
+                                        selectedColor = PinkExpense
+                                        touchOffset = offset
+                                    }
+                                    in incomeTop..(totalBarHeightPx + 10.dp.toPx()) -> {
+                                        selectedAmount = day.income
+                                        selectedColor = GreenIncome
+                                        touchOffset = offset
+                                    }
+                                    else -> {
+                                        selectedAmount = null
+                                    }
                                 }
                             }
                         }
@@ -486,7 +489,7 @@ fun BarChart(
                     }
 
                     // Popup Overlay
-                    AnimatedVisibility(
+                    androidx.compose.animation.AnimatedVisibility(
                         visible = selectedAmount != null,
                         enter = fadeIn() + scaleIn(),
                         exit = fadeOut() + scaleOut(),
