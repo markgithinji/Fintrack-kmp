@@ -59,7 +59,6 @@ fun MainAppScaffold(
     val navController = LocalNavController.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    val appBarState by mainViewModel.appBarState.collectAsStateWithLifecycle()
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
@@ -75,12 +74,11 @@ fun MainAppScaffold(
         }
     }
 
-    // Automatically derive AppBarState from the current route
-    LaunchedEffect(navBackStackEntry) {
-        val entry = navBackStackEntry ?: return@LaunchedEffect
+    val appBarState = remember(navBackStackEntry) {
+        val entry = navBackStackEntry ?: return@remember AppBarState(title = "Home")
         val destination = entry.destination
         
-        val newState = when {
+        when {
             destination.hasRoute<Screen.Home>() -> AppBarState(title = "Home")
             destination.hasRoute<Screen.Statistics>() -> AppBarState(title = "Statistics")
             destination.hasRoute<Screen.Budget>() -> AppBarState(title = "Budget")
@@ -148,7 +146,6 @@ fun MainAppScaffold(
             )
             else -> AppBarState(title = "Fintrack")
         }
-        mainViewModel.updateAppBarState(newState)
     }
 
     // Show bars only if not on login/register screens
@@ -173,90 +170,90 @@ fun MainAppScaffold(
         currentDestination.hasRoute<Screen.Profile>()
     }
 
-    SharedTransitionLayout {
-        CompositionLocalProvider(LocalSharedTransitionScope provides this) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                NavigationSuiteScaffold(
-                    layoutType = if (showBottomBar) {
-                        NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(currentWindowAdaptiveInfo())
-                    } else {
-                        NavigationSuiteType.None
-                    },
-                    navigationSuiteItems = {
-                        if (showBottomBar) {
-                            item(
-                                selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Home>() } == true,
-                                onClick = {
-                                    navController.navigate(Screen.Home()) {
-                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                                icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                                label = { Text("Home") }
-                            )
-                            item(
-                                selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Statistics>() } == true,
-                                onClick = {
-                                    navController.navigate(Screen.Statistics()) {
-                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                                icon = { Icon(Icons.Default.BarChart, contentDescription = "Stats") },
-                                label = { Text("Stats") }
-                            )
-
-                            // Spacing for the FAB
-                            item(
-                                selected = false,
-                                icon = { Box(Modifier.size(1.dp)) },
-                                label = { Text("") },
-                                enabled = false,
-                                onClick = {}
-                            )
-
-                            item(
-                                selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Budget>() } == true,
-                                onClick = {
-                                    navController.navigate(Screen.Budget) {
-                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                                icon = { Icon(Icons.Default.Info, contentDescription = "Budget") },
-                                label = { Text("Budget") }
-                            )
-                            item(
-                                selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Profile>() } == true,
-                                onClick = {
-                                    navController.navigate(Screen.Profile) {
-                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                                icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-                                label = { Text("Profile") }
-                            )
-                        }
-                    },
-                    containerColor = MaterialTheme.colorScheme.background,
-                    contentColor = MaterialTheme.colorScheme.onBackground
-                ) {
-                    Scaffold(
-                        containerColor = MaterialTheme.colorScheme.background,
-                        topBar = {
-                            if (showTopBar) {
-                                AppTopBar(
-                                    appBarState = appBarState
-                                )
+    Box(modifier = Modifier.fillMaxSize()) {
+        NavigationSuiteScaffold(
+            layoutType = if (showBottomBar) {
+                NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(currentWindowAdaptiveInfo())
+            } else {
+                NavigationSuiteType.None
+            },
+            navigationSuiteItems = {
+                if (showBottomBar) {
+                    item(
+                        selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Home>() } == true,
+                        onClick = {
+                            navController.navigate(Screen.Home()) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                        }
-                    ) { paddingValues ->
+                        },
+                        icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                        label = { Text("Home") }
+                    )
+                    item(
+                        selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Statistics>() } == true,
+                        onClick = {
+                            navController.navigate(Screen.Statistics()) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = { Icon(Icons.Default.BarChart, contentDescription = "Stats") },
+                        label = { Text("Stats") }
+                    )
+
+                    // Spacing for the FAB
+                    item(
+                        selected = false,
+                        icon = { Box(Modifier.size(1.dp)) },
+                        label = { Text("") },
+                        enabled = false,
+                        onClick = {}
+                    )
+
+                    item(
+                        selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Budget>() } == true,
+                        onClick = {
+                            navController.navigate(Screen.Budget) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = { Icon(Icons.Default.Info, contentDescription = "Budget") },
+                        label = { Text("Budget") }
+                    )
+                    item(
+                        selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Profile>() } == true,
+                        onClick = {
+                            navController.navigate(Screen.Profile) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
+                        label = { Text("Profile") }
+                    )
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.background,
+            contentColor = MaterialTheme.colorScheme.onBackground
+        ) {
+            Scaffold(
+                containerColor = MaterialTheme.colorScheme.background,
+                topBar = {
+                    if (showTopBar) {
+                        AppTopBar(
+                            appBarState = appBarState
+                        )
+                    }
+                }
+            ) { paddingValues ->
+                SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
+                    CompositionLocalProvider(LocalSharedTransitionScope provides this) {
                         Box(modifier = Modifier.fillMaxSize()) {
                             AppNavigation(
                                 isAuthenticated = isAuthenticated,
@@ -268,29 +265,29 @@ fun MainAppScaffold(
                         }
                     }
                 }
-
-                toastMessage?.let { (message, isError) ->
-                    MaterialToast(
-                        message = message,
-                        isError = isError,
-                        onDismiss = { toastMessage = null },
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = if (showBottomBar) 72.dp else 24.dp)
-                    )
-                }
-
-                // Place FAB over everything
-                if (showFAB) {
-                    AddTransactionFAB(
-                        onClick = { navController.navigate(Screen.AddTransaction()) },
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 85.dp)
-                            .zIndex(100f)
-                    )
-                }
             }
+        }
+
+        toastMessage?.let { (message, isError) ->
+            MaterialToast(
+                message = message,
+                isError = isError,
+                onDismiss = { toastMessage = null },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = if (showBottomBar) 72.dp else 24.dp)
+            )
+        }
+
+        // Place FAB over everything
+        if (showFAB) {
+            AddTransactionFAB(
+                onClick = { navController.navigate(Screen.AddTransaction()) },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 85.dp)
+                    .zIndex(100f)
+            )
         }
     }
 

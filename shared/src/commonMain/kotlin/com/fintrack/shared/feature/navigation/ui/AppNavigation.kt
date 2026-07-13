@@ -3,7 +3,6 @@ package com.fintrack.shared.feature.navigation.ui
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -107,266 +106,262 @@ fun AppNavigation(
         }
     }
 
-    SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
-        CompositionLocalProvider(LocalSharedTransitionScope provides this) {
-            NavHost(
-                navController = navController,
-                startDestination = startDestination,
-                modifier = Modifier.fillMaxSize(),
-                enterTransition = {
-                    val isToAuth = (targetState.destination.hasRoute<Screen.Login>() || 
-                                 targetState.destination.hasRoute<Screen.Register>())
-                    val isFromAuth = (initialState.destination.hasRoute<Screen.Login>() || 
-                                   initialState.destination.hasRoute<Screen.Register>())
-                    
-                    val isToMorphScreen = targetState.destination.hasRoute<Screen.BudgetDetail>() ||
-                                         targetState.destination.hasRoute<Screen.TransactionList>() ||
-                                         targetState.destination.hasRoute<Screen.AddTransaction>()
+    NavHost(
+        navController = navController,
+        startDestination = startDestination,
+        modifier = Modifier.fillMaxSize(),
+        enterTransition = {
+            val isToAuth = (targetState.destination.hasRoute<Screen.Login>() || 
+                         targetState.destination.hasRoute<Screen.Register>())
+            val isFromAuth = (initialState.destination.hasRoute<Screen.Login>() || 
+                           initialState.destination.hasRoute<Screen.Register>())
+            
+            val isToMorphScreen = targetState.destination.hasRoute<Screen.BudgetDetail>() ||
+                                 targetState.destination.hasRoute<Screen.TransactionList>() ||
+                                 targetState.destination.hasRoute<Screen.AddTransaction>()
 
-                    if (isFromAuth && !isToAuth) { // Login success
-                        scaleIn(initialScale = 0.9f, animationSpec = tween(600)) + fadeIn(animationSpec = tween(600))
-                    } else if (isToAuth && !isFromAuth) { // Logout
-                        fadeIn(animationSpec = tween(600))
-                    } else if (isToAuth && isFromAuth) { // Between Login/Register
-                        fadeIn(animationSpec = tween(400))
-                    } else if (isToMorphScreen) {
-                        slideInVertically(
-                            initialOffsetY = { it },
-                            animationSpec = tween(500, easing = FastOutSlowInEasing)
-                        ) + fadeIn(animationSpec = tween(500))
-                    } else {
-                        EnterTransition.None
-                    }
-                },
-                exitTransition = {
-                    val isToAuth = targetState.destination.hasRoute<Screen.Login>() || 
-                                 targetState.destination.hasRoute<Screen.Register>()
-                    val isFromAuth = initialState.destination.hasRoute<Screen.Login>() || 
-                                   initialState.destination.hasRoute<Screen.Register>()
-                    
-                    val isFromMorphScreen = initialState.destination.hasRoute<Screen.BudgetDetail>() ||
-                                           initialState.destination.hasRoute<Screen.TransactionList>() ||
-                                           initialState.destination.hasRoute<Screen.AddTransaction>()
-
-                    if (isFromAuth && !isToAuth) { // Login success
-                        scaleOut(targetScale = 1.1f, animationSpec = tween(600)) + fadeOut(animationSpec = tween(600))
-                    } else if (isToAuth && !isFromAuth) { // Logout
-                        scaleOut(targetScale = 0.9f, animationSpec = tween(600)) + fadeOut(animationSpec = tween(600))
-                    } else if (isToAuth && isFromAuth) { // Between Login/Register
-                        fadeOut(animationSpec = tween(400))
-                    } else if (isFromMorphScreen) {
-                        slideOutVertically(
-                            targetOffsetY = { it },
-                            animationSpec = tween(500, easing = FastOutSlowInEasing)
-                        ) + fadeOut(animationSpec = tween(400))
-                    } else {
-                        ExitTransition.None
-                    }
-                },
-                popEnterTransition = { 
-                    val isToMorphScreen = targetState.destination.hasRoute<Screen.BudgetDetail>() ||
-                                         targetState.destination.hasRoute<Screen.TransactionList>() ||
-                                         targetState.destination.hasRoute<Screen.AddTransaction>()
-                    
-                    if (isToMorphScreen) {
-                        fadeIn(animationSpec = tween(400))
-                    } else {
-                        EnterTransition.None
-                    }
-                },
-                popExitTransition = {
-                    val isFromMorphScreen = initialState.destination.hasRoute<Screen.BudgetDetail>() ||
-                                           initialState.destination.hasRoute<Screen.TransactionList>() ||
-                                           initialState.destination.hasRoute<Screen.AddTransaction>()
-                    if (isFromMorphScreen) {
-                        slideOutVertically(
-                            targetOffsetY = { it },
-                            animationSpec = tween(500, easing = FastOutSlowInEasing)
-                        ) + fadeOut(animationSpec = tween(400))
-                    } else {
-                        ExitTransition.None
-                    }
-                }
-            ) {
-                composable<Screen.Home> { backStackEntry ->
-                    val route: Screen.Home = backStackEntry.toRoute()
-                    val accountId = route.accountId ?: selectedAccountId
-
-                    HomeScreen(
-                        selectedAccountId = accountId,
-                        onAccountSelected = { mainViewModel.onAccountSelected(it) },
-                        paddingValues = paddingValues,
-                        animatedVisibilityScope = this,
-                        onEditTransaction = { transactionId ->
-                            navController.navigate(Screen.AddTransaction(transactionId))
-                        },
-                        onCardClick = { accountIdParam, isIncome ->
-                            navController.navigate(
-                                Screen.TransactionList(
-                                    accountId = accountIdParam ?: accountId ?: "",
-                                    isIncome = isIncome
-                                )
-                            )
-                        }
-                    )
-                }
-
-                composable<Screen.AddTransaction> { backStackEntry ->
-                    val route: Screen.AddTransaction = backStackEntry.toRoute()
-                    val transactionId = route.transactionId
-
-                    AddTransactionScreen(
-                        transactionId = transactionId,
-                        paddingValues = paddingValues,
-                        animatedVisibilityScope = this,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-
-                composable<Screen.Statistics> { backStackEntry ->
-                    val route: Screen.Statistics = backStackEntry.toRoute()
-                    val accountId = route.accountId ?: selectedAccountId
-
-                    StatisticsScreen(
-                        selectedAccountId = accountId,
-                        paddingValues = paddingValues,
-                        animatedVisibilityScope = this,
-                        onCategoryClick = { category, isIncome, startDate, endDate, accountIdParam ->
-                            val isTransactionCost = category == "Transaction Fees"
-                            navController.navigate(
-                                Screen.TransactionList(
-                                    accountId = accountIdParam ?: accountId ?: "",
-                                    isIncome = if (isTransactionCost) null else isIncome,
-                                    category = if (isTransactionCost) null else category,
-                                    startDate = startDate,
-                                    endDate = endDate,
-                                    hasTransactionCost = if (isTransactionCost) true else null
-                                )
-                            )
-                        }
-                    )
-                }
-
-                composable<Screen.Budget> { 
-                    BudgetScreen(
-                        paddingValues = paddingValues,
-                        animatedVisibilityScope = this,
-                        onAddBudget = {
-                            navController.navigate(Screen.BudgetDetail(null))
-                        },
-                        onBudgetClick = { budgetWithStatus ->
-                            navController.navigate(
-                                Screen.BudgetDetail(
-                                    budgetWithStatus.budget.id
-                                )
-                            )
-                        }
-                    )
-                }
-
-                composable<Screen.Profile> { 
-                    ProfileScreen(
-                        paddingValues = paddingValues,
-                        onNavigateToAccounts = { navController.navigate(Screen.Accounts) },
-                        onNavigateToCategories = { navController.navigate(Screen.Categories) },
-                        onNavigateToSettings = { navController.navigate(Screen.Settings) },
-                        onNavigateToEditProfile = { navController.navigate(Screen.EditProfile) },
-                        onLogout = onLogout
-                    )
-                }
-
-                composable<Screen.EditProfile> { 
-                    EditProfileScreen(
-                        onNavigateBack = { navController.popBackStack() }
-                    )
-                }
-
-                composable<Screen.Accounts> { 
-                    AccountsScreen(paddingValues = paddingValues)
-                }
-
-                composable<Screen.Categories> { 
-                    CategoryManagementScreen(
-                        paddingValues = paddingValues,
-                        onNavigateBack = { navController.popBackStack() }
-                    )
-                }
-
-                composable<Screen.Settings> { 
-                    SettingsScreen(
-                        paddingValues = paddingValues
-                    )
-                }
-
-                composable<Screen.BudgetDetail> { backStackEntry ->
-                    val route: Screen.BudgetDetail = backStackEntry.toRoute()
-                    val budgetId = route.budgetId
-
-                    BudgetDetailScreen(
-                        budgetId = budgetId,
-                        paddingValues = paddingValues,
-                        animatedVisibilityScope = this,
-                        onSave = { navController.popBackStack() },
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-
-                composable<Screen.Login> { 
-                    LoginScreen(
-                        viewModel = authViewModel,
-                        onLoginSuccess = {
-                            // Handled by LaunchedEffect(isAuthenticated)
-                        },
-                        onSignUp = {
-                            navController.navigate(Screen.Register) {
-                                popUpTo(Screen.Login) { inclusive = true }
-                            }
-                        },
-                        onForgotPassword = {
-                        },
-                        modifier = Modifier.padding(paddingValues)
-                    )
-                }
-
-                composable<Screen.Register> { 
-                    RegisterScreen(
-                        viewModel = authViewModel,
-                        onRegisterSuccess = {
-                            // Handled by LaunchedEffect(isAuthenticated)
-                        },
-                        onLogin = {
-                            navController.navigate(Screen.Login) {
-                                popUpTo(Screen.Register) { inclusive = true }
-                            }
-                        },
-                        modifier = Modifier.padding(paddingValues)
-                    )
-                }
-
-                composable<Screen.TransactionList> { backStackEntry ->
-                    val route: Screen.TransactionList = backStackEntry.toRoute()
-                    val accountId = route.accountId
-                    val isIncome = route.isIncome
-                    val category = route.category
-                    val startDate = route.startDate
-                    val endDate = route.endDate
-                    val hasTransactionCost = route.hasTransactionCost
-
-                    TransactionListScreen(
-                        accountId = accountId, 
-                        isIncome = isIncome,
-                        category = category,
-                        startDate = startDate,
-                        endDate = endDate,
-                        hasTransactionCost = hasTransactionCost,
-                        paddingValues = paddingValues,
-                        animatedVisibilityScope = this,
-                        onEditTransaction = { transactionId ->
-                            navController.navigate(Screen.AddTransaction(transactionId))
-                        }
-                    )
-                }
+            if (isFromAuth && !isToAuth) { // Login success
+                scaleIn(initialScale = 0.9f, animationSpec = tween(600)) + fadeIn(animationSpec = tween(600))
+            } else if (isToAuth && !isFromAuth) { // Logout
+                fadeIn(animationSpec = tween(600))
+            } else if (isToAuth && isFromAuth) { // Between Login/Register
+                fadeIn(animationSpec = tween(400))
+            } else if (isToMorphScreen) {
+                slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = tween(500, easing = FastOutSlowInEasing)
+                ) + fadeIn(animationSpec = tween(500))
+            } else {
+                EnterTransition.None
             }
+        },
+        exitTransition = {
+            val isToAuth = targetState.destination.hasRoute<Screen.Login>() || 
+                         targetState.destination.hasRoute<Screen.Register>()
+            val isFromAuth = initialState.destination.hasRoute<Screen.Login>() || 
+                           initialState.destination.hasRoute<Screen.Register>()
+            
+            val isFromMorphScreen = initialState.destination.hasRoute<Screen.BudgetDetail>() ||
+                                   initialState.destination.hasRoute<Screen.TransactionList>() ||
+                                   initialState.destination.hasRoute<Screen.AddTransaction>()
+
+            if (isFromAuth && !isToAuth) { // Login success
+                scaleOut(targetScale = 1.1f, animationSpec = tween(600)) + fadeOut(animationSpec = tween(600))
+            } else if (isToAuth && !isFromAuth) { // Logout
+                scaleOut(targetScale = 0.9f, animationSpec = tween(600)) + fadeOut(animationSpec = tween(600))
+            } else if (isToAuth && isFromAuth) { // Between Login/Register
+                fadeOut(animationSpec = tween(400))
+            } else if (isFromMorphScreen) {
+                slideOutVertically(
+                    targetOffsetY = { it },
+                    animationSpec = tween(500, easing = FastOutSlowInEasing)
+                ) + fadeOut(animationSpec = tween(400))
+            } else {
+                ExitTransition.None
+            }
+        },
+        popEnterTransition = { 
+            val isToMorphScreen = targetState.destination.hasRoute<Screen.BudgetDetail>() ||
+                                 targetState.destination.hasRoute<Screen.TransactionList>() ||
+                                 targetState.destination.hasRoute<Screen.AddTransaction>()
+            
+            if (isToMorphScreen) {
+                fadeIn(animationSpec = tween(400))
+            } else {
+                EnterTransition.None
+            }
+        },
+        popExitTransition = {
+            val isFromMorphScreen = initialState.destination.hasRoute<Screen.BudgetDetail>() ||
+                                   initialState.destination.hasRoute<Screen.TransactionList>() ||
+                                   initialState.destination.hasRoute<Screen.AddTransaction>()
+            if (isFromMorphScreen) {
+                slideOutVertically(
+                    targetOffsetY = { it },
+                    animationSpec = tween(500, easing = FastOutSlowInEasing)
+                ) + fadeOut(animationSpec = tween(400))
+            } else {
+                ExitTransition.None
+            }
+        }
+    ) {
+        composable<Screen.Home> { backStackEntry ->
+            val route: Screen.Home = backStackEntry.toRoute()
+            val accountId = route.accountId ?: selectedAccountId
+
+            HomeScreen(
+                selectedAccountId = accountId,
+                onAccountSelected = { mainViewModel.onAccountSelected(it) },
+                paddingValues = paddingValues,
+                animatedVisibilityScope = this,
+                onEditTransaction = { transactionId ->
+                    navController.navigate(Screen.AddTransaction(transactionId))
+                },
+                onCardClick = { accountIdParam, isIncome ->
+                    navController.navigate(
+                        Screen.TransactionList(
+                            accountId = accountIdParam ?: accountId ?: "",
+                            isIncome = isIncome
+                        )
+                    )
+                }
+            )
+        }
+
+        composable<Screen.AddTransaction> { backStackEntry ->
+            val route: Screen.AddTransaction = backStackEntry.toRoute()
+            val transactionId = route.transactionId
+
+            AddTransactionScreen(
+                transactionId = transactionId,
+                paddingValues = paddingValues,
+                animatedVisibilityScope = this,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<Screen.Statistics> { backStackEntry ->
+            val route: Screen.Statistics = backStackEntry.toRoute()
+            val accountId = route.accountId ?: selectedAccountId
+
+            StatisticsScreen(
+                selectedAccountId = accountId,
+                paddingValues = paddingValues,
+                animatedVisibilityScope = this,
+                onCategoryClick = { category, isIncome, startDate, endDate, accountIdParam ->
+                    val isTransactionCost = category == "Transaction Fees"
+                    navController.navigate(
+                        Screen.TransactionList(
+                            accountId = accountIdParam ?: accountId ?: "",
+                            isIncome = if (isTransactionCost) null else isIncome,
+                            category = if (isTransactionCost) null else category,
+                            startDate = startDate,
+                            endDate = endDate,
+                            hasTransactionCost = if (isTransactionCost) true else null
+                        )
+                    )
+                }
+            )
+        }
+
+        composable<Screen.Budget> { 
+            BudgetScreen(
+                paddingValues = paddingValues,
+                animatedVisibilityScope = this,
+                onAddBudget = {
+                    navController.navigate(Screen.BudgetDetail(null))
+                },
+                onBudgetClick = { budgetWithStatus ->
+                    navController.navigate(
+                        Screen.BudgetDetail(
+                            budgetWithStatus.budget.id
+                        )
+                    )
+                }
+            )
+        }
+
+        composable<Screen.Profile> { 
+            ProfileScreen(
+                paddingValues = paddingValues,
+                onNavigateToAccounts = { navController.navigate(Screen.Accounts) },
+                onNavigateToCategories = { navController.navigate(Screen.Categories) },
+                onNavigateToSettings = { navController.navigate(Screen.Settings) },
+                onNavigateToEditProfile = { navController.navigate(Screen.EditProfile) },
+                onLogout = onLogout
+            )
+        }
+
+        composable<Screen.EditProfile> { 
+            EditProfileScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<Screen.Accounts> { 
+            AccountsScreen(paddingValues = paddingValues)
+        }
+
+        composable<Screen.Categories> { 
+            CategoryManagementScreen(
+                paddingValues = paddingValues,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<Screen.Settings> { 
+            SettingsScreen(
+                paddingValues = paddingValues
+            )
+        }
+
+        composable<Screen.BudgetDetail> { backStackEntry ->
+            val route: Screen.BudgetDetail = backStackEntry.toRoute()
+            val budgetId = route.budgetId
+
+            BudgetDetailScreen(
+                budgetId = budgetId,
+                paddingValues = paddingValues,
+                animatedVisibilityScope = this,
+                onSave = { navController.popBackStack() },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<Screen.Login> { 
+            LoginScreen(
+                viewModel = authViewModel,
+                onLoginSuccess = {
+                    // Handled by LaunchedEffect(isAuthenticated)
+                },
+                onSignUp = {
+                    navController.navigate(Screen.Register) {
+                        popUpTo(Screen.Login) { inclusive = true }
+                    }
+                },
+                onForgotPassword = {
+                },
+                modifier = Modifier.padding(paddingValues)
+            )
+        }
+
+        composable<Screen.Register> { 
+            RegisterScreen(
+                viewModel = authViewModel,
+                onRegisterSuccess = {
+                    // Handled by LaunchedEffect(isAuthenticated)
+                },
+                onLogin = {
+                    navController.navigate(Screen.Login) {
+                        popUpTo(Screen.Register) { inclusive = true }
+                    }
+                },
+                modifier = Modifier.padding(paddingValues)
+            )
+        }
+
+        composable<Screen.TransactionList> { backStackEntry ->
+            val route: Screen.TransactionList = backStackEntry.toRoute()
+            val accountId = route.accountId
+            val isIncome = route.isIncome
+            val category = route.category
+            val startDate = route.startDate
+            val endDate = route.endDate
+            val hasTransactionCost = route.hasTransactionCost
+
+            TransactionListScreen(
+                accountId = accountId, 
+                isIncome = isIncome,
+                category = category,
+                startDate = startDate,
+                endDate = endDate,
+                hasTransactionCost = hasTransactionCost,
+                paddingValues = paddingValues,
+                animatedVisibilityScope = this,
+                onEditTransaction = { transactionId ->
+                    navController.navigate(Screen.AddTransaction(transactionId))
+                }
+            )
         }
     }
 }
