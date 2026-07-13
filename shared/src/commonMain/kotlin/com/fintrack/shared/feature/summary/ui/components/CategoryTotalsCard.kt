@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.summary.ui.components
 
+import Period
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -73,14 +74,13 @@ import com.fintrack.shared.ui.theme.SegmentColor4
 import com.fintrack.shared.ui.theme.SegmentColor5
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.CommonErrorState
+import com.fintrack.shared.feature.core.util.DateTimeUtils
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDate
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.Period
 import com.fintrack.shared.feature.summary.domain.model.TabType
-import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.plus
 
 import androidx.compose.runtime.saveable.rememberSaveable
 
@@ -856,45 +856,21 @@ private fun formatPeriodCode(code: String, type: TimeSpan): String {
     return try {
         when (type) {
             TimeSpan.WEEK -> {
-                // code format: 2024-W25
-                val parts = code.split("-W")
-                if (parts.size == 2) {
-                    val year = parts[0].toIntOrNull() ?: return code
-                    val week = parts[1].toIntOrNull() ?: return code
-
-                    // ISO week calculation (Simplified for UI)
-                    // Monday is 0 in kotlinx-datetime ordinal
-                    val jan1 = LocalDate(year, 1, 1)
-                    val jan1DayOfWeek = jan1.dayOfWeek.ordinal + 1 // Mon=1, Sun=7
-                    val daysToFirstMonday = (8 - jan1DayOfWeek) % 7
-                    val firstMonday = jan1.plus(DatePeriod(days = daysToFirstMonday))
-                    val weekStart = firstMonday.plus(DatePeriod(days = (week - 1) * 7))
-                    val weekEnd = weekStart.plus(DatePeriod(days = 6))
+                val range = DateTimeUtils.getIsoWeekRange(code)
+                if (range != null) {
+                    val (weekStart, weekEnd) = range
+                    val year = weekStart.year
 
                     if (weekStart.month == weekEnd.month) {
-                        // Same month: "Jun 22 - 28, 2026"
+                        // Same month: "Jun 22 - 28, 2024"
                         "${weekStart.formatAsShortDate()} - ${weekEnd.dayOfMonth}, $year"
                     } else {
-                        // Different months: "Jun 29 - Jul 5, 2026"
+                        // Different months: "Jun 29 - Jul 5, 2024"
                         "${weekStart.formatAsShortDate()} - ${weekEnd.formatAsShortDate()}, $year"
                     }
                 } else code
             }
-            TimeSpan.MONTH -> {
-                // code format: 2024-06
-                val parts = code.split("-")
-                if (parts.size == 2) {
-                    val year = parts[0]
-                    val month = parts[1].toIntOrNull() ?: return code
-                    val monthName = when (month) {
-                        1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
-                        5 -> "May"; 6 -> "Jun"; 7 -> "Jul"; 8 -> "Aug"
-                        9 -> "Sep"; 10 -> "Oct"; 11 -> "Nov"; 12 -> "Dec"
-                        else -> ""
-                    }
-                    "$monthName $year"
-                } else code
-            }
+            TimeSpan.MONTH -> DateTimeUtils.formatMonthCode(code)
             TimeSpan.YEAR -> code
         }
     } catch (_: Exception) {
