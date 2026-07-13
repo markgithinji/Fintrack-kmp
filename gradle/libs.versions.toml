@@ -35,6 +35,8 @@ core = "1.7.0"
 lifecycleRuntimeKtx = "2.9.4"
 composeBom = "2025.10.00"
 securityCryptoKtx = "1.1.0"
+datastore = "1.1.2"
+tink = "1.14.1"
 splashscreen = "1.0.1"
 spotless = "8.0.0"
 workManager = "2.10.0"
@@ -46,6 +48,8 @@ androidx-paging-compose = { module = "androidx.paging:paging-compose", version.r
 androidx-paging-common = { module = "androidx.paging:paging-common", version.ref = "pagingRuntime" }
 androidx-paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "pagingRuntime" }
 androidx-security-crypto-ktx = { module = "androidx.security:security-crypto-ktx", version.ref = "securityCryptoKtx" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+tink-android = { module = "com.google.crypto.tink:tink-android", version.ref = "tink" }
 cmpcharts = { module = "network.chaintech:cmpcharts", version.ref = "cmpcharts" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koinAndroid" }
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koinAndroid" }
