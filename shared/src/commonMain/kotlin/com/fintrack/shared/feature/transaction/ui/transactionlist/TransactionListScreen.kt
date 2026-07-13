@@ -139,7 +139,7 @@ private fun TransactionListContent(
             start = 16.dp,
             top = 16.dp + paddingValues.calculateTopPadding(),
             end = 16.dp,
-            bottom = 16.dp + paddingValues.calculateBottomPadding()
+            bottom = 100.dp + paddingValues.calculateBottomPadding()
         ),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         state = listState

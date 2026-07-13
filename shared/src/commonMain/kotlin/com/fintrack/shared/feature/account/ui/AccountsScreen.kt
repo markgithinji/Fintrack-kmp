@@ -38,7 +38,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -124,67 +123,65 @@ fun AccountsScreen(
         }
     }
 
-    Scaffold { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                when (val state = accountsState) {
-                    is Result.Loading -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    }
-
-                    is Result.Success -> {
-                        val defaultAccountId by settingsViewModel.defaultAccountId.collectAsStateWithLifecycle()
-                        val effectiveDefaultAccountId =
-                            defaultAccountId ?: state.data.find { it.type == AccountType.MPESA }?.id
-
-                        AccountList(
-                            accounts = state.data,
-                            defaultAccountId = effectiveDefaultAccountId,
-                            topPadding = innerPadding.calculateTopPadding() + paddingValues.calculateTopPadding() - 4.dp,
-                            bottomPadding = innerPadding.calculateBottomPadding() + paddingValues.calculateBottomPadding(),
-                            onEditAccount = {
-                                if (!isOperating) {
-                                    showAccountDialog = it
-                                    isEditing = true
-                                }
-                            },
-                            onAddAccount = {
-                                if (!isOperating) {
-                                    showAccountDialog = Account(id = "", name = "")
-                                    isEditing = false
-                                }
-                            }
-                        )
-                    }
-
-                    is Result.Error -> {
-                        CommonErrorState(
-                            modifier = Modifier.fillMaxSize(),
-                            title = "Failed to load accounts",
-                            error = state.exception,
-                            onRetry = { accountsViewModel.reloadAccounts() }
-                        )
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            when (val state = accountsState) {
+                is Result.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
                     }
                 }
-            }
 
-            toastMessage?.let { (message, isError) ->
-                MaterialToast(
-                    message = message,
-                    isError = isError,
-                    onDismiss = { toastMessage = null },
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 84.dp)
-                )
+                is Result.Success -> {
+                    val defaultAccountId by settingsViewModel.defaultAccountId.collectAsStateWithLifecycle()
+                    val effectiveDefaultAccountId =
+                        defaultAccountId ?: state.data.find { it.type == AccountType.MPESA }?.id
+
+                    AccountList(
+                        accounts = state.data,
+                        defaultAccountId = effectiveDefaultAccountId,
+                        topPadding = paddingValues.calculateTopPadding() + 12.dp,
+                        bottomPadding = paddingValues.calculateBottomPadding() + 100.dp,
+                        onEditAccount = {
+                            if (!isOperating) {
+                                showAccountDialog = it
+                                isEditing = true
+                            }
+                        },
+                        onAddAccount = {
+                            if (!isOperating) {
+                                showAccountDialog = Account(id = "", name = "")
+                                isEditing = false
+                            }
+                        }
+                    )
+                }
+
+                is Result.Error -> {
+                    CommonErrorState(
+                        modifier = Modifier.fillMaxSize(),
+                        title = "Failed to load accounts",
+                        error = state.exception,
+                        onRetry = { accountsViewModel.reloadAccounts() }
+                    )
+                }
             }
+        }
+
+        toastMessage?.let { (message, isError) ->
+            MaterialToast(
+                message = message,
+                isError = isError,
+                onDismiss = { toastMessage = null },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = paddingValues.calculateBottomPadding() + 84.dp)
+            )
         }
     }
 

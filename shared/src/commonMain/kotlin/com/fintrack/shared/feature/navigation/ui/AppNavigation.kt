@@ -62,19 +62,27 @@ fun AppNavigation(
     val navController = LocalNavController.current
     val selectedAccountId by mainViewModel.selectedAccountId.collectAsStateWithLifecycle()
 
-    val startDestination: Any = remember(isAuthenticated) {
+    val startDestination: Any = remember {
         if (isAuthenticated) Screen.Home() else Screen.Login
     }
 
     // Navigation Guard: Kick user to Login if session expires or unauthorized access
     LaunchedEffect(isAuthenticated) {
-        if (!isAuthenticated) {
-            val currentDestination = navController.currentBackStackEntry?.destination
-            val isAuthRoute = currentDestination?.hasRoute<Screen.Login>() == true ||
-                    currentDestination?.hasRoute<Screen.Register>() == true
+        val currentRoute = navController.currentBackStackEntry?.destination
+        val isAuthRoute = currentRoute?.hasRoute<Screen.Login>() == true ||
+                currentRoute?.hasRoute<Screen.Register>() == true
 
+        if (!isAuthenticated) {
             if (!isAuthRoute) {
                 navController.navigate(Screen.Login) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+        } else {
+            // If authenticated and still on an auth screen, move to Home
+            if (isAuthRoute) {
+                navController.navigate(Screen.Home()) {
                     popUpTo(0) { inclusive = true }
                     launchSingleTop = true
                 }
@@ -307,7 +315,7 @@ fun AppNavigation(
                     LoginScreen(
                         viewModel = authViewModel,
                         onLoginSuccess = {
-                            // Handled by AuthOrchestrator and AppNavigation startDestination logic
+                            // Handled by LaunchedEffect(isAuthenticated)
                         },
                         onSignUp = {
                             navController.navigate(Screen.Register) {
@@ -324,7 +332,7 @@ fun AppNavigation(
                     RegisterScreen(
                         viewModel = authViewModel,
                         onRegisterSuccess = {
-                            // Handled by AuthOrchestrator and AppNavigation startDestination logic
+                            // Handled by LaunchedEffect(isAuthenticated)
                         },
                         onLogin = {
                             navController.navigate(Screen.Login) {

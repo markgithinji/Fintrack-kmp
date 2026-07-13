@@ -77,24 +77,14 @@ fun CategoryManagementScreen(
         }
     }
 
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddDialog = true },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Category")
-            }
-        }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
             when {
                 state.error != null && state.categories.isEmpty() -> {
                     CommonErrorState(
-                        modifier = Modifier.fillMaxSize().padding(top = innerPadding.calculateTopPadding() + paddingValues.calculateTopPadding()),
+                        modifier = Modifier.fillMaxSize().padding(top = paddingValues.calculateTopPadding()),
                         title = "Category Error",
                         errorMessage = state.error,
                         onRetry = {
@@ -117,8 +107,8 @@ fun CategoryManagementScreen(
                         contentPadding = PaddingValues(
                             start = 16.dp, 
                             end = 16.dp, 
-                            top = innerPadding.calculateTopPadding() + paddingValues.calculateTopPadding() - 4.dp, 
-                            bottom = innerPadding.calculateBottomPadding() + paddingValues.calculateBottomPadding() + 16.dp
+                            top = paddingValues.calculateTopPadding() + 12.dp, 
+                            bottom = paddingValues.calculateBottomPadding() + 100.dp
                         ),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -156,17 +146,29 @@ fun CategoryManagementScreen(
                     }
                 }
             }
+        }
 
-            toastMessage?.let { message ->
-                MaterialToast(
-                    message = message,
-                    isError = true,
-                    onDismiss = { toastMessage = null },
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 16.dp)
-                )
-            }
+        // FAB moved manually inside Box to avoid Scaffold redundant padding
+        FloatingActionButton(
+            onClick = { showAddDialog = true },
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = paddingValues.calculateBottomPadding() + 16.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Add Category")
+        }
+
+        toastMessage?.let { message ->
+            MaterialToast(
+                message = message,
+                isError = true,
+                onDismiss = { toastMessage = null },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = paddingValues.calculateBottomPadding() + 84.dp)
+            )
         }
     }
 

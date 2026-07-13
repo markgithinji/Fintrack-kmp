@@ -15,7 +15,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -174,6 +177,11 @@ fun MainAppScaffold(
         CompositionLocalProvider(LocalSharedTransitionScope provides this) {
             Box(modifier = Modifier.fillMaxSize()) {
                 NavigationSuiteScaffold(
+                    layoutType = if (showBottomBar) {
+                        NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(currentWindowAdaptiveInfo())
+                    } else {
+                        NavigationSuiteType.None
+                    },
                     navigationSuiteItems = {
                         if (showBottomBar) {
                             item(
@@ -257,19 +265,19 @@ fun MainAppScaffold(
                                 mainViewModel = mainViewModel,
                                 onLogout = onLogout
                             )
-
-                            toastMessage?.let { (message, isError) ->
-                                MaterialToast(
-                                    message = message,
-                                    isError = isError,
-                                    onDismiss = { toastMessage = null },
-                                    modifier = Modifier
-                                        .align(Alignment.BottomCenter)
-                                        .padding(bottom = paddingValues.calculateBottomPadding() + 84.dp)
-                                )
-                            }
                         }
                     }
+                }
+
+                toastMessage?.let { (message, isError) ->
+                    MaterialToast(
+                        message = message,
+                        isError = isError,
+                        onDismiss = { toastMessage = null },
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = if (showBottomBar) 84.dp else 32.dp)
+                    )
                 }
 
                 // Place FAB over everything

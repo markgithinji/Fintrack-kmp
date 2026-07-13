@@ -142,10 +142,6 @@ class AuthViewModel(
 
                     // Set login state to success to show success on button
                     _loginState.value = AuthState.Success(result.data)
-                    
-                    // Delay setting the global auth status to give the UI time to show success state
-                    delay(1000)
-
                     _authStatus.value = AuthState.Success(true)
                 }
 
@@ -281,10 +277,6 @@ class AuthViewModel(
 
                     // Set register state to success to show success on button
                     _registerState.value = AuthState.Success(result.data)
-                    
-                    // Delay setting the global auth status to give the UI time to show success state
-                    delay(1000)
-
                     _authStatus.value = AuthState.Success(true)
                 }
 
