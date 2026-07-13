@@ -12,7 +12,7 @@ class LocalCategoryDataSource {
 
     fun updateCategories(newCategories: List<Category>) {
         _categories.update { 
-            (Category.allCategories + newCategories)
+            (newCategories + Category.allCategories)
                 .distinctBy { it.name.lowercase() to it.isExpense }
         }
     }

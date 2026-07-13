@@ -80,6 +80,9 @@ class BudgetViewModel(
                 _categories.value = it
             }
         }
+        viewModelScope.launch {
+            syncCategoriesUseCase()
+        }
         reloadBudgets()
     }
 
