@@ -120,6 +120,10 @@ class StatisticsViewModel(
     private var lastHighlightsAccountId: String? = null
     private var lastHighlightsPeriod: String? = null
     private var highlightsJob: Job? = null
+    private var availablePeriodsJob: Job? = null
+    private var overviewJob: Job? = null
+    private var categoryComparisonsJob: Job? = null
+    private var transactionCountsJob: Job? = null
 
     fun loadHighlights(accountId: String? = null, period: String? = null, force: Boolean = false) {
         if (period == null) {
@@ -214,7 +218,8 @@ class StatisticsViewModel(
             return
         }
 
-        viewModelScope.launch {
+        availablePeriodsJob?.cancel()
+        availablePeriodsJob = viewModelScope.launch {
             try {
                 lastAvailablePeriodsAccountId = accountId
                 val weeksDeferred = viewModelScope.async {
@@ -270,7 +275,8 @@ class StatisticsViewModel(
         
         if (!force && current is Result.Success && !paramsChanged) return
         
-        viewModelScope.launch {
+        overviewJob?.cancel()
+        overviewJob = viewModelScope.launch {
             if (current !is Result.Success || paramsChanged) {
                 _overview.value = Result.Loading
             }
@@ -291,7 +297,8 @@ class StatisticsViewModel(
         
         if (!force && current is Result.Success && !paramsChanged) return
 
-        viewModelScope.launch {
+        categoryComparisonsJob?.cancel()
+        categoryComparisonsJob = viewModelScope.launch {
             if (current !is Result.Success || paramsChanged) {
                 _categoryComparisons.value = Result.Loading
             }
@@ -460,7 +467,8 @@ class StatisticsViewModel(
             lastTransactionCountsHasCost == hasCost
         ) return
 
-        viewModelScope.launch {
+        transactionCountsJob?.cancel()
+        transactionCountsJob = viewModelScope.launch {
             _transactionCounts.value = Result.Loading
             lastTransactionCountsAccountId = accountId
             lastTransactionCountsIsIncome = isIncome
