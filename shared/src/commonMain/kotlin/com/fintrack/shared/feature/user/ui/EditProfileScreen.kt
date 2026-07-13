@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.profile
+package com.fintrack.shared.feature.user.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

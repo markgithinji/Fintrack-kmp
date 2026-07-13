@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.profile
+package com.fintrack.shared.feature.user.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Spring

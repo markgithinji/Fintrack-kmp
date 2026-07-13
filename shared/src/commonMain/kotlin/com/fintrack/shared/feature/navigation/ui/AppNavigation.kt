@@ -31,8 +31,8 @@ import com.fintrack.shared.feature.auth.ui.RegisterScreen
 import com.fintrack.shared.feature.budget.ui.BudgetDetailScreen
 import com.fintrack.shared.feature.budget.ui.BudgetScreen
 import com.fintrack.shared.feature.account.ui.AccountsScreen
-import com.fintrack.shared.feature.profile.EditProfileScreen
-import com.fintrack.shared.feature.profile.ProfileScreen
+import com.fintrack.shared.feature.user.ui.EditProfileScreen
+import com.fintrack.shared.feature.user.ui.ProfileScreen
 import com.fintrack.shared.feature.settings.ui.SettingsScreen
 import com.fintrack.shared.feature.summary.ui.StatisticsScreen
 import com.fintrack.shared.feature.transaction.ui.addtransaction.AddTransactionScreen

@@ -1,11 +1,10 @@
-package com.fintrack.shared.feature.profile
+package com.fintrack.shared.feature.user.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.core.logger.LogTags
 import com.fintrack.shared.feature.summary.domain.model.ProfileMetrics
 import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
 import com.fintrack.shared.feature.user.domain.model.User
@@ -65,14 +64,13 @@ class ProfileViewModel(
         val name = _formState.value.name
         val email = _formState.value.email
 
-        val nameResult = validationUseCase.validateName(name)
-        val emailResult = validationUseCase.validateEmail(email)
+        val result = validationUseCase(name, email)
 
-        if ((nameResult is ValidationResult.Error) || (emailResult is ValidationResult.Error)) {
+        if (!result.isValid) {
             _formState.update {
                 it.copy(
-                    nameError = (nameResult as? ValidationResult.Error)?.message,
-                    emailError = (emailResult as? ValidationResult.Error)?.message
+                    nameError = (result.nameResult as? ValidationResult.Error)?.message,
+                    emailError = (result.emailResult as? ValidationResult.Error)?.message
                 )
             }
             return

@@ -1,6 +1,6 @@
 package com.fintrack.shared.feature.user.di
 
-import com.fintrack.shared.feature.profile.ProfileViewModel
+import com.fintrack.shared.feature.user.ui.ProfileViewModel
 import com.fintrack.shared.feature.user.data.UserApi
 import com.fintrack.shared.feature.user.data.UserRepositoryImpl
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
