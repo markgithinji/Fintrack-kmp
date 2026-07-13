@@ -24,13 +24,13 @@ import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
+import com.fintrack.shared.feature.core.logger.KMPLogger
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalTime
 
 class SettingsViewModel(
     private val settingsDataSource: SettingsDataSource,
-    private val clearAllUserDataUseCase: ClearAllUserDataUseCase,
     private val exportTransactionsUseCase: ExportTransactionsUseCase,
     private val notificationService: NotificationService,
     private val authRepository: AuthRepository,
@@ -43,7 +43,7 @@ class SettingsViewModel(
     private val budgetRepository: BudgetRepository,
 ) : ViewModel() {
 
-    private val logger = com.fintrack.shared.feature.core.logger.KMPLogger()
+    private val logger = KMPLogger()
 
     // State Flows
     private val _budgets = MutableStateFlow<Result<List<BudgetWithStatus>>>(Result.Loading)
@@ -87,8 +87,6 @@ class SettingsViewModel(
     val isReminderEnabled: StateFlow<Boolean> = settingsDataSource.isReminderEnabled
     val isBiometricEnabled: StateFlow<Boolean> = settingsDataSource.isBiometricEnabled
     val reminderTime: StateFlow<LocalTime> = settingsDataSource.reminderTime
-    val mpesaSimSlot: StateFlow<Int?> = settingsDataSource.mpesaSimSlot
-    val mpesaAccountId: StateFlow<String?> = settingsDataSource.mpesaAccountId
     val isMpesaListenerEnabled: StateFlow<Boolean> = settingsDataSource.isMpesaListenerEnabled
     val isEquityListenerEnabled: StateFlow<Boolean> = settingsDataSource.isEquityListenerEnabled
     val budgetAlertsEnabled: StateFlow<Boolean> = settingsDataSource.budgetAlertsEnabled

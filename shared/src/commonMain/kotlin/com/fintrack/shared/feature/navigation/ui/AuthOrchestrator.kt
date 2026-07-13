@@ -16,131 +16,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavDestination
-import com.fintrack.shared.feature.auth.domain.model.AuthState
-import com.fintrack.shared.feature.auth.ui.AuthViewModel
-import com.fintrack.shared.feature.auth.ui.LockScreen
-import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import com.fintrack.shared.feature.core.ui.CommonErrorState
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-
-@Composable
-fun AuthOrchestrator(
-    authStatus: AuthState<Boolean>,
-    currentDestination: NavDestination?,
-    authViewModel: AuthViewModel
-) {
-    val isAppLocked by authViewModel.isAppLocked.collectAsStateWithLifecycle()
-    val biometricAuthenticator = LocalBiometricAuthenticator.current
-    val scope = rememberCoroutineScope()
-
-    // Track the last error to determine if we are in a retry/transition flow.
-    var lastError by remember { mutableStateOf<AuthState.Error?>(null) }
-
-    LaunchedEffect(authStatus) {
-        when (authStatus) {
-            is AuthState.Error -> {
-                lastError = authStatus
-            }
-            is AuthState.Success -> {
-                // If we succeeded and were previously in an error state, 
-                // stay on the error screen to show the success button for a moment.
-                if (lastError != null) {
-                    delay(1500)
-                    lastError = null
-                }
-            }
-            else -> {}
-        }
-    }
-
-    if (isAppLocked) {
-        LockScreen(
-            onUnlock = {
-                scope.launch {
-                    val result = biometricAuthenticator.authenticate(
-                        title = "Unlock Fintrack",
-                        subtitle = "Authenticate to access your account"
-                    )
-                    if (result is BiometricResult.Success) {
-                        authViewModel.unlockWithBiometrics()
-                    }
-                }
-            }
-        )
-        return
-    }
-
-    when (authStatus) {
-        is AuthState.Loading -> {
-            if (lastError != null) {
-                // We are retrying from an error state
-                AuthErrorScreen(
-                    error = lastError!!.exception,
-                    isLoading = true,
-                    onRetry = { authViewModel.checkAuthenticationStatus() }
-                )
-            } else {
-                AuthLoadingScreen(message = authStatus.message)
-            }
-        }
-
-        is AuthState.Success -> {
-            if (lastError != null) {
-                // We just succeeded after an error; show success in the button
-                AuthErrorScreen(
-                    error = lastError!!.exception,
-                    isSuccess = true,
-                    onRetry = { authViewModel.checkAuthenticationStatus() }
-                )
-            } else {
-                // Clean transition to the main app
-                MainAppScaffold(
-                    isAuthenticated = authStatus.data,
-                    currentDestination = currentDestination,
-                    authViewModel = authViewModel,
-                    onLogout = { 
-                        authViewModel.logout() 
-                    }
-                )
-            }
-        }
-
-        is AuthState.Error -> {
-            AuthErrorScreen(
-                error = authStatus.exception,
-                onRetry = { authViewModel.checkAuthenticationStatus() }
-            )
-        }
-
-        is AuthState.Idle -> {
-            AuthLoadingScreen(message = "Initializing...")
-        }
-    }
-}
 
 @Composable
 fun AuthLoadingScreen(message: String = "") {
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = MaterialTheme.colorScheme.background,
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Surface(
                 modifier = Modifier
@@ -148,17 +39,17 @@ fun AuthLoadingScreen(message: String = "") {
                     .widthIn(max = 400.dp),
                 shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 4.dp
+                tonalElevation = 4.dp,
             ) {
                 Column(
                     modifier = Modifier.padding(32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.Center,
                 ) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(40.dp),
                         strokeWidth = 4.dp,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
@@ -166,14 +57,14 @@ fun AuthLoadingScreen(message: String = "") {
                         color = MaterialTheme.colorScheme.onSurface,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Please wait a moment",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.labelSmall,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
                     )
                 }
             }
@@ -190,11 +81,11 @@ fun AuthErrorScreen(
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = MaterialTheme.colorScheme.background,
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Surface(
                 modifier = Modifier
@@ -202,7 +93,7 @@ fun AuthErrorScreen(
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 4.dp
+                tonalElevation = 4.dp,
             ) {
                 CommonErrorState(
                     modifier = Modifier.padding(16.dp),
@@ -210,7 +101,7 @@ fun AuthErrorScreen(
                     error = error,
                     isLoading = isLoading,
                     isSuccess = isSuccess,
-                    onRetry = onRetry
+                    onRetry = onRetry,
                 )
             }
         }

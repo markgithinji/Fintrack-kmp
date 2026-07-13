@@ -39,8 +39,11 @@ import com.fintrack.shared.feature.transaction.ui.addtransaction.AddTransactionS
 import com.fintrack.shared.feature.transaction.ui.home.HomeScreen
 import com.fintrack.shared.feature.transaction.ui.transactionlist.TransactionListScreen
 import org.koin.compose.viewmodel.koinViewModel
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.fintrack.shared.feature.category.ui.CategoryManagementScreen
 import com.fintrack.shared.feature.navigation.model.Screen
 
@@ -61,6 +64,39 @@ fun AppNavigation(
 
     val startDestination: Any = remember(isAuthenticated) {
         if (isAuthenticated) Screen.Home() else Screen.Login
+    }
+
+    // Navigation Guard: Kick user to Login if session expires or unauthorized access
+    LaunchedEffect(isAuthenticated) {
+        if (!isAuthenticated) {
+            val currentDestination = navController.currentBackStackEntry?.destination
+            val isAuthRoute = currentDestination?.hasRoute<Screen.Login>() == true ||
+                    currentDestination?.hasRoute<Screen.Register>() == true
+
+            if (!isAuthRoute) {
+                navController.navigate(Screen.Login) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+        }
+    }
+
+    // Navigation Guard: Prevent navigation to protected routes when not authenticated
+    DisposableEffect(navController, isAuthenticated) {
+        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
+            val isAuthRoute = destination.hasRoute<Screen.Login>() || destination.hasRoute<Screen.Register>()
+            if (!isAuthRoute && !isAuthenticated) {
+                navController.navigate(Screen.Login) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+        }
+        navController.addOnDestinationChangedListener(listener)
+        onDispose {
+            navController.removeOnDestinationChangedListener(listener)
+        }
     }
 
     SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {

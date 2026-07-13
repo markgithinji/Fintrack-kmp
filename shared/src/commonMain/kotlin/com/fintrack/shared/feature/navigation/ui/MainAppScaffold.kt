@@ -48,7 +48,6 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun MainAppScaffold(
     isAuthenticated: Boolean,
-    currentDestination: NavDestination?,
     authViewModel: AuthViewModel,
     mainViewModel: MainViewModel = koinViewModel(),
     transactionsViewModel: TransactionViewModel = koinViewModel(),
@@ -56,6 +55,7 @@ fun MainAppScaffold(
 ) {
     val navController = LocalNavController.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
     val appBarState by mainViewModel.appBarState.collectAsStateWithLifecycle()
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
 
@@ -278,7 +278,7 @@ fun MainAppScaffold(
                         onClick = { navController.navigate(Screen.AddTransaction()) },
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(bottom = 85.dp) // Significantly higher
+                            .padding(bottom = 85.dp)
                             .zIndex(100f)
                     )
                 }
