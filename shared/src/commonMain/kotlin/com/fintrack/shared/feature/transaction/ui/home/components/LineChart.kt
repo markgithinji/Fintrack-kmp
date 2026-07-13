@@ -65,6 +65,7 @@ import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.DaySummary
 import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.ui.theme.PinkExpense
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.datetime.LocalDate
 import kotlin.math.roundToInt
 
@@ -101,9 +102,10 @@ fun LineChart(
     }
 
     val sortedData = data.sortedBy { it.date }
-    val maxIncome = sortedData.maxOfOrNull { it.income } ?: 0.0
-    val maxExpense = sortedData.maxOfOrNull { it.expense } ?: 0.0
-    val maxValue = maxOf(maxIncome, maxExpense).coerceAtLeast(1.0).toFloat() * 1.2f
+    val maxIncome = sortedData.maxOfOrNull { it.income } ?: BigDecimal.ZERO
+    val maxExpense = sortedData.maxOfOrNull { it.expense } ?: BigDecimal.ZERO
+    val maxVal = if (maxIncome > maxExpense) maxIncome else maxExpense
+    val maxValue = maxVal.doubleValue(false).coerceAtLeast(1.0).toFloat() * 1.2f
 
     var selectedDay by remember { mutableStateOf<DaySummary?>(null) }
     var touchOffset by remember { mutableStateOf(Offset.Zero) }
@@ -208,8 +210,8 @@ fun LineChart(
 
                         sortedData.forEachIndexed { index, day ->
                             val x = index * spacingX
-                            val yIncome = height - (day.income.toFloat() / maxValue) * height
-                            val yExpense = height - (day.expense.toFloat() / maxValue) * height
+                            val yIncome = height - (day.income.floatValue(false) / maxValue) * height
+                            val yExpense = height - (day.expense.floatValue(false) / maxValue) * height
                             val date = try { LocalDate.parse(day.date) } catch(_: Exception) { null }
 
                             // Month Transition Marker
@@ -301,8 +303,8 @@ fun LineChart(
                         selectedDay?.let { day ->
                             val index = sortedData.indexOf(day)
                             val x = index * spacingX
-                            val yIncome = height - (day.income.toFloat() / maxValue) * height
-                            val yExpense = height - (day.expense.toFloat() / maxValue) * height
+                            val yIncome = height - (day.income.floatValue(false) / maxValue) * height
+                            val yExpense = height - (day.expense.floatValue(false) / maxValue) * height
 
                             drawLine(
                                 color = selectionLineColor,

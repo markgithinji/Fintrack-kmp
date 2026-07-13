@@ -1,5 +1,7 @@
 package com.fintrack.shared.feature.summary.data.model
 
+import com.fintrack.shared.feature.core.data.serialization.BigDecimalSerializer
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -13,6 +15,8 @@ data class OverviewSummaryDto(
 @Serializable
 data class DaySummaryDto(
     val date: String,
-    val income: Double,
-    val expense: Double
+    @Serializable(with = BigDecimalSerializer::class)
+    val income: BigDecimal,
+    @Serializable(with = BigDecimalSerializer::class)
+    val expense: BigDecimal
 )

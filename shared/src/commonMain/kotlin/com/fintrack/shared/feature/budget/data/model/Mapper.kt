@@ -41,7 +41,6 @@ fun BudgetWithStatusDto.toDomain(): BudgetWithStatus {
     return BudgetWithStatus(
         budget = budget.toDomain(),
         status = BudgetStatus(
-            limit = budget.limit,
             spent = status.spent,
             remaining = status.remaining,
             percentageUsed = status.percentageUsed,

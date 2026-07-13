@@ -82,6 +82,8 @@ import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.util.DateTimeUtils
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDate
+import com.fintrack.shared.feature.core.util.toDouble
+import com.fintrack.shared.feature.core.util.toInt
 import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
@@ -92,6 +94,8 @@ import com.fintrack.shared.ui.theme.SegmentColor1
 import com.fintrack.shared.ui.theme.SegmentColor3
 import com.fintrack.shared.ui.theme.SegmentColor4
 import com.fintrack.shared.ui.theme.SegmentColor5
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -249,13 +253,13 @@ fun CategoryTotalsCardWithTabs(
                                 is TabType.Expense -> result.data.expenseCategories
                             }
 
-                            if (baseCategories.isEmpty() && (tabType !is TabType.Expense || result.data.totalTransactionCost <= 0.0)) {
+                            if (baseCategories.isEmpty() && (tabType !is TabType.Expense || result.data.totalTransactionCost <= BigDecimal.ZERO)) {
                                 EmptyDistributionState()
                             } else {
                                 val displayModels = baseCategories.map {
                                     CategoryDisplayModel(
                                         name = it.category,
-                                        amount = it.total.toFloat(),
+                                        amount = it.total,
                                         count = it.transactionCount,
                                         avgCount = it.averageTransactionCount,
                                         trend = it.momentumTrend,
@@ -263,19 +267,19 @@ fun CategoryTotalsCardWithTabs(
                                     )
                                 }.toMutableList()
 
-                                if (tabType is TabType.Expense && result.data.totalTransactionCost > 0) {
+                                if (tabType is TabType.Expense && result.data.totalTransactionCost > BigDecimal.ZERO) {
                                     displayModels.add(
                                         CategoryDisplayModel(
                                             name = "Transaction Fees",
-                                            amount = result.data.totalTransactionCost.toFloat(),
+                                            amount = result.data.totalTransactionCost,
                                             count = 0
                                         )
                                     )
                                 }
 
                                 val totalAmount =
-                                    displayModels.sumOf { it.amount.toDouble() }.toFloat()
-                                val categorySums = displayModels.map { it.name to it.amount }
+                                    displayModels.fold(BigDecimal.ZERO) { acc, m -> acc + m.amount }
+                                val categorySums = displayModels.map { it.name to it.amount.toDouble().toFloat() }
 
                                 val othersInsight = result.data.othersInsightSummary
 
@@ -285,7 +289,7 @@ fun CategoryTotalsCardWithTabs(
                                 ) {
                                     DonutChartSection(
                                         categorySums = categorySums,
-                                        totalAmount = totalAmount,
+                                        totalAmount = totalAmount.toDouble().toFloat(),
                                         selectedIndex = selectedIndex,
                                         onSelectedIndexChange = { index -> selectedIndex = index }
                                     )
@@ -488,7 +492,7 @@ fun LoadingCategoryList() {
 @Composable
 fun CategoryList(
     displayModels: List<CategoryDisplayModel>,
-    totalAmount: Float,
+    totalAmount: BigDecimal,
     selectedIndex: Int,
     onSelectedIndexChange: (Int) -> Unit,
     onCategoryClick: (String) -> Unit = {},
@@ -517,8 +521,8 @@ fun CategoryList(
     val remainingModels = displayModels.filter { it.name !in topNames }
 
     val displayList = topModelsList.toMutableList()
-    val othersAmount = remainingModels.sumOf { it.amount.toDouble() }.toFloat()
-    if (othersAmount > 0f) {
+    val othersAmount = remainingModels.fold(BigDecimal.ZERO) { acc, m -> acc + m.amount }
+    if (othersAmount > BigDecimal.ZERO) {
         val aggregatedInsights = if (othersInsight != null) listOf(othersInsight) else {
             remainingModels.flatMap { it.insights ?: emptyList() }
                 .groupBy { it }
@@ -545,7 +549,13 @@ fun CategoryList(
         displayList.forEachIndexed { index, model ->
             val categoryName = model.name
             val amount = model.amount
-            val percent = if (totalAmount > 0) (amount / totalAmount * 100).toInt() else 0
+            val percent = if (totalAmount > BigDecimal.ZERO) {
+                try {
+                    (amount.divide(totalAmount) * BigDecimal.fromInt(100)).toDouble().toInt()
+                } catch (e: Exception) {
+                    0
+                }
+            } else 0
             val color =
                 if (index < 4) segmentColors[index % segmentColors.size] else segmentColors.last()
             val isSelected = selectedIndex == index
@@ -975,9 +985,9 @@ enum class TimeSpan(val displayName: String) {
 
 data class CategoryDisplayModel(
     val name: String,
-    val amount: Float,
+    val amount: BigDecimal,
     val count: Int,
-    val avgCount: Double? = null,
+    val avgCount: BigDecimal? = null,
     val trend: String? = null,
     val insights: List<String>? = null
 )

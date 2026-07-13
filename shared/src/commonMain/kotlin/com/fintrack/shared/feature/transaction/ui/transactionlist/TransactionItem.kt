@@ -45,6 +45,7 @@ import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.category.ui.util.toColor
 import com.fintrack.shared.feature.category.ui.util.toIcon
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
@@ -162,7 +163,7 @@ fun TransactionItem(
                     fontWeight = FontWeight.Bold
                 )
                 
-                if (transaction.transactionCost > 0) {
+                if (transaction.transactionCost > BigDecimal.ZERO) {
                     Text(
                         text = "Incl. ${transaction.transactionCost.toCurrencyString()} fee",
                         style = androidx.compose.ui.text.TextStyle(

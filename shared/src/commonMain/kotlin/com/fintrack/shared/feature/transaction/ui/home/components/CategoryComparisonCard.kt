@@ -55,6 +55,7 @@ import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 
 @Composable
 fun CategoryComparisonCard(
@@ -221,14 +222,14 @@ private fun CategoryComparisonItem(
     val iconTint = category.toColor()
 
     // Monthly Trend (Primary)
-    val monthlyPositive = comparison.changePercentage >= 0
+    val monthlyPositive = comparison.changePercentage >= BigDecimal.ZERO
     val monthlyChangeColor = if (monthlyPositive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
     
     val monthlyChangeText = if (isCurrent) {
         if (monthlyPositive) {
             "${comparison.changePercentage.formatToSinglePrecision()}% more than last month"
         } else {
-            "${(comparison.changePercentage * -1).formatToSinglePrecision()}% less than last month"
+            "${(comparison.changePercentage.negate()).formatToSinglePrecision()}% less than last month"
         }
     } else {
         "${comparison.changePercentage.formatToSinglePrecision().removePrefix("-")}% vs previous month"
@@ -297,7 +298,7 @@ private fun CategoryComparisonItem(
                     
                     // Weekly Context (If available)
                     comparison.weeklyChangePercentage?.let { weeklyChange ->
-                        val weeklyPositive = weeklyChange >= 0
+                        val weeklyPositive = weeklyChange >= BigDecimal.ZERO
                         val weeklyColor = if (weeklyPositive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                         val weeklyComparisonText = if (isCurrent) "last week" else "previous week"
                         
@@ -305,7 +306,7 @@ private fun CategoryComparisonItem(
                             if (weeklyPositive) {
                                 "${weeklyChange.formatToSinglePrecision()}% more than $weeklyComparisonText"
                             } else {
-                                "${(weeklyChange * -1).formatToSinglePrecision()}% less than $weeklyComparisonText"
+                                "${(weeklyChange.negate()).formatToSinglePrecision()}% less than $weeklyComparisonText"
                             }
                         } else {
                             "${weeklyChange.formatToSinglePrecision().removePrefix("-")}% vs $weeklyComparisonText"

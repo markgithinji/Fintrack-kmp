@@ -77,6 +77,7 @@ import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 
 @Composable
 fun CurrentBalanceCardWrapper(
@@ -323,7 +324,7 @@ private fun CurrentBalanceSuccessState(
     onManualSync: () -> Unit,
     onSyncErrorClick: (String) -> Unit
 ) {
-    val balance = account.balance ?: 0.0
+    val balance = account.balance ?: BigDecimal.ZERO
     val isLinkedAccount = isMpesaLinked || isEquityLinked
     
     // Show manual sync if the account is linked AND auto-sync for that service is OFF
@@ -803,7 +804,7 @@ private fun AccountSelectionListState(
                         }
                     }
                     Text(
-                        (acc.balance ?: 0.0).toCurrencyString(),
+                        (acc.balance ?: BigDecimal.ZERO).toCurrencyString(),
                         style = MaterialTheme.typography.labelSmall,
                         color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -9,6 +9,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.fintrack.shared.feature.core.util.formatToCurrency
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
@@ -34,6 +35,18 @@ val LocalNavController = staticCompositionLocalOf<NavHostController> {
 
 @Composable
 fun Double.toCurrencyString(): String {
+    val currency = LocalCurrency.current
+    val isPrivacyMode = LocalPrivacyMode.current
+    val showDecimals = LocalShowDecimals.current
+
+    if (isPrivacyMode) {
+        return "${currency.symbol} ****"
+    }
+    return this.formatToCurrency(currency.symbol, showDecimals = showDecimals)
+}
+
+@Composable
+fun BigDecimal.toCurrencyString(): String {
     val currency = LocalCurrency.current
     val isPrivacyMode = LocalPrivacyMode.current
     val showDecimals = LocalShowDecimals.current

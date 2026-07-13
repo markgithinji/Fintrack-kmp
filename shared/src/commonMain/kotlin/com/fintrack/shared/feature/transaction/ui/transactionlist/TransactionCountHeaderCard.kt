@@ -37,6 +37,7 @@ import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.ui.theme.PinkExpense
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -210,7 +211,7 @@ private fun TransactionCountSuccessState(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            if (counts.totalTransactionCost > 0) {
+            if (counts.totalTransactionCost > BigDecimal.ZERO) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "Total Fees: ${counts.totalTransactionCost.toCurrencyString()}",

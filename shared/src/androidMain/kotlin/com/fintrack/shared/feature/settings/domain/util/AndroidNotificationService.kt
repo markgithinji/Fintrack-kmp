@@ -16,6 +16,8 @@ import androidx.core.content.ContextCompat
 import com.fintrack.shared.R
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import com.fintrack.shared.feature.core.util.formatToAmount
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalTime
@@ -97,9 +99,7 @@ class AndroidNotificationService(
         )
 
         val showDecimals = runBlocking { settingsDataSource.showDecimals.first() }
-        val format = if (showDecimals) "%,.2f" else "%,.0f"
-
-        val amountStr = "Ksh ${String.format(java.util.Locale.US, format, transaction.amount)}"
+        val amountStr = "Ksh ${transaction.amount.formatToAmount(showDecimals = showDecimals)}"
         val emoji = if (transaction.isIncome) "💰" else "💸"
         val merchant = transaction.description?.split("(Ref:")?.get(0)?.trim() ?: transaction.category
         
@@ -155,7 +155,7 @@ class AndroidNotificationService(
         }
     }
 
-    override fun showBillReminderNotification(billName: String, amount: Double) {
+    override fun showBillReminderNotification(billName: String, amount: BigDecimal) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) {
@@ -163,9 +163,7 @@ class AndroidNotificationService(
         }
 
         val showDecimals = runBlocking { settingsDataSource.showDecimals.first() }
-        val format = if (showDecimals) "%,.2f" else "%,.0f"
-
-        val amountStr = "Ksh ${String.format(java.util.Locale.US, format, amount)}"
+        val amountStr = "Ksh ${amount.formatToAmount(showDecimals = showDecimals)}"
         val title = "Upcoming Bill: $billName"
         val contentText = "Your bill of $amountStr is due soon."
         
@@ -185,7 +183,7 @@ class AndroidNotificationService(
         }
     }
 
-    override fun scheduleBillReminder(billName: String, amount: Double, dueDate: LocalDate, daysBefore: Int) {
+    override fun scheduleBillReminder(billName: String, amount: BigDecimal, dueDate: LocalDate, daysBefore: Int) {
         val reminderDate = dueDate.minus(daysBefore, DateTimeUnit.DAY)
         val calendar = Calendar.getInstance().apply {
             set(Calendar.YEAR, reminderDate.year)
@@ -202,7 +200,7 @@ class AndroidNotificationService(
         val intent = Intent(context, ReminderReceiver::class.java).apply {
             action = "com.fintrack.shared.ACTION_SHOW_BILL_REMINDER"
             putExtra("billName", billName)
-            putExtra("amount", amount)
+            putExtra("amount", amount.toString())
         }
         
         val pendingIntent = PendingIntent.getBroadcast(

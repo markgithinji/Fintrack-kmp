@@ -2,6 +2,8 @@ package com.fintrack.shared.feature.transaction.domain.usecase
 
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.category.domain.model.Category
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 
 class ValidateTransactionUseCase {
     operator fun invoke(
@@ -11,17 +13,17 @@ class ValidateTransactionUseCase {
         category: Category?,
         selectedAccount: Account?
     ): TransactionValidationResult {
-        val parsedAmount = amount.toDoubleOrNull()
-        val parsedCost = transactionCost.toDoubleOrNull()
+        val parsedAmount = try { amount.toBigDecimal() } catch (_: Exception) { null }
+        val parsedCost = try { transactionCost.toBigDecimal() } catch (_: Exception) { null }
 
         return when {
             amount.isBlank() -> TransactionValidationResult.Invalid("Please enter an amount")
             parsedAmount == null -> TransactionValidationResult.Invalid("Please enter a valid amount")
-            parsedAmount <= 0 -> TransactionValidationResult.Invalid("Amount must be greater than zero")
+            parsedAmount <= BigDecimal.ZERO -> TransactionValidationResult.Invalid("Amount must be greater than zero")
             
             transactionCost.isNotBlank() && parsedCost == null -> 
                 TransactionValidationResult.Invalid("Please enter a valid transaction cost")
-            parsedCost != null && parsedCost < 0 -> 
+            parsedCost != null && parsedCost < BigDecimal.ZERO ->
                 TransactionValidationResult.Invalid("Transaction cost cannot be negative")
 
             category == null -> TransactionValidationResult.Invalid("Please select a category")

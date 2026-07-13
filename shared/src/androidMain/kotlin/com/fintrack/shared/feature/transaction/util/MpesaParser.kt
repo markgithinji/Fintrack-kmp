@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.transaction.util
 
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.time.Clock
 import kotlin.time.Instant
 import java.text.SimpleDateFormat
@@ -216,8 +217,8 @@ object MpesaParser {
         prefix: String, 
         fixedCategory: String?,
         accountId: String,
-        cost: Double,
-        balance: Double?,
+        cost: BigDecimal,
+        balance: BigDecimal?,
         smsTimestamp: Instant? = null
     ): Transaction {
         val code = match.groupValues[1]
@@ -239,9 +240,9 @@ object MpesaParser {
 
     private fun createTransactionModel(
         code: String,
-        amount: Double,
-        cost: Double,
-        balance: Double?,
+        amount: BigDecimal,
+        cost: BigDecimal,
+        balance: BigDecimal?,
         category: String,
         dateTime: Instant,
         description: String,
@@ -259,7 +260,7 @@ object MpesaParser {
         balance = balance
     )
 
-    fun parseBalance(message: String): Double? {
+    fun parseBalance(message: String): BigDecimal? {
         // 1. Look for explicit M-PESA balance (highest priority)
         // Format examples: 
         // "M-PESA balance is Ksh1,234.56"
@@ -300,12 +301,16 @@ object MpesaParser {
         return null
     }
 
-    private fun parseAmountFromMatch(match: MatchResult?): Double {
-        return match?.groupValues?.get(1)?.let { parseAmount(it) } ?: 0.0
+    private fun parseAmountFromMatch(match: MatchResult?): BigDecimal {
+        return match?.groupValues?.get(1)?.let { parseAmount(it) } ?: BigDecimal.ZERO
     }
 
-    private fun parseAmount(value: String?): Double {
-        return value?.replace(",", "")?.toDoubleOrNull() ?: 0.0
+    private fun parseAmount(value: String?): BigDecimal {
+        return try {
+            value?.replace(",", "")?.let { BigDecimal.parseString(it) } ?: BigDecimal.ZERO
+        } catch (e: Exception) {
+            BigDecimal.ZERO
+        }
     }
 
     private fun parseDateTime(date: String, time: String, smsTimestamp: Instant? = null): Instant {

@@ -15,6 +15,7 @@ import com.fintrack.shared.feature.category.domain.usecase.SyncCategoriesUseCase
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.core.util.Result
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -121,13 +122,7 @@ class BudgetViewModel(
         return BudgetFormState(
             id = budget.id,
             name = budget.name,
-            amount = budget.limit.let { limit ->
-                when {
-                    limit == 0.0 -> ""
-                    limit == limit.toLong().toDouble() -> limit.toLong().toString()
-                    else -> limit.toString()
-                }
-            },
+            amount = budget.limit.toString().removeSuffix(".0"),
             selectedCategories = budget.categories.map { budgetCat ->
                 allCategories.find { it.id == budgetCat.id } ?: budgetCat
             }.toSet(),
@@ -214,7 +209,7 @@ class BudgetViewModel(
                 accountIds = currentForm.selectedAccounts.map { it.id },
                 name = currentForm.name,
                 categories = currentForm.selectedCategories.toList(),
-                limit = currentForm.amount.toDoubleOrNull() ?: 0.0,
+                limit = try { BigDecimal.parseString(currentForm.amount) } catch (e: Exception) { BigDecimal.ZERO },
                 isExpense = currentForm.isExpense,
                 startDate = currentForm.startDate!!,
                 endDate = currentForm.endDate!!

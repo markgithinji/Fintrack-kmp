@@ -2,7 +2,7 @@ package com.fintrack.shared.feature.budget.ui
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.SharedTransitionScope.OverlayClip
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.LinearEasing
@@ -50,9 +50,11 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.core.util.formatToSinglePrecision
+import com.fintrack.shared.feature.core.util.toDouble
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.ui.theme.GreenIncome
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -169,9 +171,15 @@ fun BudgetScreen(
 
 @Composable
 private fun BudgetSummaryHeader(budgets: List<BudgetWithStatus>) {
-    val totalLimit = budgets.sumOf { it.budget.limit }
-    val totalSpent = budgets.sumOf { it.status.spent }
-    val progress = if (totalLimit > 0) (totalSpent / totalLimit).toFloat().coerceIn(0f, 1f) else 0f
+    val totalLimit = budgets.fold(BigDecimal.ZERO) { acc, b -> acc + b.budget.limit }
+    val totalSpent = budgets.fold(BigDecimal.ZERO) { acc, b -> acc + b.status.spent }
+    val progress = if (totalLimit > BigDecimal.ZERO) {
+        try {
+            (totalSpent.divide(totalLimit)).toDouble().toFloat().coerceIn(0f, 1f)
+        } catch (_: Exception) {
+            0f
+        }
+    } else 0f
 
     Card(
         modifier = Modifier
@@ -371,7 +379,13 @@ fun BudgetItem(
 ) {
     val budget = budgetWithStatus.budget
     val status = budgetWithStatus.status
-    val progress = ((status.percentageUsed / 100.0).coerceAtMost(1.0)).toFloat()
+    val progress = if (budget.limit > BigDecimal.ZERO) {
+        try {
+            (status.spent.divide(budget.limit)).toDouble().toFloat().coerceAtMost(1f)
+        } catch (_: Exception) {
+            0f
+        }
+    } else 0f
 
     Card(
         modifier = modifier
@@ -498,11 +512,11 @@ fun BudgetItem(
 }
 
 @Composable
-private fun StatusChip(percentage: Double, isExceeded: Boolean) {
+private fun StatusChip(percentage: BigDecimal, isExceeded: Boolean) {
     val (label, color) = when {
         isExceeded -> "Exceeded" to MaterialTheme.colorScheme.error
-        percentage > 90 -> "Critical" to Color(0xFFF44336)
-        percentage > 75 -> "Warning" to Color(0xFFFF9800)
+        percentage > BigDecimal.fromInt(90) -> "Critical" to Color(0xFFF44336)
+        percentage > BigDecimal.fromInt(75) -> "Warning" to Color(0xFFFF9800)
         else -> "On Track" to GreenIncome
     }
 

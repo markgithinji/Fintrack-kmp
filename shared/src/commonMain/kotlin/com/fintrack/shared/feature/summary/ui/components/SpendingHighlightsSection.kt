@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.toInt
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.Correlation
 import com.fintrack.shared.feature.summary.domain.model.StatisticsSummary
@@ -58,6 +59,7 @@ import com.fintrack.shared.ui.theme.SegmentColor2
 import com.fintrack.shared.ui.theme.SegmentColor3
 import com.fintrack.shared.ui.theme.SegmentColor4
 import com.fintrack.shared.ui.theme.SegmentColor5
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 
 @Composable
 fun SpendingHighlightsSection(
@@ -201,7 +203,7 @@ private fun SuccessContent(
                 icon = Icons.Default.Category,
                 color = SegmentColor4,
                 badge = volatility?.let {
-                    val isIncrease = it > 0
+                    val isIncrease = it > BigDecimal.ZERO
                     val prefix = if (isIncrease) "+" else ""
                     val badgeColor = if (isIncome) {
                         if (isIncrease) GreenIncome else PinkExpense
@@ -223,24 +225,29 @@ private fun SuccessContent(
                 title = "$yearLabel Total",
                 value = currentYearTotal.toCurrencyString(),
                 subValue = if (ytdChange != null) {
-                    val prefix = if (ytdChange > 0) "+" else ""
+                    val prefix = if (ytdChange > BigDecimal.ZERO) "+" else ""
                     "$prefix${ytdChange.toInt()}% vs Last Year"
                 } else "So far this year",
                 icon = Icons.AutoMirrored.Filled.TrendingUp,
                 color = if (ytdChange != null) {
-                    val isBetter = if (isIncome) ytdChange > 0 else ytdChange < 0
+                    val isBetter = if (isIncome) ytdChange > BigDecimal.ZERO else ytdChange < BigDecimal.ZERO
                     if (isBetter) GreenIncome else PinkExpense
                 } else SegmentColor1,
                 badge = ytdChange?.let {
-                    val prefix = if (it > 0) "+" else ""
-                    "$prefix${it.toInt()}%" to if (isIncome) (if (it > 0) GreenIncome else PinkExpense) else (if (it > 0) PinkExpense else GreenIncome)
+                    val prefix = if (it > BigDecimal.ZERO) "+" else ""
+                    "$prefix${it.toInt()}%" to if (isIncome) (if (it > BigDecimal.ZERO) GreenIncome else PinkExpense) else (if (it > BigDecimal.ZERO) PinkExpense else GreenIncome)
                 }
             )
 
             val exceedMonth = highlights.projectedExceedMonth
-            val projected = highlights.projectedTotal ?: 0.0
-            val progressPercent =
-                if (projected > 0) (currentYearTotal / projected * 100).toInt() else 0
+            val projected = highlights.projectedTotal ?: BigDecimal.ZERO
+            val progressPercent = if (projected > BigDecimal.ZERO) {
+                try {
+                    (currentYearTotal.divide(projected) * BigDecimal.fromInt(100)).toInt()
+                } catch (_: Exception) {
+                    0
+                }
+            } else 0
 
             HighlightCard(
                 modifier = Modifier.weight(1f),
@@ -417,8 +424,8 @@ fun HighlightCard(
 
 @Composable
 fun HealthSummaryCard(
-    savingsRate: Double?,
-    essentialRatio: Double?
+    savingsRate: BigDecimal?,
+    essentialRatio: BigDecimal?
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().height(134.dp),
@@ -432,14 +439,15 @@ fun HealthSummaryCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (savingsRate != null) {
+                val isHealthy = savingsRate >= BigDecimal.fromInt(20)
                 HealthMetricItem(
                     modifier = Modifier.weight(1f),
                     title = "Income Saved",
                     value = "${savingsRate.toInt()}%",
                     subValue = "Portion kept",
                     icon = Icons.AutoMirrored.Filled.ShowChart,
-                    color = if (savingsRate >= 20) GreenIncome else SegmentColor2,
-                    badge = if (savingsRate >= 20) "Healthy" else null
+                    color = if (isHealthy) GreenIncome else SegmentColor2,
+                    badge = if (isHealthy) "Healthy" else null
                 )
             }
 
@@ -454,14 +462,15 @@ fun HealthSummaryCard(
             }
 
             if (essentialRatio != null) {
+                val isGood = essentialRatio <= BigDecimal.fromInt(50)
                 HealthMetricItem(
                     modifier = Modifier.weight(1f),
                     title = "Needs & Bills",
                     value = "${essentialRatio.toInt()}%",
                     subValue = "Rent & Food",
                     icon = Icons.Default.Category,
-                    color = if (essentialRatio <= 50) GreenIncome else PinkExpense,
-                    badge = if (essentialRatio <= 50) "Good" else null
+                    color = if (isGood) GreenIncome else PinkExpense,
+                    badge = if (isGood) "Good" else null
                 )
             }
         }

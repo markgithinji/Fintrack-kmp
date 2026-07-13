@@ -1,6 +1,8 @@
 package com.fintrack.shared.feature.account.data.model
 
 import com.fintrack.shared.feature.account.domain.model.AccountType
+import com.fintrack.shared.feature.core.data.serialization.BigDecimalSerializer
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.serialization.Serializable
 import kotlin.time.Instant
 
@@ -8,9 +10,12 @@ import kotlin.time.Instant
 data class AccountDto(
     val id: String? = null,
     val name: String,
-    val balance: Double? = null,
-    val income: Double? = null,
-    val expense: Double? = null,
+    @Serializable(with = BigDecimalSerializer::class)
+    val balance: BigDecimal? = null,
+    @Serializable(with = BigDecimalSerializer::class)
+    val income: BigDecimal? = null,
+    @Serializable(with = BigDecimalSerializer::class)
+    val expense: BigDecimal? = null,
     val isDefault: Boolean? = false,
     val type: AccountType? = AccountType.GENERAL,
     val createdAt: Instant? = null,

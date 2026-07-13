@@ -4,6 +4,7 @@ import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.settings.domain.util.NotificationService
 import com.fintrack.shared.feature.core.util.Result
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.coroutines.flow.first
 
 class CheckBudgetThresholdsUseCase(
@@ -27,7 +28,7 @@ class CheckBudgetThresholdsUseCase(
             val actualPercent = budgetWithStatus.status.percentageUsed
 
             val thresholdReached = thresholds
-                .filter { it.toDouble() <= actualPercent }
+                .filter { BigDecimal.fromInt(it) <= actualPercent }
                 .maxByOrNull { it }
 
             if (thresholdReached != null) {

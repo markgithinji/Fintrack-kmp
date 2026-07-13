@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.transaction.util
 
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.time.Clock
 import kotlin.time.Instant
 import java.text.SimpleDateFormat
@@ -57,7 +58,7 @@ object EquityParser {
             val merchant = it.groupValues[2].trim()
             val dateTime = parseDateTime(it.groupValues[3], smsTimestamp)
             val code = it.groupValues[5]
-            return createTransactionModel(code, amount, 0.0, null, inferCategory(merchant), dateTime, "Card payment at $merchant", accountId, false)
+            return createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(merchant), dateTime, "Card payment at $merchant", accountId, false)
         }
 
         // 2. Sent Money
@@ -66,7 +67,7 @@ object EquityParser {
             val code = it.groupValues[2]
             val dateStr = "${it.groupValues[3]} ${it.groupValues[4]}"
             val dateTime = parseDateTime(dateStr, smsTimestamp)
-            return createTransactionModel(code, amount, 0.0, null, "Transfer", dateTime, "Bank Transfer", accountId, false)
+            return createTransactionModel(code, amount, BigDecimal.ZERO, null, "Transfer", dateTime, "Bank Transfer", accountId, false)
         }
 
         // 3. Drawn
@@ -75,7 +76,7 @@ object EquityParser {
             val code = it.groupValues[4]
             val dateStr = "${it.groupValues[5]} ${it.groupValues[6]}"
             val dateTime = parseDateTime(dateStr, smsTimestamp)
-            return createTransactionModel(code, amount, 0.0, null, "Transfer", dateTime, "Withdrawal / Drawn", accountId, false)
+            return createTransactionModel(code, amount, BigDecimal.ZERO, null, "Transfer", dateTime, "Withdrawal / Drawn", accountId, false)
         }
 
         // 4. Bill Payment
@@ -85,14 +86,14 @@ object EquityParser {
             val code = it.groupValues[4]
             val dateStr = "${it.groupValues[5]} ${it.groupValues[6]}"
             val dateTime = parseDateTime(dateStr, smsTimestamp)
-            return createTransactionModel(code, amount, 0.0, null, inferCategory(merchant), dateTime, "Bill payment to $merchant", accountId, false)
+            return createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(merchant), dateTime, "Bill payment to $merchant", accountId, false)
         }
 
         // 5. Loan Approved
         loanApprovedRegex.find(message)?.let {
             val amount = parseAmount(it.groupValues[2])
             val code = it.groupValues[3]
-            return createTransactionModel(code, amount, 0.0, null, "Loans", smsTimestamp ?: Clock.System.now(), "Loan Approved", accountId, true)
+            return createTransactionModel(code, amount, BigDecimal.ZERO, null, "Loans", smsTimestamp ?: Clock.System.now(), "Loan Approved", accountId, true)
         }
 
         // 6. Deposited
@@ -106,7 +107,7 @@ object EquityParser {
             val isMySelf = recipient.contains("MARK", ignoreCase = true)
             val description = if (isMySelf) "Cash Deposit" else "Paid to $recipient"
             
-            return createTransactionModel(code, amount, 0.0, null, if (isMySelf) "Other Income" else inferCategory(recipient), dateTime, description, accountId, isMySelf)
+            return createTransactionModel(code, amount, BigDecimal.ZERO, null, if (isMySelf) "Other Income" else inferCategory(recipient), dateTime, description, accountId, isMySelf)
         }
 
         // 7. Generic Equity Transfer
@@ -115,14 +116,18 @@ object EquityParser {
             val code = it.groupValues[2]
             val dateStr = "${it.groupValues[3]} ${it.groupValues[4]}"
             val dateTime = parseDateTime(dateStr, smsTimestamp)
-            return createTransactionModel(code, amount, 0.0, null, "Transfer", dateTime, "Bank Transaction", accountId, false)
+            return createTransactionModel(code, amount, BigDecimal.ZERO, null, "Transfer", dateTime, "Bank Transaction", accountId, false)
         }
 
         return null
     }
 
-    private fun parseAmount(value: String?): Double {
-        return value?.replace(",", "")?.toDoubleOrNull() ?: 0.0
+    private fun parseAmount(value: String?): BigDecimal {
+        return try {
+            value?.replace(",", "")?.let { BigDecimal.parseString(it) } ?: BigDecimal.ZERO
+        } catch (e: Exception) {
+            BigDecimal.ZERO
+        }
     }
 
     private fun parseDateTime(dateStr: String, smsTimestamp: Instant? = null): Instant {
@@ -151,9 +156,9 @@ object EquityParser {
 
     private fun createTransactionModel(
         code: String,
-        amount: Double,
-        cost: Double,
-        balance: Double?,
+        amount: BigDecimal,
+        cost: BigDecimal,
+        balance: BigDecimal?,
         category: String,
         dateTime: Instant,
         description: String,
@@ -171,7 +176,7 @@ object EquityParser {
         balance = balance
     )
 
-    fun parseBalance(message: String): Double? {
+    fun parseBalance(message: String): BigDecimal? {
         // No obvious balance pattern found in current logs yet.
         return null
     }

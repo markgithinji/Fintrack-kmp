@@ -14,6 +14,7 @@ import com.fintrack.shared.feature.summary.domain.model.TabType
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.domain.model.TransactionType
 import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -407,6 +408,7 @@ class StatisticsViewModel(
             _incomeDistribution.value = Result.Success(
                 DistributionSummary(
                     period = "",
+                    totalTransactionCost = BigDecimal.ZERO,
                     incomeCategories = emptyList(),
                     expenseCategories = emptyList()
                 )
@@ -414,6 +416,7 @@ class StatisticsViewModel(
             _expenseDistribution.value = Result.Success(
                 DistributionSummary(
                     period = "",
+                    totalTransactionCost = BigDecimal.ZERO,
                     incomeCategories = emptyList(),
                     expenseCategories = emptyList()
                 )
@@ -439,7 +442,7 @@ class StatisticsViewModel(
         highestMonth = null,
         highestCategory = null,
         highestDay = null,
-        averagePerDay = 0.0
+        averagePerDay = BigDecimal.ZERO
     )
 
     private var lastTransactionCountsAccountId: String? = null

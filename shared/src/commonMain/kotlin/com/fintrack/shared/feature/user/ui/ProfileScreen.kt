@@ -31,6 +31,7 @@ import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -238,7 +239,7 @@ fun ProfileScreen(
                         ) {
                             val isLoading = metricsResult is Result.Loading
                             val metrics = (metricsResult as? Result.Success)?.data
-                            val netWorth = metrics?.netWorth ?: 0.0
+                            val netWorth = metrics?.netWorth ?: BigDecimal.ZERO
                             val savingsRate = metrics?.savingsRate
                             val essentialRatio = metrics?.essentialSpendRatio
 
@@ -257,7 +258,7 @@ fun ProfileScreen(
 
                             ProfileMetricItem(
                                 label = "Savings",
-                                value = if (savingsRate != null) "${savingsRate.toInt()}%" else "--",
+                                value = if (savingsRate != null) "${savingsRate.intValue(false)}%" else "--",
                                 icon = Icons.AutoMirrored.Filled.TrendingUp,
                                 isLoading = isLoading,
                                 modifier = Modifier.weight(1f)
@@ -270,7 +271,7 @@ fun ProfileScreen(
 
                             ProfileMetricItem(
                                 label = "Needs",
-                                value = if (essentialRatio != null) "${essentialRatio.toInt()}%" else "--",
+                                value = if (essentialRatio != null) "${essentialRatio.intValue(false)}%" else "--",
                                 icon = Icons.Default.ReceiptLong,
                                 isLoading = isLoading,
                                 modifier = Modifier.weight(1f)

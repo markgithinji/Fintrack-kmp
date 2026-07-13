@@ -77,6 +77,7 @@ import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.transaction.ui.home.components.AccountIcon
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -253,7 +254,9 @@ fun AccountList(
     onEditAccount: (Account) -> Unit,
     onAddAccount: () -> Unit
 ) {
-    val totalBalance = remember(accounts) { accounts.sumOf { it.balance ?: 0.0 } }
+    val totalBalance = remember(accounts) { 
+        accounts.fold(BigDecimal.ZERO) { acc, account -> acc + (account.balance ?: BigDecimal.ZERO) } 
+    }
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -299,7 +302,7 @@ fun AccountList(
 }
 
 @Composable
-private fun NetWorthHeader(totalBalance: Double) {
+private fun NetWorthHeader(totalBalance: BigDecimal) {
     Surface(
         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
         shape = RoundedCornerShape(16.dp),
@@ -462,7 +465,7 @@ fun AccountItem(
             )
 
             Text(
-                text = (account.balance ?: 0.0).toCurrencyString(),
+                text = (account.balance ?: BigDecimal.ZERO).toCurrencyString(),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary

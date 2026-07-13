@@ -1,8 +1,10 @@
 package com.fintrack.shared.feature.summary.domain.model
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
+
 data class TransactionCountSummary(
     val totalIncomeTransactions: Int,
     val totalExpenseTransactions: Int,
     val totalTransactions: Int,
-    val totalTransactionCost: Double = 0.0
+    val totalTransactionCost: BigDecimal = BigDecimal.ZERO
 )

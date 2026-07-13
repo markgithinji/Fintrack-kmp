@@ -9,6 +9,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +46,7 @@ class MpesaImporter(
             val bodyIndex = it.getColumnIndex(Telephony.Sms.Inbox.BODY)
             val dateIndex = it.getColumnIndex(Telephony.Sms.Inbox.DATE)
             val transactions = mutableListOf<Transaction>()
-            var latestBalance: Double? = null
+            var latestBalance: BigDecimal? = null
             var loggedCount = 0
             val totalMessages = it.count
             
@@ -119,7 +120,7 @@ class MpesaImporter(
             val accountResult = accountRepository.getAccountById(accountId)
             if (accountResult is Result.Success) {
                 val account = accountResult.data
-                val currentAppBalance = account.balance ?: 0.0
+                val currentAppBalance = account.balance ?: BigDecimal.ZERO
                 val newBalance = latestBalance ?: currentAppBalance
                 val now = Clock.System.now()
                 

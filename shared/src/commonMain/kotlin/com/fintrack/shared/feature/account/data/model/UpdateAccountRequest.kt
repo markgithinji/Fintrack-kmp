@@ -1,11 +1,14 @@
 package com.fintrack.shared.feature.account.data.model
 
 import com.fintrack.shared.feature.account.domain.model.AccountType
+import com.fintrack.shared.feature.core.data.serialization.BigDecimalSerializer
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class UpdateAccountRequest(
     val name: String,
-    val type: AccountType = AccountType.GENERAL,
-    val balance: Double? = null
+    val type: AccountType,
+    @Serializable(with = BigDecimalSerializer::class)
+    val balance: BigDecimal? = null
 )

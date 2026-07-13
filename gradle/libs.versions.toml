@@ -20,6 +20,7 @@ kotlin = "2.2.10"
 kotlinStdlib = "2.2.20"
 kotlinxDatetime = "0.7.1"
 kotlinxSerialization = "1.9.0"
+bignum = "0.3.10"
 ktorClientCore = "3.3.1"
 ktorClientContentNegotiation = "3.3.1"
 ktorClientDarwin = "3.3.1"
@@ -83,6 +84,7 @@ material3-adaptive-layout = { module = "org.jetbrains.compose.material3.adaptive
 material3-adaptive-navigation-suite = { module = "org.jetbrains.compose.material3:material3-adaptive-navigation-suite", version = "1.7.3" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "bignum" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorClientContentNegotiation" }
 ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktorClientAuth" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClientCore" }

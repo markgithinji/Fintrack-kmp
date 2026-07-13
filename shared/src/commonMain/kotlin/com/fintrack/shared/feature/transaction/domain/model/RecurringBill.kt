@@ -1,5 +1,7 @@
 package com.fintrack.shared.feature.transaction.domain.model
 
+import com.fintrack.shared.feature.core.data.serialization.BigDecimalSerializer
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
@@ -7,7 +9,8 @@ import kotlinx.serialization.Serializable
 data class RecurringBill(
     val id: String,
     val name: String,
-    val amount: Double,
+    @Serializable(with = BigDecimalSerializer::class)
+    val amount: BigDecimal,
     val category: String,
     val frequency: String, // "Monthly", "Weekly", etc.
     val nextDueDate: LocalDate,

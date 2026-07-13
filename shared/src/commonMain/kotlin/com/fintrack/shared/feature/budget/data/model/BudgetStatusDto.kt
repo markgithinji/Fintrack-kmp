@@ -1,11 +1,16 @@
 package com.fintrack.shared.feature.budget.data.model
 
+import com.fintrack.shared.feature.core.data.serialization.BigDecimalSerializer
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class BudgetStatusDto(
-    val spent: Double,
-    val remaining: Double,
-    val percentageUsed: Double,
+    @Serializable(with = BigDecimalSerializer::class)
+    val spent: BigDecimal,
+    @Serializable(with = BigDecimalSerializer::class)
+    val remaining: BigDecimal,
+    @Serializable(with = BigDecimalSerializer::class)
+    val percentageUsed: BigDecimal,
     val isExceeded: Boolean
 )

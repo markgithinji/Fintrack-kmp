@@ -50,6 +50,7 @@ import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
 import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.ui.theme.PinkExpense
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -130,8 +131,8 @@ private fun RowScope.SuccessCards(
     animatedVisibilityScope: AnimatedVisibilityScope,
     onCardClick: (isIncome: Boolean) -> Unit
 ) {
-    val totalIncome = account.income ?: 0.0
-    val totalExpense = account.expense ?: 0.0
+    val totalIncome = account.income ?: BigDecimal.ZERO
+    val totalExpense = account.expense ?: BigDecimal.ZERO
 
     InfoCard(
         title = "Total Income",

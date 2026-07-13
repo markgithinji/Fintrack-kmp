@@ -57,6 +57,7 @@ import com.fintrack.shared.feature.summary.domain.model.DaySummary
 import com.fintrack.shared.feature.summary.domain.model.OverviewSummary
 import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.ui.theme.PinkExpense
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 
@@ -356,10 +357,11 @@ fun BarChart(
     val density = LocalDensity.current
     
     // 7 bars even if data is partial
-    val maxTotal = (data.maxOfOrNull { it.income + it.expense } ?: 1.0) * 1.2
+    val maxTotalBD = (data.maxOfOrNull { it.income + it.expense } ?: BigDecimal.fromInt(1))
+    val maxTotal = maxTotalBD.doubleValue(false) * 1.2
     val totalBarHeightPx = with(density) { totalBarHeight.toPx() }
 
-    var selectedAmount by remember { mutableStateOf<Double?>(null) }
+    var selectedAmount by remember { mutableStateOf<BigDecimal?>(null) }
     var selectedColor by remember { mutableStateOf(Color.Transparent) }
     var touchOffset by remember { mutableStateOf(Offset.Zero) }
     var barsWidth by remember { mutableStateOf(0f) }
@@ -421,8 +423,8 @@ fun BarChart(
                                 val index = (offset.x / barAreaWidth).toInt().coerceIn(0, data.size - 1)
                                 val day = data[index]
                                 
-                                val incomeH = (day.income / maxTotal).toFloat() * totalBarHeightPx
-                                val expenseH = (day.expense / maxTotal).toFloat() * totalBarHeightPx
+                                val incomeH = (day.income.doubleValue(false) / maxTotal).toFloat() * totalBarHeightPx
+                                val expenseH = (day.expense.doubleValue(false) / maxTotal).toFloat() * totalBarHeightPx
                                 
                                 val incomeTop = totalBarHeightPx - incomeH
                                 val expenseTop = incomeTop - expenseH
@@ -452,8 +454,8 @@ fun BarChart(
                         verticalAlignment = Alignment.Bottom
                     ) {
                         data.forEach { day ->
-                            val incomeHeightFraction = (day.income / maxTotal).toFloat()
-                            val expenseHeightFraction = (day.expense / maxTotal).toFloat()
+                            val incomeHeightFraction = (day.income.doubleValue(false) / maxTotal).toFloat()
+                            val expenseHeightFraction = (day.expense.doubleValue(false) / maxTotal).toFloat()
 
                             Box(
                                 modifier = Modifier

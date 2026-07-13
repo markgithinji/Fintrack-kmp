@@ -6,6 +6,8 @@ import android.content.Intent
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.formatToAmount
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
@@ -40,7 +42,8 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
                     }
                     "com.fintrack.shared.ACTION_SHOW_BILL_REMINDER" -> {
                         val billName = intent.getStringExtra("billName") ?: "Bill"
-                        val amount = intent.getDoubleExtra("amount", 0.0)
+                        val amountStr = intent.getStringExtra("amount") ?: "0"
+                        val amount = try { BigDecimal.parseString(amountStr) } catch(_: Exception) { BigDecimal.ZERO }
                         notificationService.showBillReminderNotification(billName, amount)
                     }
                     "com.fintrack.shared.ACTION_SHOW_SUMMARY" -> {
@@ -72,13 +75,11 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
         val time = settingsDataSource.summaryNotificationTime.first()
         val showDecimals = settingsDataSource.showDecimals.first()
 
-        val format = if (showDecimals) "%,.2f" else "%,.0f"
-
         if (dailyEnabled) {
             val yesterdaySpending = getSpendingForYesterday()
             notificationService.showSummaryNotification(
                 title = "Daily Spending Summary",
-                content = "You spent Ksh ${String.format(java.util.Locale.US, format, yesterdaySpending)} yesterday."
+                content = "You spent Ksh ${yesterdaySpending.formatToAmount(showDecimals = showDecimals)} yesterday."
             )
         }
 
@@ -87,7 +88,7 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
             val weeklySpending = getSpendingForLastWeek()
             notificationService.showSummaryNotification(
                 title = "Weekly Spending Summary",
-                content = "You spent Ksh ${String.format(java.util.Locale.US, format, weeklySpending)} this past week."
+                content = "You spent Ksh ${weeklySpending.formatToAmount(showDecimals = showDecimals)} this past week."
             )
         }
 
@@ -97,7 +98,7 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
         }
     }
 
-    private suspend fun getSpendingForYesterday(): Double {
+    private suspend fun getSpendingForYesterday(): BigDecimal {
         val timeZone = TimeZone.currentSystemDefault()
         val today = Clock.System.now().toLocalDateTime(timeZone).date
         val yesterday = today.minus(1, DateTimeUnit.DAY).toString()
@@ -112,11 +113,11 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
         )
         
         return if (result is Result.Success) {
-            result.data.first.sumOf { it.amount }
-        } else 0.0
+            result.data.first.fold(BigDecimal.ZERO) { acc, transaction -> acc + transaction.amount }
+        } else BigDecimal.ZERO
     }
 
-    private suspend fun getSpendingForLastWeek(): Double {
+    private suspend fun getSpendingForLastWeek(): BigDecimal {
         val timeZone = TimeZone.currentSystemDefault()
         val today = Clock.System.now().toLocalDateTime(timeZone).date
         val lastWeekStart = today.minus(7, DateTimeUnit.DAY).toString()
@@ -132,7 +133,7 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
         )
         
         return if (result is Result.Success) {
-            result.data.first.sumOf { it.amount }
-        } else 0.0
+            result.data.first.fold(BigDecimal.ZERO) { acc, transaction -> acc + transaction.amount }
+        } else BigDecimal.ZERO
     }
 }
