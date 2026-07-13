@@ -72,25 +72,11 @@ fun StatisticsScreen(
         getDefaultPeriod(availableWeeks, availableMonths, availableYears)
     }
 
-    LaunchedEffect(refreshTrigger) {
-        if (refreshTrigger > 0 && selectedAccountId != null) {
-            viewModel.loadAvailablePeriods(selectedAccountId, force = true)
-            viewModel.loadOverview(selectedAccountId, force = true)
-            viewModel.loadCategoryComparisons(selectedAccountId, force = true)
-            
-            val yearCode = safePeriod.code.split("-").firstOrNull() ?: safePeriod.code
-            viewModel.loadHighlights(selectedAccountId, yearCode, force = true)
-        }
-    }
-
-    LaunchedEffect(selectedAccountId, safePeriod) {
+    LaunchedEffect(selectedAccountId, refreshTrigger) {
         if (selectedAccountId != null) {
-            viewModel.loadAvailablePeriods(selectedAccountId)
-            viewModel.loadOverview(selectedAccountId)
-            viewModel.loadCategoryComparisons(selectedAccountId)
-            
-            val yearCode = safePeriod.code.split("-").firstOrNull() ?: safePeriod.code
-            viewModel.loadHighlights(selectedAccountId, yearCode)
+            val force = refreshTrigger > 0
+            viewModel.loadAvailablePeriods(selectedAccountId, force = force)
+            viewModel.loadOverview(selectedAccountId, force = force)
         }
     }
 
