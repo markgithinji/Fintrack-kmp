@@ -322,9 +322,7 @@ class StatisticsViewModel(
                 }
             }
 
-            val result = summaryRepository.getCategoryComparisons(accountId, targetPeriod)
-
-            _categoryComparisons.value = result
+            _categoryComparisons.value = summaryRepository.getCategoryComparisons(accountId, targetPeriod)
         }
     }
 

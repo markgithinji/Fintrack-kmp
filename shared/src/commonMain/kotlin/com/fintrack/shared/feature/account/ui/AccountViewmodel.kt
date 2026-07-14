@@ -59,6 +59,10 @@ class AccountsViewModel(
     }
 
     fun selectAccount(id: String) {
+        // Only load if not already selected
+        val currentAccount = (_selectedAccount.value as? Result.Success)?.data
+        if (currentAccount?.id == id) return
+
         viewModelScope.launch {
             _selectedAccount.value = Result.Loading
             val accounts = (_accounts.value as? Result.Success)?.data

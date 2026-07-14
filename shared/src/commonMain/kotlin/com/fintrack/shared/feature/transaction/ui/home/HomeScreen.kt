@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -123,17 +124,20 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(refreshTrigger) {
-        if (refreshTrigger > 0) {
-            accountsViewModel.reloadAccounts( showLoading = false)
-            val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-            accountId?.let { id ->
-                transactionsViewModel.loadRecentTransactions(id, force = true)
-                statsViewModel.loadOverview(id, force = true)
-                statsViewModel.loadCategoryComparisons(id, force = true)
-                statsViewModel.loadHighlights(id, force = true)
-                transactionsViewModel.refreshCategories()
-            }
+    // Keep track of the last processed refresh trigger to avoid redundant refreshes on re-entry
+    // We use rememberSaveable to ensure it persists across navigation
+    var lastProcessedRefreshTrigger by rememberSaveable { mutableIntStateOf(refreshTrigger) }
+
+    LaunchedEffect(refreshTrigger, selectedAccountResult) {
+        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+        if (accountId != null && refreshTrigger > lastProcessedRefreshTrigger) {
+            accountsViewModel.reloadAccounts(showLoading = false)
+            transactionsViewModel.loadRecentTransactions(accountId, force = true)
+            statsViewModel.loadOverview(accountId, force = true)
+            statsViewModel.loadCategoryComparisons(accountId, force = true)
+            statsViewModel.loadHighlights(accountId, force = true)
+            transactionsViewModel.refreshCategories()
+            lastProcessedRefreshTrigger = refreshTrigger
         }
     }
 

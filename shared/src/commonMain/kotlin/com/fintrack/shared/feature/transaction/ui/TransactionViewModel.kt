@@ -284,13 +284,18 @@ class TransactionViewModel(
             return
         }
 
-        if (!force && _recentTransactions.value is Result.Success && lastLoadedRecentAccountId == accountId) {
+        val current = _recentTransactions.value
+        if (!force && current is Result.Success && lastLoadedRecentAccountId == accountId) {
             return
         }
 
         recentTransactionsJob?.cancel()
         recentTransactionsJob = viewModelScope.launch {
-            _recentTransactions.value = Result.Loading
+            // Only show loading if we don't have data or if the account changed
+            if (current !is Result.Success || lastLoadedRecentAccountId != accountId) {
+                _recentTransactions.value = Result.Loading
+            }
+
             lastLoadedRecentAccountId = accountId
             val result = repo.getTransactions(
                 limit = 6,
