@@ -1,31 +1,19 @@
 package com.fintrack.shared.feature.navigation.ui
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.animation.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -58,6 +46,7 @@ fun MainAppScaffold(
 ) {
     val navController = LocalNavController.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val visibleEntries by navController.visibleEntries.collectAsStateWithLifecycle()
     val currentDestination = navBackStackEntry?.destination
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
 
@@ -148,13 +137,16 @@ fun MainAppScaffold(
         }
     }
 
-    // Show bars only if not on login/register screens
-    val showTopBar = remember(currentDestination) {
-        if (currentDestination == null) return@remember true
-        !(currentDestination.hasRoute<Screen.Login>() || currentDestination.hasRoute<Screen.Register>())
+    // Show bars only if any of the visible entries requires them (avoids layout jumps during transitions)
+    val showTopBar = remember(visibleEntries) {
+        visibleEntries.any { entry ->
+            val dest = entry.destination
+            !(dest.hasRoute<Screen.Login>() || dest.hasRoute<Screen.Register>())
+        }
     }
 
-    val showBottomBar = remember(currentDestination) {
+    // Logic for animating the bars away immediately upon navigation
+    val showBottomBarNow = remember(currentDestination) {
         if (currentDestination == null) return@remember true
         currentDestination.hasRoute<Screen.Home>() ||
         currentDestination.hasRoute<Screen.Statistics>() ||
@@ -162,99 +154,185 @@ fun MainAppScaffold(
         currentDestination.hasRoute<Screen.Profile>()
     }
 
-    val showFAB = remember(currentDestination) {
+    // Keep the composable in the hierarchy during transitions to stabilize content area
+    val keepBottomBarInHierarchy = remember(visibleEntries) {
+        visibleEntries.any { entry ->
+            val dest = entry.destination
+            dest.hasRoute<Screen.Home>() ||
+            dest.hasRoute<Screen.Statistics>() ||
+            dest.hasRoute<Screen.Budget>() ||
+            dest.hasRoute<Screen.Profile>()
+        }
+    }
+
+    val showFABNow = remember(currentDestination) {
         if (currentDestination == null) return@remember true
         currentDestination.hasRoute<Screen.Home>() ||
         currentDestination.hasRoute<Screen.Statistics>() ||
         currentDestination.hasRoute<Screen.Budget>() ||
         currentDestination.hasRoute<Screen.Profile>()
     }
+
+    val adaptiveInfo = currentWindowAdaptiveInfo()
+    val suiteType = NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(adaptiveInfo)
 
     Box(modifier = Modifier.fillMaxSize()) {
-        NavigationSuiteScaffold(
-            layoutType = if (showBottomBar) {
-                NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(currentWindowAdaptiveInfo())
-            } else {
-                NavigationSuiteType.None
-            },
-            navigationSuiteItems = {
-                if (showBottomBar) {
-                    item(
-                        selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Home>() } == true,
-                        onClick = {
-                            navController.navigate(Screen.Home()) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                        label = { Text("Home") }
-                    )
-                    item(
-                        selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Statistics>() } == true,
-                        onClick = {
-                            navController.navigate(Screen.Statistics()) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(Icons.Default.BarChart, contentDescription = "Stats") },
-                        label = { Text("Stats") }
-                    )
-
-                    // Spacing for the FAB
-                    item(
-                        selected = false,
-                        icon = { Box(Modifier.size(1.dp)) },
-                        label = { Text("") },
-                        enabled = false,
-                        onClick = {}
-                    )
-
-                    item(
-                        selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Budget>() } == true,
-                        onClick = {
-                            navController.navigate(Screen.Budget) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(Icons.Default.Info, contentDescription = "Budget") },
-                        label = { Text("Budget") }
-                    )
-                    item(
-                        selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Profile>() } == true,
-                        onClick = {
-                            navController.navigate(Screen.Profile) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-                        label = { Text("Profile") }
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            topBar = {
+                if (showTopBar) {
+                    AppTopBar(
+                        appBarState = appBarState
                     )
                 }
             },
-            containerColor = MaterialTheme.colorScheme.background,
-            contentColor = MaterialTheme.colorScheme.onBackground
-        ) {
-            Scaffold(
-                containerColor = MaterialTheme.colorScheme.background,
-                topBar = {
-                    if (showTopBar) {
-                        AppTopBar(
-                            appBarState = appBarState
-                        )
+            bottomBar = {
+                if (suiteType == NavigationSuiteType.NavigationBar && keepBottomBarInHierarchy) {
+                    Box(modifier = Modifier.height(80.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())) {
+                        AnimatedVisibility(
+                            visible = showBottomBarNow,
+                            enter = slideInVertically(
+                                animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                            ) { it },
+                            exit = slideOutVertically(
+                                animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                            ) { it }
+                        ) {
+                            NavigationBar(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ) {
+                                NavigationBarItem(
+                                    selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Home>() } == true,
+                                    onClick = {
+                                        navController.navigate(Screen.Home()) {
+                                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    },
+                                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                                    label = { Text("Home") }
+                                )
+                                NavigationBarItem(
+                                    selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Statistics>() } == true,
+                                    onClick = {
+                                        navController.navigate(Screen.Statistics()) {
+                                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    },
+                                    icon = { Icon(Icons.Default.BarChart, contentDescription = "Stats") },
+                                    label = { Text("Stats") }
+                                )
+
+                                // Spacing for the FAB
+                                NavigationBarItem(
+                                    selected = false,
+                                    icon = { Box(Modifier.size(1.dp)) },
+                                    label = { Text("") },
+                                    enabled = false,
+                                    onClick = {}
+                                )
+
+                                NavigationBarItem(
+                                    selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Budget>() } == true,
+                                    onClick = {
+                                        navController.navigate(Screen.Budget) {
+                                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    },
+                                    icon = { Icon(Icons.Default.Info, contentDescription = "Budget") },
+                                    label = { Text("Budget") }
+                                )
+                                NavigationBarItem(
+                                    selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Profile>() } == true,
+                                    onClick = {
+                                        navController.navigate(Screen.Profile) {
+                                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    },
+                                    icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
+                                    label = { Text("Profile") }
+                                )
+                            }
+                        }
                     }
                 }
-            ) { paddingValues ->
-                SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
-                    CompositionLocalProvider(LocalSharedTransitionScope provides this) {
-                        Box(modifier = Modifier.fillMaxSize()) {
+            }
+        ) { paddingValues ->
+            Row(modifier = Modifier.fillMaxSize()) {
+                if (suiteType == NavigationSuiteType.NavigationRail) {
+                    AnimatedVisibility(
+                        visible = showBottomBarNow,
+                        enter = slideInHorizontally { -it },
+                        exit = slideOutHorizontally { -it }
+                    ) {
+                        NavigationRail(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ) {
+                            NavigationRailItem(
+                                selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Home>() } == true,
+                                onClick = {
+                                    navController.navigate(Screen.Home()) {
+                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                                label = { Text("Home") }
+                            )
+                            NavigationRailItem(
+                                selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Statistics>() } == true,
+                                onClick = {
+                                    navController.navigate(Screen.Statistics()) {
+                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                icon = { Icon(Icons.Default.BarChart, contentDescription = "Stats") },
+                                label = { Text("Stats") }
+                            )
+
+                            NavigationRailItem(
+                                selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Budget>() } == true,
+                                onClick = {
+                                    navController.navigate(Screen.Budget) {
+                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                icon = { Icon(Icons.Default.Info, contentDescription = "Budget") },
+                                label = { Text("Budget") }
+                            )
+                            NavigationRailItem(
+                                selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Profile>() } == true,
+                                onClick = {
+                                    navController.navigate(Screen.Profile) {
+                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
+                                label = { Text("Profile") }
+                            )
+                        }
+                    }
+                }
+
+                Box(modifier = Modifier.weight(1f)) {
+                    SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
+                        CompositionLocalProvider(LocalSharedTransitionScope provides this) {
                             AppNavigation(
                                 isAuthenticated = isAuthenticated,
                                 paddingValues = paddingValues,
@@ -275,18 +353,22 @@ fun MainAppScaffold(
                 onDismiss = { toastMessage = null },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = if (showBottomBar) 72.dp else 24.dp)
+                    .padding(bottom = if (showBottomBarNow) 72.dp else 24.dp)
             )
         }
 
         // Place FAB over everything
-        if (showFAB) {
+        AnimatedVisibility(
+            visible = showFABNow,
+            enter = slideInVertically { it * 2 } + fadeIn(),
+            exit = slideOutVertically { it * 2 } + fadeOut(),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .zIndex(100f)
+        ) {
             AddTransactionFAB(
                 onClick = { navController.navigate(Screen.AddTransaction()) },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 85.dp)
-                    .zIndex(100f)
+                modifier = Modifier.padding(bottom = 85.dp)
             )
         }
     }

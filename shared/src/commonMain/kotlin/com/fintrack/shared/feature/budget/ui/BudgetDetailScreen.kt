@@ -1,20 +1,9 @@
 package com.fintrack.shared.feature.budget.ui
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import com.fintrack.shared.feature.navigation.ui.LocalCurrency
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
-import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,13 +13,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -164,6 +156,20 @@ fun BudgetDetailScreen(
         animationSpec = tween(durationMillis = 500)
     )
 
+    // Animate the bottom padding to "follow" the bottom bar sliding in/out
+    val bottomBarHeight = 80.dp
+    val animatedBottomPadding by animatedVisibilityScope.transition.animateDp(
+        transitionSpec = {
+            spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            )
+        },
+        label = "SaveButtonPadding"
+    ) { state ->
+        if (state == EnterExitState.Visible) 0.dp else bottomBarHeight
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -260,21 +266,29 @@ fun BudgetDetailScreen(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = paddingValues.calculateBottomPadding())
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(bottom = animatedBottomPadding)
                 .padding(20.dp)
         ) {
-            FinanceSaveButton(
-                saveState = saveState,
-                isFormValid = validationState is ValidationResult.Success,
-                themeColor = themeColor,
-                contentColor = if (formState.isExpense) Color.White else MaterialTheme.colorScheme.onTertiary,
-                onSaveClick = { 
-                    showNumpad = false
-                    viewModel.saveBudget() 
-                },
-                label = "Save Budget",
-                successLabel = "Saved"
-            )
+            AnimatedVisibility(
+                visible = animatedVisibilityScope.transition.targetState == EnterExitState.Visible && 
+                          saveState !is SaveState.Success,
+                enter = fadeIn(animationSpec = tween(300)),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+            ) {
+                FinanceSaveButton(
+                    saveState = saveState,
+                    isFormValid = validationState is ValidationResult.Success,
+                    themeColor = themeColor,
+                    contentColor = if (formState.isExpense) Color.White else MaterialTheme.colorScheme.onTertiary,
+                    onSaveClick = { 
+                        showNumpad = false
+                        viewModel.saveBudget() 
+                    },
+                    label = "Save Budget",
+                    successLabel = "Saved"
+                )
+            }
         }
 
         // Delete Button (Top Right)

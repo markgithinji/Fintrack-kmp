@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -78,7 +79,6 @@ fun HomeScreen(
             if (accountsResult is Result.Loading) {
                 CircularProgressIndicator()
             } else {
-                // You could show a "No Accounts Found" screen here with a button to go to Accounts
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(32.dp)
@@ -104,7 +104,7 @@ fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
-                        onClick = { onAccountSelected("") }, // Navigates to accounts indirectly via callback
+                        onClick = { onAccountSelected("") },
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text("Add First Account")
@@ -157,16 +157,39 @@ fun HomeScreen(
         }
     }
 
+    val bottomPadding = paddingValues.calculateBottomPadding()
+    var lastBottomPadding by remember { mutableStateOf(80.dp) }
+    SideEffect {
+        if (bottomPadding > 0.dp) {
+            lastBottomPadding = bottomPadding
+        }
+    }
+    
+    val transition = animatedVisibilityScope.transition
+    val isTransitionRunning = transition.isRunning
+    val isExiting = transition.targetState == androidx.compose.animation.EnterExitState.PostExit || 
+                   transition.targetState == androidx.compose.animation.EnterExitState.PreEnter
+                   
+    val stableBottomPadding = if (isTransitionRunning || isExiting || (bottomPadding == 0.dp && lastBottomPadding > 0.dp)) {
+        lastBottomPadding
+    } else {
+        bottomPadding
+    }
+
+    val listState = rememberLazyListState()
+
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
+                .padding(bottom = stableBottomPadding)
                 .background(MaterialTheme.colorScheme.background),
             contentPadding = PaddingValues(
                 start = 16.dp,
                 top = paddingValues.calculateTopPadding() + 16.dp,
                 end = 16.dp,
-                bottom = paddingValues.calculateBottomPadding() + 32.dp
+                bottom = 32.dp
             ),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {

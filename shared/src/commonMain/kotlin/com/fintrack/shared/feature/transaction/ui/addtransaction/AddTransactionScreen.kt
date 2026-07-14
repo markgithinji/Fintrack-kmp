@@ -1,9 +1,7 @@
 package com.fintrack.shared.feature.transaction.ui.addtransaction
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import androidx.compose.foundation.BorderStroke
@@ -107,6 +105,23 @@ fun AddTransactionScreen(
         targetValue = if (formState.isIncome) GreenIncome else PinkExpense,
         animationSpec = tween(durationMillis = 500)
     )
+
+    // Animate the bottom padding to "follow" the bottom bar sliding in/out
+    // We use the transition state to start moving IMMEDIATELY when the screen enters
+    val bottomBarHeight = 80.dp 
+    val animatedBottomPadding by animatedVisibilityScope.transition.animateDp(
+        transitionSpec = {
+            spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            )
+        },
+        label = "SaveButtonPadding"
+    ) { state ->
+        // When the screen is visible, the bottom bar is gone, so we want 0dp extra padding
+        // When the screen is entering/exiting, we want to match the bar's position
+        if (state == EnterExitState.Visible) 0.dp else bottomBarHeight
+    }
 
     LaunchedEffect(saveState) {
         if (saveState is SaveState.Success<*>) {
@@ -238,28 +253,36 @@ fun AddTransactionScreen(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = paddingValues.calculateBottomPadding())
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(bottom = animatedBottomPadding)
                 .padding(20.dp)
         ) {
-            FinanceSaveButton(
-                saveState = saveState,
-                isFormValid = (formState.amount.isNotBlank() && 
-                             formState.selectedCategory != null && 
-                             formState.selectedAccount != null && 
-                             formState.description.isNotBlank()),
-                themeColor = themeColor,
-                contentColor = if (formState.isIncome) MaterialTheme.colorScheme.onTertiary else Color.White,
-                onSaveClick = { 
-                    showNumpad = false
-                    if (transactionId != null) {
-                        transactionsViewModel.updateTransaction(id = transactionId)
-                    } else {
-                        transactionsViewModel.addTransaction()
-                    }
-                },
-                label = if (transactionId != null) "Update Transaction" else "Save Transaction",
-                successLabel = if (transactionId != null) "Updated" else "Saved"
-            )
+            AnimatedVisibility(
+                visible = animatedVisibilityScope.transition.targetState == EnterExitState.Visible && 
+                          saveState !is SaveState.Success<*>,
+                enter = fadeIn(animationSpec = tween(300)),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+            ) {
+                FinanceSaveButton(
+                    saveState = saveState,
+                    isFormValid = (formState.amount.isNotBlank() && 
+                                 formState.selectedCategory != null && 
+                                 formState.selectedAccount != null && 
+                                 formState.description.isNotBlank()),
+                    themeColor = themeColor,
+                    contentColor = if (formState.isIncome) MaterialTheme.colorScheme.onTertiary else Color.White,
+                    onSaveClick = { 
+                        showNumpad = false
+                        if (transactionId != null) {
+                            transactionsViewModel.updateTransaction(id = transactionId)
+                        } else {
+                            transactionsViewModel.addTransaction()
+                        }
+                    },
+                    label = if (transactionId != null) "Update Transaction" else "Save Transaction",
+                    successLabel = if (transactionId != null) "Updated" else "Saved"
+                )
+            }
         }
 
         AnimatedVisibility(

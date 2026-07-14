@@ -18,8 +18,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -93,6 +96,27 @@ fun TransactionListScreen(
         )
     }
 
+    // Stabilize the viewport height during transitions to prevent list jumping
+    val bottomPadding = paddingValues.calculateBottomPadding()
+    var lastBottomPadding by remember { mutableStateOf(0.dp) }
+    SideEffect {
+        if (bottomPadding > 0.dp) {
+            lastBottomPadding = bottomPadding
+        }
+    }
+    
+    val transition = animatedVisibilityScope.transition
+    val isTransitionRunning = transition.isRunning
+    val isExiting = transition.targetState == androidx.compose.animation.EnterExitState.PostExit || 
+                   transition.targetState == androidx.compose.animation.EnterExitState.PreEnter
+
+    // FORCE-LOCK the padding if we are anywhere near a transition state or raw padding is 0
+    val stableBottomPadding = if (isTransitionRunning || isExiting || (bottomPadding == 0.dp && lastBottomPadding > 0.dp)) {
+        lastBottomPadding
+    } else {
+        bottomPadding
+    }
+
     TransactionListContent(
         transactionCounts = transactionCounts,
         transactions = transactions,
@@ -104,7 +128,7 @@ fun TransactionListScreen(
         animatedVisibilityScope = animatedVisibilityScope,
         sharedTransitionScope = sharedTransitionScope,
         onTransactionClick = onEditTransaction,
-        modifier = if (sharedTransitionScope != null) {
+        modifier = (if (sharedTransitionScope != null) {
             with(sharedTransitionScope) {
                 Modifier.sharedBounds(
                     rememberSharedContentState(key = sharedBoundsKey),
@@ -112,7 +136,8 @@ fun TransactionListScreen(
                     clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(0.dp))
                 )
             }
-        } else Modifier
+        } else Modifier)
+            .padding(bottom = stableBottomPadding)
     )
 }
 
@@ -139,7 +164,7 @@ private fun TransactionListContent(
             start = 16.dp,
             top = 16.dp + paddingValues.calculateTopPadding(),
             end = 16.dp,
-            bottom = 32.dp + paddingValues.calculateBottomPadding()
+            bottom = 32.dp
         ),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         state = listState
