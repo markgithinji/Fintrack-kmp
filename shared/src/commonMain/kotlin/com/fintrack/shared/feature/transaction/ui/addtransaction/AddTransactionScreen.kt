@@ -126,7 +126,7 @@ fun AddTransactionScreen(
     LaunchedEffect(saveState) {
         if (saveState is SaveState.Success<*>) {
             mainViewModel.triggerGlobalRefresh()
-            delay(1000)
+            delay(1200)
             onBack()
             transactionsViewModel.resetSaveState()
         }
@@ -258,8 +258,7 @@ fun AddTransactionScreen(
                 .padding(20.dp)
         ) {
             AnimatedVisibility(
-                visible = animatedVisibilityScope.transition.targetState == EnterExitState.Visible && 
-                          saveState !is SaveState.Success<*>,
+                visible = animatedVisibilityScope.transition.targetState == EnterExitState.Visible,
                 enter = fadeIn(animationSpec = tween(300)),
                 exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
             ) {
