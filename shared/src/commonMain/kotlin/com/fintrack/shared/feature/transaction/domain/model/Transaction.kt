@@ -2,8 +2,8 @@ package com.fintrack.shared.feature.transaction.domain.model
 
 import com.fintrack.shared.feature.core.data.serialization.BigDecimalSerializer
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
-import kotlin.time.Instant
 
 @Serializable
 data class Transaction(

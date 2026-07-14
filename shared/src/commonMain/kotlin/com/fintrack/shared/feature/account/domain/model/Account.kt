@@ -1,9 +1,9 @@
 package com.fintrack.shared.feature.account.domain.model
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.time.Instant
 
 data class Account(
     val id: String,

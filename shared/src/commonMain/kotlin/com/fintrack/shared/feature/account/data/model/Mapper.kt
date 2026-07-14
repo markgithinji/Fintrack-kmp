@@ -12,7 +12,8 @@ fun Account.toCreateRequest(): CreateAccountRequest = CreateAccountRequest(
 fun Account.toUpdateRequest(): UpdateAccountRequest = UpdateAccountRequest(
     name = this.name,
     type = this.type,
-    balance = this.balance
+    balance = this.balance,
+    lastSyncedAt = this.lastSyncedAt
 )
 
 fun AccountDto.toDomain(): Account = Account(

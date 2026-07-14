@@ -177,7 +177,14 @@ object EquityParser {
     )
 
     fun parseBalance(message: String): BigDecimal? {
-        // No obvious balance pattern found in current logs yet.
+        // Look for common bank balance patterns
+        // "Account balance is KES 1,234.56"
+        // "available balance is KES 1,234.56"
+        // "balance was KES 1,234.56"
+        val balanceRegex = """(?:(?:account|available)\s+)?balance\s+(?:is|was)\s+(?:KES|KSH|Ksh\.?)\s*([\d,]+\.\d{2})""".toRegex(RegexOption.IGNORE_CASE)
+        balanceRegex.find(message)?.let {
+            return parseAmount(it.groupValues[1])
+        }
         return null
     }
 }

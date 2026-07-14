@@ -265,9 +265,8 @@ object MpesaParser {
         // Format examples: 
         // "M-PESA balance is Ksh1,234.56"
         // "New M-PESA balance is Ksh1,234.56"
-        // "M-PESA balance is Ksh. 1,234.56"
-        // "balance is KSH 1,234.56" (if clearly M-PESA)
-        val mpesaRegex = """(?:New\s+)?M-?PESA\s+(?:account\s+)?balance\s+(?:is\s+)?(?:Ksh\.?\s*|KSH\s*)?([\d,]+\.\d{2})""".toRegex(RegexOption.IGNORE_CASE)
+        // "Your M-PESA balance was Ksh1,234.56 on..."
+        val mpesaRegex = """(?:New\s+)?M-?PESA\s+(?:account\s+)?balance\s+(?:is|was)\s+(?:Ksh\.?\s*|KSH\s*)?([\d,]+\.\d{2})""".toRegex(RegexOption.IGNORE_CASE)
         mpesaRegex.find(message)?.let {
             return parseAmount(it.groupValues[1])
         }
@@ -278,9 +277,8 @@ object MpesaParser {
             return parseAmount(it.groupValues[1])
         }
 
-        // 2. Look for "balance is" but ONLY if it's not an M-Shwari balance
-        // We look for "balance is" and ensure "M-Shwari" or "MShwari" isn't in the immediate preceding text.
-        val genericRegex = """balance\s+is\s+(?:Ksh\.?\s*|KSH\s*)?([\d,]+\.\d{2})""".toRegex(RegexOption.IGNORE_CASE)
+        // 2. Look for "balance is/was" but ONLY if it's not an M-Shwari balance
+        val genericRegex = """balance\s+(?:is|was)\s+(?:Ksh\.?\s*|KSH\s*)?([\d,]+\.\d{2})""".toRegex(RegexOption.IGNORE_CASE)
         val allMatches = genericRegex.findAll(message)
         
         for (match in allMatches) {
