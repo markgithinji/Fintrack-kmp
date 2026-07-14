@@ -25,36 +25,55 @@ actual fun createTransactionImporter(
     val logger = KMPLogger()
     
     return object : TransactionImporter {
-        override suspend fun importHistory(onProgress: (Float) -> Unit) {
-            logger.info("SYNC_FLOW", "AndroidTransactionImporter: importHistory started")
+        override suspend fun importHistory(targetAccountId: String?, onProgress: (Float) -> Unit) {
+            logger.info("SYNC_FLOW", "AndroidTransactionImporter: importHistory started. Target: $targetAccountId")
             val accountsResult = accountRepository.getAccounts()
             val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
             
+            val mpesaImporter = MpesaImporter(context, transactionRepository, accountRepository, categoryRepository)
+            val equityImporter = EquityImporter(context, transactionRepository, accountRepository, categoryRepository)
+
+            if (targetAccountId != null) {
+                val targetAccount = accounts.find { it.id == targetAccountId }
+                when {
+                    targetAccount?.type == AccountType.MPESA || targetAccount?.name?.lowercase() == "mpesa" -> {
+                        logger.info("SYNC_FLOW", "Importing specific Mpesa account: $targetAccountId")
+                        mpesaImporter.importHistory(targetAccountId, onProgress)
+                    }
+                    targetAccount?.type == AccountType.EQUITY || targetAccount?.name?.lowercase()?.contains("equity") == true -> {
+                        logger.info("SYNC_FLOW", "Importing specific Equity account: $targetAccountId")
+                        equityImporter.importHistory(targetAccountId, onProgress)
+                    }
+                    else -> {
+                        logger.warning("SYNC_FLOW", "Account $targetAccountId is not a linked account type")
+                        onProgress(1.0f)
+                    }
+                }
+                return
+            }
+
             val mpesaAccount = accounts.find { (it.type == AccountType.MPESA) || (it.name.lowercase() == "mpesa") }
             val equityAccount = accounts.find { (it.type == AccountType.EQUITY) || (it.name.lowercase().contains("equity")) }
 
-            logger.info("SYNC_FLOW", "Found accounts - Mpesa: ${mpesaAccount?.id}, Equity: ${equityAccount?.id}")
+            logger.info("SYNC_FLOW", "Found accounts for global sync - Mpesa: ${mpesaAccount?.id}, Equity: ${equityAccount?.id}")
 
-            val mpesaImporter = MpesaImporter(context, transactionRepository, accountRepository, categoryRepository)
-            val equityImporter = EquityImporter(context, transactionRepository, accountRepository, categoryRepository)
-            
             when {
                 mpesaAccount != null && equityAccount != null -> {
                     logger.info("SYNC_FLOW", "Importing both Mpesa and Equity")
-                    mpesaImporter.importHistory { progress ->
+                    mpesaImporter.importHistory(null) { progress ->
                         onProgress(progress * 0.5f)
                     }
-                    equityImporter.importHistory { progress ->
+                    equityImporter.importHistory(null) { progress ->
                         onProgress(0.5f + (progress * 0.5f))
                     }
                 }
                 mpesaAccount != null -> {
                     logger.info("SYNC_FLOW", "Importing Mpesa only")
-                    mpesaImporter.importHistory(onProgress)
+                    mpesaImporter.importHistory(null, onProgress)
                 }
                 equityAccount != null -> {
                     logger.info("SYNC_FLOW", "Importing Equity only")
-                    equityImporter.importHistory(onProgress)
+                    equityImporter.importHistory(null, onProgress)
                 }
                 else -> {
                     logger.warning("SYNC_FLOW", "No suitable accounts found for import")

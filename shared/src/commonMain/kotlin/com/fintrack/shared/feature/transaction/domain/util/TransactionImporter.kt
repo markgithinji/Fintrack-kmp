@@ -5,7 +5,7 @@ import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 
 interface TransactionImporter {
-    suspend fun importHistory(onProgress: (Float) -> Unit = {})
+    suspend fun importHistory(targetAccountId: String? = null, onProgress: (Float) -> Unit = {})
 }
 
 expect fun createTransactionImporter(

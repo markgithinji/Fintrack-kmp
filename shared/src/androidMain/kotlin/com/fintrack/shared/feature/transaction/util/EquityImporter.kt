@@ -25,8 +25,8 @@ class EquityImporter(
 ) : TransactionImporter {
     private val logger = KMPLogger()
 
-    override suspend fun importHistory(onProgress: (Float) -> Unit): Unit = withContext(Dispatchers.IO) {
-        logger.info("SYNC_FLOW", "EquityImporter: importHistory started")
+    override suspend fun importHistory(targetAccountId: String?, onProgress: (Float) -> Unit): Unit = withContext(Dispatchers.IO) {
+        logger.info("SYNC_FLOW", "EquityImporter: importHistory started for account: $targetAccountId")
         onProgress(0.05f)
         
         // Fetch categories first to map inferred category names to IDs
@@ -35,7 +35,7 @@ class EquityImporter(
         
         val accountsResult = accountRepository.getAccounts()
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
-        val accountId = accounts.find { it.type == AccountType.EQUITY }?.id
+        val accountId = targetAccountId ?: accounts.find { it.type == AccountType.EQUITY }?.id
             ?: accounts.find { it.name.lowercase().contains("equity") }?.id
             ?: "equity"
 

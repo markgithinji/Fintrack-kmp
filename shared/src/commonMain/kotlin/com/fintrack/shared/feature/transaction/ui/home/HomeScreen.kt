@@ -119,6 +119,7 @@ fun HomeScreen(
 
     LaunchedEffect(importState) {
         if (importState is Result.Success) {
+            mainViewModel.triggerGlobalRefresh()
             delay(1500)
             transactionsViewModel.resetImportState()
         }
@@ -148,7 +149,8 @@ fun HomeScreen(
         
         // Auto-sync transactions if enabled
         if (isMpesaListenerEnabled || isEquityListenerEnabled) {
-            transactionsViewModel.autoSyncTransactions()
+            val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+            transactionsViewModel.autoSyncTransactions(accountId)
         }
     }
 
@@ -213,7 +215,10 @@ fun HomeScreen(
                         transactionsViewModel.cancelImport()
                     },
                     onToggleBalanceVisibility = { settingsViewModel.setBalanceHidden(it) },
-                    onManualSync = { transactionsViewModel.importTransactions() },
+                    onManualSync = { 
+                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                        transactionsViewModel.importTransactions(accountId) 
+                    },
                     onSyncErrorClick = { message -> syncErrorMessage = message },
                     onRetry = {
                         accountsViewModel.reloadAccounts()

@@ -5,7 +5,7 @@ import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 
 class IosTransactionImporter : TransactionImporter {
-    override suspend fun importHistory(onProgress: (Float) -> Unit) {
+    override suspend fun importHistory(targetAccountId: String?, onProgress: (Float) -> Unit) {
         // No-op on iOS for now as SMS access is restricted
     }
 }

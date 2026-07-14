@@ -454,10 +454,10 @@ class TransactionViewModel(
         }
     }
 
-    fun importTransactions() {
+    fun importTransactions(accountId: String? = null) {
         logger.info(
             "SYNC_FLOW",
-            "importTransactions triggered. Current state: ${_importState.value}"
+            "importTransactions triggered for account: $accountId. Current state: ${_importState.value}"
         )
         if (_importState.value is Result.Loading) {
             logger.info("SYNC_FLOW", "Already importing, skipping.")
@@ -470,7 +470,7 @@ class TransactionViewModel(
             _importProgress.value = 0f
             logger.info("SYNC_FLOW", "Starting transaction import job")
             try {
-                transactionImporter.importHistory { progress ->
+                transactionImporter.importHistory(accountId) { progress ->
                     _importProgress.value = progress
                 }
                 logger.info("SYNC_FLOW", "Transaction import completed successfully")
@@ -492,10 +492,10 @@ class TransactionViewModel(
         resetImportState()
     }
 
-    fun autoSyncTransactions() {
+    fun autoSyncTransactions(accountId: String? = null) {
         if (!hasAutoSynced) {
             hasAutoSynced = true
-            importTransactions()
+            importTransactions(accountId)
         }
     }
 
