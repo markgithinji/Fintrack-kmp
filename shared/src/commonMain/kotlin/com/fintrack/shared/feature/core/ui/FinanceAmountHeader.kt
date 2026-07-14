@@ -120,26 +120,26 @@ fun FinanceAmountHeader(
                         contentAlignment = Alignment.CenterStart,
                         modifier = Modifier.widthIn(min = 16.dp)
                     ) {
-                        if (amount.isEmpty() || amount == "0") {
+                        if (amount.isEmpty() || amount == "0" || amount == "0.00") {
                             Text(
-                                "0",
+                                "0.00",
                                 color = (if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White).copy(alpha = 0.4f),
                                 fontSize = amountFontSize.value.sp,
                                 fontWeight = FontWeight.Black
                             )
                         } else {
-                            // Robust formatting for display, handling potential scientific notation
-                            val cleanAmount = if (amount.contains("E", ignoreCase = true)) {
-                                try {
-                                    // Use a simpler approach if possible, but for now just show as is if parsing fails
-                                    // ideally we'd use BigDecimal(amount).toPlainString()
-                                    amount 
-                                } catch (e: Exception) { amount }
-                            } else amount
-
-                            val parts = cleanAmount.split(".")
+                            // Split into integer and decimal parts for formatting
+                            val parts = amount.split(".")
                             val integerPart = parts[0].reversed().chunked(3).joinToString(",").reversed()
-                            val formattedAmount = if (parts.size > 1) "$integerPart.${parts[1]}" else integerPart
+                            
+                            // Ensure at least 2 decimal places are shown if a decimal point exists or was loaded
+                            val decimalPart = if (parts.size > 1) {
+                                if (parts[1].length < 2) parts[1].padEnd(2, '0') else parts[1]
+                            } else {
+                                "00"
+                            }
+                            
+                            val formattedAmount = "$integerPart.$decimalPart"
 
                             AnimatedNumber(
                                 value = formattedAmount,

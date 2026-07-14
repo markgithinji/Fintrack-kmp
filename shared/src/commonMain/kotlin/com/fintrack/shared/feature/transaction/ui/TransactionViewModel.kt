@@ -11,6 +11,7 @@ import com.fintrack.shared.feature.category.domain.usecase.SyncCategoriesUseCase
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.formatToTwoPrecision
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.model.TransactionFormState
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
@@ -260,12 +261,8 @@ class TransactionViewModel(
                 }
 
                 _formState.value = TransactionFormState(
-                    amount = transaction.amount.toPlainString().let { s ->
-                        if (s.contains(".")) s.trimEnd('0').trimEnd('.') else s
-                    },
-                    transactionCost = transaction.transactionCost.toPlainString().let { s ->
-                        if (s.contains(".")) s.trimEnd('0').trimEnd('.') else s
-                    },
+                    amount = transaction.amount.formatToTwoPrecision(),
+                    transactionCost = transaction.transactionCost.formatToTwoPrecision(),
                     isIncome = transaction.isIncome,
                     selectedCategory = category,
                     selectedAccount = accounts.find { it.id == transaction.accountId },

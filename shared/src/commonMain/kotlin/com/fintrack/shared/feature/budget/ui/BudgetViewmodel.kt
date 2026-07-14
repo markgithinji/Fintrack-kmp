@@ -15,6 +15,7 @@ import com.fintrack.shared.feature.category.domain.usecase.SyncCategoriesUseCase
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.formatToTwoPrecision
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -122,9 +123,7 @@ class BudgetViewModel(
         return BudgetFormState(
             id = budget.id,
             name = budget.name,
-            amount = budget.limit.toPlainString().let { s ->
-                if (s.contains(".")) s.trimEnd('0').trimEnd('.') else s
-            },
+            amount = budget.limit.formatToTwoPrecision(),
             selectedCategories = budget.categories.map { budgetCat ->
                 allCategories.find { it.id == budgetCat.id } ?: budgetCat
             }.toSet(),

@@ -24,10 +24,10 @@ fun BigDecimal.formatToSinglePrecision(): String {
 fun BigDecimal.formatToTwoPrecision(): String {
     val rounded = this.roundToDigitPositionAfterDecimalPoint(2, RoundingMode.ROUND_HALF_AWAY_FROM_ZERO)
     val s = rounded.toPlainString()
-    if (!s.contains(".")) return s
     val parts = s.split(".")
-    if (parts[1].length == 1) return "${s}0"
-    return s
+    val integerPart = parts[0]
+    val decimalPart = if (parts.size > 1) parts[1].padEnd(2, '0').take(2) else "00"
+    return "$integerPart.$decimalPart"
 }
 
 fun BigDecimal.formatToCurrency(symbol: String = "KSh", showDecimals: Boolean = true): String {
