@@ -260,8 +260,12 @@ class TransactionViewModel(
                 }
 
                 _formState.value = TransactionFormState(
-                    amount = transaction.amount.toString(),
-                    transactionCost = transaction.transactionCost.toString(),
+                    amount = transaction.amount.toPlainString().let { s ->
+                        if (s.contains(".")) s.trimEnd('0').trimEnd('.') else s
+                    },
+                    transactionCost = transaction.transactionCost.toPlainString().let { s ->
+                        if (s.contains(".")) s.trimEnd('0').trimEnd('.') else s
+                    },
                     isIncome = transaction.isIncome,
                     selectedCategory = category,
                     selectedAccount = accounts.find { it.id == transaction.accountId },

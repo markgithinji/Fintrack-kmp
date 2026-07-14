@@ -122,7 +122,9 @@ class BudgetViewModel(
         return BudgetFormState(
             id = budget.id,
             name = budget.name,
-            amount = budget.limit.toString().removeSuffix(".0"),
+            amount = budget.limit.toPlainString().let { s ->
+                if (s.contains(".")) s.trimEnd('0').trimEnd('.') else s
+            },
             selectedCategories = budget.categories.map { budgetCat ->
                 allCategories.find { it.id == budgetCat.id } ?: budgetCat
             }.toSet(),
