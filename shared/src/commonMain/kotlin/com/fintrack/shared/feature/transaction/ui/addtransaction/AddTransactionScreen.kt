@@ -30,6 +30,17 @@ import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.ui.AccountSelectionSection
 import com.fintrack.shared.feature.core.data.model.ApiException
 import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import com.fintrack.shared.feature.core.ui.*
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.util.Result
@@ -141,6 +152,9 @@ fun AddTransactionScreen(
             with(sharedTransitionScope) {
                 FinanceAmountHeader(
                     amount = formState.amount,
+                    selectionStart = formState.amountSelectionStart,
+                    selectionEnd = formState.amountSelectionEnd,
+                    onSelectionChange = { start, end -> transactionsViewModel.onAmountSelectionChange(start, end) },
                     label = if (formState.isIncome) "Income Amount" else "Expense Amount",
                     isIncome = formState.isIncome,
                     themeColor = themeColor,
@@ -176,6 +190,10 @@ fun AddTransactionScreen(
 
                 TransactionCostSection(
                     cost = formState.transactionCost,
+                    selectionStart = formState.costSelectionStart,
+                    selectionEnd = formState.costSelectionEnd,
+                    onSelectionChange = { start, end -> transactionsViewModel.onCostSelectionChange(start, end) },
+                    isActive = showNumpad && numpadTarget == NumpadTarget.TransactionCost,
                     onClick = {
                         numpadTarget = NumpadTarget.TransactionCost
                         showNumpad = true
@@ -293,24 +311,14 @@ fun AddTransactionScreen(
             FinanceNumpad(
                 onNumberClick = { num ->
                     when (numpadTarget) {
-                        NumpadTarget.Amount -> {
-                            if (num == "." && formState.amount.contains(".")) return@FinanceNumpad
-                            if (formState.amount.length < 12) transactionsViewModel.onAmountChange(formState.amount + num)
-                        }
-                        NumpadTarget.TransactionCost -> {
-                            if (num == "." && formState.transactionCost.contains(".")) return@FinanceNumpad
-                            if (formState.transactionCost.length < 10) transactionsViewModel.onTransactionCostChange(formState.transactionCost + num)
-                        }
+                        NumpadTarget.Amount -> transactionsViewModel.handleAmountInput(num)
+                        NumpadTarget.TransactionCost -> transactionsViewModel.handleCostInput(num)
                     }
                 },
                 onBackspaceClick = {
                     when (numpadTarget) {
-                        NumpadTarget.Amount -> {
-                            if (formState.amount.isNotEmpty()) transactionsViewModel.onAmountChange(formState.amount.dropLast(1))
-                        }
-                        NumpadTarget.TransactionCost -> {
-                            if (formState.transactionCost.isNotEmpty()) transactionsViewModel.onTransactionCostChange(formState.transactionCost.dropLast(1))
-                        }
+                        NumpadTarget.Amount -> transactionsViewModel.handleAmountBackspace()
+                        NumpadTarget.TransactionCost -> transactionsViewModel.handleCostBackspace()
                     }
                 },
                 onDoneClick = { showNumpad = false }
@@ -374,15 +382,33 @@ fun AddTransactionScreen(
 @Composable
 fun TransactionCostSection(
     cost: String,
+    selectionStart: Int,
+    selectionEnd: Int,
+    onSelectionChange: (Int, Int) -> Unit,
+    isActive: Boolean,
     onClick: () -> Unit
 ) {
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(isActive) {
+        if (isActive) {
+            focusRequester.requestFocus()
+            keyboardController?.hide()
+        }
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Transaction Fees", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
-            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
+            border = BorderStroke(1.dp, if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
+            modifier = Modifier.fillMaxWidth().clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -390,13 +416,50 @@ fun TransactionCostSection(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Payments, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.Payments, null, tint = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(12.dp))
-                    Text(
-                        text = if (cost.isEmpty()) "0.00" else cost.toDoubleOrNull()?.toCurrencyString() ?: cost,
-                        color = if (cost.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.bodyLarge
+                    
+                    val textFieldValue = remember(cost, selectionStart, selectionEnd) {
+                        TextFieldValue(
+                            text = cost,
+                            selection = TextRange(selectionStart, selectionEnd)
+                        )
+                    }
+
+                    BasicTextField(
+                        value = textFieldValue,
+                        onValueChange = { 
+                            onSelectionChange(it.selection.start, it.selection.end)
+                            keyboardController?.hide()
+                        },
+                        modifier = Modifier
+                            .focusRequester(focusRequester)
+                            .widthIn(min = 1.dp),
+                        readOnly = !isActive,
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(
+                            color = if (cost.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurface
+                        ),
+                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        visualTransformation = ThousandsSeparatorTransformation(),
+                        singleLine = true,
+                        decorationBox = { innerTextField ->
+                            Box(contentAlignment = Alignment.CenterStart) {
+                                if (cost.isEmpty()) {
+                                    Text(
+                                        "0.00",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                    )
+                                }
+                                innerTextField()
+                            }
+                        }
                     )
+                    
+                    LaunchedEffect(textFieldValue) {
+                        if (isActive) keyboardController?.hide()
+                    }
                 }
                 Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }

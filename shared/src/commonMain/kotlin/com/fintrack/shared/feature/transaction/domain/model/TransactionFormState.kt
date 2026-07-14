@@ -7,7 +7,11 @@ import kotlin.time.Instant
 
 data class TransactionFormState(
     val amount: String = "",
+    val amountSelectionStart: Int = 0,
+    val amountSelectionEnd: Int = 0,
     val transactionCost: String = "",
+    val costSelectionStart: Int = 0,
+    val costSelectionEnd: Int = 0,
     val isIncome: Boolean = false,
     val selectedCategory: Category? = null,
     val selectedAccount: Account? = null,

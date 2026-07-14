@@ -8,6 +8,8 @@ data class BudgetFormState(
     val id: String? = null,
     val name: String = "",
     val amount: String = "",
+    val amountSelectionStart: Int = 0,
+    val amountSelectionEnd: Int = 0,
     val selectedCategories: Set<Category> = emptySet(),
     val isExpense: Boolean = true,
     val startDate: LocalDate? = null,

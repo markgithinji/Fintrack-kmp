@@ -155,8 +155,53 @@ class BudgetViewModel(
         _formState.update { it.copy(name = name) }
     }
 
-    fun setAmount(amount: String) {
-        _formState.update { it.copy(amount = amount) }
+    fun setAmount(amount: String, selectionStart: Int? = null, selectionEnd: Int? = null) {
+        _formState.update { 
+            it.copy(
+                amount = amount,
+                amountSelectionStart = selectionStart ?: amount.length,
+                amountSelectionEnd = selectionEnd ?: amount.length
+            ) 
+        }
+    }
+
+    fun onAmountSelectionChange(start: Int, end: Int) {
+        _formState.update { it.copy(amountSelectionStart = start, amountSelectionEnd = end) }
+    }
+
+    fun handleAmountInput(input: String) {
+        val current = _formState.value
+        val amount = current.amount
+        val start = current.amountSelectionStart
+        val end = current.amountSelectionEnd
+
+        if (input == "." && amount.contains(".")) return
+        if (amount.length >= 12 && start == end && start == amount.length) return
+
+        val newAmount = amount.take(start) + input + amount.drop(end)
+        
+        val newSelection = start + input.length
+        setAmount(newAmount, newSelection, newSelection)
+    }
+
+    fun handleAmountBackspace() {
+        val current = _formState.value
+        val amount = current.amount
+        val start = current.amountSelectionStart
+        val end = current.amountSelectionEnd
+
+        if (start == 0 && end == 0) return
+
+        val newAmount: String
+        val newSelection: Int
+        if (start != end) {
+            newAmount = amount.take(start) + amount.drop(end)
+            newSelection = start
+        } else {
+            newAmount = amount.take(start - 1) + amount.drop(start)
+            newSelection = start - 1
+        }
+        setAmount(newAmount, newSelection, newSelection)
     }
 
     fun setIsExpense(isExpense: Boolean) {

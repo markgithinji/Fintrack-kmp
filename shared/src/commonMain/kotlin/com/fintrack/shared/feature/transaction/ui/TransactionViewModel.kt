@@ -81,14 +81,104 @@ class TransactionViewModel(
         refreshCategories()
     }
 
-    fun onAmountChange(newAmount: String) {
-        _formState.update { it.copy(amount = newAmount) }
+    fun onAmountChange(newAmount: String, selectionStart: Int? = null, selectionEnd: Int? = null) {
+        _formState.update { 
+            it.copy(
+                amount = newAmount,
+                amountSelectionStart = selectionStart ?: newAmount.length,
+                amountSelectionEnd = selectionEnd ?: newAmount.length
+            ) 
+        }
         _validationError.value = null
     }
 
-    fun onTransactionCostChange(newCost: String) {
-        _formState.update { it.copy(transactionCost = newCost) }
+    fun onAmountSelectionChange(start: Int, end: Int) {
+        _formState.update { it.copy(amountSelectionStart = start, amountSelectionEnd = end) }
+    }
+
+    fun handleAmountInput(input: String) {
+        val current = _formState.value
+        val amount = current.amount
+        val start = current.amountSelectionStart
+        val end = current.amountSelectionEnd
+
+        if (input == "." && amount.contains(".")) return
+        if (amount.length >= 12 && start == end && start == amount.length) return
+
+        val newAmount = amount.take(start) + input + amount.drop(end)
+        
+        val newSelection = start + input.length
+        onAmountChange(newAmount, newSelection, newSelection)
+    }
+
+    fun handleAmountBackspace() {
+        val current = _formState.value
+        val amount = current.amount
+        val start = current.amountSelectionStart
+        val end = current.amountSelectionEnd
+
+        if (start == 0 && end == 0) return
+
+        val newAmount: String
+        val newSelection: Int
+        if (start != end) {
+            newAmount = amount.take(start) + amount.drop(end)
+            newSelection = start
+        } else {
+            newAmount = amount.take(start - 1) + amount.drop(start)
+            newSelection = start - 1
+        }
+        onAmountChange(newAmount, newSelection, newSelection)
+    }
+
+    fun onTransactionCostChange(newCost: String, selectionStart: Int? = null, selectionEnd: Int? = null) {
+        _formState.update { 
+            it.copy(
+                transactionCost = newCost,
+                costSelectionStart = selectionStart ?: newCost.length,
+                costSelectionEnd = selectionEnd ?: newCost.length
+            ) 
+        }
         _validationError.value = null
+    }
+
+    fun onCostSelectionChange(start: Int, end: Int) {
+        _formState.update { it.copy(costSelectionStart = start, costSelectionEnd = end) }
+    }
+
+    fun handleCostInput(input: String) {
+        val current = _formState.value
+        val cost = current.transactionCost
+        val start = current.costSelectionStart
+        val end = current.costSelectionEnd
+
+        if (input == "." && cost.contains(".")) return
+        if (cost.length >= 10 && start == end && start == cost.length) return
+
+        val newCost = cost.take(start) + input + cost.drop(end)
+        
+        val newSelection = start + input.length
+        onTransactionCostChange(newCost, newSelection, newSelection)
+    }
+
+    fun handleCostBackspace() {
+        val current = _formState.value
+        val cost = current.transactionCost
+        val start = current.costSelectionStart
+        val end = current.costSelectionEnd
+
+        if (start == 0 && end == 0) return
+
+        val newCost: String
+        val newSelection: Int
+        if (start != end) {
+            newCost = cost.take(start) + cost.drop(end)
+            newSelection = start
+        } else {
+            newCost = cost.take(start - 1) + cost.drop(start)
+            newSelection = start - 1
+        }
+        onTransactionCostChange(newCost, newSelection, newSelection)
     }
 
     fun onCategoryChange(newCategory: Category?) {

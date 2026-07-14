@@ -195,6 +195,9 @@ fun BudgetDetailScreen(
                     with(sharedTransitionScope) {
                         FinanceAmountHeader(
                             amount = formState.amount,
+                            selectionStart = formState.amountSelectionStart,
+                            selectionEnd = formState.amountSelectionEnd,
+                            onSelectionChange = { start, end -> viewModel.onAmountSelectionChange(start, end) },
                             label = if (formState.isExpense) "Expense Budget Limit" else "Income Target Limit",
                             isIncome = !formState.isExpense,
                             themeColor = themeColor,
@@ -341,15 +344,10 @@ fun BudgetDetailScreen(
         ) {
             FinanceNumpad(
                 onNumberClick = { num ->
-                    if (num == "." && formState.amount.contains(".")) return@FinanceNumpad
-                    if (formState.amount.length < 12) {
-                        viewModel.setAmount(formState.amount + num)
-                    }
+                    viewModel.handleAmountInput(num)
                 },
                 onBackspaceClick = {
-                    if (formState.amount.isNotEmpty()) {
-                        viewModel.setAmount(formState.amount.dropLast(1))
-                    }
+                    viewModel.handleAmountBackspace()
                 },
                 onDoneClick = { showNumpad = false }
             )
