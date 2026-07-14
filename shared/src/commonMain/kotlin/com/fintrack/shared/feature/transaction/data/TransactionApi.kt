@@ -13,6 +13,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
@@ -60,21 +61,21 @@ class TransactionApi(
         client.post("transactions/batch") {
             contentType(ContentType.Application.Json)
             setBody(requests)
-        }
+        }.bodyAsText()
     }
 
     suspend fun importMpesaTransactions(requests: List<CreateTransactionRequest>): Unit {
         client.post("transactions/mpesa") {
             contentType(ContentType.Application.Json)
             setBody(requests)
-        }
+        }.bodyAsText()
     }
 
     suspend fun importEquityTransactions(requests: List<CreateTransactionRequest>): Unit {
         client.post("transactions/equity") {
             contentType(ContentType.Application.Json)
             setBody(requests)
-        }
+        }.bodyAsText()
     }
 
     suspend fun getTransaction(id: String): TransactionDto {

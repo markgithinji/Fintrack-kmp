@@ -41,12 +41,12 @@ class EquityImporter(
 
         logger.info("SYNC_FLOW", "Equity account identified as: $accountId")
 
-        // Search for both "EquitBank" and "EquityBank"
+        // Search for both "EquitBank" and "EquityBank" and "EQUITY"
         val cursor = context.contentResolver.query(
             Telephony.Sms.Inbox.CONTENT_URI,
             arrayOf(Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS, Telephony.Sms.Inbox.DATE),
-            "${Telephony.Sms.Inbox.ADDRESS} IN (?, ?)",
-            arrayOf("EquitBank", "EquityBank"),
+            "${Telephony.Sms.Inbox.ADDRESS} IN (?, ?, ?, ?)",
+            arrayOf("EquitBank", "EquityBank", "EQUITYBANK", "EQUITY"),
             "${Telephony.Sms.Inbox.DATE} DESC"
         )
 
@@ -66,35 +66,59 @@ class EquityImporter(
                 val timestamp = it.getLong(dateIndex)
                 val smsInstant = Instant.fromEpochMilliseconds(timestamp)
 
+                // Log all Equity SMS for debugging as requested
+                logger.debug("EQUITY_DEBUG", "SMS Body: $body")
+
                 // Keep the first balance we find (most recent message)
                 if (latestBalance == null) {
                     latestBalance = EquityParser.parseBalance(body)
                 }
 
-                var transaction = EquityParser.parse(body, accountId, smsInstant)
-                if (transaction != null) {
+                val parsedTransaction = EquityParser.parse(body, accountId, smsInstant)
+                if (parsedTransaction != null) {
                     // Map inferred category name to ID
-                    val categoryName = transaction.category
-                    val isExpense = !transaction.isIncome
+                    val categoryName = parsedTransaction.category
+                    val isExpense = !parsedTransaction.isIncome
                     
                     val categoryId = categories.find { 
                         it.name.equals(categoryName, ignoreCase = true) && it.isExpense == isExpense 
                     }?.id
                     
-                    if (categoryId != null) {
-                        transaction = transaction.copy(categoryId = categoryId)
+                    val finalTransaction = if (categoryId != null) {
+                        parsedTransaction.copy(categoryId = categoryId)
                     } else {
                         // Fallback: If category not found, try to find "Transfer" with matching type
                         val fallbackId = categories.find { 
                             it.name.equals("Transfer", ignoreCase = true) && it.isExpense == isExpense 
                         }?.id ?: categories.firstOrNull { it.isExpense == isExpense }?.id
 
-                        transaction = transaction.copy(categoryId = fallbackId)
+                        parsedTransaction.copy(categoryId = fallbackId)
                     }
                     
-                    transactions.add(transaction)
-                    if (loggedCount < 5) {
-                        logger.debug("SYNC_FLOW", "Parsed Equity sample: ${transaction.externalId} on ${transaction.dateTime} - Cat: ${transaction.category} (${transaction.categoryId})")
+                    // Deduplicate: Check for exact externalId OR fuzzy match (same amount, type, and within 2 mins)
+                    // We prioritize the first one found (which is the newest due to DESC sort)
+                    val isDuplicate = transactions.any { existing ->
+                        existing.externalId == finalTransaction.externalId || (
+                            existing.amount == finalTransaction.amount &&
+                            existing.isIncome == finalTransaction.isIncome &&
+                            kotlin.math.abs(existing.dateTime.toEpochMilliseconds() - finalTransaction.dateTime.toEpochMilliseconds()) < 120000
+                        )
+                    }
+
+                    if (!isDuplicate) {
+                        transactions.add(finalTransaction)
+                        if (transactions.size <= 20) {
+                            logger.debug("SYNC_FLOW", "Parsed Equity SUCCESS: id=${finalTransaction.externalId}, date=${finalTransaction.dateTime}, amount=${finalTransaction.amount}, acc=${finalTransaction.accountId}")
+                        }
+                    } else {
+                        logger.debug("EQUITY_DEBUG", "Skipping duplicate/fuzzy-duplicate Equity Tx: ${finalTransaction.externalId} (${finalTransaction.amount})")
+                    }
+                } else {
+                    if (loggedCount < 10) {
+                        // Check if it's an Equity message that we are missing
+                        if (body.contains("KES", ignoreCase = true) || body.contains("Ksh", ignoreCase = true)) {
+                             logger.debug("SYNC_FLOW", "Parsed Equity FAIL (potential match missed): $body")
+                        }
                     }
                 }
                 
@@ -119,7 +143,7 @@ class EquityImporter(
 
                 chunks.forEachIndexed { index, chunk ->
                     ensureActive()
-                    logger.debug("SYNC_FLOW", "Uploading Equity chunk ${index + 1}/$totalChunks...")
+                    logger.debug("SYNC_FLOW", "Uploading Equity chunk ${index + 1}/$totalChunks... First Tx Acc: ${chunk.firstOrNull()?.accountId}")
                     val result = transactionRepository.importEquityTransactions(chunk)
                     if (result is Result.Success) {
                         if (index < 3 || index == totalChunks - 1) {

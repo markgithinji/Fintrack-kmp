@@ -36,6 +36,29 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
     private val notificationService: NotificationService by inject()
     private val logger = KMPLogger()
 
+    companion object {
+        // Cache to deduplicate real-time messages that arrive in pairs (e.g. Sent + Drawn)
+        private val recentTransactions = mutableListOf<Triple<com.ionspin.kotlin.bignum.decimal.BigDecimal, Long, String>>()
+
+        @Synchronized
+        private fun isDuplicate(amount: com.ionspin.kotlin.bignum.decimal.BigDecimal, timestamp: Long, sender: String?): Boolean {
+            val now = System.currentTimeMillis() / 1000
+            // Keep only last 5 minutes of signatures
+            recentTransactions.removeAll { it.second < now - 300 }
+            
+            val senderPrefix = sender?.take(5) ?: ""
+            // Check for similar amount and sender within 2 minutes
+            val exists = recentTransactions.any { (a, t, s) ->
+                a == amount && Math.abs(t - timestamp) < 120 && s == senderPrefix
+            }
+            
+            if (!exists) {
+                recentTransactions.add(Triple(amount, timestamp, senderPrefix))
+            }
+            return exists
+        }
+    }
+
     override fun onReceive(context: Context?, intent: Intent?) {
         if (intent?.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION || context == null) return
 
@@ -51,7 +74,8 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                      sender?.contains("M-PESA", ignoreCase = true) == true
         
         val isEquity = sender?.contains("EquitBank", ignoreCase = true) == true || 
-                      sender?.contains("EquityBank", ignoreCase = true) == true
+                      sender?.contains("EquityBank", ignoreCase = true) == true ||
+                      sender?.equals("EQUITY", ignoreCase = true) == true
 
         if (isMpesa || isEquity) {
             val pendingResult = goAsync()
@@ -68,7 +92,11 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                         return@launch
                     }
 
-                    logger.debug("SmsReceiver", "Processing ${if (isMpesa) "M-Pesa" else "Equity"} message: ${fullMessage.take(50)}...")
+                    if (isEquity) {
+                        logger.debug("EQUITY_DEBUG", "Processing Equity message: $fullMessage")
+                    } else {
+                        logger.debug("SmsReceiver", "Processing M-Pesa message: ${fullMessage.take(50)}...")
+                    }
                     
                     val accountsResult = accountRepository.getAccounts()
                     val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
@@ -90,6 +118,12 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                     }
 
                     if (transaction != null) {
+                        // Fuzzy deduplication for real-time messages
+                        if (isDuplicate(transaction.amount, transaction.dateTime.epochSeconds, sender)) {
+                            logger.debug("SmsReceiver", "Skipping real-time duplicate: ${transaction.amount} from $sender")
+                            return@launch
+                        }
+
                         // Map category name to ID
                         val categoriesResult = categoryRepository.getCategories()
                         val categories = (categoriesResult as? Result.Success)?.data ?: emptyList()
