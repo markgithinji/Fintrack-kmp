@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -145,19 +146,22 @@ fun CategoryTotalsCardWithTabs(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp)
                 .pointerInput(period.toString(), tabType.toString()) {
                     detectTapGestures { selectedIndex = -1 }
                 }
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 20.dp, top = 20.dp, end = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { showHelpDialog = true }
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { showHelpDialog = true }
                 ) {
                     Text(
                         text = "Distribution",
@@ -173,7 +177,10 @@ fun CategoryTotalsCardWithTabs(
                     )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
+                ) {
                     IconButton(
                         onClick = onPreviousPeriod,
                         enabled = hasPrevious,
@@ -221,90 +228,92 @@ fun CategoryTotalsCardWithTabs(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Crossfade(
-                targetState = distributionResult,
-                animationSpec = tween(durationMillis = 300),
-                label = "ChartContentFade"
-            ) { result ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 450.dp)
-                ) {
-                    when (result) {
-                        is Result.Loading -> {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                LoadingDonutChartSection()
-                                Spacer(Modifier.height(16.dp))
-                                LoadingCategoryList()
-                            }
-                        }
-
-                        is Result.Error -> {
-                            ErrorState(
-                                message = result.exception.message ?: "Failed to load distribution",
-                                onRetry = onRetry
-                            )
-                        }
-
-                        is Result.Success -> {
-                            val baseCategories = when (tabType) {
-                                is TabType.Income -> result.data.incomeCategories
-                                is TabType.Expense -> result.data.expenseCategories
+            Box(modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 20.dp)) {
+                Crossfade(
+                    targetState = distributionResult,
+                    animationSpec = tween(durationMillis = 300),
+                    label = "ChartContentFade"
+                ) { result ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 450.dp)
+                    ) {
+                        when (result) {
+                            is Result.Loading -> {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    LoadingDonutChartSection()
+                                    Spacer(Modifier.height(16.dp))
+                                    LoadingCategoryList()
+                                }
                             }
 
-                            if (baseCategories.isEmpty() && (tabType !is TabType.Expense || result.data.totalTransactionCost <= BigDecimal.ZERO)) {
-                                EmptyDistributionState()
-                            } else {
-                                val displayModels = baseCategories.map {
-                                    CategoryDisplayModel(
-                                        name = it.category,
-                                        amount = it.total,
-                                        count = it.transactionCount,
-                                        avgCount = it.averageTransactionCount,
-                                        trend = it.momentumTrend,
-                                        insights = it.topDescriptionInsights
-                                    )
-                                }.toMutableList()
+                            is Result.Error -> {
+                                ErrorState(
+                                    message = result.exception.message ?: "Failed to load distribution",
+                                    onRetry = onRetry
+                                )
+                            }
 
-                                if (tabType is TabType.Expense && result.data.totalTransactionCost > BigDecimal.ZERO) {
-                                    displayModels.add(
-                                        CategoryDisplayModel(
-                                            name = "Transaction Fees",
-                                            amount = result.data.totalTransactionCost,
-                                            count = 0
-                                        )
-                                    )
+                            is Result.Success -> {
+                                val baseCategories = when (tabType) {
+                                    is TabType.Income -> result.data.incomeCategories
+                                    is TabType.Expense -> result.data.expenseCategories
                                 }
 
-                                val totalAmount =
-                                    displayModels.fold(BigDecimal.ZERO) { acc, m -> acc + m.amount }
-                                val categorySums = displayModels.map { it.name to it.amount.toDouble().toFloat() }
+                                if (baseCategories.isEmpty() && (tabType !is TabType.Expense || result.data.totalTransactionCost <= BigDecimal.ZERO)) {
+                                    EmptyDistributionState()
+                                } else {
+                                    val displayModels = baseCategories.map {
+                                        CategoryDisplayModel(
+                                            name = it.category,
+                                            amount = it.total,
+                                            count = it.transactionCount,
+                                            avgCount = it.averageTransactionCount,
+                                            trend = it.momentumTrend,
+                                            insights = it.topDescriptionInsights
+                                        )
+                                    }.toMutableList()
 
-                                val othersInsight = result.data.othersInsightSummary
+                                    if (tabType is TabType.Expense && result.data.totalTransactionCost > BigDecimal.ZERO) {
+                                        displayModels.add(
+                                            CategoryDisplayModel(
+                                                name = "Transaction Fees",
+                                                amount = result.data.totalTransactionCost,
+                                                count = 0
+                                            )
+                                        )
+                                    }
 
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    DonutChartSection(
-                                        categorySums = categorySums,
-                                        totalAmount = totalAmount.toDouble().toFloat(),
-                                        selectedIndex = selectedIndex,
-                                        onSelectedIndexChange = { index -> selectedIndex = index }
-                                    )
-                                    Spacer(Modifier.height(16.dp))
-                                    CategoryList(
-                                        displayModels = displayModels,
-                                        totalAmount = totalAmount,
-                                        selectedIndex = selectedIndex,
-                                        onSelectedIndexChange = { index -> selectedIndex = index },
-                                        onCategoryClick = onCategoryClick,
-                                        segmentColors = SegmentColors,
-                                        animatedVisibilityScope = animatedVisibilityScope,
-                                        othersInsight = othersInsight,
-                                        isIncome = tabType is TabType.Income
-                                    )
+                                    val totalAmount =
+                                        displayModels.fold(BigDecimal.ZERO) { acc, m -> acc + m.amount }
+                                    val categorySums = displayModels.map { it.name to it.amount.toDouble().toFloat() }
+
+                                    val othersInsight = result.data.othersInsightSummary
+
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        DonutChartSection(
+                                            categorySums = categorySums,
+                                            totalAmount = totalAmount.toDouble().toFloat(),
+                                            selectedIndex = selectedIndex,
+                                            onSelectedIndexChange = { index -> selectedIndex = index }
+                                        )
+                                        Spacer(Modifier.height(16.dp))
+                                        CategoryList(
+                                            displayModels = displayModels,
+                                            totalAmount = totalAmount,
+                                            selectedIndex = selectedIndex,
+                                            onSelectedIndexChange = { index -> selectedIndex = index },
+                                            onCategoryClick = onCategoryClick,
+                                            segmentColors = SegmentColors,
+                                            animatedVisibilityScope = animatedVisibilityScope,
+                                            othersInsight = othersInsight,
+                                            isIncome = tabType is TabType.Income
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -768,7 +777,7 @@ fun PeriodSelector(
     Box {
         Row(
             modifier = Modifier
-                .widthIn(min = 150.dp)
+                .width(150.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 .clickable { expanded = true }
