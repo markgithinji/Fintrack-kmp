@@ -4,6 +4,7 @@ import android.content.Context
 import android.provider.Telephony
 import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
+import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
@@ -19,13 +20,19 @@ import kotlinx.coroutines.withContext
 class EquityImporter(
     private val context: Context,
     private val transactionRepository: TransactionRepository,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val categoryRepository: CategoryRepository
 ) : TransactionImporter {
     private val logger = KMPLogger()
 
     override suspend fun importHistory(onProgress: (Float) -> Unit): Unit = withContext(Dispatchers.IO) {
         logger.info("SYNC_FLOW", "EquityImporter: importHistory started")
         onProgress(0.05f)
+        
+        // Fetch categories first to map inferred category names to IDs
+        val categoriesResult = categoryRepository.getCategories()
+        val categories = (categoriesResult as? Result.Success)?.data ?: emptyList()
+        
         val accountsResult = accountRepository.getAccounts()
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
         val accountId = accounts.find { it.type == AccountType.EQUITY }?.id
@@ -64,11 +71,30 @@ class EquityImporter(
                     latestBalance = EquityParser.parseBalance(body)
                 }
 
-                val transaction = EquityParser.parse(body, accountId, smsInstant)
+                var transaction = EquityParser.parse(body, accountId, smsInstant)
                 if (transaction != null) {
+                    // Map inferred category name to ID
+                    val categoryName = transaction.category
+                    val isExpense = !transaction.isIncome
+                    
+                    val categoryId = categories.find { 
+                        it.name.equals(categoryName, ignoreCase = true) && it.isExpense == isExpense 
+                    }?.id
+                    
+                    if (categoryId != null) {
+                        transaction = transaction.copy(categoryId = categoryId)
+                    } else {
+                        // Fallback: If category not found, try to find "Transfer" with matching type
+                        val fallbackId = categories.find { 
+                            it.name.equals("Transfer", ignoreCase = true) && it.isExpense == isExpense 
+                        }?.id ?: categories.firstOrNull { it.isExpense == isExpense }?.id
+
+                        transaction = transaction.copy(categoryId = fallbackId)
+                    }
+                    
                     transactions.add(transaction)
                     if (loggedCount < 5) {
-                        logger.debug("SYNC_FLOW", "Parsed Equity sample: ${transaction.externalId} on ${transaction.dateTime}")
+                        logger.debug("SYNC_FLOW", "Parsed Equity sample: ${transaction.externalId} on ${transaction.dateTime} - Cat: ${transaction.category} (${transaction.categoryId})")
                     }
                 }
                 

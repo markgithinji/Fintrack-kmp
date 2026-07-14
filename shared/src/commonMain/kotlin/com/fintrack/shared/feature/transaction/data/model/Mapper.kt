@@ -24,7 +24,7 @@ fun Transaction.toCreateRequest(): CreateTransactionRequest {
         amount = this.amount,
         transactionCost = this.transactionCost,
         category = this.category,
-        categoryId = this.categoryId ?: "",
+        categoryId = this.categoryId,
         dateTime = this.dateTime,
         description = this.description ?: "",
         externalId = this.externalId,

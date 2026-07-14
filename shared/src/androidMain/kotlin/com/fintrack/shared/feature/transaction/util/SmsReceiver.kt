@@ -13,6 +13,7 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
+import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.settings.domain.util.NotificationService
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit
 
 class SmsReceiver : BroadcastReceiver(), KoinComponent {
     private val accountRepository: AccountRepository by inject()
+    private val categoryRepository: CategoryRepository by inject()
     private val settingsDataSource: SettingsDataSource by inject()
     private val notificationService: NotificationService by inject()
     private val logger = KMPLogger()
@@ -81,13 +83,29 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                             ?: "equity"
                     }
                     
-                    val transaction = if (isMpesa) {
+                    var transaction = if (isMpesa) {
                         MpesaParser.parse(fullMessage, accountId)
                     } else {
                         EquityParser.parse(fullMessage, accountId)
                     }
 
                     if (transaction != null) {
+                        // Map category name to ID
+                        val categoriesResult = categoryRepository.getCategories()
+                        val categories = (categoriesResult as? Result.Success)?.data ?: emptyList()
+                        val categoryName = transaction.category
+                        val isExpense = !transaction.isIncome
+                        
+                        val categoryId = categories.find { 
+                            it.name.equals(categoryName, ignoreCase = true) && it.isExpense == isExpense 
+                        }?.id ?: categories.find { 
+                            it.name.equals("Transfer", ignoreCase = true) && it.isExpense == isExpense 
+                        }?.id ?: categories.firstOrNull { it.isExpense == isExpense }?.id
+                        
+                        if (categoryId != null) {
+                            transaction = transaction.copy(categoryId = categoryId)
+                        }
+
                         // Show notification immediately so the user knows we caught it
                         notificationService.showTransactionNotification(transaction)
 

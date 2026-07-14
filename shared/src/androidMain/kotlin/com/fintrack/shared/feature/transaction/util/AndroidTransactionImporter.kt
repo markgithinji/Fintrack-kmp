@@ -3,6 +3,7 @@ package com.fintrack.shared.feature.transaction.domain.util
 import android.content.Context
 import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
+import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.logger.KMPLogger
@@ -18,6 +19,7 @@ fun initTransactionImporter(context: Context) {
 actual fun createTransactionImporter(
     transactionRepository: TransactionRepository,
     accountRepository: AccountRepository,
+    categoryRepository: CategoryRepository,
 ): TransactionImporter {
     val context = importerContext ?: throw IllegalStateException("TransactionImporter not initialized. Call initTransactionImporter(context)")
     val logger = KMPLogger()
@@ -33,8 +35,8 @@ actual fun createTransactionImporter(
 
             logger.info("SYNC_FLOW", "Found accounts - Mpesa: ${mpesaAccount?.id}, Equity: ${equityAccount?.id}")
 
-            val mpesaImporter = MpesaImporter(context, transactionRepository, accountRepository)
-            val equityImporter = EquityImporter(context, transactionRepository, accountRepository)
+            val mpesaImporter = MpesaImporter(context, transactionRepository, accountRepository, categoryRepository)
+            val equityImporter = EquityImporter(context, transactionRepository, accountRepository, categoryRepository)
             
             when {
                 mpesaAccount != null && equityAccount != null -> {

@@ -27,7 +27,13 @@ val transactionModule = module {
         )
     }
 
-    single { createTransactionImporter(transactionRepository = get(), accountRepository = get()) }
+    single {
+        createTransactionImporter(
+            transactionRepository = get(),
+            accountRepository = get(),
+            categoryRepository = get()
+        )
+    }
 
     viewModel {
         TransactionViewModel(
