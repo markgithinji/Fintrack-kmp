@@ -81,6 +81,7 @@ import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
 import com.fintrack.shared.feature.navigation.ui.MainViewModel
+import androidx.compose.ui.platform.LocalFocusManager
 import com.fintrack.shared.feature.transaction.ui.home.components.AccountIcon
 import kotlinx.coroutines.delay
 import kotlinx.datetime.DatePeriod
@@ -116,6 +117,7 @@ fun BudgetDetailScreen(
     val validationError by viewModel.validationError.collectAsStateWithLifecycle()
     val accountsResult by accountsViewModel.accounts.collectAsStateWithLifecycle()
 
+    val focusManager = LocalFocusManager.current
     var showNumpad by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -202,6 +204,7 @@ fun BudgetDetailScreen(
                             isIncome = !formState.isExpense,
                             themeColor = themeColor,
                             paddingValues = paddingValues,
+                            isActive = showNumpad,
                             onToggleNumpad = { showNumpad = it },
                             modifier = Modifier.sharedBounds(
                                 rememberSharedContentState(key = "budget_header_${budgetId ?: "new"}"),
@@ -285,6 +288,7 @@ fun BudgetDetailScreen(
                     contentColor = if (formState.isExpense) Color.White else MaterialTheme.colorScheme.onTertiary,
                     onSaveClick = { 
                         showNumpad = false
+                        focusManager.clearFocus()
                         viewModel.saveBudget() 
                     },
                     label = "Save Budget",

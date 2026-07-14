@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.ui.theme.PinkExpense
+import androidx.compose.ui.platform.LocalFocusManager
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.budget.ui.AccountSelectionSection
 import com.fintrack.shared.feature.core.data.model.ApiException
@@ -81,6 +82,7 @@ fun AddTransactionScreen(
     val allCategories by transactionsViewModel.categories.collectAsStateWithLifecycle()
     val formState by transactionsViewModel.formState.collectAsStateWithLifecycle()
 
+    val focusManager = LocalFocusManager.current
     var showDatePicker by remember { mutableStateOf(value = false) }
     var showTimePicker by remember { mutableStateOf(value = false) }
     var showNumpad by remember { mutableStateOf(value = false) }
@@ -159,6 +161,7 @@ fun AddTransactionScreen(
                     isIncome = formState.isIncome,
                     themeColor = themeColor,
                     paddingValues = paddingValues,
+                    isActive = showNumpad && numpadTarget == NumpadTarget.Amount,
                     onToggleNumpad = {
                         numpadTarget = NumpadTarget.Amount
                         showNumpad = it
@@ -290,6 +293,7 @@ fun AddTransactionScreen(
                     contentColor = if (formState.isIncome) MaterialTheme.colorScheme.onTertiary else Color.White,
                     onSaveClick = { 
                         showNumpad = false
+                        focusManager.clearFocus()
                         if (transactionId != null) {
                             transactionsViewModel.updateTransaction(id = transactionId)
                         } else {

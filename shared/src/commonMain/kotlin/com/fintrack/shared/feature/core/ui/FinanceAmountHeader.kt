@@ -61,7 +61,8 @@ fun FinanceAmountHeader(
     themeColor: Color,
     onToggleNumpad: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    paddingValues: PaddingValues = PaddingValues(0.dp)
+    paddingValues: PaddingValues = PaddingValues(0.dp),
+    isActive: Boolean = false
 ) {
     val amountFontSize by animateDpAsState(
         targetValue = when {
@@ -125,8 +126,11 @@ fun FinanceAmountHeader(
                 val focusRequester = remember { FocusRequester() }
                 val keyboardController = LocalSoftwareKeyboardController.current
 
-                LaunchedEffect(Unit) {
-                    focusRequester.requestFocus()
+                LaunchedEffect(isActive) {
+                    if (isActive) {
+                        focusRequester.requestFocus()
+                        keyboardController?.hide()
+                    }
                 }
 
                 Row(
