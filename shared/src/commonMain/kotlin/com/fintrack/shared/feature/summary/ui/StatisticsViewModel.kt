@@ -445,7 +445,7 @@ class StatisticsViewModel(
 
     private var lastTransactionCountsAccountId: String? = null
     private var lastTransactionCountsIsIncome: Boolean? = null
-    private var lastTransactionCountsCategory: String? = null
+    private var lastTransactionCountsCategoryId: String? = null
     private var lastTransactionCountsStart: String? = null
     private var lastTransactionCountsEnd: String? = null
     private var lastTransactionCountsHasCost: Boolean? = null
@@ -453,7 +453,7 @@ class StatisticsViewModel(
     fun loadTransactionCounts(
         accountId: String,
         isIncome: Boolean? = null,
-        category: String? = null,
+        categoryId: String? = null,
         start: String? = null,
         end: String? = null,
         hasCost: Boolean? = null,
@@ -462,7 +462,7 @@ class StatisticsViewModel(
         if (!force && _transactionCounts.value is Result.Success &&
             lastTransactionCountsAccountId == accountId &&
             lastTransactionCountsIsIncome == isIncome &&
-            lastTransactionCountsCategory == category &&
+            lastTransactionCountsCategoryId == categoryId &&
             lastTransactionCountsStart == start &&
             lastTransactionCountsEnd == end &&
             lastTransactionCountsHasCost == hasCost
@@ -473,11 +473,11 @@ class StatisticsViewModel(
             _transactionCounts.value = Result.Loading
             lastTransactionCountsAccountId = accountId
             lastTransactionCountsIsIncome = isIncome
-            lastTransactionCountsCategory = category
+            lastTransactionCountsCategoryId = categoryId
             lastTransactionCountsStart = start
             lastTransactionCountsEnd = end
             lastTransactionCountsHasCost = hasCost
-            _transactionCounts.value = summaryRepository.getTransactionCounts(accountId, isIncome, category, start, end, hasCost)
+            _transactionCounts.value = summaryRepository.getTransactionCounts(accountId, isIncome, categoryId, start, end, hasCost)
         }
     }
 }

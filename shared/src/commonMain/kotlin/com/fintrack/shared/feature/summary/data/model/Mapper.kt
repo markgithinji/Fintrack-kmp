@@ -58,6 +58,7 @@ fun HighlightsSummaryDto.toDomain(): StatisticsSummary =
 fun CategorySummaryDto.toDomain(): CategorySummary =
     CategorySummary(
         category = category, 
+        categoryId = categoryId,
         total = total, 
         percentage = percentage,
         transactionCount = transactionCount,

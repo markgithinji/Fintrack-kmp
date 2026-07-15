@@ -340,15 +340,11 @@ class TransactionViewModel(
             if (result is Result.Success) {
                 val transaction = result.data
                 loadedTransactionId = transaction.id
-                val category = if (transaction.categoryId != null) {
-                    Category.fromId(
-                        transaction.categoryId,
-                        name = transaction.category,
-                        isExpense = !transaction.isIncome
-                    )
-                } else {
-                    Category.fromName(transaction.category, isExpense = !transaction.isIncome)
-                }
+                val category = Category.fromId(
+                    transaction.categoryId,
+                    name = transaction.category,
+                    isExpense = !transaction.isIncome
+                )
 
                 _formState.value = TransactionFormState(
                     amount = transaction.amount.formatToTwoPrecision(),
@@ -409,7 +405,7 @@ class TransactionViewModel(
     fun getTransactionsPagingData(
         accountId: String?,
         isIncome: Boolean? = null,
-        category: String? = null,
+        categoryId: String? = null,
         startDate: String? = null,
         endDate: String? = null,
         hasTransactionCost: Boolean? = null
@@ -417,7 +413,7 @@ class TransactionViewModel(
         val newParams = TransactionPagingParams(
             accountId = accountId,
             isIncome = isIncome,
-            category = category,
+            categoryId = categoryId,
             startDate = startDate,
             endDate = endDate,
             hasTransactionCost = hasTransactionCost
@@ -431,7 +427,7 @@ class TransactionViewModel(
         val flow = repo.getTransactionsPagingFlow(
             accountId = accountId,
             isIncome = isIncome,
-            category = category,
+            categoryId = categoryId,
             startDate = startDate,
             endDate = endDate,
             hasTransactionCost = hasTransactionCost
@@ -515,7 +511,7 @@ class TransactionViewModel(
 private data class TransactionPagingParams(
     val accountId: String?,
     val isIncome: Boolean?,
-    val category: String?,
+    val categoryId: String?,
     val startDate: String?,
     val endDate: String?,
     val hasTransactionCost: Boolean?

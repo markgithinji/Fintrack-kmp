@@ -87,10 +87,15 @@ class EquityImporter(
                     val finalTransaction = if (categoryId != null) {
                         parsedTransaction.copy(categoryId = categoryId)
                     } else {
-                        // Fallback: If category not found, try to find "Transfer" with matching type
+                        // Fallback: If category not found, try to find "Transfer" or "Other" with matching type
                         val fallbackId = categories.find { 
                             it.name.equals("Transfer", ignoreCase = true) && it.isExpense == isExpense 
-                        }?.id ?: categories.firstOrNull { it.isExpense == isExpense }?.id
+                        }?.id ?: categories.find {
+                            it.name.contains("Other", ignoreCase = true) && it.isExpense == isExpense
+                        }?.id ?: categories.find {
+                            it.name.contains("Misc", ignoreCase = true) && it.isExpense == isExpense
+                        }?.id ?: categories.firstOrNull { it.isExpense == isExpense }?.id 
+                        ?: "pending"
 
                         parsedTransaction.copy(categoryId = fallbackId)
                     }

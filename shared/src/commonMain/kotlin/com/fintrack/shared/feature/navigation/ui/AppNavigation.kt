@@ -228,13 +228,14 @@ fun AppNavigation(
                 selectedAccountId = accountId,
                 paddingValues = paddingValues,
                 animatedVisibilityScope = this,
-                onCategoryClick = { category, isIncome, startDate, endDate, accountIdParam ->
-                    val isTransactionCost = category == "Transaction Fees"
+                onCategoryClick = { categoryName: String, categoryId: String, isIncome: Boolean, startDate: String?, endDate: String?, accountIdParam: String ->
+                    val isTransactionCost = categoryId == "transaction_cost" || categoryName == "Transaction Fees"
                     navController.navigate(
                         Screen.TransactionList(
-                            accountId = accountIdParam ?: accountId ?: "",
+                            accountId = accountIdParam.ifEmpty { accountId ?: "" },
                             isIncome = if (isTransactionCost) null else isIncome,
-                            category = if (isTransactionCost) null else category,
+                            categoryId = if (isTransactionCost) null else categoryId,
+                            categoryName = if (isTransactionCost) null else categoryName,
                             startDate = startDate,
                             endDate = endDate,
                             hasTransactionCost = if (isTransactionCost) true else null
@@ -344,7 +345,8 @@ fun AppNavigation(
             val route: Screen.TransactionList = backStackEntry.toRoute()
             val accountId = route.accountId
             val isIncome = route.isIncome
-            val category = route.category
+            val categoryId = route.categoryId
+            val categoryName = route.categoryName
             val startDate = route.startDate
             val endDate = route.endDate
             val hasTransactionCost = route.hasTransactionCost
@@ -352,7 +354,8 @@ fun AppNavigation(
             TransactionListScreen(
                 accountId = accountId, 
                 isIncome = isIncome,
-                category = category,
+                categoryId = categoryId,
+                categoryName = categoryName,
                 startDate = startDate,
                 endDate = endDate,
                 hasTransactionCost = hasTransactionCost,

@@ -43,7 +43,8 @@ sealed interface Screen {
     data class TransactionList(
         val accountId: String,
         val isIncome: Boolean? = null,
-        val category: String? = null,
+        val categoryId: String? = null,
+        val categoryName: String? = null,
         val startDate: String? = null,
         val endDate: String? = null,
         val hasTransactionCost: Boolean? = null

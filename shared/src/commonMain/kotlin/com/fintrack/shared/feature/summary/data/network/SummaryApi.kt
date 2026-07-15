@@ -95,7 +95,7 @@ class SummaryApi(
     suspend fun getTransactionCounts(
         accountId: String,
         isIncome: Boolean? = null,
-        category: String? = null,
+        categoryId: String? = null,
         start: String? = null,
         end: String? = null,
         hasTransactionCost: Boolean? = null
@@ -104,7 +104,7 @@ class SummaryApi(
             client.get("transactions/summary/counts") {
                 parameter("accountId", accountId)
                 isIncome?.let { parameter("isIncome", it) }
-                category?.let { parameter("category", it) }
+                categoryId?.let { parameter("categoryId", it) }
                 start?.let { parameter("start", it) }
                 end?.let { parameter("end", it) }
                 hasTransactionCost?.let { parameter("hasCost", it) }

@@ -12,6 +12,7 @@ data class DistributionSummary(
 
 data class CategorySummary(
     val category: String,
+    val categoryId: String,
     val total: BigDecimal,
     val percentage: BigDecimal,
     val transactionCount: Int,

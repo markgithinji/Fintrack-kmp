@@ -69,12 +69,12 @@ class SummaryRepositoryImpl(
     override suspend fun getTransactionCounts(
         accountId: String,
         isIncome: Boolean?,
-        category: String?,
+        categoryId: String?,
         start: String?,
         end: String?,
         hasTransactionCost: Boolean?
     ): Result<TransactionCountSummary> = safeApiCall {
-        summaryApi.getTransactionCounts(accountId, isIncome, category, start, end, hasTransactionCost).toDomain()
+        summaryApi.getTransactionCounts(accountId, isIncome, categoryId, start, end, hasTransactionCost).toDomain()
     }
 
     override suspend fun getProfileMetrics(): Result<ProfileMetrics> = safeApiCall {

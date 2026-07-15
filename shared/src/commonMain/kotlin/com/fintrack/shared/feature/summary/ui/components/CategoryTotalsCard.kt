@@ -116,7 +116,7 @@ fun CategoryTotalsCardWithTabs(
     onNextPeriod: () -> Unit = {},
     hasPrevious: Boolean = true,
     hasNext: Boolean = true,
-    onCategoryClick: (String) -> Unit = {},
+    onCategoryClick: (categoryName: String, categoryId: String) -> Unit = { _, _ -> },
     onRetry: () -> Unit = {}
 ) {
     // Use rememberSaveable to maintain selection across navigation
@@ -267,6 +267,7 @@ fun CategoryTotalsCardWithTabs(
                                     val displayModels = baseCategories.map {
                                         CategoryDisplayModel(
                                             name = it.category,
+                                            categoryId = it.categoryId,
                                             amount = it.total,
                                             count = it.transactionCount,
                                             avgCount = it.averageTransactionCount,
@@ -279,6 +280,7 @@ fun CategoryTotalsCardWithTabs(
                                         displayModels.add(
                                             CategoryDisplayModel(
                                                 name = "Transaction Fees",
+                                                categoryId = "transaction_cost",
                                                 amount = result.data.totalTransactionCost,
                                                 count = 0
                                             )
@@ -504,7 +506,7 @@ fun CategoryList(
     totalAmount: BigDecimal,
     selectedIndex: Int,
     onSelectedIndexChange: (Int) -> Unit,
-    onCategoryClick: (String) -> Unit = {},
+    onCategoryClick: (categoryName: String, categoryId: String) -> Unit = { _, _ -> },
     segmentColors: List<Color>,
     animatedVisibilityScope: AnimatedVisibilityScope,
     othersInsight: String? = null,
@@ -544,6 +546,7 @@ fun CategoryList(
         displayList.add(
             CategoryDisplayModel(
                 name = "Others",
+                categoryId = remainingModels.joinToString(",") { it.categoryId },
                 amount = othersAmount,
                 count = remainingModels.sumOf { it.count },
                 insights = aggregatedInsights
@@ -593,13 +596,7 @@ fun CategoryList(
                 ),
                 onClick = {
                     onSelectedIndexChange(index)
-
-                    val categoryFilter = if (categoryName == "Others") {
-                        remainingModels.joinToString(",") { it.name }
-                    } else {
-                        categoryName
-                    }
-                    onCategoryClick(categoryFilter)
+                    onCategoryClick(categoryName, model.categoryId)
                 }
             ) {
                 Column(modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp)) {
@@ -994,6 +991,7 @@ enum class TimeSpan(val displayName: String) {
 
 data class CategoryDisplayModel(
     val name: String,
+    val categoryId: String,
     val amount: BigDecimal,
     val count: Int,
     val avgCount: BigDecimal? = null,

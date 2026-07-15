@@ -16,7 +16,7 @@ interface TransactionRepository {
         afterId: String? = null,
         accountId: String? = null,
         isIncome: Boolean? = null,
-        category: String? = null,
+        categoryId: String? = null,
         startDate: String? = null,
         endDate: String? = null,
         hasTransactionCost: Boolean? = null
@@ -49,7 +49,7 @@ interface TransactionRepository {
     fun getTransactionsPagingFlow(
         accountId: String?,
         isIncome: Boolean? = null,
-        category: String? = null,
+        categoryId: String? = null,
         startDate: String? = null,
         endDate: String? = null,
         hasTransactionCost: Boolean? = null

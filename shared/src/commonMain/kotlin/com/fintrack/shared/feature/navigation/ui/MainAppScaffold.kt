@@ -113,8 +113,8 @@ fun MainAppScaffold(
                 AppBarState(
                     title = when {
                         route.hasTransactionCost == true -> "Transaction Fees"
-                        route.category?.contains(",") == true -> "Other Categories"
-                        route.category != null -> route.category
+                        route.categoryName?.contains(",") == true -> "Other Categories"
+                        route.categoryName != null -> route.categoryName
                         route.isIncome == true -> "Income Transactions"
                         route.isIncome == false -> "Expense Transactions"
                         else -> "All Transactions"

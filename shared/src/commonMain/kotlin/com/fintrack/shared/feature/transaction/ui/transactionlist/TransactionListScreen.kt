@@ -49,7 +49,8 @@ import org.koin.compose.viewmodel.koinViewModel
 fun TransactionListScreen(
     accountId: String,
     isIncome: Boolean? = null,
-    category: String? = null,
+    categoryId: String? = null,
+    categoryName: String? = null,
     startDate: String? = null,
     endDate: String? = null,
     hasTransactionCost: Boolean? = null,
@@ -63,33 +64,34 @@ fun TransactionListScreen(
     val listState = rememberLazyListState()
     val sharedTransitionScope = LocalSharedTransitionScope.current
 
-    val sharedBoundsKey = remember(accountId, isIncome, category, hasTransactionCost) {
+    val sharedBoundsKey = remember(accountId, isIncome, categoryId, categoryName, hasTransactionCost) {
         when {
             hasTransactionCost == true -> "header_card_Transaction Fees"
-            category?.contains(",") == true -> "header_card_Others"
-            category != null -> "header_card_$category"
+            categoryName?.contains(",") == true -> "header_card_Others"
+            categoryName != null -> "header_card_$categoryName"
+            categoryId != null -> "header_card_$categoryId"
             isIncome == true -> "income_card"
             isIncome == false -> "expense_card"
             else -> "all_transactions_card"
         }
     }
 
-    val transactions = remember(accountId, isIncome, category, startDate, endDate, hasTransactionCost) {
+    val transactions = remember(accountId, isIncome, categoryId, startDate, endDate, hasTransactionCost) {
         transactionsViewModel.getTransactionsPagingData(
             accountId = accountId,
             isIncome = isIncome,
-            category = category,
+            categoryId = categoryId,
             startDate = startDate,
             endDate = endDate,
             hasTransactionCost = hasTransactionCost
         )
     }.collectAsLazyPagingItems()
 
-    LaunchedEffect(accountId, isIncome, category, startDate, endDate, hasTransactionCost) {
+    LaunchedEffect(accountId, isIncome, categoryId, startDate, endDate, hasTransactionCost) {
         statisticsViewModel.loadTransactionCounts(
             accountId = accountId,
             isIncome = isIncome,
-            category = category,
+            categoryId = categoryId,
             start = startDate,
             end = endDate,
             hasCost = hasTransactionCost
@@ -121,7 +123,8 @@ fun TransactionListScreen(
         transactionCounts = transactionCounts,
         transactions = transactions,
         isIncome = isIncome,
-        category = category,
+        categoryId = categoryId,
+        categoryName = categoryName,
         hasTransactionCost = hasTransactionCost,
         listState = listState,
         paddingValues = paddingValues,
@@ -147,7 +150,8 @@ private fun TransactionListContent(
     transactionCounts: Result<TransactionCountSummary>,
     transactions: LazyPagingItems<Transaction>,
     isIncome: Boolean?,
-    category: String?,
+    categoryId: String?,
+    categoryName: String?,
     hasTransactionCost: Boolean? = null,
     listState: androidx.compose.foundation.lazy.LazyListState,
     paddingValues: PaddingValues,
@@ -174,7 +178,7 @@ private fun TransactionListContent(
                 transactionCounts = transactionCounts,
                 isIncome = isIncome,
                 hasTransactionCost = hasTransactionCost,
-                categoryName = category,
+                categoryName = categoryName ?: categoryId,
                 modifier = Modifier,
                 animatedVisibilityScope = animatedVisibilityScope,
                 sharedTransitionScope = sharedTransitionScope

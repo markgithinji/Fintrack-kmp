@@ -17,6 +17,7 @@ data class DistributionSummaryDto(
 @Serializable
 data class CategorySummaryDto(
     val category: String = "",
+    val categoryId: String = "",
     @Serializable(with = BigDecimalSerializer::class)
     val total: BigDecimal = BigDecimal.ZERO,
     @Serializable(with = BigDecimalSerializer::class)

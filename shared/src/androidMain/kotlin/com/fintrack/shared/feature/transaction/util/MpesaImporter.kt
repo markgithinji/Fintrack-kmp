@@ -70,26 +70,25 @@ class MpesaImporter(
                     latestBalance = MpesaParser.parseBalance(body)
                 }
 
-                var transaction = MpesaParser.parse(body, accountId, smsInstant)
-                if (transaction != null) {
+                val parsed = MpesaParser.parse(body, accountId, smsInstant)
+                if (parsed != null) {
                     // Map inferred category name to ID
-                    val categoryName = transaction.category
-                    val isExpense = !transaction.isIncome
+                    val categoryName = parsed.category
+                    val isExpense = !parsed.isIncome
                     
                     val categoryId = categories.find { 
                         it.name.equals(categoryName, ignoreCase = true) && it.isExpense == isExpense 
                     }?.id
                     
-                    if (categoryId != null) {
-                        transaction = transaction.copy(categoryId = categoryId)
-                    } else {
-                        // Fallback: If category not found, try to find "Transfer" with matching type
-                        val fallbackId = categories.find { 
-                            it.name.equals("Transfer", ignoreCase = true) && it.isExpense == isExpense 
-                        }?.id ?: categories.firstOrNull { it.isExpense == isExpense }?.id
+                    val finalCategoryId = categoryId ?: categories.find { 
+                        it.name.equals("Transfer", ignoreCase = true) && it.isExpense == isExpense 
+                    }?.id ?: categories.find {
+                        it.name.contains("Other", ignoreCase = true) && it.isExpense == isExpense
+                    }?.id ?: categories.find {
+                        it.name.contains("Misc", ignoreCase = true) && it.isExpense == isExpense
+                    }?.id ?: categories.firstOrNull { it.isExpense == isExpense }?.id ?: "pending"
 
-                        transaction = transaction.copy(categoryId = fallbackId)
-                    }
+                    val transaction = parsed.copy(categoryId = finalCategoryId)
                     
                     transactions.add(transaction)
                     if (loggedCount < 5) {

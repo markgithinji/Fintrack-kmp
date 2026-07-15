@@ -9,7 +9,7 @@ class TransactionPagingSource(
     private val transactionApi: TransactionApi,
     private val accountId: String?,
     private val isIncome: Boolean? = null,
-    private val category: String? = null,
+    private val categoryId: String? = null,
     private val startDate: String? = null,
     private val endDate: String? = null,
     private val hasTransactionCost: Boolean? = null
@@ -29,7 +29,7 @@ class TransactionPagingSource(
                 afterId = afterId,
                 accountId = accountId,
                 isIncome = isIncome,
-                category = category,
+                categoryId = categoryId,
                 startDate = startDate,
                 endDate = endDate,
                 hasTransactionCost = hasTransactionCost

@@ -29,7 +29,7 @@ class TransactionRepositoryImpl(
         afterId: String?,
         accountId: String?,
         isIncome: Boolean?,
-        category: String?,
+        categoryId: String?,
         startDate: String?,
         endDate: String?,
         hasTransactionCost: Boolean?
@@ -43,7 +43,7 @@ class TransactionRepositoryImpl(
                 afterId = afterId,
                 accountId = accountId,
                 isIncome = isIncome,
-                category = category,
+                categoryId = categoryId,
                 startDate = startDate,
                 endDate = endDate,
                 hasTransactionCost = hasTransactionCost
@@ -143,7 +143,7 @@ class TransactionRepositoryImpl(
     override fun getTransactionsPagingFlow(
         accountId: String?,
         isIncome: Boolean?,
-        category: String?,
+        categoryId: String?,
         startDate: String?,
         endDate: String?,
         hasTransactionCost: Boolean?
@@ -153,7 +153,7 @@ class TransactionRepositoryImpl(
                 transactionApi = transactionApi,
                 accountId = accountId,
                 isIncome = isIncome,
-                category = category,
+                categoryId = categoryId,
                 startDate = startDate,
                 endDate = endDate,
                 hasTransactionCost = hasTransactionCost

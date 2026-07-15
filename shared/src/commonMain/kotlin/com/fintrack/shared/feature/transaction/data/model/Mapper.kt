@@ -23,7 +23,6 @@ fun Transaction.toCreateRequest(): CreateTransactionRequest {
         isIncome = this.isIncome,
         amount = this.amount,
         transactionCost = this.transactionCost,
-        category = this.category,
         categoryId = this.categoryId,
         dateTime = this.dateTime,
         description = this.description ?: "",

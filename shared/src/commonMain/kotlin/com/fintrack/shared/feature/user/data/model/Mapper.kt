@@ -5,5 +5,5 @@ import com.fintrack.shared.feature.user.domain.model.User
 fun UserDto.toDomain(): User = User(
     name = name,
     email = email,
-    trackedCategories = trackedCategories
+    trackedCategoryIds = trackedCategoryIds
 )

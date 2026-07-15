@@ -101,14 +101,6 @@ class SettingsViewModel(
     val defaultAccountId: StateFlow<String?> = settingsDataSource.defaultAccountId
     val exportFormat: StateFlow<ExportFormat> = settingsDataSource.exportFormat
 
-    val trackedCategories: StateFlow<List<String>> = userRepository.getUserProfile()
-        .map { it?.trackedCategories ?: emptyList() }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = userRepository.getUserProfile().value?.trackedCategories ?: emptyList()
-        )
-
     val allCategories: StateFlow<List<Category>> = localCategoryDataSource.categories
         .map { categories ->
             val filtered = categories.filter { it.id != "transaction_cost" }
@@ -134,6 +126,22 @@ class SettingsViewModel(
                 listOf(Category.TransactionCost) + filtered
             }
         )
+
+    val trackedCategoryIds: StateFlow<List<String>> = userRepository.getUserProfile()
+        .map { it?.trackedCategoryIds ?: emptyList() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = userRepository.getUserProfile().value?.trackedCategoryIds ?: emptyList()
+        )
+
+    val trackedCategoryNames: StateFlow<List<String>> = combine(trackedCategoryIds, allCategories) { ids, all ->
+        ids.mapNotNull { id -> all.find { it.id == id }?.name }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
 
     init {
         viewModelScope.launch {

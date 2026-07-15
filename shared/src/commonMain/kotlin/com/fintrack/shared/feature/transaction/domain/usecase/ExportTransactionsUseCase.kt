@@ -56,7 +56,7 @@ class ExportTransactionsUseCase(
         
         transactions.forEach { transaction ->
             csv.append("${transaction.dateTime},")
-            csv.append("${escapeCsv(transaction.category)},")
+            csv.append("${escapeCsv(transaction.category ?: "Uncategorized")},")
             csv.append("${transaction.amount},")
             csv.append("${transaction.transactionCost},")
             csv.append("${transaction.totalAmount},")

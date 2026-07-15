@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 data class UserDto(
     val name: String,
     val email: String,
-    val trackedCategories: List<String> = emptyList()
+    val trackedCategoryIds: List<String> = emptyList()
 )

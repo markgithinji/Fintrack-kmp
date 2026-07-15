@@ -56,7 +56,7 @@ fun StatisticsScreen(
     mainViewModel: MainViewModel = koinInject(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
-    onCategoryClick: (category: String, isIncome: Boolean, startDate: String?, endDate: String?, accountId: String) -> Unit = { _, _, _, _, _ -> }
+    onCategoryClick: (categoryName: String, categoryId: String, isIncome: Boolean, startDate: String?, endDate: String?, accountId: String) -> Unit = { _, _, _, _, _, _ -> }
 ) {
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
     val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle()
@@ -168,10 +168,11 @@ fun StatisticsScreen(
                             force = true
                         )
                     },
-                    onCategoryClick = { category ->
+                    onCategoryClick = { categoryName, categoryId ->
                         val dateRange = safePeriod.getDateRange()
                         onCategoryClick(
-                            category,
+                            categoryName,
+                            categoryId,
                             selectedTab is TabType.Income,
                             dateRange?.first,
                             dateRange?.second,

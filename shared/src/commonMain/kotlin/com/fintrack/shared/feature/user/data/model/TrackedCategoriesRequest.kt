@@ -4,5 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class TrackedCategoriesRequest(
-    val categories: List<String>
+    val categoryIds: List<String>
 )

@@ -97,7 +97,8 @@ fun SettingsScreen(
     val exportEndDate by viewModel.exportEndDate.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-    val trackedCategories by viewModel.trackedCategories.collectAsStateWithLifecycle()
+    val trackedCategoryIds by viewModel.trackedCategoryIds.collectAsStateWithLifecycle()
+    val trackedCategoryNames by viewModel.trackedCategoryNames.collectAsStateWithLifecycle()
     val allCategories by viewModel.allCategories.collectAsStateWithLifecycle()
     val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
 
@@ -215,7 +216,7 @@ fun SettingsScreen(
 
                         SettingsItem(
                             title = "Tracked Categories",
-                            subtitle = if (trackedCategories.isEmpty()) "Automatic (Top Spending & Income)" else trackedCategories.joinToString(", "),
+                            subtitle = if (trackedCategoryNames.isEmpty()) "Automatic (Top Spending & Income)" else trackedCategoryNames.joinToString(", "),
                             icon = Icons.Default.Category,
                             onClick = { showTrackedCategoriesDialog = true }
                         )
@@ -706,7 +707,7 @@ fun SettingsScreen(
     if (showTrackedCategoriesDialog) {
         TrackedCategoriesSelectionDialog(
             allCategories = allCategories,
-            selectedCategories = trackedCategories,
+            selectedCategoryIds = trackedCategoryIds,
             onCategoriesSelected = {
                 viewModel.updateTrackedCategories(it)
                 mainViewModel.triggerGlobalRefresh()
@@ -1441,11 +1442,11 @@ fun CurrencySelectionDialog(
 @Composable
 fun TrackedCategoriesSelectionDialog(
     allCategories: List<Category>,
-    selectedCategories: List<String>,
+    selectedCategoryIds: List<String>,
     onCategoriesSelected: (List<String>) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var currentSelection by remember { mutableStateOf(selectedCategories) }
+    var currentSelection by remember { mutableStateOf(selectedCategoryIds) }
 
     BasicAlertDialog(
         onDismissRequest = onDismiss,
@@ -1534,14 +1535,14 @@ fun TrackedCategoriesSelectionDialog(
                         modifier = Modifier.heightIn(max = 400.dp)
                     ) {
                         items(allCategories) { category ->
-                            val isSelected = currentSelection.contains(category.name)
+                            val isSelected = currentSelection.contains(category.id)
 
                             Surface(
                                 onClick = {
                                     if (isSelected) {
-                                        currentSelection = currentSelection.filter { it != category.name }
+                                        currentSelection = currentSelection.filter { it != category.id }
                                     } else if (currentSelection.size < 2) {
-                                        currentSelection = currentSelection + category.name
+                                        currentSelection = currentSelection + category.id
                                     }
                                 },
                                 shape = RoundedCornerShape(16.dp),

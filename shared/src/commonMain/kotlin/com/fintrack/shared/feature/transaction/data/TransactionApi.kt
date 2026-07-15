@@ -28,7 +28,7 @@ class TransactionApi(
         afterId: String? = null,
         accountId: String? = null,
         isIncome: Boolean? = null,
-        category: String? = null,
+        categoryId: String? = null,
         startDate: String? = null,
         endDate: String? = null,
         hasTransactionCost: Boolean? = null
@@ -41,7 +41,7 @@ class TransactionApi(
             afterId?.let { parameter("afterId", it) }
             accountId?.let { parameter("accountId", it) }
             isIncome?.let { parameter("isIncome", it) }
-            category?.let { parameter("category", it) }
+            categoryId?.let { parameter("categoryId", it) }
             startDate?.let { parameter("start", it) }
             endDate?.let { parameter("end", it) }
             hasTransactionCost?.let { parameter("hasCost", it) }

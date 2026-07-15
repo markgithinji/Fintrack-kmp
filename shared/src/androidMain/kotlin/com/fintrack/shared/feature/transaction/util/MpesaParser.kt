@@ -97,7 +97,7 @@ object MpesaParser {
             val amount = parseAmount(it.groupValues[2])
             val date = it.groupValues.getOrNull(3) ?: ""
             val time = it.groupValues.getOrNull(4) ?: ""
-            return wrap(createTransactionModel(code, amount, cost, balance, "Loans", parseDateTime(date, time, smsTimestamp), "Fuliza M-PESA Repayment", accountId, false))
+            return wrap(createTransactionModel(code, amount, cost, balance, "Loans", parseDateTime(date, time, smsTimestamp), "Fuliza M-PESA Repayment", accountId, isIncome = false))
         }
 
         // 2. Loans (Repayments should be checked before general transfers)
@@ -107,7 +107,7 @@ object MpesaParser {
             val party = cleanPartyName(it.groupValues[3])
             val date = it.groupValues.getOrNull(4) ?: ""
             val time = it.groupValues.getOrNull(5) ?: ""
-            return wrap(createTransactionModel(code, amount, cost, balance, "Loans", parseDateTime(date, time, smsTimestamp), "Loan Repayment to $party", accountId, false))
+            return wrap(createTransactionModel(code, amount, cost, balance, "Loans", parseDateTime(date, time, smsTimestamp), "Loan Repayment to $party", accountId, isIncome = false))
         }
 
         loanApprovedRegex.find(message)?.let { 
@@ -115,7 +115,7 @@ object MpesaParser {
             val amount = parseAmount(it.groupValues[2])
             val date = it.groupValues.getOrNull(3) ?: ""
             val time = it.groupValues.getOrNull(4) ?: ""
-            return wrap(createTransactionModel(code, amount, cost, balance, "Loans", parseDateTime(date, time, smsTimestamp), "Loan Approved", accountId, true))
+            return wrap(createTransactionModel(code, amount, cost, balance, "Loans", parseDateTime(date, time, smsTimestamp), "Loan Approved", accountId, isIncome = true))
         }
 
         // 3. Try Agent Transactions (Date First)
@@ -141,7 +141,7 @@ object MpesaParser {
             val time = it.groupValues[3]
             val amount = parseAmount(it.groupValues[4])
             val party = cleanPartyName(it.groupValues[5])
-            return wrap(createTransactionModel(code, amount, cost, balance, "Transport", parseDateTime(date, time, smsTimestamp), "Withdrawn from $party", accountId, false))
+            return wrap(createTransactionModel(code, amount, cost, balance, "Transport", parseDateTime(date, time, smsTimestamp), "Withdrawn from $party", accountId, isIncome = false))
         }
 
         // M-Shwari / Bank / KCB Transfers
@@ -152,20 +152,16 @@ object MpesaParser {
             val date = it.groupValues.getOrNull(4) ?: ""
             val time = it.groupValues.getOrNull(5) ?: ""
             
-            val isSavings = party.lowercase().let { 
-                (it.contains("m-shwari") || it.contains("kcb")) && !it.contains("loan") 
-            }
-            
             return wrap(createTransactionModel(
                 code, 
                 amount, 
                 cost, 
                 balance, 
-                if (isSavings) "Savings" else "Other Income",
+                inferCategory(party, isIncome = true),
                 parseDateTime(date, time, smsTimestamp), 
                 "Transferred from $party", 
-                accountId, 
-                true
+                accountId,
+                isIncome = true
             ))
         }
         transferToRegex.find(message)?.let { 
@@ -175,20 +171,16 @@ object MpesaParser {
             val date = it.groupValues.getOrNull(4) ?: ""
             val time = it.groupValues.getOrNull(5) ?: ""
             
-            val isSavings = party.lowercase().let { 
-                (it.contains("m-shwari") || it.contains("kcb")) && !it.contains("loan") 
-            }
-
             return wrap(createTransactionModel(
                 code, 
                 amount, 
                 cost, 
                 balance, 
-                if (isSavings) "Savings" else inferCategory(party),
+                inferCategory(party, isIncome = false),
                 parseDateTime(date, time, smsTimestamp), 
                 "Transferred to $party", 
-                accountId, 
-                false
+                accountId,
+                isIncome = false
             ))
         }
         
@@ -198,7 +190,7 @@ object MpesaParser {
             val amount = parseAmount(it.groupValues[2])
             val date = it.groupValues[3]
             val time = it.groupValues[4]
-            return wrap(createTransactionModel(code, amount, cost, balance, "Airtime", parseDateTime(date, time, smsTimestamp), "Bought airtime", accountId, false))
+            return wrap(createTransactionModel(code, amount, cost, balance, "Airtime", parseDateTime(date, time, smsTimestamp), "Bought airtime", accountId, isIncome = false))
         }
 
         // Reversals
@@ -214,15 +206,15 @@ object MpesaParser {
         }
 
         // Standard transactions
-        sentRegex.find(message)?.let { return wrap(createFromMatch(it, false, "Sent to", null, accountId, cost, balance, smsTimestamp)) }
+        sentRegex.find(message)?.let { return wrap(createFromMatch(it, false, "Sent to", null, cost, balance, accountId, smsTimestamp)) }
         
-        receivedRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Received from", "Other Income", accountId, cost, balance, smsTimestamp)) }
-        sentToYouRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Sent by", "Other Income", accountId, cost, balance, smsTimestamp)) }
+        receivedRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Received from", "Other Income", cost, balance, accountId, smsTimestamp)) }
+        sentToYouRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Sent by", "Other Income", cost, balance, accountId, smsTimestamp)) }
         
-        paidRegex.find(message)?.let { return wrap(createFromMatch(it, false, "Paid to", null, accountId, cost, balance, smsTimestamp)) }
+        paidRegex.find(message)?.let { return wrap(createFromMatch(it, false, "Paid to", null, cost, balance, accountId, smsTimestamp)) }
 
-        depositRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Deposit from", "Other Income", accountId, cost, balance, smsTimestamp)) }
-        withdrawRegex.find(message)?.let { return wrap(createFromMatch(it, false, "Withdrawn from", "Transport", accountId, cost, balance, smsTimestamp)) }
+        depositRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Deposit from", "Other Income", cost, balance, accountId, smsTimestamp)) }
+        withdrawRegex.find(message)?.let { return wrap(createFromMatch(it, false, "Withdrawn from", "Transport", cost, balance, accountId, smsTimestamp)) }
 
         // Received at Till (Ref at end)
         receivedAtTillRegex.find(message)?.let {
@@ -231,7 +223,7 @@ object MpesaParser {
             val code = it.groupValues[3]
             val date = it.groupValues[4]
             val time = it.groupValues[5]
-            return wrap(createTransactionModel(code, amount, cost, balance, "Other Income", parseDateTime(date, time, smsTimestamp), "Payment received at Till ($recipient)", accountId, true))
+            return wrap(createTransactionModel(code, amount, cost, balance, "Other Income", parseDateTime(date, time, smsTimestamp), "Payment received at Till ($recipient)", accountId, isIncome = true))
         }
 
         // Bank to M-Pesa
@@ -240,7 +232,7 @@ object MpesaParser {
             val amount = parseAmount(it.groupValues[2])
             val code = it.groupValues[3]
             val bankRef = it.groupValues[4]
-            return wrap(createTransactionModel(code, amount, cost, balance, "Other Income", smsTimestamp ?: Clock.System.now(), "Received from $sender (Bank Ref: $bankRef)", accountId, true))
+            return wrap(createTransactionModel(code, amount, cost, balance, "Other Income", smsTimestamp ?: Clock.System.now(), "Received from $sender (Bank Ref: $bankRef)", accountId, isIncome = true))
         }
 
         return null
@@ -251,9 +243,9 @@ object MpesaParser {
         isIncome: Boolean, 
         prefix: String, 
         fixedCategory: String?,
-        accountId: String,
         cost: BigDecimal,
         balance: BigDecimal?,
+        accountId: String,
         smsTimestamp: Instant? = null
     ): Transaction {
         val code = match.groupValues[1]
@@ -289,6 +281,7 @@ object MpesaParser {
         amount = amount,
         transactionCost = cost,
         category = category,
+        categoryId = "pending", // Resolved by receiver/importer
         dateTime = dateTime,
         description = "$description (Ref: $code)",
         externalId = code,
@@ -369,7 +362,7 @@ object MpesaParser {
         }
     }
 
-    private fun inferCategory(recipient: String): String {
+    private fun inferCategory(recipient: String, isIncome: Boolean = false): String {
         val r = recipient.lowercase(Locale.ENGLISH)
         return when {
             r.contains("kplc") || r.contains("tokens") || r.contains("power") || r.contains("jajemelo") -> "Utilities"
@@ -384,7 +377,7 @@ object MpesaParser {
             r.contains("lofty") || r.contains("kuza") || r.contains("mali") || r.contains("ziidi") || r.contains("kasha") || 
             r.contains("genghis") || r.contains("hela imara") || r.contains("old mutual") || r.contains("sanlam") || r.contains("cic") || 
             r.contains("icea lion") || r.contains("britam") || r.contains("madison") || r.contains("apollo") || r.contains("nabo capital") || 
-            r.contains("dry associates") -> "Savings"
+            r.contains("dry associates") || r.contains("m-pesa saving") -> "Savings"
             r.contains("tithe") || r.contains("offering") || r.contains("citam") || r.contains("church") || r.contains("charity") || r.contains("mosque") || r.contains("prayer mountain") -> "Charity"
             r.contains("parking") || r.contains("kaps") || r.contains("bolt") || r.contains("uber") || r.contains("taxi") || r.contains("rubis") || r.contains("totalenergies") || r.contains("shell") -> "Transport"
             r.contains("chemist") || r.contains("pharmacy") || r.contains("hospital") || r.contains("health") || r.contains("clinic") || r.contains("meds") || r.contains("dental") -> "Health"
@@ -397,7 +390,7 @@ object MpesaParser {
             r.contains("bonus") -> "Bonus"
             r.contains("interest") -> "Interest"
             r.contains("commission") || r.contains("income") -> "Other Income"
-            else -> "Transfer"
+            else -> if (isIncome) "Other Income" else "Transfer"
         }
     }
 }

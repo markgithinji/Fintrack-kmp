@@ -111,7 +111,7 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                             ?: "equity"
                     }
                     
-                    var transaction = if (isMpesa) {
+                    var transaction: com.fintrack.shared.feature.transaction.domain.model.Transaction? = if (isMpesa) {
                         MpesaParser.parse(fullMessage, accountId)
                     } else {
                         EquityParser.parse(fullMessage, accountId)
@@ -134,11 +134,14 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                             it.name.equals(categoryName, ignoreCase = true) && it.isExpense == isExpense 
                         }?.id ?: categories.find { 
                             it.name.equals("Transfer", ignoreCase = true) && it.isExpense == isExpense 
+                        }?.id ?: categories.find {
+                            it.name.contains("Other", ignoreCase = true) && it.isExpense == isExpense
+                        }?.id ?: categories.find {
+                            it.name.contains("Misc", ignoreCase = true) && it.isExpense == isExpense
                         }?.id ?: categories.firstOrNull { it.isExpense == isExpense }?.id
+                        ?: "pending"
                         
-                        if (categoryId != null) {
-                            transaction = transaction.copy(categoryId = categoryId)
-                        }
+                        transaction = transaction.copy(categoryId = categoryId)
 
                         // Show notification immediately so the user knows we caught it
                         notificationService.showTransactionNotification(transaction)

@@ -92,7 +92,7 @@ object EquityParser {
             val merchant = it.groupValues[2].trim()
             val dateTime = parseDateTime(it.groupValues[3], smsTimestamp)
             val code = it.groupValues[5]
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(merchant), dateTime, "Card payment at $merchant", accountId, false))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(merchant, isIncome = false), dateTime, "Card payment at $merchant", accountId, false))
         }
 
         // 2. Sent Money
@@ -120,7 +120,7 @@ object EquityParser {
             val code = it.groupValues[5]
             val dateStr = "${it.groupValues[6]} ${it.groupValues[7]}"
             val dateTime = parseDateTime(dateStr, smsTimestamp)
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(merchant), dateTime, "Bill payment to $merchant", accountId, false))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(merchant, isIncome = false), dateTime, "Bill payment to $merchant", accountId, false))
         }
 
         // 5. Loan Approved
@@ -141,7 +141,7 @@ object EquityParser {
             val isMySelf = recipient.contains("MARK", ignoreCase = true)
             val description = if (isMySelf) "Cash Deposit" else "Paid to $recipient"
             
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, if (isMySelf) "Other Income" else inferCategory(recipient), dateTime, description, accountId, isMySelf))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, if (isMySelf) "Other Income" else inferCategory(recipient, isIncome = isMySelf), dateTime, description, accountId, isMySelf))
         }
 
         // 6b. Received to Equity Account
@@ -173,7 +173,7 @@ object EquityParser {
             val code = it.groupValues[3]
             val dateStr = "${it.groupValues[4]} ${it.groupValues[5]}"
             val dateTime = parseDateTime(dateStr, smsTimestamp)
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(recipient), dateTime, "Sent to $recipient", accountId, false))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(recipient, isIncome = false), dateTime, "Sent to $recipient", accountId, false))
         }
 
         return null
@@ -197,7 +197,7 @@ object EquityParser {
         return smsTimestamp ?: Clock.System.now()
     }
 
-    private fun inferCategory(description: String): String {
+    private fun inferCategory(description: String, isIncome: Boolean = false): String {
         val d = description.lowercase()
         return when {
             d.contains("netflix") || d.contains("google") || d.contains("youtube") || d.contains("spotify") || d.contains("openai") || d.contains("chatgpt") || d.contains("prime") -> "Subscriptions"
@@ -205,10 +205,10 @@ object EquityParser {
             d.contains("kplc") || d.contains("token") || d.contains("power") || d.contains("water") -> "Utilities"
             d.contains("supermarket") || d.contains("groceries") || d.contains("naivas") || d.contains("carrefour") || d.contains("quickmart") || d.contains("chandarana") -> "Groceries"
             d.contains("restaurant") || d.contains("cafe") || d.contains("dining") || d.contains("bar") || d.contains("inn") || d.contains("dishes") || d.contains("pizza") || d.contains("kfc") || d.contains("java") -> "Dining Out"
-            d.contains("zimele") || d.contains("etica") || d.contains("m-shwari") || d.contains("kcb m-pesa") -> "Savings"
+            d.contains("zimele") || d.contains("etica") || d.contains("m-shwari") || d.contains("kcb m-pesa") || d.contains("money market") || d.contains("m-pesa saving") -> "Savings"
             d.contains("loan") || d.contains("kcb loan") || d.contains("m-shwari loan") -> "Loans"
             d.contains("uber") || d.contains("bolt") || d.contains("fuel") || d.contains("shell") || d.contains("rubis") || d.contains("total") -> "Transport"
-            else -> "Transfer"
+            else -> if (isIncome) "Other Income" else "Transfer"
         }
     }
 
@@ -228,6 +228,7 @@ object EquityParser {
         amount = amount,
         transactionCost = cost,
         category = category,
+        categoryId = "pending", // Will be resolved by the importer
         dateTime = dateTime,
         description = "$description (Ref: $code)",
         externalId = code,
