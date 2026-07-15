@@ -168,13 +168,13 @@ fun ProfileScreen(
                                                 AnimatedShimmerBox(
                                                     modifier = Modifier
                                                         .width(140.dp)
-                                                        .height(24.dp)
+                                                        .height(20.dp)
                                                         .clip(RoundedCornerShape(8.dp))
                                                 )
                                                 AnimatedShimmerBox(
                                                     modifier = Modifier
                                                         .width(180.dp)
-                                                        .height(16.dp)
+                                                        .height(12.dp)
                                                         .clip(RoundedCornerShape(8.dp))
                                                 )
                                             }
@@ -351,7 +351,7 @@ private fun ProfileMetricItem(
             AnimatedShimmerBox(
                 modifier = Modifier
                     .width(48.dp)
-                    .height(18.dp)
+                    .height(14.dp)
                     .clip(RoundedCornerShape(4.dp))
             )
         } else {
