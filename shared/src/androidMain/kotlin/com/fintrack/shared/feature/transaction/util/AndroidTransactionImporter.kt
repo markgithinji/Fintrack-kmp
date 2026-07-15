@@ -35,12 +35,25 @@ actual fun createTransactionImporter(
 
             if (targetAccountId != null) {
                 val targetAccount = accounts.find { it.id == targetAccountId }
+                val hasMpesa = targetAccount?.linkedSources?.contains("mpesa") == true || 
+                              targetAccount?.type == AccountType.MPESA || 
+                              targetAccount?.name?.lowercase() == "mpesa"
+                
+                val hasEquity = targetAccount?.linkedSources?.contains("equity") == true || 
+                               targetAccount?.type == AccountType.EQUITY || 
+                               targetAccount?.name?.lowercase()?.contains("equity") == true
+
                 when {
-                    targetAccount?.type == AccountType.MPESA || targetAccount?.name?.lowercase() == "mpesa" -> {
+                    hasMpesa && hasEquity -> {
+                        logger.info("SYNC_FLOW", "Importing both Mpesa and Equity for account: $targetAccountId")
+                        mpesaImporter.importHistory(targetAccountId) { onProgress(it * 0.5f) }
+                        equityImporter.importHistory(targetAccountId) { onProgress(0.5f + (it * 0.5f)) }
+                    }
+                    hasMpesa -> {
                         logger.info("SYNC_FLOW", "Importing specific Mpesa account: $targetAccountId")
                         mpesaImporter.importHistory(targetAccountId, onProgress)
                     }
-                    targetAccount?.type == AccountType.EQUITY || targetAccount?.name?.lowercase()?.contains("equity") == true -> {
+                    hasEquity -> {
                         logger.info("SYNC_FLOW", "Importing specific Equity account: $targetAccountId")
                         equityImporter.importHistory(targetAccountId, onProgress)
                     }
@@ -52,8 +65,12 @@ actual fun createTransactionImporter(
                 return
             }
 
-            val mpesaAccount = accounts.find { (it.type == AccountType.MPESA) || (it.name.lowercase() == "mpesa") }
-            val equityAccount = accounts.find { (it.type == AccountType.EQUITY) || (it.name.lowercase().contains("equity")) }
+            val mpesaAccount = accounts.find { 
+                it.linkedSources.contains("mpesa") || it.type == AccountType.MPESA || it.name.lowercase() == "mpesa" 
+            }
+            val equityAccount = accounts.find { 
+                it.linkedSources.contains("equity") || it.type == AccountType.EQUITY || it.name.lowercase().contains("equity") 
+            }
 
             logger.info("SYNC_FLOW", "Found accounts for global sync - Mpesa: ${mpesaAccount?.id}, Equity: ${equityAccount?.id}")
 

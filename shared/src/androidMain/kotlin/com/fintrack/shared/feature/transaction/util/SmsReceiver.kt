@@ -102,11 +102,11 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                     val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
                     
                     val accountId = if (isMpesa) {
-                        accounts.find { it.type == AccountType.MPESA }?.id
+                        accounts.find { it.linkedSources.contains("mpesa") || it.type == AccountType.MPESA }?.id
                             ?: accounts.find { it.name.lowercase() == "mpesa" }?.id 
                             ?: "mpesa"
                     } else {
-                        accounts.find { it.type == AccountType.EQUITY }?.id
+                        accounts.find { it.linkedSources.contains("equity") || it.type == AccountType.EQUITY }?.id
                             ?: accounts.find { it.name.lowercase().contains("equity") }?.id 
                             ?: "equity"
                     }

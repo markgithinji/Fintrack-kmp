@@ -77,11 +77,14 @@ class AccountsViewModel(
     }
 
     fun saveAccount(account: Account) {
+        println("ACCOUNTS_DEBUG: ViewModel saveAccount called for: ${account.name} (ID: ${account.id})")
         viewModelScope.launch {
             _saveResult.value = Result.Loading
             val result = repo.addOrUpdateAccount(account)
+            println("ACCOUNTS_DEBUG: Repository result: $result")
             _saveResult.value = result
             if (result is Result.Success) {
+                println("ACCOUNTS_DEBUG: Save SUCCESS - updating local state")
                 // Update local state immediately for a smooth transition
                 val currentResult = _accounts.value
                 if (currentResult is Result.Success) {

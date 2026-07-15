@@ -10,5 +10,6 @@ data class CreateAccountRequest(
     val name: String,
     val type: AccountType,
     @Serializable(with = BigDecimalSerializer::class)
-    val balance: BigDecimal? = null
+    val balance: BigDecimal? = null,
+    val linkedSources: List<String> = emptyList()
 )

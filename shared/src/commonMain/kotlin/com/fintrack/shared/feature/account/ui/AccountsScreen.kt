@@ -112,9 +112,20 @@ fun AccountsScreen(
         }
     }
 
+    var pendingDefaultAccountId by remember { mutableStateOf<String?>(null) }
+
     LaunchedEffect(saveResult) {
-        if (saveResult is Result.Success) {
+        val result = saveResult
+        if (result is Result.Success) {
             toastMessage = (if (isEditing) "Account updated" else "Account added") to false
+            
+            // Handle pending default account assignment for new accounts
+            pendingDefaultAccountId?.let {
+                if (it == "NEW_ACCOUNT_PENDING") {
+                    settingsViewModel.setDefaultAccountId(result.data.id)
+                }
+                pendingDefaultAccountId = null
+            }
         }
     }
 
@@ -233,12 +244,25 @@ fun AccountsScreen(
                 }
             },
             onClearResults = { accountsViewModel.clearResults() },
-            onConfirm = { name, type, isDefault ->
-                accountsViewModel.saveAccount(account.copy(name = name, type = type))
-                if (isDefault) {
-                    settingsViewModel.setDefaultAccountId(account.id)
-                } else if (account.id == defaultAccountId) {
-                    settingsViewModel.setDefaultAccountId(null)
+            onConfirm = { name, type, sources, isDefault ->
+                println("ACCOUNTS_DEBUG: onConfirm clicked - Name: $name, Sources: $sources, isDefault: $isDefault")
+                accountsViewModel.saveAccount(account.copy(
+                    name = name, 
+                    type = type, 
+                    isDefault = isDefault,
+                    linkedSources = sources
+                ))
+                if (account.id.isNotEmpty()) {
+                    if (isDefault) {
+                        println("ACCOUNTS_DEBUG: Setting default account ID: ${account.id}")
+                        settingsViewModel.setDefaultAccountId(account.id)
+                    } else if (account.id == defaultAccountId) {
+                        println("ACCOUNTS_DEBUG: Clearing default account ID")
+                        settingsViewModel.setDefaultAccountId(null)
+                    }
+                } else if (isDefault) {
+                    println("ACCOUNTS_DEBUG: New account pending default assignment")
+                    pendingDefaultAccountId = "NEW_ACCOUNT_PENDING"
                 }
             }
         )
@@ -499,12 +523,13 @@ fun AccountDialog(
     onDelete: () -> Unit,
     onClearData: () -> Unit,
     onClearResults: () -> Unit,
-    onConfirm: (String, AccountType, Boolean) -> Unit
+    onConfirm: (String, AccountType, List<String>, Boolean) -> Unit
 ) {
     var accountName by remember(account.id) { mutableStateOf(account.name) }
     var type by remember(account.id) { mutableStateOf(accountType) }
+    var linkedSources by remember(account.id) { mutableStateOf(account.linkedSources.toSet()) }
     var isDefault by remember(account.id) { 
-        mutableStateOf(isDefaultSelection || (type == AccountType.MPESA && !isOtherAccountDefault)) 
+        mutableStateOf(isDefaultSelection || (type == AccountType.MPESA && !isOtherAccountDefault))
     }
     var showClearDataConfirm by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -514,7 +539,10 @@ fun AccountDialog(
 
     val hasChanges = accountName != account.name ||
             type != accountType ||
-            isDefault != isDefaultSelection
+            isDefault != isDefaultSelection ||
+            linkedSources != account.linkedSources.toSet()
+
+    println("ACCOUNTS_DEBUG: Dialog State - NameChanged: ${accountName != account.name}, TypeChanged: ${type != accountType}, DefaultChanged: ${isDefault != isDefaultSelection}, hasChanges: $hasChanges")
 
     val saveError = (saveResult as? Result.Error)?.let {
         (it.exception as? ApiException)?.getUserFriendlyMessage()
@@ -665,10 +693,13 @@ fun AccountDialog(
                                 title = "M-Pesa SMS Link",
                                 subtitle = "Auto-track transactions",
                                 icon = Icons.Default.Smartphone,
-                                checked = type == AccountType.MPESA,
-                                onCheckedChange = {
-                                    type = if (it) AccountType.MPESA else AccountType.GENERAL
-                                    if (it && !isOtherAccountDefault) isDefault = true
+                                checked = linkedSources.contains("mpesa"),
+                                onCheckedChange = { checked ->
+                                    linkedSources = if (checked) linkedSources + "mpesa" else linkedSources - "mpesa"
+                                    // Only auto-set default if the actual account type is MPESA
+                                    if (checked && type == AccountType.MPESA && !isOtherAccountDefault) {
+                                        isDefault = true
+                                    }
                                 },
                                 enabled = !isEffectivelyLoading
                             )
@@ -677,15 +708,14 @@ fun AccountDialog(
                                 title = "Equity Bank SMS Link",
                                 subtitle = "Auto-track bank transactions",
                                 icon = Icons.Default.AccountBalance,
-                                checked = type == AccountType.EQUITY,
-                                onCheckedChange = {
-                                    type = if (it) AccountType.EQUITY else AccountType.GENERAL
+                                checked = linkedSources.contains("equity"),
+                                onCheckedChange = { checked ->
+                                    linkedSources = if (checked) linkedSources + "equity" else linkedSources - "equity"
                                 },
                                 enabled = !isEffectivelyLoading
                             )
 
-                            val isDefaultLocked =
-                                type == AccountType.MPESA && !isOtherAccountDefault
+                            val isDefaultLocked = type == AccountType.MPESA && !isOtherAccountDefault
                             AccountOptionRow(
                                 title = "Set as Default",
                                 subtitle = if (isDefaultLocked) "M-Pesa is default when no other account is set" else "Loads this account first",
@@ -728,6 +758,7 @@ fun AccountDialog(
                             if (accountName.isNotBlank()) onConfirm(
                                 accountName,
                                 type,
+                                linkedSources.toList(),
                                 isDefault
                             )
                         },

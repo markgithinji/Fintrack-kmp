@@ -35,7 +35,7 @@ class MpesaImporter(
         
         val accountsResult = accountRepository.getAccounts()
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
-        val accountId = targetAccountId ?: accounts.find { it.type == AccountType.MPESA }?.id
+        val accountId = targetAccountId ?: accounts.find { it.linkedSources.contains("mpesa") || it.type == AccountType.MPESA }?.id
             ?: accounts.find { it.name.lowercase() == "mpesa" }?.id 
             ?: "mpesa"
 

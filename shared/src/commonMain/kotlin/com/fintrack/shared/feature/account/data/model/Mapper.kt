@@ -6,14 +6,16 @@ import com.fintrack.shared.feature.account.domain.model.AccountType
 fun Account.toCreateRequest(): CreateAccountRequest = CreateAccountRequest(
     name = this.name,
     type = this.type,
-    balance = this.balance
+    balance = this.balance,
+    linkedSources = this.linkedSources
 )
 
 fun Account.toUpdateRequest(): UpdateAccountRequest = UpdateAccountRequest(
     name = this.name,
     type = this.type,
     balance = this.balance,
-    lastSyncedAt = this.lastSyncedAt
+    lastSyncedAt = this.lastSyncedAt,
+    linkedSources = this.linkedSources
 )
 
 fun AccountDto.toDomain(): Account = Account(
@@ -24,6 +26,7 @@ fun AccountDto.toDomain(): Account = Account(
     expense = this.expense,
     isDefault = this.isDefault ?: false,
     type = this.type ?: AccountType.GENERAL,
+    linkedSources = this.linkedSources ?: emptyList(),
     createdAt = this.createdAt,
     lastSyncedAt = this.lastSyncedAt
 )

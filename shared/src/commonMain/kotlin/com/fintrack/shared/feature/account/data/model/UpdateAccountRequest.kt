@@ -12,5 +12,6 @@ data class UpdateAccountRequest(
     val type: AccountType,
     @Serializable(with = BigDecimalSerializer::class)
     val balance: BigDecimal? = null,
-    val lastSyncedAt: Instant? = null
+    val lastSyncedAt: Instant? = null,
+    val linkedSources: List<String> = emptyList()
 )
