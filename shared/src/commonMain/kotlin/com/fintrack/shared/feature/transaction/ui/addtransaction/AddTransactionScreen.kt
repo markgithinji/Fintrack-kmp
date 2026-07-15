@@ -451,7 +451,7 @@ fun TransactionCostSection(
                             Box(contentAlignment = Alignment.CenterStart) {
                                 if (cost.isEmpty()) {
                                     Text(
-                                        "0.00",
+                                        "0",
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                                     )
