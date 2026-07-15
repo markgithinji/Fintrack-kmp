@@ -404,33 +404,33 @@ private fun LoadingCategoryComparisonItem(isLast: Boolean) {
                     AnimatedShimmerBox(
                         modifier = Modifier
                             .width(100.dp)
-                            .height(20.dp)
+                            .height(18.dp)
                             .clip(RoundedCornerShape(4.dp))
                     )
                     AnimatedShimmerBox(
                         modifier = Modifier
                             .width(80.dp)
-                            .height(20.dp)
+                            .height(18.dp)
                             .clip(RoundedCornerShape(4.dp))
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 AnimatedShimmerBox(
                     modifier = Modifier
-                        .width(160.dp)
-                        .height(32.dp)
+                        .fillMaxWidth()
+                        .height(26.dp)
                         .clip(RoundedCornerShape(12.dp))
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
 
                 AnimatedShimmerBox(
                     modifier = Modifier
                         .padding(start = 4.dp)
                         .width(180.dp)
-                        .height(14.dp)
+                        .height(12.dp)
                         .clip(RoundedCornerShape(4.dp))
                 )
             }
