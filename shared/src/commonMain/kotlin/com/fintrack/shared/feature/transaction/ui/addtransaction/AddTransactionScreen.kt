@@ -5,8 +5,10 @@ import androidx.compose.animation.core.*
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -32,16 +34,9 @@ import com.fintrack.shared.feature.budget.ui.AccountSelectionSection
 import com.fintrack.shared.feature.core.data.model.ApiException
 import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.TextLayoutResult
 import com.fintrack.shared.feature.core.ui.*
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.util.Result
@@ -59,7 +54,6 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.Clock
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -194,7 +188,6 @@ fun AddTransactionScreen(
                 TransactionCostSection(
                     cost = formState.transactionCost,
                     selectionStart = formState.costSelectionStart,
-                    selectionEnd = formState.costSelectionEnd,
                     onSelectionChange = { start, end -> transactionsViewModel.onCostSelectionChange(start, end) },
                     isActive = showNumpad && numpadTarget == NumpadTarget.TransactionCost,
                     onClick = {
@@ -364,7 +357,7 @@ fun AddTransactionScreen(
                 onDismiss = { transactionsViewModel.clearValidationError() },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = paddingValues.calculateBottomPadding() + 32.dp)
+                    .padding(bottom = paddingValues.calculateBottomPadding() + 80.dp)
             )
         }
 
@@ -377,7 +370,7 @@ fun AddTransactionScreen(
                 onDismiss = { transactionsViewModel.resetSaveState() },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = paddingValues.calculateBottomPadding() + 32.dp)
+                    .padding(bottom = paddingValues.calculateBottomPadding() + 80.dp)
             )
         }
     }
@@ -387,19 +380,32 @@ fun AddTransactionScreen(
 fun TransactionCostSection(
     cost: String,
     selectionStart: Int,
-    selectionEnd: Int,
     onSelectionChange: (Int, Int) -> Unit,
     isActive: Boolean,
     onClick: () -> Unit
 ) {
-    val focusRequester = remember { FocusRequester() }
-    val keyboardController = LocalSoftwareKeyboardController.current
+    var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+    val infiniteTransition = rememberInfiniteTransition(label = "cursor")
+    val cursorAlpha by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 500),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "cursorAlpha"
+    )
 
-    LaunchedEffect(isActive) {
-        if (isActive) {
-            focusRequester.requestFocus()
-            keyboardController?.hide()
-        }
+    val transformedCost = remember(cost) {
+        if (cost.isEmpty()) return@remember "0"
+        val parts = cost.split(".")
+        val integerPart = parts[0].reversed().chunked(3).joinToString(",").reversed()
+        val decimalPart = if (parts.size > 1) "." + parts[1] else ""
+        (if (integerPart.isEmpty() && decimalPart.isNotEmpty()) "0" else integerPart) + decimalPart
+    }
+
+    val offsetMapping = remember(cost) {
+        ThousandsSeparatorOffsetMapping(cost)
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -417,55 +423,54 @@ fun TransactionCostSection(
             Row(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.Start
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Payments, null, tint = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(12.dp))
-                    
-                    val textFieldValue = remember(cost, selectionStart, selectionEnd) {
-                        TextFieldValue(
-                            text = cost,
-                            selection = TextRange(selectionStart, selectionEnd)
-                        )
-                    }
-
-                    BasicTextField(
-                        value = textFieldValue,
-                        onValueChange = { 
-                            onSelectionChange(it.selection.start, it.selection.end)
-                            keyboardController?.hide()
-                        },
-                        modifier = Modifier
-                            .focusRequester(focusRequester)
-                            .widthIn(min = 1.dp),
-                        readOnly = !isActive,
-                        textStyle = MaterialTheme.typography.bodyLarge.copy(
+                Icon(
+                    Icons.Default.Payments, 
+                    null, 
+                    tint = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, 
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(12.dp))
+                
+                Box(contentAlignment = Alignment.CenterStart, modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = transformedCost,
+                        style = MaterialTheme.typography.bodyLarge.copy(
                             color = if (cost.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurface
                         ),
-                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        visualTransformation = ThousandsSeparatorTransformation(),
-                        singleLine = true,
-                        decorationBox = { innerTextField ->
-                            Box(contentAlignment = Alignment.CenterStart) {
-                                if (cost.isEmpty()) {
-                                    Text(
-                                        "0",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                                    )
+                        onTextLayout = { textLayoutResult = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .pointerInput(cost) {
+                                detectTapGestures { offset ->
+                                    textLayoutResult?.let { layout ->
+                                        val transformedIndex = layout.getOffsetForPosition(offset)
+                                        val originalIndex = offsetMapping.transformedToOriginal(transformedIndex)
+                                        onSelectionChange(originalIndex, originalIndex)
+                                        onClick()
+                                    }
                                 }
-                                innerTextField()
+                            }
+                    )
+
+                    if (isActive) {
+                        val cursorColor = MaterialTheme.colorScheme.primary
+                        Canvas(modifier = Modifier.matchParentSize()) {
+                            textLayoutResult?.let { layout ->
+                                val transformedIndex = offsetMapping.originalToTransformed(selectionStart)
+                                val cursorRect = layout.getCursorRect(transformedIndex.coerceIn(0, transformedCost.length))
+                                
+                                drawLine(
+                                    color = cursorColor.copy(alpha = cursorAlpha),
+                                    start = Offset(cursorRect.left, cursorRect.top + 2.dp.toPx()),
+                                    end = Offset(cursorRect.left, cursorRect.bottom - 2.dp.toPx()),
+                                    strokeWidth = 2.dp.toPx()
+                                )
                             }
                         }
-                    )
-                    
-                    LaunchedEffect(textFieldValue) {
-                        if (isActive) keyboardController?.hide()
                     }
                 }
-                Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
