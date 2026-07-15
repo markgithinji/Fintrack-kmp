@@ -633,24 +633,54 @@ fun BudgetScreenLoadingState(paddingValues: PaddingValues = PaddingValues(0.dp))
             Card(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
+                val shimmerColors = listOf(
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f),
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.05f),
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f),
+                )
                 Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    AnimatedShimmerBox(modifier = Modifier.width(120.dp).height(20.dp))
-                    AnimatedShimmerBox(modifier = Modifier.width(180.dp).height(32.dp))
-                    AnimatedShimmerBox(modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape))
+                    AnimatedShimmerBox(
+                        modifier = Modifier.width(120.dp).height(20.dp).clip(RoundedCornerShape(4.dp)),
+                        shimmerColors = shimmerColors
+                    )
+                    AnimatedShimmerBox(
+                        modifier = Modifier.width(180.dp).height(32.dp).clip(RoundedCornerShape(8.dp)),
+                        shimmerColors = shimmerColors
+                    )
+                    AnimatedShimmerBox(
+                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
+                        shimmerColors = shimmerColors
+                    )
                 }
             }
         }
 
         item {
-            AnimatedShimmerBox(
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .height(72.dp)
-                    .clip(RoundedCornerShape(20.dp))
-            )
+                    .height(72.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                AnimatedShimmerBox(
+                    modifier = Modifier.fillMaxSize(),
+                    shimmerColors = listOf(
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f),
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.03f),
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f),
+                    )
+                )
+            }
         }
 
         items(3) {

@@ -18,14 +18,13 @@ import androidx.compose.ui.graphics.Color
 
 @Composable
 fun AnimatedShimmerBox(
-    modifier: Modifier = Modifier
-) {
-    val shimmerColors = listOf(
+    modifier: Modifier = Modifier,
+    shimmerColors: List<Color> = listOf(
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
     )
-
+) {
     val transition = rememberInfiniteTransition()
     val translateAnim by transition.animateFloat(
         initialValue = 0f,
