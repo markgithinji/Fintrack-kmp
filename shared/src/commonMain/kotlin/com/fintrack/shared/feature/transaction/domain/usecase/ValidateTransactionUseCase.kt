@@ -2,6 +2,7 @@ package com.fintrack.shared.feature.transaction.domain.usecase
 
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.category.domain.model.Category
+import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 
@@ -12,29 +13,24 @@ class ValidateTransactionUseCase {
         description: String,
         category: Category?,
         selectedAccount: Account?
-    ): TransactionValidationResult {
+    ): ValidationResult {
         val parsedAmount = try { amount.toBigDecimal() } catch (_: Exception) { null }
         val parsedCost = try { transactionCost.toBigDecimal() } catch (_: Exception) { null }
 
         return when {
-            amount.isBlank() -> TransactionValidationResult.Invalid("Please enter an amount")
-            parsedAmount == null -> TransactionValidationResult.Invalid("Please enter a valid amount")
-            parsedAmount <= BigDecimal.ZERO -> TransactionValidationResult.Invalid("Amount must be greater than zero")
+            amount.isBlank() -> ValidationResult.Error("Please enter an amount")
+            parsedAmount == null -> ValidationResult.Error("Please enter a valid amount")
+            parsedAmount <= BigDecimal.ZERO -> ValidationResult.Error("Amount must be greater than zero")
             
             transactionCost.isNotBlank() && parsedCost == null -> 
-                TransactionValidationResult.Invalid("Please enter a valid transaction cost")
+                ValidationResult.Error("Please enter a valid transaction cost")
             parsedCost != null && parsedCost < BigDecimal.ZERO ->
-                TransactionValidationResult.Invalid("Transaction cost cannot be negative")
+                ValidationResult.Error("Transaction cost cannot be negative")
 
-            category == null -> TransactionValidationResult.Invalid("Please select a category")
-            selectedAccount == null -> TransactionValidationResult.Invalid("Please select an account")
-            description.isBlank() -> TransactionValidationResult.Invalid("Please enter a description")
-            else -> TransactionValidationResult.Valid
+            category == null -> ValidationResult.Error("Please select a category")
+            selectedAccount == null -> ValidationResult.Error("Please select an account")
+            description.isBlank() -> ValidationResult.Error("Please enter a description")
+            else -> ValidationResult.Success
         }
-    }
-
-    sealed class TransactionValidationResult {
-        object Valid : TransactionValidationResult()
-        data class Invalid(val errorMessage: String) : TransactionValidationResult()
     }
 }

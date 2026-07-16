@@ -9,7 +9,6 @@ import com.fintrack.shared.feature.auth.domain.usecase.ChangePasswordValidationU
 import com.fintrack.shared.feature.auth.domain.usecase.LoginValidationUseCase
 import com.fintrack.shared.feature.auth.domain.usecase.RegisterValidationUseCase
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
-import com.fintrack.shared.feature.core.data.remote.ApiConfig
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf

@@ -98,7 +98,6 @@ fun TransactionListScreen(
         )
     }
 
-    // Stabilize the viewport height during transitions to prevent list jumping
     val bottomPadding = paddingValues.calculateBottomPadding()
     var lastBottomPadding by remember { mutableStateOf(0.dp) }
     SideEffect {
@@ -112,7 +111,6 @@ fun TransactionListScreen(
     val isExiting = transition.targetState == androidx.compose.animation.EnterExitState.PostExit || 
                    transition.targetState == androidx.compose.animation.EnterExitState.PreEnter
 
-    // FORCE-LOCK the padding if we are anywhere near a transition state or raw padding is 0
     val stableBottomPadding = if (isTransitionRunning || isExiting || (bottomPadding == 0.dp && lastBottomPadding > 0.dp)) {
         lastBottomPadding
     } else {

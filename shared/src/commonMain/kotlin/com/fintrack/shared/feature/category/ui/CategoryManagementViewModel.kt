@@ -16,14 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class CategoryManagementState(
-    val categories: List<Category> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null
-)
-
 class CategoryManagementViewModel(
-    private val localDataSource: LocalCategoryDataSource,
+    private val localCategoryDataSource: LocalCategoryDataSource,
     private val syncCategoriesUseCase: SyncCategoriesUseCase,
     private val addCategoryUseCase: AddCategoryUseCase,
     private val deleteCategoryUseCase: DeleteCategoryUseCase
@@ -33,9 +27,8 @@ class CategoryManagementViewModel(
     val state: StateFlow<CategoryManagementState> = _state.asStateFlow()
 
     init {
-        // Collect external category updates and merge them into our unified state
         viewModelScope.launch {
-            localDataSource.categories.collect { categories ->
+            localCategoryDataSource.categories.collect { categories ->
                 _state.update { it.copy(categories = categories) }
             }
         }

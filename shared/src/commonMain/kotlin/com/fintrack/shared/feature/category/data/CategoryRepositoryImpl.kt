@@ -8,7 +8,8 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.safeApiCall
 
 class CategoryRepositoryImpl(
-    private val categoryApi: CategoryApi
+    private val categoryApi: CategoryApi,
+    private val localDataSource: LocalCategoryDataSource
 ) : CategoryRepository {
 
     override suspend fun getCategories(): Result<List<Category>> = safeApiCall {
@@ -16,8 +17,13 @@ class CategoryRepositoryImpl(
         dtos.map { it.toDomain() }
     }
 
-    override suspend fun getCategoryRules(): Result<List<CategoryRule>> = safeApiCall {
-        categoryApi.getCategoryRules()
+    override suspend fun getCategoryRules(): Result<List<CategoryRule>> {
+        localDataSource.rules?.let { return Result.Success(it) }
+        return safeApiCall {
+            categoryApi.getCategoryRules().also { 
+                localDataSource.updateRules(it)
+            }
+        }
     }
 
     override suspend fun addCategory(name: String, isExpense: Boolean, iconName: String?): Result<Category> = safeApiCall {

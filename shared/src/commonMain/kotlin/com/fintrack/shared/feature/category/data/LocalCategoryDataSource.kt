@@ -11,18 +11,18 @@ class LocalCategoryDataSource {
     private val _categories = MutableStateFlow(Category.allCategories)
     val categories: StateFlow<List<Category>> = _categories.asStateFlow()
 
-    private val _categoryRules = MutableStateFlow<List<CategoryRule>>(emptyList())
-    val categoryRules: StateFlow<List<CategoryRule>> = _categoryRules.asStateFlow()
+    private var _rules: List<CategoryRule>? = null
+    val rules: List<CategoryRule>? get() = _rules
+
+    fun updateRules(newRules: List<CategoryRule>) {
+        _rules = newRules
+    }
 
     fun updateCategories(newCategories: List<Category>) {
         _categories.update { 
             (Category.allCategories + newCategories)
                 .distinctBy { it.name.lowercase() to it.isExpense }
         }
-    }
-
-    fun updateCategoryRules(newRules: List<CategoryRule>) {
-        _categoryRules.update { newRules }
     }
 
     fun addCategory(category: Category) {

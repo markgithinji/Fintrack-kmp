@@ -18,7 +18,7 @@ val transactionModule = module {
 
     single { ValidateTransactionUseCase() }
     single { CreateTransactionUseCase() }
-    single { ExportTransactionsUseCase(repository = get(), fileSaver = get()) }
+    single { ExportTransactionsUseCase(transactionRepository = get(), fileSaver = get()) }
     single {
         SyncRecurringBillsUseCase(
             transactionRepository = get(),

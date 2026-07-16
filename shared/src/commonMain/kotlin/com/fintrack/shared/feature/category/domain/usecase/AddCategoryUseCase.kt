@@ -6,11 +6,11 @@ import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.core.util.Result
 
 class AddCategoryUseCase(
-    private val repository: CategoryRepository,
+    private val categoryRepository: CategoryRepository,
     private val localDataSource: LocalCategoryDataSource
 ) {
     suspend operator fun invoke(name: String, isExpense: Boolean, iconName: String? = null): Result<Category> {
-        return when (val result = repository.addCategory(name, isExpense, iconName)) {
+        return when (val result = categoryRepository.addCategory(name, isExpense, iconName)) {
             is Result.Success -> {
                 localDataSource.addCategory(result.data)
                 Result.Success(result.data)

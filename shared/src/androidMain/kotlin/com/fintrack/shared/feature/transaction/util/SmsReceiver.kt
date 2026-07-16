@@ -69,6 +69,7 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                       sender?.equals("EQUITY", ignoreCase = true) == true
 
         if (isMpesa || isEquity) {
+            /* PAUSED FOR NOW
             val pendingResult = goAsync()
             CoroutineScope(Dispatchers.IO).launch {
                 try {
@@ -175,6 +176,7 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                     pendingResult.finish()
                 }
             }
+            */
         }
     }
 }

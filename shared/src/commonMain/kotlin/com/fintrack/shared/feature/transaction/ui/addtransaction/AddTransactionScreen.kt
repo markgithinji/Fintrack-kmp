@@ -2,7 +2,6 @@ package com.fintrack.shared.feature.transaction.ui.addtransaction
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -44,8 +43,7 @@ import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.settings.domain.util.format
 import com.fintrack.shared.feature.navigation.ui.LocalTimeFormat
 import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
-import com.fintrack.shared.feature.category.domain.model.Category
-import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import com.fintrack.shared.feature.core.ui.util.ThousandsSeparatorOffsetMapping
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import kotlinx.coroutines.delay
 import kotlinx.datetime.LocalDateTime

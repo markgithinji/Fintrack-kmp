@@ -424,7 +424,7 @@ class StatisticsViewModel(
                 CategoryComparisonSummary(
                     period = "",
                     isCurrent = false,
-                    data = emptyList<CategoryComparison>()
+                    data = emptyList()
                 )
             )
         }

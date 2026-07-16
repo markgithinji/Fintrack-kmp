@@ -72,7 +72,5 @@ fun BigDecimal.toDouble(): Double = try {
 
 fun BigDecimal.toInt(): Int = this.toDouble().toInt()
 
-// Keep Double extensions for compatibility where needed, converting to BigDecimal
-fun Double.formatToSinglePrecision(): String = try { BigDecimal.fromDouble(this).formatToSinglePrecision() } catch(e: Exception) { this.toString() }
 fun Double.formatToCurrency(symbol: String = "KSh", showDecimals: Boolean = true): String = try { BigDecimal.fromDouble(this).formatToCurrency(symbol, showDecimals) } catch(e: Exception) { "$symbol $this" }
 fun Double.formatToAmount(showDecimals: Boolean = true): String = try { BigDecimal.fromDouble(this).formatToAmount(showDecimals) } catch(e: Exception) { this.toString() }

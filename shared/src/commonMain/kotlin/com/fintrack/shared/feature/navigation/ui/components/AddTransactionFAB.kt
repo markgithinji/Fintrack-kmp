@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.navigation.ui
+package com.fintrack.shared.feature.navigation.ui.components
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -10,18 +10,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.fintrack.shared.feature.navigation.model.AppBarState
-
-@Composable
-fun AppTopBar(
-    appBarState: AppBarState
-) {
-    TopBar(
-        title = appBarState.title,
-        showBackButton = appBarState.showBackButton,
-        onBack = appBarState.onBack
-    )
-}
 
 @Composable
 fun AddTransactionFAB(

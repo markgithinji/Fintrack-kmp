@@ -13,16 +13,21 @@ import org.koin.dsl.module
 
 val categoryModule = module {
     single { CategoryApi(client = get()) }
-    single<CategoryRepository> { CategoryRepositoryImpl(categoryApi = get()) }
     single { LocalCategoryDataSource() }
+    single<CategoryRepository> { 
+        CategoryRepositoryImpl(
+            categoryApi = get(),
+            localDataSource = get()
+        ) 
+    }
     
     single { SyncCategoriesUseCase(repository = get(), localDataSource = get()) }
-    single { AddCategoryUseCase(repository = get(), localDataSource = get()) }
+    single { AddCategoryUseCase(categoryRepository = get(), localDataSource = get()) }
     single { DeleteCategoryUseCase(repository = get(), localDataSource = get()) }
 
     viewModel { 
         CategoryManagementViewModel(
-            localDataSource = get(),
+            localCategoryDataSource = get(),
             syncCategoriesUseCase = get(),
             addCategoryUseCase = get(),
             deleteCategoryUseCase = get()

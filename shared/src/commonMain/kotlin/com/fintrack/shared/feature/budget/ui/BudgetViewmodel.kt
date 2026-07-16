@@ -134,12 +134,6 @@ class BudgetViewModel(
         )
     }
 
-    fun refreshCategories() {
-        viewModelScope.launch {
-            syncCategoriesUseCase()
-        }
-    }
-
     fun toggleAccount(account: Account) {
         _formState.update { state ->
             val updatedAccounts = if (state.selectedAccounts.any { it.id == account.id }) {

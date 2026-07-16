@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
-
 @Composable
 fun DonutChartSection(
     categorySums: List<Pair<String, Float>>,
@@ -39,7 +38,7 @@ fun DonutChartSection(
         topForChart.add("Others" to othersTotal)
     }
 
-    val chartColors = topForChart.mapIndexed { index, _ ->
+    val chartColors = List(topForChart.size) { index ->
         if (index < 4) SegmentColors[index] else SegmentColors.last()
     }
 

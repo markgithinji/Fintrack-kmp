@@ -7,22 +7,20 @@ import com.fintrack.shared.feature.auth.domain.model.AuthResponse
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.auth.domain.model.LoginFormState
 import com.fintrack.shared.feature.auth.domain.model.RegisterFormState
-import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
 import com.fintrack.shared.feature.auth.domain.usecase.LoginValidationUseCase
 import com.fintrack.shared.feature.auth.domain.usecase.RegisterValidationUseCase
+import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.logger.LogTags
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class AuthViewModel(
@@ -84,7 +82,7 @@ class AuthViewModel(
                     // This avoids the race condition at startup where a cached token might 
                     // set Success(true) before validateToken has finished.
                     if (currentStatus is AuthState.Success && !currentStatus.data) {
-                        
+
                         // If we are currently logging in or just succeeded, delay to let UI show success
                         if (_loginState.value !is AuthState.Idle || _registerState.value !is AuthState.Idle) {
                             delay(1000)
@@ -259,7 +257,8 @@ class AuthViewModel(
             password = currentState.password,
             confirmPassword = currentState.confirmPassword
         )
-        val confirmPasswordError = (result.confirmPasswordResult as? ValidationResult.Error)?.message
+        val confirmPasswordError =
+            (result.confirmPasswordResult as? ValidationResult.Error)?.message
         _registerFormState.value = currentState.copy(confirmPasswordError = confirmPasswordError)
     }
 
@@ -281,7 +280,11 @@ class AuthViewModel(
                 }
 
                 is Result.Error -> {
-                    logger.error(LogTags.AUTH, "Registration failed for ${formState.email}: ${result.exception.message}", result.exception)
+                    logger.error(
+                        LogTags.AUTH,
+                        "Registration failed for ${formState.email}: ${result.exception.message}",
+                        result.exception
+                    )
                     _registerState.value = AuthState.Error(result.exception)
                 }
 
@@ -314,7 +317,10 @@ class AuthViewModel(
 
                         _authStatus.value = AuthState.Success(true)
                     } else {
-                        logger.warning(LogTags.AUTH, "Token validation failed (invalid token). Clearing session.")
+                        logger.warning(
+                            LogTags.AUTH,
+                            "Token validation failed (invalid token). Clearing session."
+                        )
                         tokenDataSource.clearTokens()
                         _authStatus.value = AuthState.Success(false)
                     }
@@ -341,7 +347,7 @@ class AuthViewModel(
             } finally {
                 tokenDataSource.clearTokens()
                 _authStatus.value = AuthState.Success(false)
-                
+
                 // Reset states
                 _loginState.value = AuthState.Idle
                 _registerState.value = AuthState.Idle

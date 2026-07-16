@@ -9,6 +9,7 @@ import com.fintrack.shared.feature.category.data.LocalCategoryDataSource
 import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.category.domain.usecase.SyncCategoriesUseCase
 import com.fintrack.shared.feature.core.domain.SaveState
+import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatToTwoPrecision
@@ -28,8 +29,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 @OptIn(FlowPreview::class)
@@ -68,7 +67,6 @@ class TransactionViewModel(
 
     private val logger = KMPLogger()
 
-    private var lastAutoSyncTime: Instant? = null
     private var lastLoadedRecentAccountId: String? = null
     private var recentTransactionsJob: Job? = null
     private var importJob: Job? = null
@@ -84,12 +82,12 @@ class TransactionViewModel(
     }
 
     fun onAmountChange(newAmount: String, selectionStart: Int? = null, selectionEnd: Int? = null) {
-        _formState.update { 
+        _formState.update {
             it.copy(
                 amount = newAmount,
                 amountSelectionStart = selectionStart ?: newAmount.length,
                 amountSelectionEnd = selectionEnd ?: newAmount.length
-            ) 
+            )
         }
         _validationError.value = null
     }
@@ -108,7 +106,7 @@ class TransactionViewModel(
         if (amount.length >= 12 && start == end && start == amount.length) return
 
         val newAmount = amount.take(start) + input + amount.drop(end)
-        
+
         val newSelection = start + input.length
         onAmountChange(newAmount, newSelection, newSelection)
     }
@@ -133,13 +131,17 @@ class TransactionViewModel(
         onAmountChange(newAmount, newSelection, newSelection)
     }
 
-    fun onTransactionCostChange(newCost: String, selectionStart: Int? = null, selectionEnd: Int? = null) {
-        _formState.update { 
+    fun onTransactionCostChange(
+        newCost: String,
+        selectionStart: Int? = null,
+        selectionEnd: Int? = null
+    ) {
+        _formState.update {
             it.copy(
                 transactionCost = newCost,
                 costSelectionStart = selectionStart ?: newCost.length,
                 costSelectionEnd = selectionEnd ?: newCost.length
-            ) 
+            )
         }
         _validationError.value = null
     }
@@ -158,7 +160,7 @@ class TransactionViewModel(
         if (cost.length >= 10 && start == end && start == cost.length) return
 
         val newCost = cost.take(start) + input + cost.drop(end)
-        
+
         val newSelection = start + input.length
         onTransactionCostChange(newCost, newSelection, newSelection)
     }
@@ -230,13 +232,13 @@ class TransactionViewModel(
         )
 
         when (result) {
-            is ValidateTransactionUseCase.TransactionValidationResult.Valid -> {
+            is ValidationResult.Success -> {
                 _validationError.value = null
                 return true
             }
 
-            is ValidateTransactionUseCase.TransactionValidationResult.Invalid -> {
-                _validationError.value = result.errorMessage
+            is ValidationResult.Error -> {
+                _validationError.value = result.message
                 return false
             }
         }
@@ -491,6 +493,7 @@ class TransactionViewModel(
     }
 
     fun autoSyncTransactions(accountId: String? = null) {
+        /* PAUSED FOR NOW
         val now = Clock.System.now()
         val lastSync = lastAutoSyncTime
         
@@ -501,6 +504,7 @@ class TransactionViewModel(
         } else {
             logger.info("SYNC_FLOW", "Auto-sync skipped. Cooldown active. Last sync: $lastSync")
         }
+        */
     }
 
     fun resetImportState() {

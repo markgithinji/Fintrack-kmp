@@ -280,7 +280,7 @@ private fun SuccessContent(
         }
 
         val correlations = highlights.correlations
-        if (correlations != null && correlations.isNotEmpty()) {
+        if (!correlations.isNullOrEmpty()) {
             correlations.forEach { correlation ->
                 CorrelationCard(
                     correlation = correlation,

@@ -57,21 +57,21 @@ class TransactionApi(
         return response.result
     }
 
-    suspend fun addTransactions(requests: List<CreateTransactionRequest>): Unit {
+    suspend fun addTransactions(requests: List<CreateTransactionRequest>) {
         client.post("transactions/batch") {
             contentType(ContentType.Application.Json)
             setBody(requests)
         }.bodyAsText()
     }
 
-    suspend fun importMpesaTransactions(requests: List<CreateTransactionRequest>): Unit {
+    suspend fun importMpesaTransactions(requests: List<CreateTransactionRequest>) {
         client.post("transactions/mpesa") {
             contentType(ContentType.Application.Json)
             setBody(requests)
         }.bodyAsText()
     }
 
-    suspend fun importEquityTransactions(requests: List<CreateTransactionRequest>): Unit {
+    suspend fun importEquityTransactions(requests: List<CreateTransactionRequest>) {
         client.post("transactions/equity") {
             contentType(ContentType.Application.Json)
             setBody(requests)

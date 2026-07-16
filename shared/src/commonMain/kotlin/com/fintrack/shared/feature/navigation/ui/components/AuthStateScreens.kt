@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.navigation.ui
+package com.fintrack.shared.feature.navigation.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

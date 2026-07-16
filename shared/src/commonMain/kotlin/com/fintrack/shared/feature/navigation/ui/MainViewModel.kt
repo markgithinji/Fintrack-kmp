@@ -2,13 +2,12 @@ package com.fintrack.shared.feature.navigation.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fintrack.shared.feature.account.domain.usecase.GetAccountsUseCase
 import com.fintrack.shared.feature.budget.domain.usecase.CheckBudgetThresholdsUseCase
+import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.transaction.domain.usecase.SyncRecurringBillsUseCase
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
-import com.fintrack.shared.feature.account.domain.usecase.GetAccountsUseCase
-import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.navigation.model.AppBarState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,15 +30,6 @@ class MainViewModel(
 
     private val _refreshTrigger = MutableStateFlow(0)
     val refreshTrigger: StateFlow<Int> = _refreshTrigger.asStateFlow()
-
-    private val _appBarState = MutableStateFlow(AppBarState(title = "Home"))
-    val appBarState: StateFlow<AppBarState> = _appBarState.asStateFlow()
-
-    fun updateAppBarState(state: AppBarState) {
-        if (_appBarState.value != state) {
-            _appBarState.value = state
-        }
-    }
 
     // Global states that multiple screens care about
     val isBalanceHidden = settingsDataSource.isBalanceHidden

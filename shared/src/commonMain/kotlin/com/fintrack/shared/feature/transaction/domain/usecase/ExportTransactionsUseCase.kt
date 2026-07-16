@@ -9,10 +9,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
 import kotlin.time.Clock
-import kotlin.time.Instant
 
 class ExportTransactionsUseCase(
-    private val repository: TransactionRepository,
+    private val transactionRepository: TransactionRepository,
     private val fileSaver: FileSaver,
 ) {
     private val json = Json { prettyPrint = true }
@@ -22,7 +21,7 @@ class ExportTransactionsUseCase(
         startDate: String? = null,
         endDate: String? = null
     ): Result<String> {
-        val result = repository.getAllTransactions(
+        val result = transactionRepository.getAllTransactions(
             startDate = startDate,
             endDate = endDate
         )

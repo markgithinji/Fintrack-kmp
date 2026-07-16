@@ -110,7 +110,6 @@ fun LineChart(
     var selectedDay by remember { mutableStateOf<DaySummary?>(null) }
     var touchOffset by remember { mutableStateOf(Offset.Zero) }
 
-    val density = LocalDensity.current
     val minSpacingDp = 48.dp
     val totalChartWidthDp = (minSpacingDp * (sortedData.size - 1).coerceAtLeast(0)) + 32.dp
     val selectionLineColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)

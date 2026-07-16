@@ -66,8 +66,6 @@ fun HomeScreen(
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
     val importProgress by transactionsViewModel.importProgress.collectAsStateWithLifecycle()
     val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
-    
-    val logger = remember { KMPLogger() }
 
     var syncErrorMessage by remember { mutableStateOf<String?>(null) }
 

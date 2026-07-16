@@ -1,33 +1,4 @@
-package com.fintrack.shared.feature.core.ui
-
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.text.input.VisualTransformation
-
-class ThousandsSeparatorTransformation : VisualTransformation {
-    override fun filter(text: AnnotatedString): TransformedText {
-        val originalText = text.text
-        if (originalText.isEmpty()) {
-            return TransformedText(text, OffsetMapping.Identity)
-        }
-
-        val mapping = ThousandsSeparatorOffsetMapping(originalText)
-        
-        val parts = originalText.split(".")
-        val integerPart = parts[0]
-        val integerPartRev = integerPart.reversed().chunked(3).joinToString(",").reversed()
-        val decimalPart = if (parts.size > 1) "." + parts[1] else ""
-        val formatted = (if (integerPartRev.isEmpty() && decimalPart.isNotEmpty()) "0" else integerPartRev) + decimalPart
-
-        val offsetMapping = object : OffsetMapping {
-            override fun originalToTransformed(offset: Int): Int = mapping.originalToTransformed(offset)
-            override fun transformedToOriginal(offset: Int): Int = mapping.transformedToOriginal(offset)
-        }
-
-        return TransformedText(AnnotatedString(formatted), offsetMapping)
-    }
-}
+package com.fintrack.shared.feature.core.ui.util
 
 class ThousandsSeparatorOffsetMapping(private val originalText: String) {
     private val parts = originalText.split(".")

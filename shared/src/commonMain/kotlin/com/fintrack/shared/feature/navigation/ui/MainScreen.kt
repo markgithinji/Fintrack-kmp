@@ -21,6 +21,8 @@ import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import com.fintrack.shared.feature.auth.ui.LockScreen
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.navigation.model.Screen
+import com.fintrack.shared.feature.navigation.ui.components.AuthErrorScreen
+import com.fintrack.shared.feature.navigation.ui.components.AuthLoadingScreen
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import com.fintrack.shared.ui.theme.FinanceTrackerTheme
 import kotlinx.coroutines.delay
@@ -73,7 +75,7 @@ fun MainScreen(
                 // Handle initial navigation (e.g., from notifications)
                 LaunchedEffect(initialTransactionId, authStatusState) {
                     val auth = authStatusState
-                    if (initialTransactionId != null && auth is AuthState.Success && auth.data == true) {
+                    if (initialTransactionId != null && auth is AuthState.Success && auth.data) {
                         navController.navigate(Screen.AddTransaction(initialTransactionId))
                         onTransactionIdConsumed()
                     }

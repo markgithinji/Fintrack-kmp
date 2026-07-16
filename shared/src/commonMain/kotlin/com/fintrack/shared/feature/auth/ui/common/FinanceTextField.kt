@@ -58,7 +58,7 @@ fun FinanceTextField(
         onValueChange = onValueChange,
         modifier = modifier
             .fillMaxWidth()
-            .clip(shape) // Clip the background/autofill highlight
+            .clip(shape)
             .border(
                 width = 1.dp,
                 color = if (isError) colorScheme.error else colorScheme.outline.copy(alpha = 0.2f),

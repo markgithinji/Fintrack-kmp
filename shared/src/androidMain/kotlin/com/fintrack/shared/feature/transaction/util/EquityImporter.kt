@@ -26,7 +26,7 @@ class EquityImporter(
     private val logger = KMPLogger()
 
     override suspend fun importHistory(targetAccountId: String?, onProgress: (Float) -> Unit): Unit = withContext(Dispatchers.IO) {
-        logger.info("SYNC_FLOW", "EquityImporter: importHistory started for account: $targetAccountId")
+        // logger.info("SYNC_FLOW", "EquityImporter: importHistory started for account: $targetAccountId")
         onProgress(0.05f)
         
         // Fetch categories and rules first to map inferred category names to IDs
@@ -35,7 +35,7 @@ class EquityImporter(
         
         val rulesResult = categoryRepository.getCategoryRules()
         val rules = (rulesResult as? Result.Success)?.data ?: emptyList()
-        logger.info("SYNC_FLOW", "EquityImporter: Fetched ${rules.size} dynamic categorization rules from backend")
+        // logger.info("SYNC_FLOW", "EquityImporter: Fetched ${rules.size} dynamic categorization rules from backend")
         
         val accountsResult = accountRepository.getAccounts()
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()

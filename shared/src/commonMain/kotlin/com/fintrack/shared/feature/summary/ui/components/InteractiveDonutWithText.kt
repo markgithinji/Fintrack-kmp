@@ -70,7 +70,7 @@ fun InteractiveDonutWithText(
     }
 
     // Animate stroke width on selection
-    val animatedStrokes = categorySums.mapIndexed { index, _ ->
+    val animatedStrokes = List(categorySums.size) { index ->
         animateDpAsState(
             targetValue = if (selectedIndex == index) 52.dp else 36.dp,
             animationSpec = tween(300)

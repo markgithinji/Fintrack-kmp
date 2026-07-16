@@ -17,7 +17,7 @@ class SyncCategoriesUseCase(
 
         if (categoriesResult is Result.Success && rulesResult is Result.Success) {
             localDataSource.updateCategories(categoriesResult.data)
-            localDataSource.updateCategoryRules(rulesResult.data)
+            localDataSource.updateRules(rulesResult.data)
             return Result.Success(Unit)
         }
         
