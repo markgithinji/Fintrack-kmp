@@ -55,7 +55,7 @@ object MpesaParser {
     private val airtimeRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:You (?:bought|have bought|have received) |)$AMOUNT (?:of |)airtime(?: for [+\d]+)?\s+on\s+$DATE\s+at\s+$TIME""".toRegex(RegexOption.IGNORE_CASE)
 
     // 7. Reversals
-    private val reversalRegex = """$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:Your transaction|Your original transaction|Reversal of transaction) (.+?) (?:in favour of .+? |)has been successfully reversed[\s,]+(?:\s+on\s+$DATE\s+at\s+$TIME)?.*?$AMOUNT is (debited|credited) (?:from|to) your M-PESA account""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
+    private val reversalRegex = """$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:Your transaction|Your original transaction|Reversal of transaction) (.+?) (?:in favour of .+? |)has been (?:successfully reversed|reversed successfully)[\s,]+(?:\s+on\s+$DATE\s+at\s+$TIME)?.*?$AMOUNT\s+(?:is|has been) (debited|credited) (?:from|to) your M-PESA account""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
 
     // 8. Received at Till (Income for Merchant)
     private val receivedAtTillRegex = """Confirmed\.?\s+Payment of\s+(?:KES|Ksh|KSH)\.?\s*$AMOUNT_VAL\s+to\s+(.*?)\s+Till No\.\s+\d+\s+has been received\.\s+Ref\.\s*$CODE\s+on\s+$DATE\s+at\s+$TIME""".toRegex(RegexOption.IGNORE_CASE)
@@ -203,6 +203,9 @@ object MpesaParser {
             val amount = parseAmount(it.groupValues[5])
             val type = it.groupValues[6].lowercase()
             val isIncome = type == "credited"
+            
+            com.fintrack.shared.feature.core.logger.KMPLogger().info("MPESA_PARSER", "Reversal detected! Ref: $code, Original: $originalCode, Amount: $amount, Type: $type")
+
             return wrap(createTransactionModel(code, amount, cost, balance, "Transfer", parseDateTime(date, time, smsTimestamp), "Reversal of $originalCode ($type)", accountId, isIncome))
         }
 
@@ -371,29 +374,51 @@ object MpesaParser {
     private fun inferCategory(recipient: String, isIncome: Boolean = false): String {
         val r = recipient.lowercase(Locale.ENGLISH)
         return when {
-            r.contains("kplc") || r.contains("tokens") || r.contains("power") || r.contains("jajemelo") -> "Utilities"
+            r.contains("kplc") || r.contains("tokens") || r.contains("power") || r.contains("jajemelo") ||
+            r.contains("water") || r.contains("sewerage") || r.contains("ncwsc") || r.contains("kiwasco") ||
+            r.contains("mawasco") || r.contains("nyewasco") || r.contains("eldowas") || r.contains("mowasco") ||
+            r.contains("gas") || r.contains("m-gas") || r.contains("mgas") || r.contains("afrigas") ||
+            r.contains("garbage") || r.contains("waste") || r.contains("trash") ||
+            r.contains("m-kopa") || r.contains("mkopa") || r.contains("d.light") || r.contains("sunking") || r.contains("bboxx") -> "Utilities"
             r.contains("zuku") || r.contains("safaricom home") || r.contains("poa internet") || r.contains("vilcom") || 
+            r.contains("faiba") || r.contains("jtl") || r.contains("jtlk") || r.contains("wananchi") ||
+            r.contains("mawingu") || r.contains("starlink") || r.contains("konnect") || r.contains("fibre connect") || 
+            r.contains("fiber connect") || r.contains("airtel fibre") || r.contains("telkom home") ||
+            r.contains("liquid home") || r.contains("liquid telecom") ||
             r.contains("data bundles") || r.contains("data bundle") || r.contains("offers") || r.contains("tunukiwa") ||
             r.contains("internet") || r.contains("bundles") -> "Internet"
             r.contains("airtime") || r.contains("tingg") || r.contains("top up") -> "Airtime"
-            r.contains("supermarket") || r.contains("naivas") || r.contains("carrefour") || r.contains("quickmart") || r.contains("butchery") || r.contains("quick mart") || r.contains("friendly 5") -> "Groceries"
+            r.contains("supermarket") || r.contains("naivas") || r.contains("carrefour") || r.contains("quickmart") || r.contains("butchery") || r.contains("quick mart") || r.contains("friendly 5") || r.contains("slice city") || r.contains("memento butchery") -> "Groceries"
             r.contains("restaurant") || r.contains("cafe") || r.contains("kfc") || r.contains("java") || Regex("""\bbar\b""").containsMatchIn(r) || r.contains("lounge") || r.contains("chicken inn") || r.contains("pizza inn") || r.contains("creamy inn") || r.contains("choma place") || r.contains("nas n001") || r.contains("caterers") || r.contains("dishes") -> "Dining Out"
             r.contains("equity") || r.contains("co-operative") || r.contains("bank") || r.contains("i&m") || r.contains("ncba") || r.contains("boa") || r.contains("family bank") || r.contains("stanbic") || r.contains("loop") || r.contains("sidian") -> "Bank"
             r.contains("loan repayment") || r.contains("loan") || r.contains("fuliza") || r.contains("tala") || r.contains("branch") -> "Loans"
             r.contains("m-shwari saving") || r.contains("mshwari saving") || r.contains("m-shwari") || r.contains("mshwari") || r.contains("kcb") || r.contains("sacco") || r.contains("chama") || r.contains("orokise") ||
             r.contains("zimele") || r.contains("etica") || r.contains("gulfcap") || r.contains("cytonn") || r.contains("arvocap") || 
             r.contains("lofty") || r.contains("kuza") || r.contains("mali") || r.contains("ziidi") || r.contains("kasha") || 
-            r.contains("genghis") || r.contains("hela imara") || r.contains("old mutual") || r.contains("sanlam") || r.contains("cic") || 
-            r.contains("icea lion") || r.contains("britam") || r.contains("madison") || r.contains("apollo") || r.contains("nabo capital") || 
-            r.contains("dry associates") || r.contains("m-pesa saving") || r.contains("money market") || r.contains("fund") || r.contains("asset") -> "Savings"
+            r.contains("genghis") || r.contains("hela imara") || r.contains("nabo capital") || 
+            r.contains("stima sacco") || r.contains("police sacco") || r.contains("unaitas") || r.contains("mwalimu") ||
+            r.contains("harambee") || r.contains("kimisitu") || r.contains("hazina sacco") || r.contains("imarisha") ||
+            r.contains("tower sacco") || r.contains("waumini") ||
+            r.contains("dry associates") || r.contains("m-pesa saving") || r.contains("money market") || r.contains("fund") || r.contains("asset") || r.contains("mmf") -> "Savings"
             r.contains("tithe") || r.contains("offering") || r.contains("citam") || r.contains("church") || r.contains("charity") || r.contains("mosque") || r.contains("prayer mountain") -> "Charity"
             r.contains("parking") || r.contains("kaps") || r.contains("bolt") || r.contains("uber") || r.contains("taxi") || r.contains("rubis") || r.contains("totalenergies") || r.contains("shell") -> "Transport"
-            r.contains("chemist") || r.contains("pharmacy") || r.contains("hospital") || r.contains("health") || r.contains("clinic") || r.contains("meds") || r.contains("dental") -> "Health"
+            r.contains("chemist") || r.contains("pharmacy") || r.contains("hospital") || r.contains("health") || r.contains("clinic") || r.contains("meds") || r.contains("dental") || r.contains("hopemed") || r.contains("medical") -> "Health"
             r.contains("netflix") || r.contains("spotify") || r.contains("showmax") || r.contains("youtube") -> "Subscriptions"
-            r.contains("jumia") || r.contains("leather") || r.contains("watches") || r.contains("perfume") || r.contains("clothes") || r.contains("fashion") || r.contains("mrp") || r.contains("miniso") || r.contains("woolworths") || r.contains("nail bar") -> "Shopping"
+            r.contains("jumia") || r.contains("leather") || r.contains("watches") || r.contains("perfume") || r.contains("clothes") || r.contains("fashion") || r.contains("mrp") || r.contains("miniso") || r.contains("woolworths") || r.contains("tushop") || r.contains("m-pesa card") || r.contains("canva") || r.contains("pdfaid") -> "Shopping"
+            r.contains("salon") || r.contains("barber") || r.contains("beauty") || r.contains("nail bar") -> "Personal Care"
             r.contains("hardware") || r.contains("timber") || r.contains("maintenance") || r.contains("repair") -> "Maintenance"
             r.contains("e-citizen") || r.contains("kra") || r.contains("county") -> "Government"
-            r.contains("britam") || r.contains("nhif") || r.contains("insurance") -> "Insurance"
+            r.contains("britam") || r.contains("nhif") || r.contains("shif") || r.contains("insurance") || r.contains("apa") || 
+            r.contains("jubilee") || r.contains("sanlam") || r.contains("cic") || r.contains("old mutual") || 
+            r.contains("icea lion") || r.contains("madison") || r.contains("apollo") || r.contains("ga insurance") ||
+            r.contains("heritage") || r.contains("geminia") || r.contains("pioneer") || r.contains("kenindia") || r.contains("uap") -> "Insurance"
+            r.contains("salary") -> "Salary"
+            r.contains("bonus") -> "Bonus"
+            r.contains("interest") -> "Interest"
+            r.contains("commission") || r.contains("income") -> "Other Income"
+            else -> if (isIncome) "Other Income" else "Transfer"
+        }
+    }
             r.contains("salary") -> "Salary"
             r.contains("bonus") -> "Bonus"
             r.contains("interest") -> "Interest"

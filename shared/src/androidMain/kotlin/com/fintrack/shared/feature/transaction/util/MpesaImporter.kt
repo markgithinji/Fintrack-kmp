@@ -65,8 +65,8 @@ class MpesaImporter(
                 val timestamp = it.getLong(dateIndex)
                 val smsInstant = Instant.fromEpochMilliseconds(timestamp)
 
-                // Log first 1000 M-Pesa messages for parser improvement
-                if (loggedCount < 1000) {
+                // Log first 2500 M-Pesa messages for parser improvement
+                if (loggedCount < 2500) {
                     logger.debug("MPESA_DEBUG", "SMS Body: $body")
                 }
 
