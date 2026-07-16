@@ -21,7 +21,7 @@ object EquityParser {
     private val cardAuthRegex = """CONFIRMED\.?\s+(?:KES|USD|KSH|Ksh)\.?\s*$AMOUNT_VAL,?\s+Auth for card\s+.*?\s+at\s+(.*?)\s+on\s+(\d{4}-\d{2}-\d{2}\s+$TIME)\s+Ref:\s*(\w+)""".toRegex(RegexOption.IGNORE_CASE)
     
     // 2. Sent Money (Expense) - Explicitly from an account number
-    private val sentRegex = """$AMOUNT_VAL\s+(?:KES|KSH|Ksh)\.?\s+has been successfully sent from\s+(\d+)[*.]+(\d+)?\s+to\s+.*?\.\s+Ref\.\s*(\w+)\s+on\s+$DATE_TEXT\s+at\s+$TIME(?:\s+EAT)?""".toRegex(RegexOption.IGNORE_CASE)
+    private val sentRegex = """$AMOUNT_VAL\s+(?:KES|KSH|Ksh)\.?\s+has been successfully sent from\s+(\d+)[*.]+(\d+)?\s+to\s+(.+?)\.\s+Ref\.\s*(\w+)\s+on\s+$DATE_TEXT\s+at\s+$TIME(?:\s+EAT)?""".toRegex(RegexOption.IGNORE_CASE)
     
     // 3. Drawn / Withdrawal (Expense) - Mentions account
     private val drawnRegex = """Dear (.*?)\s+(?:KES|KSH|Ksh)\.?\s*$AMOUNT_VAL\s+has been drawn from your account\s+(\d+)[*.]+(\d+)?\s+Ref:\s*(\w+)\s+on\s+$DATE_TEXT\s+$TIME_AMPM""".toRegex(RegexOption.IGNORE_CASE)
@@ -76,6 +76,15 @@ object EquityParser {
         if (message.contains("Confirmed. Payment of", ignoreCase = true) && 
             !message.contains("Equity", ignoreCase = true)) return null
 
+        // Generic Intra-account skip: If the message shows a transfer between two masked numbers
+        // e.g., "sent from 1********9426 to 7********4608" -> Skip to avoid double counting internal moves
+        val maskedAcc = """\d+[*.]+\d+"""
+        if (message.contains(Regex("sent from $maskedAcc to $maskedAcc", RegexOption.IGNORE_CASE)) ||
+            message.contains(Regex("received .* from $maskedAcc to .* $maskedAcc", RegexOption.IGNORE_CASE))) {
+            com.fintrack.shared.feature.core.logger.KMPLogger().info("EQUITY_PARSER", "Skipping intra-account move: ${message.take(60)}...")
+            return null
+        }
+
         if (message.contains("failed due to insufficient funds", ignoreCase = true)) return null
         if (message.contains("is due in", ignoreCase = true)) return null
 
@@ -101,14 +110,14 @@ object EquityParser {
         // 2. Sent Money (Expense or Income)
         sentRegex.find(message)?.let {
             val amount = parseAmount(it.groupValues[1])
-            val code = it.groupValues[4]
-            val dateStr = "${it.groupValues[5]} ${it.groupValues[6]}"
+            val recipient = it.groupValues[4].trim()
+            val code = it.groupValues[5]
+            val dateStr = "${it.groupValues[6]} ${it.groupValues[7]}"
             val dateTime = parseDateTime(dateStr, smsTimestamp)
             
-            val isIncome = message.contains("to 7********4608", ignoreCase = true) || 
-                           message.contains("to your account", ignoreCase = true)
+            val isIncome = message.contains("to your account", ignoreCase = true)
             
-            val description = if (isIncome) "Received Transfer" else "Bank Transfer"
+            val description = if (isIncome) "Received Transfer" else "Sent to $recipient"
             return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, if (isIncome) "Other Income" else "Transfer", dateTime, description, accountId, isIncome))
         }
 
