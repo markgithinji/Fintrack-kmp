@@ -28,6 +28,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 @OptIn(FlowPreview::class)
@@ -66,7 +68,7 @@ class TransactionViewModel(
 
     private val logger = KMPLogger()
 
-    private var hasAutoSynced = false
+    private var lastAutoSyncTime: Instant? = null
     private var lastLoadedRecentAccountId: String? = null
     private var recentTransactionsJob: Job? = null
     private var importJob: Job? = null
@@ -489,9 +491,15 @@ class TransactionViewModel(
     }
 
     fun autoSyncTransactions(accountId: String? = null) {
-        if (!hasAutoSynced) {
-            hasAutoSynced = true
+        val now = Clock.System.now()
+        val lastSync = lastAutoSyncTime
+        
+        if (lastSync == null || (now - lastSync) >= 2.minutes) {
+            logger.info("SYNC_FLOW", "Auto-sync triggered. Last sync: $lastSync, Now: $now")
+            lastAutoSyncTime = now
             importTransactions(accountId)
+        } else {
+            logger.info("SYNC_FLOW", "Auto-sync skipped. Cooldown active. Last sync: $lastSync")
         }
     }
 

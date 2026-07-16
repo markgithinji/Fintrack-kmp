@@ -4,13 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
-import androidx.work.Constraints
-import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.OutOfQuotaPolicy
-import androidx.work.WorkManager
-import androidx.work.workDataOf
 import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
@@ -23,13 +16,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.util.concurrent.TimeUnit
 
 class SmsReceiver : BroadcastReceiver(), KoinComponent {
+    private val transactionRepository: TransactionRepository by inject()
     private val accountRepository: AccountRepository by inject()
     private val categoryRepository: CategoryRepository by inject()
     private val settingsDataSource: SettingsDataSource by inject()
@@ -148,23 +139,28 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                         // Show notification immediately so the user knows we caught it
                         notificationService.showTransactionNotification(transaction)
 
-                        logger.info("SmsReceiver", "Scheduling sync for ${if (isMpesa) "M-Pesa" else "Equity"} transaction: ${transaction.externalId}")
+                        logger.info("SmsReceiver", "Syncing ${if (isMpesa) "M-Pesa" else "Equity"} transaction directly: ${transaction.externalId}")
                         
-                        val workData = workDataOf(
-                            TransactionSyncWorker.KEY_TRANSACTION_JSON to Json.encodeToString(transaction)
-                        )
-
-                        val constraints = Constraints.Builder()
-                            .setRequiredNetworkType(NetworkType.CONNECTED)
-                            .build()
-
-                        val syncRequest = OneTimeWorkRequestBuilder<TransactionSyncWorker>()
-                            .setConstraints(constraints)
-                            .setInputData(workData)
-                            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                            .build()
-
-                        WorkManager.getInstance(context).enqueue(syncRequest)
+                        val result = transactionRepository.addTransaction(transaction)
+                        if (result is Result.Success<*>) {
+                            logger.info("SmsReceiver", "Successfully synced transaction: ${transaction.externalId}")
+                            
+                            // Update account balance and last sync time if possible
+                            val balance = if (isMpesa) MpesaParser.parseBalance(fullMessage) else EquityParser.parseBalance(fullMessage)
+                            if (balance != null) {
+                                accountRepository.getAccountById(accountId).let { accResult ->
+                                    if (accResult is Result.Success) {
+                                        val account = accResult.data
+                                        accountRepository.addOrUpdateAccount(account.copy(
+                                            balance = balance,
+                                            lastSyncedAt = kotlin.time.Clock.System.now()
+                                        ))
+                                    }
+                                }
+                            }
+                        } else {
+                            logger.error("SmsReceiver", "Failed to sync transaction: ${(result as? Result.Error)?.exception?.message}")
+                        }
                     } else {
                         logger.warning("SmsReceiver", "Failed to parse ${if (isMpesa) "M-Pesa" else "Equity"} message: $fullMessage")
                     }

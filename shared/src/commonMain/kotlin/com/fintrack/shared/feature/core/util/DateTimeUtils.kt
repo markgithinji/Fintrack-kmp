@@ -1,6 +1,10 @@
 package com.fintrack.shared.feature.core.util
 
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -10,6 +14,26 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 
 object DateTimeUtils {
+    /**
+     * Formats an Instant to a relative time string (e.g., "Just now", "5 mins ago", "2 hours ago").
+     */
+    fun toRelativeDateTimeString(instant: Instant?): String {
+        if (instant == null) return "Never synced"
+        
+        val now = Clock.System.now()
+        val duration = now - instant
+
+        return when {
+            duration < 1.minutes -> "Just now"
+            duration < 60.minutes -> "${duration.inWholeMinutes} mins ago"
+            duration < 24.hours -> "${duration.inWholeHours} hours ago"
+            duration < 2.days -> "Yesterday"
+            else -> {
+                val dateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+                "${dateTime.dayOfMonth}/${dateTime.monthNumber}/${dateTime.year}"
+            }
+        }
+    }
     /**
      * Calculates the start and end dates for a given ISO week code (e.g., "2024-W25").
      * Uses the ISO 8601 standard where Week 1 is the week with the first Thursday of the year.

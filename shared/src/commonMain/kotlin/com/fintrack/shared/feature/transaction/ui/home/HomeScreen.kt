@@ -148,10 +148,8 @@ fun HomeScreen(
         }
         
         // Auto-sync transactions if enabled
-        if (isMpesaListenerEnabled || isEquityListenerEnabled) {
-            val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-            transactionsViewModel.autoSyncTransactions(accountId)
-        }
+        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+        transactionsViewModel.autoSyncTransactions(accountId)
     }
 
     LaunchedEffect(selectedAccountResult) {
@@ -160,6 +158,8 @@ fun HomeScreen(
             transactionsViewModel.loadRecentTransactions(id)
             statsViewModel.loadOverview(id)
             statsViewModel.loadCategoryComparisons(id)
+            // Trigger auto-sync when account changes
+            transactionsViewModel.autoSyncTransactions(id)
         }
     }
 

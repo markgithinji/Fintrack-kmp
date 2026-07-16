@@ -75,6 +75,7 @@ import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.CommonErrorState
+import com.fintrack.shared.feature.core.util.DateTimeUtils
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
@@ -327,13 +328,9 @@ private fun CurrentBalanceSuccessState(
     val balance = account.balance ?: BigDecimal.ZERO
     val isLinkedAccount = isMpesaLinked || isEquityLinked
     
-    // Show manual sync if the account is linked AND auto-sync for that service is OFF
-    val showManualSyncAction = (isMpesaLinked && !isMpesaAutoSyncEnabled) || 
-                               (isEquityLinked && !isEquityAutoSyncEnabled)
-
     val logger = remember { KMPLogger() }
     SideEffect {
-        logger.debug("CurrentBalanceCard", "Account: ${account.name}, isMpesaLinked: $isMpesaLinked, isMpesaAuto: $isMpesaAutoSyncEnabled, showManualSync: $showManualSyncAction")
+        logger.debug("CurrentBalanceCard", "Account: ${account.name}, isMpesaLinked: $isMpesaLinked, isLinkedAccount: $isLinkedAccount")
     }
 
     Box(
@@ -490,25 +487,7 @@ private fun CurrentBalanceSuccessState(
                                     }
 
                                     null -> {
-                                        if (showManualSyncAction) {
-                                            Surface(
-                                                onClick = onManualSync,
-                                                shape = CircleShape,
-                                                color = MaterialTheme.colorScheme.onPrimary.copy(
-                                                    alpha = 0.15f
-                                                ),
-                                                modifier = Modifier.size(24.dp)
-                                            ) {
-                                                Box(contentAlignment = Alignment.Center) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.Sync,
-                                                        contentDescription = "Sync Transactions",
-                                                        tint = MaterialTheme.colorScheme.onPrimary,
-                                                        modifier = Modifier.size(14.dp)
-                                                    )
-                                                }
-                                            }
-                                        }
+                                        // No manual sync button shown by default anymore
                                     }
                                 }
                             }
@@ -572,20 +551,35 @@ private fun CurrentBalanceSuccessState(
                 }
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "Current Balance",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = balance.toCurrencyString(),
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.Black
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = "Current Balance",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = balance.toCurrencyString(),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+                
+                if (isLinkedAccount) {
+                    Text(
+                        text = DateTimeUtils.toRelativeDateTimeString(account.lastSyncedAt),
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
+            }
         }
     }
 }
