@@ -85,7 +85,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDate
 import com.fintrack.shared.feature.core.util.toDouble
 import com.fintrack.shared.feature.core.util.toInt
-import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
+import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.TabType

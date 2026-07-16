@@ -47,7 +47,7 @@ import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
-import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
+import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
 import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.ui.theme.PinkExpense
 import com.ionspin.kotlin.bignum.decimal.BigDecimal

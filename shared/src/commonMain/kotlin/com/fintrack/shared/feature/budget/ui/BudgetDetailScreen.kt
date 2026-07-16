@@ -79,7 +79,7 @@ import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
-import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
+import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
 import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import androidx.compose.ui.platform.LocalFocusManager
 import com.fintrack.shared.feature.transaction.ui.home.components.AccountIcon

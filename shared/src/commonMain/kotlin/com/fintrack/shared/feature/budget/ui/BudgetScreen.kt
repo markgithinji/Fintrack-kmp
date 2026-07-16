@@ -68,7 +68,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.core.util.toDouble
-import com.fintrack.shared.feature.navigation.ui.LocalSharedTransitionScope
+import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
 import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.ui.theme.GreenIncome
