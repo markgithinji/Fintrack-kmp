@@ -122,6 +122,7 @@ fun TransactionCountSummaryDto.toDomain() = TransactionCountSummary(
     totalIncomeTransactions = totalIncomeTransactions,
     totalExpenseTransactions = totalExpenseTransactions,
     totalTransactions = totalTransactions,
+    totalAmount = totalAmount,
     totalTransactionCost = totalTransactionCost
 )
 

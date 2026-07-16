@@ -54,6 +54,7 @@ import kotlinx.datetime.toLocalDateTime
 fun TransactionItem(
     transaction: Transaction,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    includeFees: Boolean = true,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
@@ -158,14 +159,18 @@ fun TransactionItem(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.Center
             ) {
+                val displayAmount = remember(transaction, includeFees) {
+                    if (includeFees) transaction.totalAmount else transaction.amount
+                }
+                
                 Text(
-                    text = "${if (transaction.isIncome) "+" else "-"}${transaction.totalAmount.toCurrencyString()}",
+                    text = "${if (transaction.isIncome) "+" else "-"}${displayAmount.toCurrencyString()}",
                     color = amountColor,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 
-                if (transaction.transactionCost > BigDecimal.ZERO) {
+                if (transaction.transactionCost > BigDecimal.ZERO && includeFees) {
                     Text(
                         text = "Incl. ${transaction.transactionCost.toCurrencyString()} fee",
                         style = androidx.compose.ui.text.TextStyle(

@@ -117,6 +117,8 @@ fun TransactionListScreen(
         bottomPadding
     }
 
+    var includeFees by remember { mutableStateOf(true) }
+
     TransactionListContent(
         transactionCounts = transactionCounts,
         transactions = transactions,
@@ -124,6 +126,8 @@ fun TransactionListScreen(
         categoryId = categoryId,
         categoryName = categoryName,
         hasTransactionCost = hasTransactionCost,
+        includeFees = includeFees,
+        onIncludeFeesChange = { includeFees = it },
         listState = listState,
         paddingValues = paddingValues,
         animatedVisibilityScope = animatedVisibilityScope,
@@ -151,6 +155,8 @@ private fun TransactionListContent(
     categoryId: String?,
     categoryName: String?,
     hasTransactionCost: Boolean? = null,
+    includeFees: Boolean = true,
+    onIncludeFeesChange: (Boolean) -> Unit = {},
     listState: androidx.compose.foundation.lazy.LazyListState,
     paddingValues: PaddingValues,
     animatedVisibilityScope: AnimatedVisibilityScope,
@@ -175,6 +181,8 @@ private fun TransactionListContent(
             TransactionCountHeaderCard(
                 transactionCounts = transactionCounts,
                 isIncome = isIncome,
+                includeFees = includeFees,
+                onIncludeFeesChange = onIncludeFeesChange,
                 hasTransactionCost = hasTransactionCost,
                 categoryName = categoryName ?: categoryId,
                 modifier = Modifier,
@@ -232,6 +240,7 @@ private fun TransactionListContent(
                     TransactionItem(
                         transaction = transaction,
                         animatedVisibilityScope = animatedVisibilityScope,
+                        includeFees = includeFees,
                         modifier = Modifier.animateItem(),
                         onClick = { transaction.id?.let { id -> onTransactionClick(id) } }
                     )

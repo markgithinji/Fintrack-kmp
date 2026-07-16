@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,8 @@ import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,8 +33,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
@@ -45,6 +50,8 @@ import com.ionspin.kotlin.bignum.decimal.BigDecimal
 fun TransactionCountHeaderCard(
     transactionCounts: Result<TransactionCountSummary>,
     isIncome: Boolean?,
+    includeFees: Boolean = true,
+    onIncludeFeesChange: (Boolean) -> Unit = {},
     hasTransactionCost: Boolean? = null,
     categoryName: String? = null,
     modifier: Modifier = Modifier,
@@ -65,6 +72,8 @@ fun TransactionCountHeaderCard(
             is Result.Success -> TransactionCountSuccessState(
                 counts = transactionCounts.data,
                 isIncome = isIncome,
+                includeFees = includeFees,
+                onIncludeFeesChange = onIncludeFeesChange,
                 hasTransactionCost = hasTransactionCost,
                 categoryName = categoryName,
                 animatedVisibilityScope = animatedVisibilityScope,
@@ -126,6 +135,8 @@ private fun TransactionCountErrorState() {
 private fun TransactionCountSuccessState(
     counts: TransactionCountSummary,
     isIncome: Boolean?,
+    includeFees: Boolean,
+    onIncludeFeesChange: (Boolean) -> Unit,
     hasTransactionCost: Boolean? = null,
     categoryName: String? = null,
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
@@ -174,28 +185,61 @@ private fun TransactionCountSuccessState(
             )
         }
 
-        Column {
-            Text(
-                text = when {
-                    hasTransactionCost == true -> "Transaction Fees"
-                    categoryName != null -> if (categoryName.contains(",")) "Other Categories" else categoryName
-                    isIncome == true -> "Income Overview"
-                    isIncome == false -> "Expense Overview"
-                    else -> "All Transactions"
-                },
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = if (sharedTransitionScope != null && animatedVisibilityScope != null && sharedElementKey != null) {
-                    with(sharedTransitionScope) {
-                        Modifier.sharedElement(
-                            rememberSharedContentState(key = "category_name_$sharedElementKey"),
-                            animatedVisibilityScope = animatedVisibilityScope
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 2.dp)
+            ) {
+                val totalDisplayAmount = remember(counts, includeFees, isIncome, hasTransactionCost) {
+                    if (includeFees) {
+                        when {
+                            isIncome == true -> counts.totalAmount - counts.totalTransactionCost
+                            isIncome == false || hasTransactionCost == true -> counts.totalAmount + counts.totalTransactionCost
+                            else -> counts.totalAmount
+                        }
+                    } else {
+                        counts.totalAmount
+                    }
+                }
+
+                Text(
+                    text = totalDisplayAmount.toCurrencyString(),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = themeColor
+                )
+
+                if (counts.totalTransactionCost > BigDecimal.ZERO) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { onIncludeFeesChange(!includeFees) }
+                            .background(themeColor.copy(alpha = 0.08f))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Checkbox(
+                            checked = includeFees,
+                            onCheckedChange = onIncludeFeesChange,
+                            modifier = Modifier
+                                .size(12.dp)
+                                .scale(0.7f),
+                            colors = CheckboxDefaults.colors(checkedColor = themeColor)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Incl. fees",
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                            color = themeColor,
+                            fontWeight = FontWeight.Bold
                         )
                     }
-                } else Modifier
-            )
-            
+                }
+            }
+
             val countText = remember(counts, isIncome, hasTransactionCost) {
                 when {
                     hasTransactionCost == true -> "${counts.totalTransactions} transactions with fees"

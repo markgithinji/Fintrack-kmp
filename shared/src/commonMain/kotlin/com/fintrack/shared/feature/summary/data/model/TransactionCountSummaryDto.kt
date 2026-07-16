@@ -10,5 +10,7 @@ data class TransactionCountSummaryDto(
     val totalExpenseTransactions: Int,
     val totalTransactions: Int,
     @Serializable(with = BigDecimalSerializer::class)
+    val totalAmount: BigDecimal = BigDecimal.ZERO,
+    @Serializable(with = BigDecimalSerializer::class)
     val totalTransactionCost: BigDecimal = BigDecimal.ZERO
 )
