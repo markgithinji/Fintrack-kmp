@@ -127,7 +127,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun SettingsScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
     viewModel: SettingsViewModel = koinViewModel(),
-    mainViewModel: MainViewModel = koinViewModel()
+    mainViewModel: MainViewModel = koinInject()
 ) {
     val currentCurrency by viewModel.currency.collectAsStateWithLifecycle()
     val currentTheme by viewModel.theme.collectAsStateWithLifecycle()
@@ -279,6 +279,7 @@ fun SettingsScreen(
                         SettingsItem(
                             title = "Tracked Categories",
                             subtitle = if (trackedCategoryNames.isEmpty()) "Automatic (Top Spending & Income)" else trackedCategoryNames.joinToString(", "),
+                            description = "Visible in 'Category Comparison' on Home dashboard.",
                             icon = Icons.Default.Category,
                             onClick = { showTrackedCategoriesDialog = true }
                         )
@@ -294,7 +295,10 @@ fun SettingsScreen(
                             subtitle = "Hide balances and amounts",
                             icon = Icons.Default.VisibilityOff,
                             checked = isBalanceHidden,
-                            onCheckedChange = { viewModel.setBalanceHidden(it) }
+                            onCheckedChange = { 
+                                viewModel.setBalanceHidden(it)
+                                mainViewModel.triggerGlobalRefresh()
+                            }
                         )
 
                         HorizontalDivider(
@@ -308,7 +312,10 @@ fun SettingsScreen(
                             subtitle = if (showDecimals) "Show cents (e.g., 0.00)" else "Clean whole numbers only",
                             icon = Icons.Default.Pin,
                             checked = showDecimals,
-                            onCheckedChange = { viewModel.setShowDecimals(it) }
+                            onCheckedChange = { 
+                                viewModel.setShowDecimals(it)
+                                mainViewModel.triggerGlobalRefresh()
+                            }
                         )
                     }
 
@@ -350,7 +357,10 @@ fun SettingsScreen(
                             subtitle = "Reminder to log your transactions for the day",
                             icon = Icons.Default.Notifications,
                             checked = isReminderEnabled,
-                            onCheckedChange = { viewModel.setReminderEnabled(it) }
+                            onCheckedChange = { 
+                                viewModel.setReminderEnabled(it)
+                                mainViewModel.triggerGlobalRefresh()
+                            }
                         )
 
                         AnimatedVisibility(
@@ -384,7 +394,10 @@ fun SettingsScreen(
                             subtitle = "Notify when spending reaches 50%, 80%, or 100% of limit",
                             icon = Icons.AutoMirrored.Filled.TrendingUp,
                             checked = budgetAlertsEnabled,
-                            onCheckedChange = { viewModel.setBudgetAlertsEnabled(it) }
+                            onCheckedChange = { 
+                                viewModel.setBudgetAlertsEnabled(it)
+                                mainViewModel.triggerGlobalRefresh()
+                            }
                         )
 
                         AnimatedVisibility(
@@ -435,7 +448,10 @@ fun SettingsScreen(
                             subtitle = "Get notified before recurring payments are due",
                             icon = Icons.AutoMirrored.Filled.ReceiptLong,
                             checked = isBillReminderEnabled,
-                            onCheckedChange = { viewModel.setBillReminderEnabled(it) }
+                            onCheckedChange = { 
+                                viewModel.setBillReminderEnabled(it)
+                                mainViewModel.triggerGlobalRefresh()
+                            }
                         )
 
                         AnimatedVisibility(
@@ -615,6 +631,7 @@ fun SettingsScreen(
             currentCurrency = currentCurrency,
             onCurrencySelected = {
                 viewModel.setCurrency(it)
+                mainViewModel.triggerGlobalRefresh()
                 showCurrencyDialog = false
             },
             onDismiss = { showCurrencyDialog = false }
@@ -626,6 +643,7 @@ fun SettingsScreen(
             currentTheme = currentTheme,
             onThemeSelected = {
                 viewModel.setTheme(it)
+                mainViewModel.triggerGlobalRefresh()
                 showThemeDialog = false
             },
             onDismiss = { showThemeDialog = false }
@@ -661,6 +679,7 @@ fun SettingsScreen(
             currentFormat = currentTimeFormat,
             onFormatSelected = {
                 viewModel.setTimeFormat(it)
+                mainViewModel.triggerGlobalRefresh()
                 showTimeFormatDialog = false
             },
             onDismiss = { showTimeFormatDialog = false }
@@ -771,8 +790,9 @@ fun SettingsScreen(
             allCategories = allCategories,
             selectedCategoryIds = trackedCategoryIds,
             onCategoriesSelected = {
-                viewModel.updateTrackedCategories(it)
-                mainViewModel.triggerGlobalRefresh()
+                viewModel.updateTrackedCategories(it) {
+                    mainViewModel.triggerGlobalRefresh()
+                }
                 showTrackedCategoriesDialog = false
             },
             onDismiss = { showTrackedCategoriesDialog = false }
@@ -2058,6 +2078,7 @@ fun SettingsItem(
     icon: ImageVector,
     iconContainerColor: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
     iconTint: Color = MaterialTheme.colorScheme.primary,
+    description: String? = null,
     onClick: () -> Unit
 ) {
     Surface(
@@ -2104,6 +2125,15 @@ fun SettingsItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 14.sp
                 )
+                if (description != null) {
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        modifier = Modifier.padding(top = 2.dp),
+                        lineHeight = 14.sp
+                    )
+                }
             }
             
             Icon(

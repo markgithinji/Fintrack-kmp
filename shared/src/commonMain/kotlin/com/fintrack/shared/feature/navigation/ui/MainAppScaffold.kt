@@ -62,6 +62,7 @@ import com.fintrack.shared.feature.navigation.model.Screen
 import com.fintrack.shared.feature.navigation.ui.components.AddTransactionFAB
 import com.fintrack.shared.feature.navigation.ui.components.AppTopBar
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -69,7 +70,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun MainAppScaffold(
     isAuthenticated: Boolean,
     authViewModel: AuthViewModel,
-    mainViewModel: MainViewModel = koinViewModel(),
+    mainViewModel: MainViewModel = koinInject(),
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     onLogout: () -> Unit = {}
 ) {

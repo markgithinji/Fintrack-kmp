@@ -3,20 +3,20 @@ package com.fintrack.shared.feature.navigation.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.fintrack.shared.feature.core.util.formatToCurrency
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
 import com.fintrack.shared.feature.settings.domain.util.rememberBiometricAuthenticator
 import com.fintrack.shared.feature.user.domain.model.User
-import org.koin.compose.viewmodel.koinViewModel
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import org.koin.compose.koinInject
 
 val LocalCurrency = compositionLocalOf { Currency.KES }
 val LocalPrivacyMode = compositionLocalOf { false }
@@ -59,7 +59,7 @@ fun BigDecimal.toCurrencyString(): String {
 
 @Composable
 fun AppStateProvider(
-    viewModel: MainViewModel = koinViewModel(),
+    viewModel: MainViewModel = koinInject(),
     navController: NavHostController = rememberNavController(),
     content: @Composable () -> Unit
 ) {

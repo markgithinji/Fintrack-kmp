@@ -451,12 +451,19 @@ class SettingsViewModel(
         _changePasswordFormState.value = ChangePasswordFormState()
     }
 
-    fun updateTrackedCategories(categories: List<String>) {
+    fun updateTrackedCategories(categories: List<String>, onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
+            logger.error("SettingsViewModel", "UPDATING tracked categories: $categories")
+            _isLoading.value = true
             val result = userRepository.updateTrackedCategories(categories)
-            if (result is Result.Error) {
+            if (result is Result.Success) {
+                logger.error("SettingsViewModel", "Update tracked categories SUCCESS")
+                onSuccess()
+            } else if (result is Result.Error) {
+                logger.error("SettingsViewModel", "Failed to update tracked categories: ${result.exception.message}")
                 _error.value = "Failed to update tracked categories: ${result.exception.message}"
             }
+            _isLoading.value = false
         }
     }
 }

@@ -127,9 +127,13 @@ fun HomeScreen(
     // We use rememberSaveable to ensure it persists across navigation
     var lastProcessedRefreshTrigger by rememberSaveable { mutableIntStateOf(refreshTrigger) }
 
+    val logger = remember { KMPLogger() }
+
     LaunchedEffect(refreshTrigger, selectedAccountResult) {
         val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+        logger.error("HomeScreen", "REFRESH CHECK: trigger=$refreshTrigger, last=$lastProcessedRefreshTrigger, accountId=$accountId")
         if (accountId != null && refreshTrigger > lastProcessedRefreshTrigger) {
+            logger.error("HomeScreen", "PERFORMING FORCED REFRESH for account: $accountId")
             accountsViewModel.reloadAccounts(showLoading = false)
             transactionsViewModel.loadRecentTransactions(accountId, force = true)
             statsViewModel.loadOverview(accountId, force = true)

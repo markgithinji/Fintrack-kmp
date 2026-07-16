@@ -27,13 +27,14 @@ import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import com.fintrack.shared.ui.theme.FinanceTrackerTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun MainScreen(
     initialTransactionId: String? = null,
     onTransactionIdConsumed: () -> Unit = {},
-    mainViewModel: MainViewModel = koinViewModel()
+    mainViewModel: MainViewModel = koinInject()
 ) {
     val appTheme by mainViewModel.theme.collectAsStateWithLifecycle()
     
