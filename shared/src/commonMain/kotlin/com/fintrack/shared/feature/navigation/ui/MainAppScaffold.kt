@@ -53,7 +53,6 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.toRoute
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.ui.permission.SmsPermissionLauncher
@@ -94,113 +93,26 @@ fun MainAppScaffold(
     }
 
     val appBarState = remember(navBackStackEntry) {
-        val entry = navBackStackEntry ?: return@remember AppBarState(title = "Home")
-        val destination = entry.destination
-        
-        when {
-            destination.hasRoute<Screen.Home>() -> AppBarState(title = "Home")
-            destination.hasRoute<Screen.Statistics>() -> AppBarState(title = "Statistics")
-            destination.hasRoute<Screen.Budget>() -> AppBarState(title = "Budget")
-            destination.hasRoute<Screen.Profile>() -> AppBarState(title = "Profile")
-            destination.hasRoute<Screen.EditProfile>() -> AppBarState(
-                title = "Edit Profile", 
-                showBackButton = true,
-                onBack = { navController.popBackStack() }
-            )
-            destination.hasRoute<Screen.Accounts>() -> AppBarState(
-                title = "Accounts", 
-                showBackButton = true,
-                onBack = { navController.popBackStack() }
-            )
-            destination.hasRoute<Screen.Categories>() -> AppBarState(
-                title = "Categories", 
-                showBackButton = true,
-                onBack = { navController.popBackStack() }
-            )
-            destination.hasRoute<Screen.Settings>() -> AppBarState(
-                title = "Settings", 
-                showBackButton = true,
-                onBack = { navController.popBackStack() }
-            )
-            destination.hasRoute<Screen.BudgetDetail>() -> {
-                val route = entry.toRoute<Screen.BudgetDetail>()
-                AppBarState(
-                    title = if (route.budgetId == null) "Add Budget" else "Edit Budget",
-                    showBackButton = true,
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            destination.hasRoute<Screen.AddTransaction>() -> {
-                val route = entry.toRoute<Screen.AddTransaction>()
-                AppBarState(
-                    title = if (route.transactionId == null) "Add Transaction" else "Edit Transaction",
-                    showBackButton = true,
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            destination.hasRoute<Screen.TransactionList>() -> {
-                val route = entry.toRoute<Screen.TransactionList>()
-                AppBarState(
-                    title = when {
-                        route.hasTransactionCost == true -> "Transaction Fees"
-                        route.categoryName?.contains(",") == true -> "Other Categories"
-                        route.categoryName != null -> route.categoryName
-                        route.isIncome == true -> "Income Transactions"
-                        route.isIncome == false -> "Expense Transactions"
-                        else -> "All Transactions"
-                    },
-                    showBackButton = true,
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            destination.hasRoute<Screen.Login>() -> AppBarState(title = "Login")
-            destination.hasRoute<Screen.Register>() -> AppBarState(
-                title = "Create Account", 
-                showBackButton = true,
-                onBack = { 
-                    navController.navigate(Screen.Login) {
-                        popUpTo(Screen.Register) { inclusive = true }
-                    }
-                }
-            )
-            else -> AppBarState(title = "Fintrack")
-        }
+        currentDestination?.getAppBarState(navBackStackEntry, navController) ?: AppBarState(title = "Home")
     }
 
     // Show bars only if any of the visible entries requires them (avoids layout jumps during transitions)
     val showTopBar = remember(visibleEntries) {
-        visibleEntries.any { entry ->
-            val dest = entry.destination
-            !(dest.hasRoute<Screen.Login>() || dest.hasRoute<Screen.Register>())
-        }
+        visibleEntries.any { entry -> !entry.destination.isAuthScreen() }
     }
 
     // Logic for animating the bars away immediately upon navigation
     val showBottomBarNow = remember(currentDestination) {
-        if (currentDestination == null) return@remember true
-        currentDestination.hasRoute<Screen.Home>() ||
-        currentDestination.hasRoute<Screen.Statistics>() ||
-        currentDestination.hasRoute<Screen.Budget>() ||
-        currentDestination.hasRoute<Screen.Profile>()
+        currentDestination?.shouldShowBottomBar() ?: true
     }
 
     // Keep the composable in the hierarchy during transitions to stabilize content area
     val keepBottomBarInHierarchy = remember(visibleEntries) {
-        visibleEntries.any { entry ->
-            val dest = entry.destination
-            dest.hasRoute<Screen.Home>() ||
-            dest.hasRoute<Screen.Statistics>() ||
-            dest.hasRoute<Screen.Budget>() ||
-            dest.hasRoute<Screen.Profile>()
-        }
+        visibleEntries.any { entry -> entry.destination.shouldShowBottomBar() }
     }
 
     val showFABNow = remember(currentDestination) {
-        if (currentDestination == null) return@remember true
-        currentDestination.hasRoute<Screen.Home>() ||
-        currentDestination.hasRoute<Screen.Statistics>() ||
-        currentDestination.hasRoute<Screen.Budget>() ||
-        currentDestination.hasRoute<Screen.Profile>()
+        currentDestination?.shouldShowFAB() ?: true
     }
 
     val adaptiveInfo = currentWindowAdaptiveInfo()

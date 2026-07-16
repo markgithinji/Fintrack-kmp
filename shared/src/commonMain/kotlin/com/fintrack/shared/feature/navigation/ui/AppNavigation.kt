@@ -64,8 +64,7 @@ fun AppNavigation(
     // Navigation Guard: Kick user to Login if session expires or unauthorized access
     LaunchedEffect(isAuthenticated) {
         val currentRoute = navController.currentBackStackEntry?.destination
-        val isAuthRoute = currentRoute?.hasRoute<Screen.Login>() == true ||
-                currentRoute?.hasRoute<Screen.Register>() == true
+        val isAuthRoute = currentRoute?.isAuthScreen() == true
 
         if (!isAuthenticated) {
             if (!isAuthRoute) {
@@ -88,7 +87,7 @@ fun AppNavigation(
     // Navigation Guard: Prevent navigation to protected routes when not authenticated
     DisposableEffect(navController, isAuthenticated) {
         val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
-            val isAuthRoute = destination.hasRoute<Screen.Login>() || destination.hasRoute<Screen.Register>()
+            val isAuthRoute = destination.isAuthScreen()
             if (!isAuthRoute && !isAuthenticated) {
                 navController.navigate(Screen.Login) {
                     popUpTo(0) { inclusive = true }
@@ -107,19 +106,10 @@ fun AppNavigation(
         startDestination = startDestination,
         modifier = Modifier.fillMaxSize(),
         enterTransition = {
-            val isToAuth = (targetState.destination.hasRoute<Screen.Login>() || 
-                         targetState.destination.hasRoute<Screen.Register>())
-            val isFromAuth = (initialState.destination.hasRoute<Screen.Login>() || 
-                           initialState.destination.hasRoute<Screen.Register>())
-            
-            val isToMorphScreen = targetState.destination.hasRoute<Screen.BudgetDetail>() ||
-                                 targetState.destination.hasRoute<Screen.TransactionList>() ||
-                                 targetState.destination.hasRoute<Screen.AddTransaction>()
-
-            val isToProfileDetail = targetState.destination.hasRoute<Screen.Accounts>() ||
-                                   targetState.destination.hasRoute<Screen.Categories>() ||
-                                   targetState.destination.hasRoute<Screen.Settings>() ||
-                                   targetState.destination.hasRoute<Screen.EditProfile>()
+            val isToAuth = targetState.destination.isAuthScreen()
+            val isFromAuth = initialState.destination.isAuthScreen()
+            val isToMorphScreen = targetState.destination.isMorphScreen()
+            val isToProfileDetail = targetState.destination.isProfileDetailScreen()
 
             if (isFromAuth && !isToAuth) { // Login success
                 scaleIn(
@@ -149,24 +139,11 @@ fun AppNavigation(
             }
         },
         exitTransition = {
-            val isToAuth = targetState.destination.hasRoute<Screen.Login>() || 
-                         targetState.destination.hasRoute<Screen.Register>()
-            val isFromAuth = initialState.destination.hasRoute<Screen.Login>() || 
-                           initialState.destination.hasRoute<Screen.Register>()
-            
-            val isFromMorphScreen = initialState.destination.hasRoute<Screen.BudgetDetail>() ||
-                                   initialState.destination.hasRoute<Screen.TransactionList>() ||
-                                   initialState.destination.hasRoute<Screen.AddTransaction>()
-
-            val isFromProfileDetail = initialState.destination.hasRoute<Screen.Accounts>() ||
-                                     initialState.destination.hasRoute<Screen.Categories>() ||
-                                     initialState.destination.hasRoute<Screen.Settings>() ||
-                                     initialState.destination.hasRoute<Screen.EditProfile>()
-
-            val isToProfileDetail = targetState.destination.hasRoute<Screen.Accounts>() ||
-                                   targetState.destination.hasRoute<Screen.Categories>() ||
-                                   targetState.destination.hasRoute<Screen.Settings>() ||
-                                   targetState.destination.hasRoute<Screen.EditProfile>()
+            val isToAuth = targetState.destination.isAuthScreen()
+            val isFromAuth = initialState.destination.isAuthScreen()
+            val isFromMorphScreen = initialState.destination.isMorphScreen()
+            val isFromProfileDetail = initialState.destination.isProfileDetailScreen()
+            val isToProfileDetail = targetState.destination.isProfileDetailScreen()
 
             if (isFromAuth && !isToAuth) { // Login success
                 scaleOut(targetScale = 1.1f, animationSpec = tween(500)) + fadeOut(animationSpec = tween(500))
@@ -195,18 +172,11 @@ fun AppNavigation(
             }
         },
         popEnterTransition = { 
-            val isToMorphScreen = targetState.destination.hasRoute<Screen.BudgetDetail>() ||
-                                 targetState.destination.hasRoute<Screen.TransactionList>() ||
-                                 targetState.destination.hasRoute<Screen.AddTransaction>()
-            
-            val isToProfileDetail = targetState.destination.hasRoute<Screen.Accounts>() ||
-                                   targetState.destination.hasRoute<Screen.Categories>() ||
-                                   targetState.destination.hasRoute<Screen.Settings>() ||
-                                   targetState.destination.hasRoute<Screen.EditProfile>()
-
+            val isToMorphScreen = targetState.destination.isMorphScreen()
+            val isToProfileDetail = targetState.destination.isProfileDetailScreen()
             val isToProfile = targetState.destination.hasRoute<Screen.Profile>()
 
-            if (isToMorphScreen || targetState.destination.hasRoute<Screen.Home>()) {
+            if (isToMorphScreen || targetState.destination.isMainScreen()) {
                 fadeIn(animationSpec = tween(250))
             } else if (isToProfileDetail) {
                 fadeIn(animationSpec = tween(250))
@@ -221,14 +191,8 @@ fun AppNavigation(
             }
         },
         popExitTransition = {
-            val isFromMorphScreen = initialState.destination.hasRoute<Screen.BudgetDetail>() ||
-                                   initialState.destination.hasRoute<Screen.TransactionList>() ||
-                                   initialState.destination.hasRoute<Screen.AddTransaction>()
-
-            val isFromProfileDetail = initialState.destination.hasRoute<Screen.Accounts>() ||
-                                     initialState.destination.hasRoute<Screen.Categories>() ||
-                                     initialState.destination.hasRoute<Screen.Settings>() ||
-                                     initialState.destination.hasRoute<Screen.EditProfile>()
+            val isFromMorphScreen = initialState.destination.isMorphScreen()
+            val isFromProfileDetail = initialState.destination.isProfileDetailScreen()
 
             if (isFromMorphScreen) {
                 slideOutVertically(
