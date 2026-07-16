@@ -29,9 +29,13 @@ class MpesaImporter(
         logger.info("SYNC_FLOW", "MpesaImporter: importHistory started for account: $targetAccountId")
         onProgress(0.05f)
         
-        // Fetch categories first to map inferred category names to IDs
+        // Fetch categories and rules first to map inferred category names to IDs
         val categoriesResult = categoryRepository.getCategories()
         val categories = (categoriesResult as? Result.Success)?.data ?: emptyList()
+        
+        val rulesResult = categoryRepository.getCategoryRules()
+        val rules = (rulesResult as? Result.Success)?.data ?: emptyList()
+        logger.info("SYNC_FLOW", "MpesaImporter: Fetched ${rules.size} dynamic categorization rules from backend")
         
         val accountsResult = accountRepository.getAccounts()
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
@@ -65,17 +69,12 @@ class MpesaImporter(
                 val timestamp = it.getLong(dateIndex)
                 val smsInstant = Instant.fromEpochMilliseconds(timestamp)
 
-                // Log first 2500 M-Pesa messages for parser improvement
-                if (loggedCount < 2500) {
-                    logger.debug("MPESA_DEBUG", "SMS Body: $body")
-                }
-
                 // Keep the first balance we find (most recent message)
                 if (latestBalance == null) {
                     latestBalance = MpesaParser.parseBalance(body)
                 }
 
-                val parsed = MpesaParser.parse(body, accountId, smsInstant)
+                val parsed = MpesaParser.parse(body, accountId, smsInstant, rules)
                 if (parsed != null) {
                     // Use the ID from the parser if it's already a fixed UUID
                     val transaction = if (parsed.categoryId != "pending" && !parsed.categoryId.startsWith("custom_")) {

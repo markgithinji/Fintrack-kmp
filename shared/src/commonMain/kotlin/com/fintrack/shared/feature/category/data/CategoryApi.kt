@@ -3,6 +3,7 @@ package com.fintrack.shared.feature.category.data
 import com.fintrack.shared.feature.core.data.model.ApiResponse
 import com.fintrack.shared.feature.category.data.model.CategoryDto
 import com.fintrack.shared.feature.category.data.model.CreateCategoryRequest
+import com.fintrack.shared.feature.category.domain.model.CategoryRule
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
@@ -17,6 +18,11 @@ class CategoryApi(
 ) {
     suspend fun getCategories(): List<CategoryDto> {
         val response: ApiResponse<List<CategoryDto>> = client.get("categories").body()
+        return response.result
+    }
+
+    suspend fun getCategoryRules(): List<CategoryRule> {
+        val response: ApiResponse<List<CategoryRule>> = client.get("categories/rules").body()
         return response.result
     }
 

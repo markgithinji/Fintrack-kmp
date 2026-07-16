@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.category.data
 
 import com.fintrack.shared.feature.category.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.CategoryRule
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,11 +11,18 @@ class LocalCategoryDataSource {
     private val _categories = MutableStateFlow(Category.allCategories)
     val categories: StateFlow<List<Category>> = _categories.asStateFlow()
 
+    private val _categoryRules = MutableStateFlow<List<CategoryRule>>(emptyList())
+    val categoryRules: StateFlow<List<CategoryRule>> = _categoryRules.asStateFlow()
+
     fun updateCategories(newCategories: List<Category>) {
         _categories.update { 
             (newCategories + Category.allCategories)
                 .distinctBy { it.name.lowercase() to it.isExpense }
         }
+    }
+
+    fun updateCategoryRules(newRules: List<CategoryRule>) {
+        _categoryRules.update { newRules }
     }
 
     fun addCategory(category: Category) {

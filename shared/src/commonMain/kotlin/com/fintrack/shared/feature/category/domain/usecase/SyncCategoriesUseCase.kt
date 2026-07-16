@@ -9,13 +9,18 @@ class SyncCategoriesUseCase(
     private val localDataSource: LocalCategoryDataSource
 ) {
     suspend operator fun invoke(): Result<Unit> {
-        return when (val result = repository.getCategories()) {
-            is Result.Success -> {
-                localDataSource.updateCategories(result.data)
-                Result.Success(Unit)
-            }
-            is Result.Error -> Result.Error(result.exception)
-            is Result.Loading -> Result.Loading
+        val categoriesResult = repository.getCategories()
+        if (categoriesResult is Result.Error) return Result.Error(categoriesResult.exception)
+        
+        val rulesResult = repository.getCategoryRules()
+        if (rulesResult is Result.Error) return Result.Error(rulesResult.exception)
+
+        if (categoriesResult is Result.Success && rulesResult is Result.Success) {
+            localDataSource.updateCategories(categoriesResult.data)
+            localDataSource.updateCategoryRules(rulesResult.data)
+            return Result.Success(Unit)
         }
+        
+        return Result.Loading
     }
 }

@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.transaction.util
 
 import com.fintrack.shared.feature.category.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.CategoryRule
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.time.Clock
@@ -68,7 +69,12 @@ object MpesaParser {
 
     private val dateFormat = SimpleDateFormat("d/M/yy h:mm a", Locale.ENGLISH)
 
-    fun parse(message: String, accountId: String = "mpesa", smsTimestamp: Instant? = null): Transaction? {
+    fun parse(
+        message: String, 
+        accountId: String = "mpesa", 
+        smsTimestamp: Instant? = null,
+        rules: List<CategoryRule> = emptyList()
+    ): Transaction? {
         if (!message.contains("Confirmed", ignoreCase = true)) return null
 
         // Ignore messages that are just balance notifications or meta-info
@@ -158,7 +164,7 @@ object MpesaParser {
                 amount, 
                 cost, 
                 balance, 
-                inferCategory(party, isIncome = true),
+                inferCategory(party, isIncome = true, rules = rules),
                 parseDateTime(date, time, smsTimestamp), 
                 "Transferred from $party", 
                 accountId,
@@ -177,7 +183,7 @@ object MpesaParser {
                 amount, 
                 cost, 
                 balance, 
-                inferCategory(party, isIncome = false),
+                inferCategory(party, isIncome = false, rules = rules),
                 parseDateTime(date, time, smsTimestamp), 
                 "Transferred to $party", 
                 accountId,
@@ -210,15 +216,15 @@ object MpesaParser {
         }
 
         // Standard transactions
-        sentRegex.find(message)?.let { return wrap(createFromMatch(it, false, "Sent to", null, cost, balance, accountId, smsTimestamp)) }
+        sentRegex.find(message)?.let { return wrap(createFromMatch(it, false, "Sent to", null, cost, balance, accountId, smsTimestamp, rules)) }
         
-        receivedRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Received from", null, cost, balance, accountId, smsTimestamp)) }
-        sentToYouRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Sent by", null, cost, balance, accountId, smsTimestamp)) }
+        receivedRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Received from", null, cost, balance, accountId, smsTimestamp, rules)) }
+        sentToYouRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Sent by", null, cost, balance, accountId, smsTimestamp, rules)) }
         
-        paidRegex.find(message)?.let { return wrap(createFromMatch(it, false, "Paid to", null, cost, balance, accountId, smsTimestamp)) }
+        paidRegex.find(message)?.let { return wrap(createFromMatch(it, false, "Paid to", null, cost, balance, accountId, smsTimestamp, rules)) }
 
-        depositRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Deposit from", null, cost, balance, accountId, smsTimestamp)) }
-        withdrawRegex.find(message)?.let { return wrap(createFromMatch(it, false, "Withdrawn from", null, cost, balance, accountId, smsTimestamp)) }
+        depositRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Deposit from", null, cost, balance, accountId, smsTimestamp, rules)) }
+        withdrawRegex.find(message)?.let { return wrap(createFromMatch(it, false, "Withdrawn from", null, cost, balance, accountId, smsTimestamp, rules)) }
 
         // Received at Till (Ref at end)
         receivedAtTillRegex.find(message)?.let {
@@ -250,7 +256,8 @@ object MpesaParser {
         cost: BigDecimal,
         balance: BigDecimal?,
         accountId: String,
-        smsTimestamp: Instant? = null
+        smsTimestamp: Instant? = null,
+        rules: List<CategoryRule> = emptyList()
     ): Transaction {
         val code = match.groupValues[1]
         val amount = parseAmount(match.groupValues[2])
@@ -259,7 +266,7 @@ object MpesaParser {
         val date = if (match.groupValues.size > 4) match.groupValues[4] else ""
         val time = if (match.groupValues.size > 5) match.groupValues[5] else ""
         
-        return createTransactionModel(code, amount, cost, balance, fixedCategory ?: inferCategory(party), parseDateTime(date, time, smsTimestamp), "$prefix $party", accountId, isIncome)
+        return createTransactionModel(code, amount, cost, balance, fixedCategory ?: inferCategory(party, rules = rules), parseDateTime(date, time, smsTimestamp), "$prefix $party", accountId, isIncome)
     }
 
     private fun cleanPartyName(name: String): String {
@@ -371,8 +378,18 @@ object MpesaParser {
         }
     }
 
-    private fun inferCategory(recipient: String, isIncome: Boolean = false): String {
+    private fun inferCategory(recipient: String, isIncome: Boolean = false, rules: List<CategoryRule> = emptyList()): String {
         val r = recipient.lowercase(Locale.ENGLISH)
+
+        // 1. Try dynamic rules from backend first
+        rules.forEach { rule ->
+            if (r.contains(rule.keyword.lowercase())) {
+                // Find matching category name from our global list to ensure correct display name
+                return Category.fromId(rule.categoryId).name
+            }
+        }
+
+        // 2. Fallback to hardcoded defaults (as safety net)
         return when {
             r.contains("kplc") || r.contains("tokens") || r.contains("power") || r.contains("jajemelo") ||
             r.contains("water") || r.contains("sewerage") || r.contains("ncwsc") || r.contains("kiwasco") ||
@@ -412,13 +429,6 @@ object MpesaParser {
             r.contains("jubilee") || r.contains("sanlam") || r.contains("cic") || r.contains("old mutual") || 
             r.contains("icea lion") || r.contains("madison") || r.contains("apollo") || r.contains("ga insurance") ||
             r.contains("heritage") || r.contains("geminia") || r.contains("pioneer") || r.contains("kenindia") || r.contains("uap") -> "Insurance"
-            r.contains("salary") -> "Salary"
-            r.contains("bonus") -> "Bonus"
-            r.contains("interest") -> "Interest"
-            r.contains("commission") || r.contains("income") -> "Other Income"
-            else -> if (isIncome) "Other Income" else "Transfer"
-        }
-    }
             r.contains("salary") -> "Salary"
             r.contains("bonus") -> "Bonus"
             r.contains("interest") -> "Interest"
