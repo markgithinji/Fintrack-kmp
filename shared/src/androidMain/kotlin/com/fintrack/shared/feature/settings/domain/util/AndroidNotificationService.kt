@@ -192,6 +192,7 @@ class AndroidNotificationService(
             set(Calendar.HOUR_OF_DAY, 9) // 9 AM
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
         }
 
         if (calendar.before(Calendar.getInstance())) return
@@ -213,14 +214,16 @@ class AndroidNotificationService(
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (alarmManager.canScheduleExactAlarms()) {
-                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+                    val info = AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent)
+                    alarmManager.setAlarmClock(info, pendingIntent)
                 } else {
                     alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
                 }
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+                val info = AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent)
+                alarmManager.setAlarmClock(info, pendingIntent)
             } else {
-                alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
             }
         } catch (e: SecurityException) {
             alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
@@ -267,6 +270,7 @@ class AndroidNotificationService(
             set(Calendar.HOUR_OF_DAY, time.hour)
             set(Calendar.MINUTE, time.minute)
             set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
             
             if (before(Calendar.getInstance())) {
                 add(Calendar.DATE, 1)
@@ -276,10 +280,14 @@ class AndroidNotificationService(
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (alarmManager.canScheduleExactAlarms()) {
-                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+                    val info = AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent)
+                    alarmManager.setAlarmClock(info, pendingIntent)
                 } else {
                     alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
                 }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val info = AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent)
+                alarmManager.setAlarmClock(info, pendingIntent)
             } else {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
             }
@@ -322,6 +330,7 @@ class AndroidNotificationService(
             set(Calendar.HOUR_OF_DAY, reminderTime.hour)
             set(Calendar.MINUTE, reminderTime.minute)
             set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
             
             if (before(Calendar.getInstance())) {
                 add(Calendar.DATE, 1)
@@ -331,11 +340,8 @@ class AndroidNotificationService(
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (alarmManager.canScheduleExactAlarms()) {
-                    alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        calendar.timeInMillis,
-                        pendingIntent
-                    )
+                    val info = AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent)
+                    alarmManager.setAlarmClock(info, pendingIntent)
                 } else {
                     alarmManager.setAndAllowWhileIdle(
                         AlarmManager.RTC_WAKEUP,
@@ -344,11 +350,8 @@ class AndroidNotificationService(
                     )
                 }
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.timeInMillis,
-                    pendingIntent
-                )
+                val info = AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent)
+                alarmManager.setAlarmClock(info, pendingIntent)
             } else {
                 alarmManager.set(
                     AlarmManager.RTC_WAKEUP,

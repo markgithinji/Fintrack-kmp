@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.settings.domain.util
 
+import android.util.Log
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -24,9 +25,11 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
     private val notificationService: NotificationService by inject()
     private val settingsDataSource: SettingsDataSource by inject()
     private val transactionRepository: TransactionRepository by inject()
+    private val TAG = "ReminderReceiver"
 
     override fun onReceive(context: Context?, intent: Intent?) {
         val action = intent?.action
+        Log.d(TAG, "onReceive: action=$action")
         val pendingResult = goAsync()
 
         CoroutineScope(Dispatchers.Default).launch {
@@ -49,7 +52,9 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
                     "com.fintrack.shared.ACTION_SHOW_SUMMARY" -> {
                         handleSummaryNotification()
                     }
-                    Intent.ACTION_BOOT_COMPLETED -> {
+                    Intent.ACTION_BOOT_COMPLETED,
+                    "android.intent.action.QUICKBOOT_POWERON",
+                    "com.htc.intent.action.QUICKBOOT_POWERON" -> {
                         // Restore alarms after reboot
                         val dailyEnabled = settingsDataSource.isReminderEnabled.first()
                         if (dailyEnabled) {
