@@ -37,6 +37,7 @@ data class Category(
         val Fitness = Category("00000000-0000-4000-a000-000000000026", "Fitness", true, "FitnessCenter", true)
         val Maintenance = Category("00000000-0000-4000-a000-000000000027", "Maintenance", true, "Build", true)
         val TransactionCost = Category("00000000-0000-4000-a000-000000000028", "Transaction Fees", true, "Receipt", true)
+        val UncategorizedExpense = Category("pending", "Uncategorized", true, "HelpOutline", true)
         val MiscExpense = Category("99999999-9999-4999-a999-999999999999", "Misc", true, "HelpOutline", true)
 
         // Income categories (Base: aaaaaaaa-aaaa-4aaa-baaa-)
@@ -52,15 +53,16 @@ data class Category(
         val TransferIncome = Category("aaaaaaaa-aaaa-4aaa-baaa-000000000010", "Transfer", false, "Sync", true)
         val SavingsIncome = Category("aaaaaaaa-aaaa-4aaa-baaa-000000000011", "Savings", false, "Savings", true)
         val OtherIncome = Category("bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb", "Other Income", false, "AttachMoney", true)
+        val UncategorizedIncome = Category("pending_income", "Uncategorized", false, "HelpOutline", true)
 
         val allCategories = listOf(
             Food, Transport, Shopping, Health, Bills,
             Entertainment, Education, GiftsExpense, Travel,
             PersonalCare, Subscriptions, Rent, Groceries,
             Insurance, DiningOut, Utilities, Internet, Airtime, Bank, Loans, Charity, Government, Savings, Transfer,
-            Pets, Fitness, Maintenance, TransactionCost, MiscExpense,
+            Pets, Fitness, Maintenance, TransactionCost, UncategorizedExpense, MiscExpense,
             Salary, Freelance, Investments, GiftsIncome, Bonus, Rental, Dividends, Interest, 
-            LoansIncome, TransferIncome, SavingsIncome, OtherIncome
+            LoansIncome, TransferIncome, SavingsIncome, OtherIncome, UncategorizedIncome
         )
 
         val expenseCategories = allCategories.filter { it.isExpense }
