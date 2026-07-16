@@ -13,6 +13,7 @@ data class CreateTransactionRequest(
     val amount: BigDecimal,
     @Serializable(with = BigDecimalSerializer::class)
     val transactionCost: BigDecimal = BigDecimal.ZERO,
+    val category: String = "",
     val categoryId: String,
     val dateTime: Instant,
     val description: String? = "",

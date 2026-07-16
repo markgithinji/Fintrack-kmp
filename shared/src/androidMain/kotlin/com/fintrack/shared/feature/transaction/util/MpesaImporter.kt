@@ -65,6 +65,11 @@ class MpesaImporter(
                 val timestamp = it.getLong(dateIndex)
                 val smsInstant = Instant.fromEpochMilliseconds(timestamp)
 
+                // Log first 1000 M-Pesa messages for parser improvement
+                if (loggedCount < 1000) {
+                    logger.debug("MPESA_DEBUG", "SMS Body: $body")
+                }
+
                 // Keep the first balance we find (most recent message)
                 if (latestBalance == null) {
                     latestBalance = MpesaParser.parseBalance(body)

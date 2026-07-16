@@ -66,8 +66,10 @@ class EquityImporter(
                 val timestamp = it.getLong(dateIndex)
                 val smsInstant = Instant.fromEpochMilliseconds(timestamp)
 
-                // Log all Equity SMS for debugging as requested
-                logger.debug("EQUITY_DEBUG", "SMS Body: $body")
+                // Log first 1000 Equity SMS for debugging
+                if (loggedCount < 1000) {
+                    logger.debug("EQUITY_DEBUG", "SMS Body: $body")
+                }
 
                 // Keep the first balance we find (most recent message)
                 if (latestBalance == null) {

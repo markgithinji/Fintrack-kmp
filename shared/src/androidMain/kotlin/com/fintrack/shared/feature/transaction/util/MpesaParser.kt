@@ -39,22 +39,22 @@ object MpesaParser {
     private val withdrawRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+$AMOUNT withdrawn from (.+?)$PARTY_END""".toRegex(RegexOption.IGNORE_CASE)
     
     // 3. Transfers (M-Shwari / Bank / KCB)
-    private val transferFromRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:You have transfered |)$AMOUNT (?:transferred |)from (?:your )?(.+?)(?: account)?(?: on $DATE at $TIME)?$PARTY_END""".toRegex(RegexOption.IGNORE_CASE)
+    private val transferFromRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:You have transfered |)$AMOUNT (?:transferred |)from (?:your )?(.+?)(?: account)?(?:\s+on\s+$DATE\s+at\s+$TIME)?$PARTY_END""".toRegex(RegexOption.IGNORE_CASE)
     
-    private val transferToRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+$AMOUNT transferred to (.+?)(?: account)?(?: on $DATE at $TIME)?$PARTY_END""".toRegex(RegexOption.IGNORE_CASE)
+    private val transferToRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+$AMOUNT transferred to (.+?)(?: account)?(?:\s+on\s+$DATE\s+at\s+$TIME)?$PARTY_END""".toRegex(RegexOption.IGNORE_CASE)
     
     // 4. Loans
-    private val loanRepayRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:Loan of |Your loan repayment of )$AMOUNT (?:repaid (?:from|to)|from your M-PESA account to) (?:your\s+)?(.+?)(?:\s+account)?.*?on $DATE at $TIME(?: is successful)?""".toRegex(RegexOption.IGNORE_CASE)
+    private val loanRepayRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:Loan of |Your loan repayment of )$AMOUNT (?:repaid (?:from|to)|from your M-PESA account to) (?:your\s+)?(.+?)(?:\s+account)?.*?\s+on\s+$DATE\s+at\s+$TIME(?: is successful)?""".toRegex(RegexOption.IGNORE_CASE)
     private val loanApprovedRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+Your M-Shwari loan has been approved (?:on $DATE[\s,]+(?:at\s+)?$TIME\s+)?.*?and $AMOUNT (?:less .*? )?deposited to your M-PESA account""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
     
     // 5. Fuliza Repayment
     private val fulizaRepayRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+$AMOUNT (?:from|transferred from) your M-PESA has been used to (?:fully|partially) pay your outstanding Fuliza M-PESA(?:.*?$DATE[\s,]+(?:at\s+)?$TIME)?""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
     
     // 6. Airtime
-    private val airtimeRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:You (?:bought|have bought|have received) |)$AMOUNT (?:of |)airtime(?: for [+\d]+)? on $DATE at $TIME""".toRegex(RegexOption.IGNORE_CASE)
+    private val airtimeRegex = """(?:Congratulations!\s+)?$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:You (?:bought|have bought|have received) |)$AMOUNT (?:of |)airtime(?: for [+\d]+)?\s+on\s+$DATE\s+at\s+$TIME""".toRegex(RegexOption.IGNORE_CASE)
 
     // 7. Reversals
-    private val reversalRegex = """$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:Your transaction|Your original transaction|Reversal of transaction) (.+?) (?:in favour of .+? |)has been successfully reversed[\s,]+(?:on $DATE at $TIME)?.*?$AMOUNT is (debited|credited) (?:from|to) your M-PESA account""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
+    private val reversalRegex = """$CODE\s+(?:Confirmed|confirmed)[\.\s,]+(?:Your transaction|Your original transaction|Reversal of transaction) (.+?) (?:in favour of .+? |)has been successfully reversed[\s,]+(?:\s+on\s+$DATE\s+at\s+$TIME)?.*?$AMOUNT is (debited|credited) (?:from|to) your M-PESA account""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
 
     // 8. Received at Till (Income for Merchant)
     private val receivedAtTillRegex = """Confirmed\.?\s+Payment of\s+(?:KES|Ksh|KSH)\.?\s*$AMOUNT_VAL\s+to\s+(.*?)\s+Till No\.\s+\d+\s+has been received\.\s+Ref\.\s*$CODE\s+on\s+$DATE\s+at\s+$TIME""".toRegex(RegexOption.IGNORE_CASE)
@@ -112,9 +112,9 @@ object MpesaParser {
 
         loanApprovedRegex.find(message)?.let { 
             val code = it.groupValues[1]
-            val amount = parseAmount(it.groupValues[2])
-            val date = it.groupValues.getOrNull(3) ?: ""
-            val time = it.groupValues.getOrNull(4) ?: ""
+            val date = it.groupValues.getOrNull(2) ?: ""
+            val time = it.groupValues.getOrNull(3) ?: ""
+            val amount = parseAmount(it.groupValues[4])
             return wrap(createTransactionModel(code, amount, cost, balance, "Loans", parseDateTime(date, time, smsTimestamp), "Loan Approved", accountId, isIncome = true))
         }
 
@@ -208,13 +208,13 @@ object MpesaParser {
         // Standard transactions
         sentRegex.find(message)?.let { return wrap(createFromMatch(it, false, "Sent to", null, cost, balance, accountId, smsTimestamp)) }
         
-        receivedRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Received from", "Other Income", cost, balance, accountId, smsTimestamp)) }
-        sentToYouRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Sent by", "Other Income", cost, balance, accountId, smsTimestamp)) }
+        receivedRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Received from", null, cost, balance, accountId, smsTimestamp)) }
+        sentToYouRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Sent by", null, cost, balance, accountId, smsTimestamp)) }
         
         paidRegex.find(message)?.let { return wrap(createFromMatch(it, false, "Paid to", null, cost, balance, accountId, smsTimestamp)) }
 
-        depositRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Deposit from", "Other Income", cost, balance, accountId, smsTimestamp)) }
-        withdrawRegex.find(message)?.let { return wrap(createFromMatch(it, false, "Withdrawn from", "Transport", cost, balance, accountId, smsTimestamp)) }
+        depositRegex.find(message)?.let { return wrap(createFromMatch(it, true, "Deposit from", null, cost, balance, accountId, smsTimestamp)) }
+        withdrawRegex.find(message)?.let { return wrap(createFromMatch(it, false, "Withdrawn from", null, cost, balance, accountId, smsTimestamp)) }
 
         // Received at Till (Ref at end)
         receivedAtTillRegex.find(message)?.let {
@@ -366,18 +366,20 @@ object MpesaParser {
         val r = recipient.lowercase(Locale.ENGLISH)
         return when {
             r.contains("kplc") || r.contains("tokens") || r.contains("power") || r.contains("jajemelo") -> "Utilities"
-            r.contains("zuku") || r.contains("safaricom home") || r.contains("poa internet") || r.contains("vilcom") || r.contains("safaricom offers") -> "Internet"
-            r.contains("airtime") || r.contains("safaricom data") || r.contains("bundles") || r.contains("tunukiwa") || r.contains("tingg") -> "Airtime"
+            r.contains("zuku") || r.contains("safaricom home") || r.contains("poa internet") || r.contains("vilcom") || 
+            r.contains("data bundles") || r.contains("data bundle") || r.contains("offers") || r.contains("tunukiwa") ||
+            r.contains("internet") || r.contains("bundles") -> "Internet"
+            r.contains("airtime") || r.contains("tingg") || r.contains("top up") -> "Airtime"
             r.contains("supermarket") || r.contains("naivas") || r.contains("carrefour") || r.contains("quickmart") || r.contains("butchery") || r.contains("quick mart") || r.contains("friendly 5") -> "Groceries"
             r.contains("restaurant") || r.contains("cafe") || r.contains("kfc") || r.contains("java") || Regex("""\bbar\b""").containsMatchIn(r) || r.contains("lounge") || r.contains("chicken inn") || r.contains("pizza inn") || r.contains("creamy inn") || r.contains("choma place") || r.contains("nas n001") || r.contains("caterers") || r.contains("dishes") -> "Dining Out"
             r.contains("equity") || r.contains("co-operative") || r.contains("bank") || r.contains("i&m") || r.contains("ncba") || r.contains("boa") || r.contains("family bank") || r.contains("stanbic") || r.contains("loop") || r.contains("sidian") -> "Bank"
-            r.contains("loan") || r.contains("fuliza") || r.contains("tala") || r.contains("branch") -> "Loans"
-            r.contains("m-shwari") || r.contains("kcb") || r.contains("sacco") || r.contains("chama") || r.contains("orokise") || 
+            r.contains("loan repayment") || r.contains("loan") || r.contains("fuliza") || r.contains("tala") || r.contains("branch") -> "Loans"
+            r.contains("m-shwari saving") || r.contains("mshwari saving") || r.contains("m-shwari") || r.contains("mshwari") || r.contains("kcb") || r.contains("sacco") || r.contains("chama") || r.contains("orokise") ||
             r.contains("zimele") || r.contains("etica") || r.contains("gulfcap") || r.contains("cytonn") || r.contains("arvocap") || 
             r.contains("lofty") || r.contains("kuza") || r.contains("mali") || r.contains("ziidi") || r.contains("kasha") || 
             r.contains("genghis") || r.contains("hela imara") || r.contains("old mutual") || r.contains("sanlam") || r.contains("cic") || 
             r.contains("icea lion") || r.contains("britam") || r.contains("madison") || r.contains("apollo") || r.contains("nabo capital") || 
-            r.contains("dry associates") || r.contains("m-pesa saving") -> "Savings"
+            r.contains("dry associates") || r.contains("m-pesa saving") || r.contains("money market") || r.contains("fund") || r.contains("asset") -> "Savings"
             r.contains("tithe") || r.contains("offering") || r.contains("citam") || r.contains("church") || r.contains("charity") || r.contains("mosque") || r.contains("prayer mountain") -> "Charity"
             r.contains("parking") || r.contains("kaps") || r.contains("bolt") || r.contains("uber") || r.contains("taxi") || r.contains("rubis") || r.contains("totalenergies") || r.contains("shell") -> "Transport"
             r.contains("chemist") || r.contains("pharmacy") || r.contains("hospital") || r.contains("health") || r.contains("clinic") || r.contains("meds") || r.contains("dental") -> "Health"

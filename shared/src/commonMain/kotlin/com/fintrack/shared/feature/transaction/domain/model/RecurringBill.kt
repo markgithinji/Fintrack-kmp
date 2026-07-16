@@ -11,7 +11,8 @@ data class RecurringBill(
     val name: String,
     @Serializable(with = BigDecimalSerializer::class)
     val amount: BigDecimal,
-    val category: String,
+    val categoryId: String,
+    val category: String? = null,
     val frequency: String, // "Monthly", "Weekly", etc.
     val nextDueDate: LocalDate,
     val isActive: Boolean = true
