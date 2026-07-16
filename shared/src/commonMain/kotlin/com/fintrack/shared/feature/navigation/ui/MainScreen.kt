@@ -1,5 +1,8 @@
 package com.fintrack.shared.feature.navigation.ui
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -76,53 +79,79 @@ fun MainScreen(
                     }
                 }
 
-                if (isAppLocked) {
-                    LockScreen(
-                        onUnlock = {
-                            scope.launch {
-                                val result = biometricAuthenticator.authenticate(
-                                    title = "Unlock Fintrack",
-                                    subtitle = "Authenticate to access your account"
-                                )
-                                if (result is BiometricResult.Success) {
-                                    authViewModel.unlockWithBiometrics()
+                AnimatedContent(
+                    targetState = isAppLocked to authStatusState,
+                    transitionSpec = {
+                        if (initialState.first && !targetState.first) {
+                            // Transition from Locked to Unlocked
+                            (fadeIn(animationSpec = tween(600)) + 
+                             scaleIn(initialScale = 0.92f, animationSpec = tween(600, easing = FastOutSlowInEasing)) +
+                             slideInVertically(initialOffsetY = { it / 10 }, animationSpec = tween(600, easing = FastOutSlowInEasing))
+                            ).togetherWith(
+                                fadeOut(animationSpec = tween(600)) + 
+                                scaleOut(targetScale = 1.08f, animationSpec = tween(600, easing = FastOutSlowInEasing))
+                            )
+                        } else if (initialState.second is AuthState.Loading && targetState.second is AuthState.Success) {
+                            // Transition from Loading to Success (App start)
+                            (fadeIn(animationSpec = tween(800)) + 
+                             scaleIn(initialScale = 0.85f, animationSpec = tween(800, easing = FastOutSlowInEasing))
+                            ).togetherWith(
+                                fadeOut(animationSpec = tween(600))
+                            )
+                        } else {
+                            fadeIn(animationSpec = tween(500)).togetherWith(fadeOut(animationSpec = tween(500)))
+                        }
+                    },
+                    label = "MainAppTransition"
+                ) { (locked, authState) ->
+                    if (locked) {
+                        LockScreen(
+                            onUnlock = {
+                                scope.launch {
+                                    val result = biometricAuthenticator.authenticate(
+                                        title = "Unlock Fintrack",
+                                        subtitle = "Authenticate to access your account"
+                                    )
+                                    if (result is BiometricResult.Success) {
+                                        authViewModel.unlockWithBiometrics()
+                                    }
                                 }
                             }
-                        }
-                    )
-                } else {
-                    when (authStatusState) {
-                        is AuthState.Loading -> {
-                            if (lastError != null) {
-                                AuthErrorScreen(
-                                    error = lastError!!.exception,
-                                    isLoading = true,
-                                    onRetry = { authViewModel.checkAuthenticationStatus() }
-                                )
-                            } else {
-                                AuthLoadingScreen(message = (authStatusState as AuthState.Loading).message)
+                        )
+                    } else {
+                        when (authState) {
+                            is AuthState.Loading -> {
+                                if (lastError != null) {
+                                    AuthErrorScreen(
+                                        error = lastError!!.exception,
+                                        isLoading = true,
+                                        onRetry = { authViewModel.checkAuthenticationStatus() }
+                                    )
+                                } else {
+                                    AuthLoadingScreen(message = authState.message)
+                                }
                             }
-                        }
-                        is AuthState.Error -> {
-                            AuthErrorScreen(
-                                error = (authStatusState as AuthState.Error).exception,
-                                onRetry = { authViewModel.checkAuthenticationStatus() }
-                            )
-                        }
-                        is AuthState.Success, is AuthState.Idle -> {
-                            if (lastError != null) {
+                            is AuthState.Error -> {
                                 AuthErrorScreen(
-                                    error = lastError!!.exception,
-                                    isSuccess = true,
+                                    error = authState.exception,
                                     onRetry = { authViewModel.checkAuthenticationStatus() }
                                 )
-                            } else {
-                                val isAuthenticated = (authStatusState as? AuthState.Success)?.data ?: false
-                                MainAppScaffold(
-                                    isAuthenticated = isAuthenticated,
-                                    authViewModel = authViewModel,
-                                    onLogout = { authViewModel.logout() }
-                                )
+                            }
+                            is AuthState.Success, is AuthState.Idle -> {
+                                if (lastError != null) {
+                                    AuthErrorScreen(
+                                        error = lastError!!.exception,
+                                        isSuccess = true,
+                                        onRetry = { authViewModel.checkAuthenticationStatus() }
+                                    )
+                                } else {
+                                    val isAuthenticated = (authState as? AuthState.Success)?.data ?: false
+                                    MainAppScaffold(
+                                        isAuthenticated = isAuthenticated,
+                                        authViewModel = authViewModel,
+                                        onLogout = { authViewModel.logout() }
+                                    )
+                                }
                             }
                         }
                     }
