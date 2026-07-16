@@ -351,13 +351,22 @@ private fun CurrentBalanceSuccessState(
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        account.name,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            account.name,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (isLinkedAccount) {
+                            Text(
+                                text = "Synced ${DateTimeUtils.toRelativeDateTimeString(account.lastSyncedAt)}",
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
 
                     AnimatedVisibility(
                         visible = isLinkedAccount,
@@ -554,7 +563,7 @@ private fun CurrentBalanceSuccessState(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.Start
             ) {
                 Column {
                     Text(
@@ -568,15 +577,6 @@ private fun CurrentBalanceSuccessState(
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.onPrimary,
                         fontWeight = FontWeight.Black
-                    )
-                }
-                
-                if (isLinkedAccount) {
-                    Text(
-                        text = DateTimeUtils.toRelativeDateTimeString(account.lastSyncedAt),
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f),
-                        modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
             }
