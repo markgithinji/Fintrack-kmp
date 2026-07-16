@@ -77,23 +77,31 @@ class MpesaImporter(
 
                 val parsed = MpesaParser.parse(body, accountId, smsInstant)
                 if (parsed != null) {
-                    // Map inferred category name to ID
-                    val categoryName = parsed.category
-                    val isExpense = !parsed.isIncome
-                    
-                    val categoryId = categories.find { 
-                        it.name.equals(categoryName, ignoreCase = true) && it.isExpense == isExpense 
-                    }?.id
-                    
-                    val finalCategoryId = categoryId ?: categories.find { 
-                        it.name.equals("Transfer", ignoreCase = true) && it.isExpense == isExpense 
-                    }?.id ?: categories.find {
-                        it.name.contains("Other", ignoreCase = true) && it.isExpense == isExpense
-                    }?.id ?: categories.find {
-                        it.name.contains("Misc", ignoreCase = true) && it.isExpense == isExpense
-                    }?.id ?: categories.firstOrNull { it.isExpense == isExpense }?.id ?: "pending"
+                    // Use the ID from the parser if it's already a fixed UUID
+                    val transaction = if (parsed.categoryId != "pending" && !parsed.categoryId.startsWith("custom_")) {
+                        parsed
+                    } else {
+                        // Fallback to name-based lookup for custom categories or failures
+                        val categoryName = parsed.category
+                        val isExpense = !parsed.isIncome
+                        
+                        val categoryId = categories.find { 
+                            it.name.equals(categoryName, ignoreCase = true) && it.isExpense == isExpense 
+                        }?.id
+                        
+                        val finalCategoryId = categoryId ?: categories.find { 
+                            it.name.equals(categoryName, ignoreCase = true)
+                        }?.id ?: categories.find { 
+                            it.name.equals("Transfer", ignoreCase = true) && it.isExpense == isExpense 
+                        }?.id ?: categories.find {
+                            it.name.contains("Other", ignoreCase = true) && it.isExpense == isExpense
+                        }?.id ?: categories.find {
+                            it.name.contains("Misc", ignoreCase = true) && it.isExpense == isExpense
+                        }?.id ?: categories.firstOrNull { it.isExpense == isExpense }?.id 
+                        ?: categories.firstOrNull()?.id ?: "pending"
 
-                    val transaction = parsed.copy(categoryId = finalCategoryId)
+                        parsed.copy(categoryId = finalCategoryId)
+                    }
                     
                     transactions.add(transaction)
                     if (loggedCount < 5) {

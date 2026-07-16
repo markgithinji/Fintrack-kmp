@@ -78,19 +78,19 @@ class EquityImporter(
 
                 val parsedTransaction = EquityParser.parse(body, accountId, smsInstant)
                 if (parsedTransaction != null) {
-                    // Map inferred category name to ID
-                    val categoryName = parsedTransaction.category
-                    val isExpense = !parsedTransaction.isIncome
-                    
-                    val categoryId = categories.find { 
-                        it.name.equals(categoryName, ignoreCase = true) && it.isExpense == isExpense 
-                    }?.id
-                    
-                    val finalTransaction = if (categoryId != null) {
-                        parsedTransaction.copy(categoryId = categoryId)
+                    // Use the ID from the parser if it's already a fixed UUID
+                    val finalTransaction = if (parsedTransaction.categoryId != "pending") {
+                        parsedTransaction
                     } else {
-                        // Fallback: If category not found, try to find "Transfer" or "Other" with matching type
-                        val fallbackId = categories.find { 
+                        // Map inferred category name to ID (Fallback)
+                        val categoryName = parsedTransaction.category
+                        val isExpense = !parsedTransaction.isIncome
+                        
+                        val categoryId = categories.find { 
+                            it.name.equals(categoryName, ignoreCase = true) && it.isExpense == isExpense 
+                        }?.id
+                        
+                        val fallbackId = categoryId ?: categories.find {
                             it.name.equals("Transfer", ignoreCase = true) && it.isExpense == isExpense 
                         }?.id ?: categories.find {
                             it.name.contains("Other", ignoreCase = true) && it.isExpense == isExpense

@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.transaction.util
 
+import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.time.Clock
@@ -222,18 +223,22 @@ object EquityParser {
         description: String,
         accountId: String,
         isIncome: Boolean
-    ): Transaction = Transaction(
-        accountId = accountId,
-        isIncome = isIncome,
-        amount = amount,
-        transactionCost = cost,
-        category = category,
-        categoryId = "pending", // Will be resolved by the importer
-        dateTime = dateTime,
-        description = "$description (Ref: $code)",
-        externalId = code,
-        balance = balance
-    )
+    ): Transaction {
+        val resolvedCategory = Category.fromName(category, !isIncome)
+        
+        return Transaction(
+            accountId = accountId,
+            isIncome = isIncome,
+            amount = amount,
+            transactionCost = cost,
+            category = resolvedCategory.name,
+            categoryId = resolvedCategory.id,
+            dateTime = dateTime,
+            description = "$description (Ref: $code)",
+            externalId = code,
+            balance = balance
+        )
+    }
 
     fun parseBalance(message: String): BigDecimal? {
         // Look for common bank balance patterns

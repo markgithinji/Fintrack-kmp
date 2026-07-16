@@ -1,5 +1,6 @@
 package com.fintrack.shared.feature.transaction.util
 
+import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.time.Clock
@@ -275,18 +276,23 @@ object MpesaParser {
         description: String,
         accountId: String,
         isIncome: Boolean
-    ): Transaction = Transaction(
-        accountId = accountId,
-        isIncome = isIncome,
-        amount = amount,
-        transactionCost = cost,
-        category = category,
-        categoryId = "pending", // Resolved by receiver/importer
-        dateTime = dateTime,
-        description = "$description (Ref: $code)",
-        externalId = code,
-        balance = balance
-    )
+    ): Transaction {
+        // Resolve fixed UUID from name to ensure backend compatibility
+        val resolvedCategory = Category.fromName(category, !isIncome)
+        
+        return Transaction(
+            accountId = accountId,
+            isIncome = isIncome,
+            amount = amount,
+            transactionCost = cost,
+            category = resolvedCategory.name,
+            categoryId = resolvedCategory.id,
+            dateTime = dateTime,
+            description = "$description (Ref: $code)",
+            externalId = code,
+            balance = balance
+        )
+    }
 
     fun parseBalance(message: String): BigDecimal? {
         // 1. Look for explicit M-PESA balance (highest priority)
