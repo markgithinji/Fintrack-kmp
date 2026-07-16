@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -63,7 +62,7 @@ fun AppNavigation(
     val navController = LocalNavController.current
     val selectedAccountId by mainViewModel.selectedAccountId.collectAsStateWithLifecycle()
 
-    val startDestination: Any = remember {
+    val startDestination: Any = remember(isAuthenticated) {
         if (isAuthenticated) Screen.Home() else Screen.Login
     }
 
@@ -130,26 +129,26 @@ fun AppNavigation(
             if (isFromAuth && !isToAuth) { // Login success
                 scaleIn(
                     initialScale = 0.85f, 
-                    animationSpec = tween(700, easing = FastOutSlowInEasing)
-                ) + fadeIn(animationSpec = tween(700)) +
+                    animationSpec = tween(500, easing = FastOutSlowInEasing)
+                ) + fadeIn(animationSpec = tween(500)) +
                 slideInVertically(
                     initialOffsetY = { it / 10 }, 
-                    animationSpec = tween(700, easing = FastOutSlowInEasing)
+                    animationSpec = tween(500, easing = FastOutSlowInEasing)
                 )
             } else if (isToAuth && !isFromAuth) { // Logout
-                fadeIn(animationSpec = tween(600))
+                fadeIn(animationSpec = tween(300))
             } else if (isToAuth && isFromAuth) { // Between Login/Register
-                fadeIn(animationSpec = tween(400))
+                fadeIn(animationSpec = tween(250))
             } else if (isToMorphScreen) {
                 slideInVertically(
                     initialOffsetY = { it },
-                    animationSpec = tween(500, easing = FastOutSlowInEasing)
-                ) + fadeIn(animationSpec = tween(500))
+                    animationSpec = tween(350, easing = FastOutSlowInEasing)
+                ) + fadeIn(animationSpec = tween(300))
             } else if (isToProfileDetail) {
                 slideInHorizontally(
                     initialOffsetX = { it },
-                    animationSpec = tween(450, easing = FastOutSlowInEasing)
-                ) + fadeIn(animationSpec = tween(400))
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
             } else {
                 EnterTransition.None
             }
@@ -175,27 +174,27 @@ fun AppNavigation(
                                    targetState.destination.hasRoute<Screen.EditProfile>()
 
             if (isFromAuth && !isToAuth) { // Login success
-                scaleOut(targetScale = 1.1f, animationSpec = tween(600)) + fadeOut(animationSpec = tween(600))
+                scaleOut(targetScale = 1.1f, animationSpec = tween(500)) + fadeOut(animationSpec = tween(500))
             } else if (isToAuth && !isFromAuth) { // Logout
-                scaleOut(targetScale = 0.9f, animationSpec = tween(600)) + fadeOut(animationSpec = tween(600))
+                scaleOut(targetScale = 0.9f, animationSpec = tween(500)) + fadeOut(animationSpec = tween(500))
             } else if (isToAuth && isFromAuth) { // Between Login/Register
-                fadeOut(animationSpec = tween(400))
+                fadeOut(animationSpec = tween(300))
             } else if (isFromMorphScreen) {
                 slideOutVertically(
                     targetOffsetY = { it },
-                    animationSpec = tween(500, easing = FastOutSlowInEasing)
-                ) + fadeOut(animationSpec = tween(400))
+                    animationSpec = tween(350, easing = FastOutSlowInEasing)
+                ) + fadeOut(animationSpec = tween(300))
             } else if (isFromProfileDetail) {
                 slideOutHorizontally(
                     targetOffsetX = { it },
-                    animationSpec = tween(450, easing = FastOutSlowInEasing)
-                ) + fadeOut(animationSpec = tween(400))
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
             } else if (isToProfileDetail) {
                 // When Profile is being covered by a detail screen, slide it slightly left
                 slideOutHorizontally(
                     targetOffsetX = { -it / 4 },
-                    animationSpec = tween(450, easing = FastOutSlowInEasing)
-                ) + fadeOut(animationSpec = tween(400))
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
             } else {
                 ExitTransition.None
             }
@@ -213,15 +212,15 @@ fun AppNavigation(
             val isToProfile = targetState.destination.hasRoute<Screen.Profile>()
 
             if (isToMorphScreen || targetState.destination.hasRoute<Screen.Home>()) {
-                fadeIn(animationSpec = tween(400))
+                fadeIn(animationSpec = tween(250))
             } else if (isToProfileDetail) {
-                fadeIn(animationSpec = tween(400))
+                fadeIn(animationSpec = tween(250))
             } else if (isToProfile) {
                 // When popping BACK to Profile from a detail screen
                 slideInHorizontally(
                     initialOffsetX = { -it / 4 },
-                    animationSpec = tween(450, easing = FastOutSlowInEasing)
-                ) + fadeIn(animationSpec = tween(400))
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
             } else {
                 EnterTransition.None
             }
@@ -239,13 +238,13 @@ fun AppNavigation(
             if (isFromMorphScreen) {
                 slideOutVertically(
                     targetOffsetY = { it },
-                    animationSpec = tween(500, easing = FastOutSlowInEasing)
-                ) + fadeOut(animationSpec = tween(400))
+                    animationSpec = tween(350, easing = FastOutSlowInEasing)
+                ) + fadeOut(animationSpec = tween(300))
             } else if (isFromProfileDetail) {
                 slideOutHorizontally(
                     targetOffsetX = { it },
-                    animationSpec = tween(450, easing = FastOutSlowInEasing)
-                ) + fadeOut(animationSpec = tween(400))
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
             } else {
                 ExitTransition.None
             }
@@ -266,7 +265,7 @@ fun AppNavigation(
                 onCardClick = { accountIdParam, isIncome ->
                     navController.navigate(
                         Screen.TransactionList(
-                            accountId = accountIdParam ?: accountId ?: "",
+                            accountId = accountIdParam,
                             isIncome = isIncome
                         )
                     )

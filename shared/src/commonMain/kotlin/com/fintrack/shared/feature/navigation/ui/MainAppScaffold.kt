@@ -192,10 +192,10 @@ fun MainAppScaffold(
                         AnimatedVisibility(
                             visible = showBottomBarNow,
                             enter = slideInVertically(
-                                animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                                animationSpec = spring(stiffness = Spring.StiffnessMedium)
                             ) { it },
                             exit = slideOutVertically(
-                                animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                                animationSpec = spring(stiffness = Spring.StiffnessMedium)
                             ) { it }
                         ) {
                             NavigationBar(
@@ -360,8 +360,12 @@ fun MainAppScaffold(
         // Place FAB over everything
         AnimatedVisibility(
             visible = showFABNow,
-            enter = slideInVertically { it * 2 } + fadeIn(),
-            exit = slideOutVertically { it * 2 } + fadeOut(),
+            enter = slideInVertically(
+                animationSpec = spring(stiffness = Spring.StiffnessMedium)
+            ) { it * 2 } + fadeIn(),
+            exit = slideOutVertically(
+                animationSpec = spring(stiffness = Spring.StiffnessMedium)
+            ) { it * 2 } + fadeOut(),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .zIndex(100f)
