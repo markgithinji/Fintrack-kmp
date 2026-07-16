@@ -179,17 +179,14 @@ class EquityImporter(
             
             logger.info("SYNC_FLOW", "Equity import process completed successfully")
 
-            // Update account state (balance and last synced time)
+            // Update account state (last synced time only - we don't send final balance for Equity)
             val accountResult = accountRepository.getAccountById(accountId)
             if (accountResult is Result.Success) {
                 val account = accountResult.data
-                val currentAppBalance = account.balance ?: BigDecimal.ZERO
-                val newBalance = latestBalance ?: currentAppBalance
                 val now = Clock.System.now()
                 
-                logger.info("SYNC_FLOW", "Updating Equity account state. Balance: $newBalance, Synced: $now")
+                logger.info("SYNC_FLOW", "Updating Equity account state. Synced: $now")
                 accountRepository.addOrUpdateAccount(account.copy(
-                    balance = newBalance,
                     lastSyncedAt = now
                 ))
             }

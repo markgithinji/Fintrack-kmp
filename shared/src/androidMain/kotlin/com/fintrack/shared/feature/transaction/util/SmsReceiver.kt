@@ -147,15 +147,20 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                             
                             // Update account balance and last sync time if possible
                             val balance = if (isMpesa) MpesaParser.parseBalance(fullMessage) else EquityParser.parseBalance(fullMessage)
-                            if (balance != null) {
-                                accountRepository.getAccountById(accountId).let { accResult ->
-                                    if (accResult is Result.Success) {
-                                        val account = accResult.data
-                                        accountRepository.addOrUpdateAccount(account.copy(
-                                            balance = balance,
-                                            lastSyncedAt = kotlin.time.Clock.System.now()
-                                        ))
-                                    }
+                            accountRepository.getAccountById(accountId).let { accResult ->
+                                if (accResult is Result.Success) {
+                                    val account = accResult.data
+                                    val isPureMpesaAccount = account.type == AccountType.MPESA && 
+                                                           !account.linkedSources.contains("equity") &&
+                                                           account.name.lowercase() == "mpesa"
+                                    
+                                    val newBalance = if (isPureMpesaAccount) balance ?: account.balance else account.balance
+                                    
+                                    logger.info("SmsReceiver", "Updating account state. Pure Mpesa: $isPureMpesaAccount, New Balance: $newBalance")
+                                    accountRepository.addOrUpdateAccount(account.copy(
+                                        balance = newBalance,
+                                        lastSyncedAt = kotlin.time.Clock.System.now()
+                                    ))
                                 }
                             }
                         } else {

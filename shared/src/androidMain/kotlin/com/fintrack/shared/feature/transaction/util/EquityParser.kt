@@ -69,17 +69,13 @@ object EquityParser {
         smsTimestamp: Instant? = null,
         rules: List<CategoryRule> = emptyList()
     ): Transaction? {
-        // Skip purely M-Pesa style messages that don't mention Equity account/card/ref
-        // These are often just duplicate notifications from the Equitel sim
-        // User requested to ignore M-Pesa confirmations unless they affect the bank account directly
-        if (message.contains("to your MPESA", ignoreCase = true) && 
-            !message.contains("Equity account", ignoreCase = true) &&
-            !message.contains("credited to", ignoreCase = true)) return null
-            
+        // Skip messages that are clearly just M-Pesa relay notifications
         if (message.contains("has sent", ignoreCase = true) && 
             message.contains("to your MPESA", ignoreCase = true)) return null
+            
+        if (message.contains("Confirmed. Payment of", ignoreCase = true) && 
+            !message.contains("Equity", ignoreCase = true)) return null
 
-        if (message.contains("Till No.", ignoreCase = true) && !message.contains("Equity", ignoreCase = true)) return null
         if (message.contains("failed due to insufficient funds", ignoreCase = true)) return null
         if (message.contains("is due in", ignoreCase = true)) return null
 
@@ -102,16 +98,21 @@ object EquityParser {
             return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(merchant, isIncome = false, rules = rules), dateTime, "Card payment at $merchant", accountId, false))
         }
 
-        // 2. Sent Money
+        // 2. Sent Money (Expense or Income)
         sentRegex.find(message)?.let {
             val amount = parseAmount(it.groupValues[1])
             val code = it.groupValues[4]
             val dateStr = "${it.groupValues[5]} ${it.groupValues[6]}"
             val dateTime = parseDateTime(dateStr, smsTimestamp)
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, "Transfer", dateTime, "Bank Transfer", accountId, false))
+            
+            val isIncome = message.contains("to 7********4608", ignoreCase = true) || 
+                           message.contains("to your account", ignoreCase = true)
+            
+            val description = if (isIncome) "Received Transfer" else "Bank Transfer"
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, if (isIncome) "Other Income" else "Transfer", dateTime, description, accountId, isIncome))
         }
 
-        // 3. Drawn
+        // 3. Drawn / Withdrawal (Expense)
         drawnRegex.find(message)?.let {
             val amount = parseAmount(it.groupValues[2])
             val code = it.groupValues[5]
@@ -145,10 +146,10 @@ object EquityParser {
             val dateStr = "${it.groupValues[5]} ${it.groupValues[6]}"
             val dateTime = parseDateTime(dateStr, smsTimestamp)
             
-            val isMySelf = recipient.contains("MARK", ignoreCase = true)
+            val isMySelf = recipient.contains("MARK", ignoreCase = true) || recipient.contains("NGOTHI", ignoreCase = true)
             val description = if (isMySelf) "Cash Deposit" else "Paid to $recipient"
             
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, if (isMySelf) "Other Income" else inferCategory(recipient, isIncome = isMySelf, rules = rules), dateTime, description, accountId, isMySelf))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, if (isMySelf) "Other Income" else inferCategory(recipient, isIncome = false, rules = rules), dateTime, description, accountId, isMySelf))
         }
 
         // 6b. Received to Equity Account
@@ -164,13 +165,19 @@ object EquityParser {
         // 7. Generic Equity Transfer (including credited to phone number)
         transferRegex.find(message)?.let {
             val amount = parseAmount(it.groupValues[1])
-            // "Your transaction ... has been credited to [Recipient]" is an outgoing transfer (Expense)
-            // "Your transaction ... has been debited from [Account]" is also an expense.
-            val isIncome = false
             val code = it.groupValues[3]
             val dateStr = "${it.groupValues[4]} ${it.groupValues[5]}"
             val dateTime = parseDateTime(dateStr, smsTimestamp)
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, "Transfer", dateTime, "Bank Transaction", accountId, isIncome))
+            
+            val isIncome = false 
+            
+            val description = if (message.contains("2547", ignoreCase = true) || message.contains("MPESA", ignoreCase = true)) {
+                "Withdrawal to M-Pesa"
+            } else {
+                "Bank Transaction"
+            }
+            
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, "Transfer", dateTime, description, accountId, isIncome))
         }
 
         // 8. Successfully Sent

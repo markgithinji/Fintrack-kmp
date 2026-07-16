@@ -157,11 +157,15 @@ class MpesaImporter(
             val accountResult = accountRepository.getAccountById(accountId)
             if (accountResult is Result.Success) {
                 val account = accountResult.data
+                val isPureMpesaAccount = account.type == AccountType.MPESA && 
+                                       !account.linkedSources.contains("equity") &&
+                                       !account.linkedSources.contains("bank")
+                
                 val currentAppBalance = account.balance ?: BigDecimal.ZERO
-                val newBalance = latestBalance ?: currentAppBalance
+                val newBalance = if (isPureMpesaAccount) (latestBalance ?: currentAppBalance) else currentAppBalance
                 val now = Clock.System.now()
                 
-                logger.info("SYNC_FLOW", "Updating Mpesa account state. Balance: $newBalance, Synced: $now")
+                logger.info("SYNC_FLOW", "Updating Mpesa account state. Pure Mpesa: $isPureMpesaAccount, Balance: $newBalance, Synced: $now")
                 accountRepository.addOrUpdateAccount(account.copy(
                     balance = newBalance,
                     lastSyncedAt = now
