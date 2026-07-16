@@ -1583,7 +1583,7 @@ fun TrackedCategoriesSelectionDialog(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
                     ) {
                         Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
@@ -1609,13 +1609,13 @@ fun TrackedCategoriesSelectionDialog(
                                 },
                                 shape = RoundedCornerShape(16.dp),
                                 color = if (isSelected)
-                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f)
                                 else
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                                 border = if (isSelected)
                                     BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
                                 else
-                                    null,
+                                    BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Row(
