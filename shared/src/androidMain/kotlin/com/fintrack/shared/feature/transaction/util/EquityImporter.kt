@@ -29,9 +29,13 @@ class EquityImporter(
         logger.info("SYNC_FLOW", "EquityImporter: importHistory started for account: $targetAccountId")
         onProgress(0.05f)
         
-        // Fetch categories first to map inferred category names to IDs
+        // Fetch categories and rules first to map inferred category names to IDs
         val categoriesResult = categoryRepository.getCategories()
         val categories = (categoriesResult as? Result.Success)?.data ?: emptyList()
+        
+        val rulesResult = categoryRepository.getCategoryRules()
+        val rules = (rulesResult as? Result.Success)?.data ?: emptyList()
+        logger.info("SYNC_FLOW", "EquityImporter: Fetched ${rules.size} dynamic categorization rules from backend")
         
         val accountsResult = accountRepository.getAccounts()
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
@@ -76,13 +80,13 @@ class EquityImporter(
                     latestBalance = EquityParser.parseBalance(body)
                 }
 
-                val parsedTransaction = EquityParser.parse(body, accountId, smsInstant)
+                val parsedTransaction = EquityParser.parse(body, accountId, smsInstant, rules)
                 if (parsedTransaction != null) {
                     // Use the ID from the parser if it's already a fixed UUID
-                    val finalTransaction = if (parsedTransaction.categoryId != "pending") {
+                    val finalTransaction = if (parsedTransaction.categoryId != "pending" && !parsedTransaction.categoryId.startsWith("custom_")) {
                         parsedTransaction
                     } else {
-                        // Map inferred category name to ID (Fallback)
+                        // Fallback to name-based lookup for custom categories or failures
                         val categoryName = parsedTransaction.category
                         val isExpense = !parsedTransaction.isIncome
                         
@@ -90,16 +94,18 @@ class EquityImporter(
                             it.name.equals(categoryName, ignoreCase = true) && it.isExpense == isExpense 
                         }?.id
                         
-                        val fallbackId = categoryId ?: categories.find {
+                        val finalCategoryId = categoryId ?: categories.find { 
+                            it.name.equals(categoryName, ignoreCase = true)
+                        }?.id ?: categories.find { 
                             it.name.equals("Transfer", ignoreCase = true) && it.isExpense == isExpense 
                         }?.id ?: categories.find {
                             it.name.contains("Other", ignoreCase = true) && it.isExpense == isExpense
                         }?.id ?: categories.find {
                             it.name.contains("Misc", ignoreCase = true) && it.isExpense == isExpense
                         }?.id ?: categories.firstOrNull { it.isExpense == isExpense }?.id 
-                        ?: "pending"
+                        ?: categories.firstOrNull()?.id ?: "pending"
 
-                        parsedTransaction.copy(categoryId = fallbackId)
+                        parsedTransaction.copy(categoryId = finalCategoryId)
                     }
                     
                     // Deduplicate: Check for exact externalId OR fuzzy match (same amount, type, and within 2 mins)

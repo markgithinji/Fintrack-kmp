@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.transaction.util
 
 import com.fintrack.shared.feature.category.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.CategoryRule
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.time.Clock
@@ -62,7 +63,12 @@ object EquityParser {
         SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.ENGLISH)
     )
 
-    fun parse(message: String, accountId: String = "equity", smsTimestamp: Instant? = null): Transaction? {
+    fun parse(
+        message: String, 
+        accountId: String = "equity", 
+        smsTimestamp: Instant? = null,
+        rules: List<CategoryRule> = emptyList()
+    ): Transaction? {
         // Skip purely M-Pesa style messages that don't mention Equity account/card/ref
         // These are often just duplicate notifications from the Equitel sim
         // User requested to ignore M-Pesa confirmations unless they affect the bank account directly
@@ -93,7 +99,7 @@ object EquityParser {
             val merchant = it.groupValues[2].trim()
             val dateTime = parseDateTime(it.groupValues[3], smsTimestamp)
             val code = it.groupValues[5]
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(merchant, isIncome = false), dateTime, "Card payment at $merchant", accountId, false))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(merchant, isIncome = false, rules = rules), dateTime, "Card payment at $merchant", accountId, false))
         }
 
         // 2. Sent Money
@@ -121,7 +127,7 @@ object EquityParser {
             val code = it.groupValues[5]
             val dateStr = "${it.groupValues[6]} ${it.groupValues[7]}"
             val dateTime = parseDateTime(dateStr, smsTimestamp)
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(merchant, isIncome = false), dateTime, "Bill payment to $merchant", accountId, false))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(merchant, isIncome = false, rules = rules), dateTime, "Bill payment to $merchant", accountId, false))
         }
 
         // 5. Loan Approved
@@ -142,7 +148,7 @@ object EquityParser {
             val isMySelf = recipient.contains("MARK", ignoreCase = true)
             val description = if (isMySelf) "Cash Deposit" else "Paid to $recipient"
             
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, if (isMySelf) "Other Income" else inferCategory(recipient, isIncome = isMySelf), dateTime, description, accountId, isMySelf))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, if (isMySelf) "Other Income" else inferCategory(recipient, isIncome = isMySelf, rules = rules), dateTime, description, accountId, isMySelf))
         }
 
         // 6b. Received to Equity Account
@@ -174,7 +180,7 @@ object EquityParser {
             val code = it.groupValues[3]
             val dateStr = "${it.groupValues[4]} ${it.groupValues[5]}"
             val dateTime = parseDateTime(dateStr, smsTimestamp)
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(recipient, isIncome = false), dateTime, "Sent to $recipient", accountId, false))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(recipient, isIncome = false, rules = rules), dateTime, "Sent to $recipient", accountId, false))
         }
 
         return null
@@ -198,8 +204,17 @@ object EquityParser {
         return smsTimestamp ?: Clock.System.now()
     }
 
-    private fun inferCategory(description: String, isIncome: Boolean = false): String {
+    private fun inferCategory(description: String, isIncome: Boolean = false, rules: List<CategoryRule> = emptyList()): String {
         val d = description.lowercase()
+        
+        // 1. Try dynamic rules from backend first
+        rules.forEach { rule ->
+            if (d.contains(rule.keyword.lowercase())) {
+                return Category.fromId(rule.categoryId).name
+            }
+        }
+
+        // 2. Fallback to hardcoded defaults
         return when {
             d.contains("netflix") || d.contains("google") || d.contains("youtube") || d.contains("spotify") || d.contains("openai") || d.contains("chatgpt") || d.contains("prime") -> "Subscriptions"
             d.contains("pharmacy") || d.contains("chemist") || d.contains("hospital") || d.contains("clinic") -> "Health"
