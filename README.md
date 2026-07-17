@@ -1,10 +1,10 @@
-# 💰 Fintrack KMP — Personal Finance & Expense Tracker
+# 💰 Fintrack KMP — The Ultimate SMS-Powered Financial Intelligence App
 
-**Fintrack KMP** is a modern **cross-platform finance tracking app** built with **Kotlin Multiplatform (KMP)**, designed to share business logic across **Android** and **iOS** while providing native, polished user experiences on each platform. It connects to the [Fintrack Ktor Backend](https://github.com/markgithinji/Fintrack-ktor) for secure data synchronization and API communication.
+**Fintrack KMP** is a high-performance, **cross-platform personal finance ecosystem** built with **Kotlin Multiplatform (KMP)**. It transforms the way you track money by combining the power of **automated SMS parsing** with a polished, native experience on both **Android** and **iOS**.
 
-It allows users to **track income, expenses, and balances**, visualize **financial insights**, and manage their money efficiently.
+Shared business logic powers the engine, while **Compose Multiplatform** and **SwiftUI** deliver a top-tier UI. Fintrack isn't just a ledger; it's a financial companion that learns from your spending patterns.
 
-> 🧠 **Note:** Fintrack KMP is 90% done and is still **a work in progress** and relies on the [Fintrack Ktor Backend](https://github.com/markgithinji/Fintrack-ktor) for API communication.
+> 🚀 **90% Complete:** Currently in active development, integrating deeply with the [Fintrack Ktor Backend](https://github.com/markgithinji/Fintrack-ktor).
 
 ---
 
@@ -13,59 +13,49 @@ It allows users to **track income, expenses, and balances**, visualize **financi
 <div align="center">
   
 ![Fintrack KMP App Preview](assets/android/Fintrack_preview.png)
-*Main dashboard showing account balances, trends, budgets, stats&summaries and recent transactions*
+*Professional dashboard featuring real-time balance tracking, automated insights, and smart budgets.*
 
 </div>
 
 ---
 
-## 🚀 Tech Stack
+## 🔥 Professional Financial Features
 
-**Cross-Platform Core:**
-- **Kotlin Multiplatform**: Shared business logic across Android & iOS
-- **KMP Architecture**: Clean Architecture + MVVM
-- **Dependency Injection**: Koin
-- **Networking**: Ktor Client + Kotlinx Serialization
-- **Asynchronous**: Kotlin Coroutines + Flow
-- **Pagination**: Paging 3
+### 📡 Smart SMS Detection & Parsing (Android)
+*   **Zero-Effort Tracking**: Real-time **M-Pesa** and **Equity Bank** transaction tracking via SMS.
+*   **Intelligent Extraction**: High-precision Regex engine extracts amounts, **Transaction Fees**, **Merchant Names**, and **Real-time Balances**.
+*   **Auto-Categorization**: Machine-logic automatically maps SMS data to accurate categories.
+*   **Immediate Sync**: Provides **immediate UI notifications** upon receipt and uses **Expedited WorkManager** for guaranteed background synchronization.
 
-**Android UI Layer:**
-- **UI**: Jetpack Compose, Material 3
-- **Background Processing**: WorkManager (Expedited Sync)
-- **Secure Storage**: Encrypted Preferences
-- **Security**: Android Biometric Library
+### 📊 Advanced Financial Analytics & Summaries
+*   **Historical Look-back**: Automatically discovers and displays your last active month's trends if the current month is empty. Includes dual-level comparisons (Monthly vs. Weekly) with context-aware wording.
+*   **Financial Highlights**: Key insights showing top expenses, savings rate, and financial health metrics.
+*   **Interactive Charts**: Beautiful visualizations for spending patterns, income trends, and budget compliance.
+*   **Total Amount Logic**: Professional-grade math that handles **Transaction Fees** natively to ensure your net balance is always accurate.
 
-**iOS UI Layer:**
-- **UI**: SwiftUI
-- **Secure Storage**: Keychain
-- **Security**: LocalAuthentication (FaceID/TouchID)
+### 🔔 Intelligent Notification & Alarm System
+*   **Smart Budget Planning**: Set monthly budgets with category-wise limits. Includes **real-time threshold alerts** (50%, 80%, 100%) to keep your spending in check.
+*   **Automated Bill Reminders**: Intelligent backend engine that detects recurring subscriptions and bills and automatically schedules local reminders before they are due.
+*   **Daily & Weekly Briefs**: Stay informed with scheduled push notifications summarizing your previous day's or week's total spending.
 
-**Development & Quality:**
-- **Testing**: Unit Tests, ViewModel Tests, UI Tests (WIP)
-- **CI/CD**: GitHub Actions (WIP)
-- **Code Quality**: Detekt, Spotless
+### 🛡️ Enterprise-Grade Security
+*   **Biometric Vault**: Protect your data with **Fingerprint, FaceID, or TouchID** lock, ensuring privacy even if your device is unlocked.
+*   **Military-Grade Encryption**: Sensitive tokens are encrypted using **Google Tink (AES-256 GCM)** and stored securely in **Jetpack DataStore**.
+*   **Hardware-Backed Storage**: Master keys are managed by the **Android Keystore** and **iOS Keychain**.
+*   **Secure Authentication**: Encrypted token storage with automated token refresh and validation.
 
 ---
 
 ## 💡 Core Features
 
-- **Multi-Account Management**: Track balances across checking, savings, credit cards, and cash
-- **Smart Category Trends**: Features a "Historical Look-back" system that automatically discovers and displays your last active month's trends if the current month is empty. Includes dual-level comparisons (Monthly vs. Weekly) with context-aware wording.
-- **Smart Budget Planning**: Set monthly budgets with category-wise limits. Includes **real-time threshold alerts** (50%, 80%, 100%) to keep your spending in check.
-- **Automated Bill Reminders**: Intelligent backend engine that detects recurring subscriptions and bills from your history and automatically schedules local reminders before they are due.
-- **Daily & Weekly Summaries**: Stay informed with scheduled push notifications summarizing your previous day's or week's total spending, helping you maintain financial awareness.
-- **Income & Expense Tracking**: Monitor cash flow with daily, weekly, and monthly period views
-- **Category-based Analytics**: Visual breakdown of spending by categories (food, transportation, entertainment, etc.)
-- **Interactive Charts**: Beautiful visualizations for spending patterns, income trends, and budget compliance
-- **Transaction History**: Comprehensive ledger with search, filter, and export capabilities
+- **Multi-Account Management**: Track balances across checking, savings, credit cards, and cash in a single unified view.
+- **Income & Expense Tracking**: Monitor cash flow with daily, weekly, and monthly period views.
+- **Category-based Analytics**: Visual breakdown of spending by categories (food, transportation, entertainment, etc.).
+- **Transaction History**: Comprehensive ledger with search, filter, and export capabilities.
 - **Flexible Data Export**: Export your transaction history in multiple formats (**CSV, PDF, or JSON**) with support for **custom date ranges**. Choose your preferred format in settings for a personalized export experience.
-- **Financial Highlights**: Key insights showing top expenses, savings rate, and financial health metrics
 - **Global Currency Preferences**: Seamlessly switch between multiple currencies (USD, KES, EUR, etc.) with real-time UI updates across the entire application.
-- **Biometric Security**: Protect your financial data with **Fingerprint, FaceID, or TouchID** lock, ensuring privacy even if your device is unlocked.
 - **Secure Password Management**: Update your account password directly from the app with real-time validation and secure backend synchronization.
-- **Secure Authentication**: Encrypted token storage with automated token refresh and validation.
 - **Daily Reminders**: Never forget to log an expense with customizable daily push notifications scheduled via high-reliability background receivers.
-- **Smart SMS Detection (Android)**: Real-time M-Pesa transaction tracking via SMS. Provides **immediate UI notifications** upon receipt and uses **Expedited WorkManager** for guaranteed, high-priority background synchronization with the backend.
 
 ---
 
@@ -82,24 +72,45 @@ Fintrack KMP prioritizes a fluid user experience with high-quality animations an
 
 ---
 
-## 🚧 In Progress
+## 🚀 Tech Stack
 
-- 🚧 iOS SwiftUI integration
-- 🚧 Testing
-- 🚧 Code cleanups
+**Cross-Platform Core:**
+- **Kotlin Multiplatform**: 100% shared Business Logic & Networking.
+- **KMP Architecture**: Clean Architecture + MVVM + Repository Pattern.
+- **Networking**: Ktor Client with high-reliability retry logic.
+- **Dependency Injection**: Koin (Multiplatform).
+- **Serialization**: Kotlinx.Serialization (JSON & BigDecimal support).
+- **Asynchronous**: Kotlin Coroutines + Flow.
+- **Pagination**: Paging 3 for smooth ledger scrolling.
+
+**Platform Specifics:**
+- **Android**: Jetpack Compose, WorkManager, AlarmManager, Material 3, **Jetpack DataStore**, **Google Tink**.
+- **iOS**: Compose Multiplatform (UI Sharing) + SwiftUI (Entry), LocalAuthentication.
+- **Storage**: **Jetpack DataStore (Android)**, Multiplatform Settings + SQLDelight (Local Cache).
 
 ---
 
-## ⚙️ Requirements
+## 🏗️ Project Progress & Roadmap
 
-- Kotlin 2.x
-- Android Studio Giraffe or newer
-- Xcode 15+ (for iOS module)
-- [Fintrack Ktor Backend](https://github.com/markgithinji/Fintrack-ktor) server
+| Feature Group | Status | Component |
+| :--- | :--- | :--- |
+| **SMS Parsing Engine** | ✅ Complete | M-Pesa & Equity (Android) |
+| **Financial Summaries** | ✅ Complete | Monthly/Weekly Highlights |
+| **Transaction Fee Logic** | ✅ Complete | Shared Domain Model |
+| **Data Export (PDF/CSV)** | ✅ Complete | Multi-format Exporter |
+| **Budgeting System** | ✅ Complete | Real-time Threshold Alerts |
+| **iOS Native Hooks** | 🚧 70% | Background Sync WIP |
+| **UI Test Coverage** | 🚧 40% | KMP-level UI Testing |
 
 ---
 
-## 🛠️ Development Setup
+## ⚙️ Development Setup
+
+1. **Backend**: Ensure [Fintrack Ktor Backend](https://github.com/markgithinji/Fintrack-ktor) is running.
+2. **IP Configuration**: Update `ApiConfig.kt` with your local machine's IP.
+3. **Environment**: 
+   - **Android**: Studio Koala+
+   - **iOS**: Xcode 15+
 
 To connect the app to a local instance of the backend during development:
 
@@ -122,20 +133,17 @@ To connect the app to a local instance of the backend during development:
 ## 🔗 Backend Integration
 
 This app connects to the [Fintrack Ktor Backend](https://github.com/markgithinji/Fintrack-ktor) which provides:
-- **RESTful API** for all financial operations
-- **JWT Authentication** with secure token management
-- **PostgreSQL Database** for data persistence
+- **RESTful API** for all financial operations.
+- **JWT Authentication** with secure token management.
+- **PostgreSQL Database** for data persistence.
 - **Smart Recurring Engine**: Automated pattern detection for recurring payments and bill prediction.
-- **Real-time synchronization** across devices
-- **Financial analytics** and reporting endpoints
 
 ---
 
-## 🎯 Project Highlights
+## 🤝 Contribution & Feedback
 
-Fintrack KMP demonstrates:
-- **Production-ready KMP architecture** with shared ViewModels
-- **Seamless backend integration** using Ktor Client
-- **Secure cross-platform storage** solutions
-- **Modern declarative UIs** on both platforms
-- **Comprehensive testing strategy** with dependency injection
+Fintrack KMP is a showcase of what modern Kotlin Multiplatform can achieve. If you're interested in how we handle SMS parsing in KMP or professional-grade financial logic, feel free to explore the code!
+
+---
+
+**Built with ❤️**
