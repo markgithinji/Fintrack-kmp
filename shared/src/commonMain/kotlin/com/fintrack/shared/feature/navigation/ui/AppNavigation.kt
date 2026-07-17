@@ -23,6 +23,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import com.fintrack.shared.feature.auth.ui.LoginScreen
 import com.fintrack.shared.feature.auth.ui.RegisterScreen
@@ -88,10 +89,13 @@ fun AppNavigation(
     }
 
     // Navigation Guard: Prevent navigation to protected routes when not authenticated
-    DisposableEffect(navController, isAuthenticated) {
+    DisposableEffect(navController) {
         val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
             val isAuthRoute = destination.isAuthScreen()
-            if (!isAuthRoute && !isAuthenticated) {
+            val currentStatus = authViewModel.authStatus.value
+            val isCurrentlyAuthenticated = (currentStatus as? AuthState.Success)?.data ?: false
+            
+            if (!isAuthRoute && !isCurrentlyAuthenticated) {
                 navController.navigate(Screen.Login) {
                     popUpTo(0) { inclusive = true }
                     launchSingleTop = true
@@ -353,7 +357,7 @@ fun AppNavigation(
             LoginScreen(
                 viewModel = authViewModel,
                 onLoginSuccess = {
-                    // Handled by LaunchedEffect(isAuthenticated)
+                    authViewModel.clearAuthStates()
                 },
                 onSignUp = {
                     navController.navigate(Screen.Register) {
@@ -370,7 +374,7 @@ fun AppNavigation(
             RegisterScreen(
                 viewModel = authViewModel,
                 onRegisterSuccess = {
-                    // Handled by LaunchedEffect(isAuthenticated)
+                    authViewModel.clearAuthStates()
                 },
                 onLogin = {
                     navController.navigate(Screen.Login) {

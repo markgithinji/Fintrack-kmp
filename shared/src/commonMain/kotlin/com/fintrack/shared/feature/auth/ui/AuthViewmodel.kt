@@ -79,8 +79,6 @@ class AuthViewModel(
                     }
                 } else {
                     // Only update authStatus to Success(true) if we were explicitly not authenticated
-                    // This avoids the race condition at startup where a cached token might 
-                    // set Success(true) before validateToken has finished.
                     if (currentStatus is AuthState.Success && !currentStatus.data) {
 
                         // If we are currently logging in or just succeeded, delay to let UI show success
@@ -336,6 +334,11 @@ class AuthViewModel(
                 }
             }
         }
+    }
+
+    fun clearAuthStates() {
+        _loginState.value = AuthState.Idle
+        _registerState.value = AuthState.Idle
     }
 
     fun logout() {
