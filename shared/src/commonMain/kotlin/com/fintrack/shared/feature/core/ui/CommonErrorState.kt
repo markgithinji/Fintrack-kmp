@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Error
 import androidx.compose.foundation.layout.Row
@@ -27,7 +28,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.fintrack.shared.feature.core.data.model.ApiException
 import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
-import com.fintrack.shared.ui.theme.AuthGold
 
 @Composable
 fun CommonErrorState(
@@ -39,10 +39,14 @@ fun CommonErrorState(
     isSuccess: Boolean = false,
     onRetry: (() -> Unit)? = null
 ) {
-    val displayMessage = remember(error, errorMessage) {
-        errorMessage ?: (error as? ApiException)?.getUserFriendlyMessage()
+    val displayMessage = remember(error, errorMessage, isSuccess) {
+        if (isSuccess) errorMessage ?: "Action completed successfully!"
+        else errorMessage ?: (error as? ApiException)?.getUserFriendlyMessage()
         ?: error?.message ?: "An unexpected error occurred"
     }
+
+    val stateColor = if (isSuccess) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
+    val stateIcon = if (isSuccess) Icons.Default.CheckCircle else Icons.Outlined.Error
 
     Box(
         modifier = modifier.fillMaxWidth().padding(16.dp),
@@ -53,15 +57,15 @@ fun CommonErrorState(
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                imageVector = Icons.Outlined.Error,
-                contentDescription = "Error",
-                tint = MaterialTheme.colorScheme.error,
+                imageVector = stateIcon,
+                contentDescription = if (isSuccess) "Success" else "Error",
+                tint = stateColor,
                 modifier = Modifier.size(48.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = title,
-                color = MaterialTheme.colorScheme.error,
+                color = stateColor,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
@@ -79,34 +83,37 @@ fun CommonErrorState(
                 Button(
                     onClick = onRetry,
                     enabled = !isLoading && !isSuccess,
+                    modifier = Modifier.height(44.dp).widthIn(min = 120.dp),
                     colors = ButtonDefaults.buttonColors(
-                        disabledContainerColor = if (isSuccess) AuthGold else MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                        disabledContentColor = if (isSuccess) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                        disabledContainerColor = if (isSuccess) stateColor else MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                        disabledContentColor = if (isSuccess) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
                     )
                 ) {
-                    when {
-                        isLoading -> {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
-                        isSuccess -> {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.CheckCircle,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
+                    Box(contentAlignment = Alignment.Center) {
+                        when {
+                            isLoading -> {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onPrimary
                                 )
-                                Text("Success", fontWeight = FontWeight.Bold)
                             }
-                        }
-                        else -> {
-                            Text("Retry", fontWeight = FontWeight.Bold)
+                            isSuccess -> {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text("Success", fontWeight = FontWeight.Bold)
+                                }
+                            }
+                            else -> {
+                                Text("Retry", fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }

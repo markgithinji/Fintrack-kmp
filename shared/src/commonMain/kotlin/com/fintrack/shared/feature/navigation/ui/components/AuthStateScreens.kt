@@ -77,6 +77,7 @@ fun AuthErrorScreen(
     error: Throwable,
     isLoading: Boolean = false,
     isSuccess: Boolean = false,
+    message: String? = null,
     onRetry: () -> Unit
 ) {
     Surface(
@@ -97,7 +98,8 @@ fun AuthErrorScreen(
             ) {
                 CommonErrorState(
                     modifier = Modifier.padding(16.dp),
-                    title = "Authentication Error",
+                    title = if (isSuccess) "Authentication Successful" else "Authentication Error",
+                    errorMessage = if (isSuccess) "Your session has been restored. Redirecting..." else message,
                     error = error,
                     isLoading = isLoading,
                     isSuccess = isSuccess,
