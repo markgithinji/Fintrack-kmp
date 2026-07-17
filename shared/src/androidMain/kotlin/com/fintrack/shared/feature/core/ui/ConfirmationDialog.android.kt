@@ -1,6 +1,10 @@
 package com.fintrack.shared.feature.core.ui
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -46,133 +50,158 @@ actual fun ConfirmationDialog(
                 .padding(16.dp),
         ) {
             Column(
-                modifier = Modifier.padding(24.dp).animateContentSize(),
+                modifier = Modifier
+                    .padding(24.dp)
+                    .animateContentSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                // Icon Circle
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .background(
-                            color = when {
-                                isSuccess -> Color(0xFF4CAF50).copy(alpha = 0.2f)
-                                errorMessage != null -> MaterialTheme.colorScheme.errorContainer
-                                isDestructive -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f)
-                                else -> MaterialTheme.colorScheme.primaryContainer
-                            },
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = when {
-                            isSuccess -> Icons.Default.CheckCircle
-                            errorMessage != null -> Icons.Default.Error
-                            else -> Icons.Default.Warning
-                        },
-                        contentDescription = null,
-                        modifier = Modifier.size(32.dp),
-                        tint = when {
-                            isSuccess -> Color(0xFF4CAF50)
-                            errorMessage != null -> MaterialTheme.colorScheme.error
-                            isDestructive -> MaterialTheme.colorScheme.error
-                            else -> MaterialTheme.colorScheme.primary
+                // Animated content for the middle section (Icon, Title, Message)
+                AnimatedContent(
+                    targetState = Triple(isSuccess, errorMessage != null, title),
+                    transitionSpec = {
+                        (fadeIn(animationSpec = tween(60)) + scaleIn(initialScale = 0.95f, animationSpec = tween(60)))
+                            .togetherWith(fadeOut(animationSpec = tween(40)))
+                    },
+                    label = "dialogContent"
+                ) { (success, error, currentTitle) ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        // Icon Circle
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .background(
+                                    color = when {
+                                        success -> Color(0xFF4CAF50).copy(alpha = 0.2f)
+                                        error -> MaterialTheme.colorScheme.errorContainer
+                                        isDestructive -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f)
+                                        else -> MaterialTheme.colorScheme.primaryContainer
+                                    },
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = when {
+                                    success -> Icons.Default.CheckCircle
+                                    error -> Icons.Default.Error
+                                    else -> Icons.Default.Warning
+                                },
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp),
+                                tint = when {
+                                    success -> Color(0xFF4CAF50)
+                                    error -> MaterialTheme.colorScheme.error
+                                    isDestructive -> MaterialTheme.colorScheme.error
+                                    else -> MaterialTheme.colorScheme.primary
+                                }
+                            )
                         }
-                    )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Text(
+                            text = when {
+                                success -> (successTitle ?: "Success!")
+                                error -> "Operation Failed"
+                                else -> currentTitle
+                            },
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (error) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = when {
+                                success -> (successMessage ?: "Action completed successfully.")
+                                error -> errorMessage ?: "Unknown error occurred"
+                                else -> message
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 14.sp,
+                            modifier = Modifier.padding(horizontal = 14.dp)
+                        )
+                    }
                 }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Text(
-                    text = when {
-                        isSuccess -> (successTitle ?: "Success!")
-                        errorMessage != null -> "Operation Failed"
-                        else -> title
-                    },
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = if (errorMessage != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = when {
-                        isSuccess -> (successMessage ?: "Action completed successfully.")
-                        errorMessage != null -> errorMessage
-                        else -> message
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 14.sp,
-                    modifier = Modifier.padding(horizontal = 14.dp)
-                )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = {
-                            if (isSuccess || errorMessage != null) {
-                                onDismiss()
-                            } else {
-                                onConfirm()
-                                if (autoDismiss && !isLoading) {
-                                    onDismiss()
-                                }
-                            }
-                        },
-                        enabled = !isLoading,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = when {
-                                isSuccess -> Color(0xFF4CAF50)
-                                errorMessage != null || isDestructive -> MaterialTheme.colorScheme.error
-                                else -> MaterialTheme.colorScheme.primary
-                            }
-                        )
+                // Bottom Buttons with their own transition
+                AnimatedContent(
+                    targetState = isLoading to (isSuccess || errorMessage != null),
+                    transitionSpec = {
+                        (fadeIn(tween(60))).togetherWith(fadeOut(tween(40)))
+                    },
+                    label = "dialogButtons"
+                ) { (loading, finished) ->
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                        } else {
-                            Text(
-                                text = when {
-                                    isSuccess -> "Done"
-                                    errorMessage != null -> "Close"
-                                    else -> confirmLabel
-                                },
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1
-                            )
-                        }
-                    }
-
-                    if (!isSuccess && errorMessage == null) {
-                        TextButton(
-                            onClick = onDismiss,
-                            enabled = !isLoading,
+                        Button(
+                            onClick = {
+                                if (finished) {
+                                    onDismiss()
+                                } else {
+                                    onConfirm()
+                                    if (autoDismiss && !loading) {
+                                        onDismiss()
+                                    }
+                                }
+                            },
+                            enabled = !loading,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text(
-                                text = cancelLabel,
-                                fontWeight = FontWeight.SemiBold,
-                                maxLines = 1
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = when {
+                                    isSuccess -> Color(0xFF4CAF50)
+                                    errorMessage != null || isDestructive -> MaterialTheme.colorScheme.error
+                                    else -> MaterialTheme.colorScheme.primary
+                                }
                             )
+                        ) {
+                            if (loading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            } else {
+                                Text(
+                                    text = when {
+                                        isSuccess -> "Done"
+                                        errorMessage != null -> "Close"
+                                        else -> confirmLabel
+                                    },
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1
+                                )
+                            }
+                        }
+
+                        if (!finished) {
+                            TextButton(
+                                onClick = onDismiss,
+                                enabled = !loading,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    text = cancelLabel,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1
+                                )
+                            }
                         }
                     }
                 }

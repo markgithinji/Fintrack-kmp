@@ -1,9 +1,16 @@
 package com.fintrack.shared.feature.settings.ui
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -80,6 +87,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -121,6 +132,8 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -996,7 +1009,7 @@ fun ExportFormatSelectionDialog(
             tonalElevation = 6.dp
         ) {
             Column(
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier.padding(24.dp).animateContentSize()
             ) {
                 Text(
                     text = "Export Transactions",
@@ -1221,7 +1234,10 @@ fun TimeFormatSelectionDialog(
             tonalElevation = 6.dp
         ) {
             Column(
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth()
+                    .animateContentSize()
             ) {
                 Text(
                     text = "Select Time Format",
@@ -1306,7 +1322,10 @@ fun ThemeSelectionDialog(
             tonalElevation = 6.dp
         ) {
             Column(
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth()
+                    .animateContentSize()
             ) {
                 Text(
                     text = "Select Theme",
@@ -1423,7 +1442,10 @@ fun CurrencySelectionDialog(
             tonalElevation = 6.dp
         ) {
             Column(
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth()
+                    .animateContentSize()
             ) {
                 Text(
                     text = "Select Currency",
@@ -1528,7 +1550,7 @@ fun TrackedCategoriesSelectionDialog(
     onCategoriesSelected: (List<String>) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var currentSelection by remember { mutableStateOf(selectedCategoryIds) }
+    val currentSelection = remember { selectedCategoryIds.toMutableStateList() }
 
     BasicAlertDialog(
         onDismissRequest = onDismiss,
@@ -1546,7 +1568,6 @@ fun TrackedCategoriesSelectionDialog(
                 modifier = Modifier
                     .padding(24.dp)
                     .fillMaxWidth()
-                    .animateContentSize()
             ) {
                 // Header
                 Row(
@@ -1592,15 +1613,13 @@ fun TrackedCategoriesSelectionDialog(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Sticky Reset Button
-                AnimatedVisibility(
-                    visible = currentSelection.isNotEmpty(),
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut()
-                ) {
+                // Reset Button - No animation to avoid scroll lag
+                if (currentSelection.isNotEmpty()) {
                     OutlinedButton(
-                        onClick = { currentSelection = emptyList() },
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                        onClick = { currentSelection.clear() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
@@ -1616,87 +1635,27 @@ fun TrackedCategoriesSelectionDialog(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.heightIn(max = 400.dp)
                     ) {
-                        items(allCategories) { category ->
-                            val isSelected = currentSelection.contains(category.id)
-
-                            Surface(
-                                onClick = {
-                                    if (isSelected) {
-                                        currentSelection = currentSelection.filter { it != category.id }
+                        items(allCategories, key = { it.id }) { category ->
+                            val isSelected by remember(category.id) {
+                                derivedStateOf { currentSelection.contains(category.id) }
+                            }
+                            
+                            val onToggle = remember(category.id) {
+                                {
+                                    if (currentSelection.contains(category.id)) {
+                                        currentSelection.remove(category.id)
                                     } else if (currentSelection.size < 2) {
-                                        currentSelection = currentSelection + category.id
+                                        currentSelection.add(category.id)
                                     }
-                                },
-                                shape = RoundedCornerShape(16.dp),
-                                color = if (isSelected)
-                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f)
-                                else
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                border = if (isSelected)
-                                    BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-                                else
-                                    BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(40.dp)
-                                                .clip(RoundedCornerShape(10.dp))
-                                                .background(
-                                                    if (isSelected)
-                                                        category.toColor().copy(alpha = 0.25f)
-                                                    else
-                                                        MaterialTheme.colorScheme.surfaceVariant
-                                                ),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = category.toIcon(),
-                                                contentDescription = null,
-                                                tint = if (isSelected)
-                                                    category.toColor()
-                                                else
-                                                    MaterialTheme.colorScheme.onSurfaceVariant,
-                                                modifier = Modifier.size(22.dp)
-                                            )
-                                        }
-
-                                        Spacer(modifier = Modifier.width(16.dp))
-
-                                        Text(
-                                            text = category.name,
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            maxLines = 1,
-                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                                        )
-                                    }
-
-                                    Icon(
-                                        imageVector = if (isSelected)
-                                            Icons.Default.CheckCircle
-                                        else
-                                            Icons.Default.RadioButtonUnchecked,
-                                        contentDescription = if (isSelected) "Selected" else "Unselected",
-                                        tint = if (isSelected)
-                                            MaterialTheme.colorScheme.primary
-                                        else
-                                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                        modifier = Modifier.size(24.dp)
-                                    )
+                                    Unit
                                 }
                             }
+
+                            CategorySelectionItem(
+                                category = category,
+                                isSelected = isSelected,
+                                onToggle = onToggle
+                            )
                         }
                     }
                 }
@@ -1716,7 +1675,7 @@ fun TrackedCategoriesSelectionDialog(
                         Text("Cancel")
                     }
                     Button(
-                        onClick = { onCategoriesSelected(currentSelection) },
+                        onClick = { onCategoriesSelected(currentSelection.toList()) },
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.height(48.dp),
                         contentPadding = PaddingValues(horizontal = 24.dp)
@@ -1724,6 +1683,114 @@ fun TrackedCategoriesSelectionDialog(
                         Text("Save Selection")
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategorySelectionItem(
+    category: Category,
+    isSelected: Boolean,
+    onToggle: () -> Unit
+) {
+    val icon = remember(category.iconName, category.name) { category.toIcon() }
+    val baseColor = remember(category.id) { category.toColor() }
+
+    val backgroundColor by animateColorAsState(
+        if (isSelected)
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f)
+        else
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        animationSpec = tween(50),
+        label = "itemBg"
+    )
+    val borderColor by animateColorAsState(
+        if (isSelected)
+            MaterialTheme.colorScheme.primary
+        else
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+        animationSpec = tween(50),
+        label = "itemBorder"
+    )
+    val borderWidth by animateDpAsState(
+        if (isSelected) 2.dp else 1.dp,
+        animationSpec = tween(50),
+        label = "borderWidth"
+    )
+
+    Surface(
+        onClick = onToggle,
+        shape = RoundedCornerShape(16.dp),
+        color = backgroundColor,
+        border = BorderStroke(borderWidth, borderColor),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(
+                            if (isSelected)
+                                baseColor.copy(alpha = 0.25f)
+                            else
+                                MaterialTheme.colorScheme.surfaceVariant
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = if (isSelected)
+                            baseColor
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Text(
+                    text = category.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+            }
+
+            AnimatedContent(
+                targetState = isSelected,
+                transitionSpec = {
+                    (fadeIn(tween(40)) + scaleIn(initialScale = 0.95f, animationSpec = tween(40)))
+                        .togetherWith(fadeOut(tween(40)) + scaleOut(targetScale = 0.95f, animationSpec = tween(40)))
+                },
+                label = "selectionIcon"
+            ) { selected ->
+                Icon(
+                    imageVector = if (selected)
+                        Icons.Default.CheckCircle
+                    else
+                        Icons.Default.RadioButtonUnchecked,
+                    contentDescription = if (selected) "Selected" else "Unselected",
+                    tint = if (selected)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }
@@ -1751,7 +1818,7 @@ fun BudgetSelectionDialog(
             tonalElevation = 6.dp
         ) {
             Column(
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier.padding(24.dp).animateContentSize()
             ) {
                 Text(
                     text = "Select Budget to Track",
@@ -1861,7 +1928,10 @@ fun BudgetThresholdDialog(
             tonalElevation = 6.dp
         ) {
             Column(
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth()
+                    .animateContentSize()
             ) {
                 Text(
                     text = "Select Alert Thresholds",
@@ -1955,7 +2025,10 @@ fun BillReminderDaysDialog(
             tonalElevation = 6.dp
         ) {
             Column(
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth()
+                    .animateContentSize()
             ) {
                 Text(
                     text = "Select Advance Notice",
@@ -2058,12 +2131,7 @@ fun SettingsSection(
             Column(
                 modifier = Modifier
                     .padding(vertical = 4.dp)
-                    .animateContentSize(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioLowBouncy,
-                            stiffness = Spring.StiffnessLow
-                        )
-                    )
+                    .animateContentSize()
             ) {
                 content()
             }

@@ -110,27 +110,25 @@ class SettingsViewModel(
 
     val allCategories: StateFlow<List<Category>> = localCategoryDataSource.categories
         .map { categories ->
-            val filtered = categories.filter { it.id != "transaction_cost" }
-                .distinctBy { it.name.lowercase() to it.isExpense }
+            val filtered = categories.filter { it.id != Category.TransactionCost.id }
                 .sortedWith(
                     compareByDescending<Category> { it.isDefault }
                         .thenBy { !it.isExpense }
                         .thenBy { it.name }
                 )
-            listOf(Category.TransactionCost) + filtered
+            (listOf(Category.TransactionCost) + filtered).distinctBy { it.id }
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = localCategoryDataSource.categories.value.let { categories ->
-                val filtered = categories.filter { it.id != "transaction_cost" }
-                    .distinctBy { it.name.lowercase() to it.isExpense }
+                val filtered = categories.filter { it.id != Category.TransactionCost.id }
                     .sortedWith(
                         compareByDescending<Category> { it.isDefault }
                             .thenBy { !it.isExpense }
                             .thenBy { it.name }
                     )
-                listOf(Category.TransactionCost) + filtered
+                (listOf(Category.TransactionCost) + filtered).distinctBy { it.id }
             }
         )
 
