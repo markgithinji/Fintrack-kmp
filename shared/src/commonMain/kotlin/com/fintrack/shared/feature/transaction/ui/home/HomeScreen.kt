@@ -27,7 +27,6 @@ import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
@@ -36,7 +35,6 @@ import com.fintrack.shared.feature.transaction.ui.home.components.CurrentBalance
 import com.fintrack.shared.feature.transaction.ui.home.components.IncomeExpenseCards
 import com.fintrack.shared.feature.transaction.ui.home.components.IncomeExpensesOverview
 import com.fintrack.shared.feature.transaction.ui.home.components.TransactionsListCard
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -44,11 +42,12 @@ import org.koin.compose.viewmodel.koinViewModel
 fun HomeScreen(
     selectedAccountId: String?,
     onAccountSelected: (String) -> Unit,
+    refreshTrigger: Int,
+    onGlobalRefresh: () -> Unit,
     accountsViewModel: AccountsViewModel = koinViewModel(),
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     statsViewModel: StatisticsViewModel = koinViewModel(),
     settingsViewModel: SettingsViewModel = koinViewModel(),
-    mainViewModel: MainViewModel = koinInject(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onEditTransaction: (String) -> Unit,
@@ -65,7 +64,6 @@ fun HomeScreen(
     val isEquityListenerEnabled by settingsViewModel.isEquityListenerEnabled.collectAsStateWithLifecycle()
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
     val importProgress by transactionsViewModel.importProgress.collectAsStateWithLifecycle()
-    val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
 
     var syncErrorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -117,7 +115,7 @@ fun HomeScreen(
 
     LaunchedEffect(importState) {
         if (importState is Result.Success) {
-            mainViewModel.triggerGlobalRefresh()
+            onGlobalRefresh()
             delay(1500)
             transactionsViewModel.resetImportState()
         }

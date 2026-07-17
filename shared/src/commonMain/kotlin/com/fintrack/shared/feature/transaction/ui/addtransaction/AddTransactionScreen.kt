@@ -2,7 +2,6 @@ package com.fintrack.shared.feature.transaction.ui.addtransaction
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -50,7 +49,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
@@ -59,7 +57,7 @@ fun AddTransactionScreen(
     transactionId: String? = null,
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     accountsViewModel: AccountsViewModel = koinViewModel(),
-    mainViewModel: MainViewModel = koinInject(),
+    onGlobalRefresh: () -> Unit,
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onBack: () -> Unit = {},
@@ -77,7 +75,7 @@ fun AddTransactionScreen(
     val focusManager = LocalFocusManager.current
     var showDatePicker by remember { mutableStateOf(value = false) }
     var showTimePicker by remember { mutableStateOf(value = false) }
-    var showNumpad by remember { mutableStateOf(value = false) }
+    var showNumpad by remember { mutableStateOf(false) }
     var numpadTarget by remember { mutableStateOf(NumpadTarget.Amount) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -101,7 +99,7 @@ fun AddTransactionScreen(
 
     LaunchedEffect(deleteResult) {
         if (deleteResult is Result.Success) {
-            mainViewModel.triggerGlobalRefresh()
+            onGlobalRefresh()
             onBack()
         }
     }
@@ -130,7 +128,7 @@ fun AddTransactionScreen(
 
     LaunchedEffect(saveState) {
         if (saveState is SaveState.Success<*>) {
-            mainViewModel.triggerGlobalRefresh()
+            onGlobalRefresh()
             delay(1200)
             onBack()
             transactionsViewModel.resetSaveState()

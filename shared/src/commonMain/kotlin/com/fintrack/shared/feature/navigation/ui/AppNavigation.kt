@@ -57,6 +57,8 @@ fun AppNavigation(
 ) {
     val navController = LocalNavController.current
     val selectedAccountId by mainViewModel.selectedAccountId.collectAsStateWithLifecycle()
+    val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
+    val onGlobalRefresh = remember { { mainViewModel.triggerGlobalRefresh() } }
 
     val startDestination: Any = remember(isAuthenticated) {
         if (isAuthenticated) Screen.Home() else Screen.Login
@@ -216,6 +218,8 @@ fun AppNavigation(
 
             HomeScreen(
                 selectedAccountId = accountId,
+                refreshTrigger = refreshTrigger,
+                onGlobalRefresh = onGlobalRefresh,
                 onAccountSelected = { mainViewModel.onAccountSelected(it) },
                 paddingValues = paddingValues,
                 animatedVisibilityScope = this,
@@ -239,6 +243,7 @@ fun AppNavigation(
 
             AddTransactionScreen(
                 transactionId = transactionId,
+                onGlobalRefresh = onGlobalRefresh,
                 paddingValues = paddingValues,
                 animatedVisibilityScope = this,
                 onBack = { navController.popBackStack() }
@@ -251,6 +256,7 @@ fun AppNavigation(
 
             StatisticsScreen(
                 selectedAccountId = accountId,
+                refreshTrigger = refreshTrigger,
                 paddingValues = paddingValues,
                 animatedVisibilityScope = this,
                 onCategoryClick = { categoryName: String, categoryId: String, isIncome: Boolean, startDate: String?, endDate: String?, accountIdParam: String ->
@@ -272,6 +278,7 @@ fun AppNavigation(
 
         composable<Screen.Budget> { 
             BudgetScreen(
+                refreshTrigger = refreshTrigger,
                 paddingValues = paddingValues,
                 animatedVisibilityScope = this,
                 onAddBudget = {
@@ -305,11 +312,16 @@ fun AppNavigation(
         }
 
         composable<Screen.Accounts> { 
-            AccountsScreen(paddingValues = paddingValues)
+            AccountsScreen(
+                refreshTrigger = refreshTrigger,
+                onGlobalRefresh = onGlobalRefresh,
+                paddingValues = paddingValues
+            )
         }
 
         composable<Screen.Categories> { 
             CategoryManagementScreen(
+                refreshTrigger = refreshTrigger,
                 paddingValues = paddingValues,
                 onNavigateBack = { navController.popBackStack() }
             )
@@ -317,6 +329,8 @@ fun AppNavigation(
 
         composable<Screen.Settings> { 
             SettingsScreen(
+                refreshTrigger = refreshTrigger,
+                onGlobalRefresh = onGlobalRefresh,
                 paddingValues = paddingValues
             )
         }
@@ -327,6 +341,7 @@ fun AppNavigation(
 
             BudgetDetailScreen(
                 budgetId = budgetId,
+                onGlobalRefresh = onGlobalRefresh,
                 paddingValues = paddingValues,
                 animatedVisibilityScope = this,
                 onSave = { navController.popBackStack() },

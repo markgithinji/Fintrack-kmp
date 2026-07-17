@@ -69,18 +69,16 @@ import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.core.util.formatToSinglePrecision
 import com.fintrack.shared.feature.core.util.toDouble
 import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
-import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.ui.theme.GreenIncome
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun BudgetScreen(
+    refreshTrigger: Int,
     viewModel: BudgetViewModel = koinViewModel(),
-    mainViewModel: MainViewModel = koinInject(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onAddBudget: () -> Unit = {},
@@ -90,7 +88,6 @@ fun BudgetScreen(
         ?: throw IllegalStateException("No SharedTransitionScope found")
 
     val budgets by viewModel.budgets.collectAsStateWithLifecycle()
-    val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
 
     LaunchedEffect(refreshTrigger) {

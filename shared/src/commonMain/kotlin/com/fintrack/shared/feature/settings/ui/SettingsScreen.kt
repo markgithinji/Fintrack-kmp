@@ -120,7 +120,6 @@ import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.ui.permission.NotificationPermissionLauncher
 import com.fintrack.shared.feature.core.ui.permission.SmsPermissionLauncher
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.settings.domain.model.ExportFormat
@@ -138,9 +137,10 @@ import androidx.compose.animation.core.animateDpAsState
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    refreshTrigger: Int,
+    onGlobalRefresh: () -> Unit,
     paddingValues: PaddingValues = PaddingValues(0.dp),
     viewModel: SettingsViewModel = koinViewModel(),
-    mainViewModel: MainViewModel = koinInject()
 ) {
     val currentCurrency by viewModel.currency.collectAsStateWithLifecycle()
     val currentTheme by viewModel.theme.collectAsStateWithLifecycle()
@@ -171,7 +171,6 @@ fun SettingsScreen(
     val trackedCategoryIds by viewModel.trackedCategoryIds.collectAsStateWithLifecycle()
     val trackedCategoryNames by viewModel.trackedCategoryNames.collectAsStateWithLifecycle()
     val allCategories by viewModel.allCategories.collectAsStateWithLifecycle()
-    val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
 
     val changePasswordFormState by viewModel.changePasswordFormState.collectAsStateWithLifecycle()
     val changePasswordState by viewModel.changePasswordState.collectAsStateWithLifecycle()
@@ -311,7 +310,7 @@ fun SettingsScreen(
                             checked = isBalanceHidden,
                             onCheckedChange = { 
                                 viewModel.setBalanceHidden(it)
-                                mainViewModel.triggerGlobalRefresh()
+                                onGlobalRefresh()
                             }
                         )
 
@@ -328,7 +327,7 @@ fun SettingsScreen(
                             checked = showDecimals,
                             onCheckedChange = { 
                                 viewModel.setShowDecimals(it)
-                                mainViewModel.triggerGlobalRefresh()
+                                onGlobalRefresh()
                             }
                         )
                     }
@@ -375,7 +374,7 @@ fun SettingsScreen(
                             checked = isReminderEnabled,
                             onCheckedChange = { 
                                 viewModel.setReminderEnabled(it)
-                                mainViewModel.triggerGlobalRefresh()
+                                onGlobalRefresh()
                             }
                         )
 
@@ -412,7 +411,7 @@ fun SettingsScreen(
                             checked = budgetAlertsEnabled,
                             onCheckedChange = { 
                                 viewModel.setBudgetAlertsEnabled(it)
-                                mainViewModel.triggerGlobalRefresh()
+                                onGlobalRefresh()
                             }
                         )
 
@@ -466,7 +465,7 @@ fun SettingsScreen(
                             checked = isBillReminderEnabled,
                             onCheckedChange = { 
                                 viewModel.setBillReminderEnabled(it)
-                                mainViewModel.triggerGlobalRefresh()
+                                onGlobalRefresh()
                             }
                         )
 
@@ -647,7 +646,7 @@ fun SettingsScreen(
             currentCurrency = currentCurrency,
             onCurrencySelected = {
                 viewModel.setCurrency(it)
-                mainViewModel.triggerGlobalRefresh()
+                onGlobalRefresh()
                 showCurrencyDialog = false
             },
             onDismiss = { showCurrencyDialog = false }
@@ -659,7 +658,7 @@ fun SettingsScreen(
             currentTheme = currentTheme,
             onThemeSelected = {
                 viewModel.setTheme(it)
-                mainViewModel.triggerGlobalRefresh()
+                onGlobalRefresh()
                 showThemeDialog = false
             },
             onDismiss = { showThemeDialog = false }
@@ -695,7 +694,7 @@ fun SettingsScreen(
             currentFormat = currentTimeFormat,
             onFormatSelected = {
                 viewModel.setTimeFormat(it)
-                mainViewModel.triggerGlobalRefresh()
+                onGlobalRefresh()
                 showTimeFormatDialog = false
             },
             onDismiss = { showTimeFormatDialog = false }
@@ -808,7 +807,7 @@ fun SettingsScreen(
             selectedCategoryIds = trackedCategoryIds,
             onCategoriesSelected = {
                 viewModel.updateTrackedCategories(it) {
-                    mainViewModel.triggerGlobalRefresh()
+                    onGlobalRefresh()
                 }
                 showTrackedCategoriesDialog = false
             },

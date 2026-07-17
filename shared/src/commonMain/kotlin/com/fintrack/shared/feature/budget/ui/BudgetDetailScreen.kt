@@ -80,7 +80,6 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
-import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import androidx.compose.ui.platform.LocalFocusManager
 import com.fintrack.shared.feature.transaction.ui.home.components.AccountIcon
 import kotlinx.coroutines.delay
@@ -89,7 +88,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 
@@ -97,9 +95,9 @@ import kotlin.time.Clock
 @Composable
 fun BudgetDetailScreen(
     budgetId: String?,
+    onGlobalRefresh: () -> Unit,
     viewModel: BudgetViewModel = koinViewModel(),
     accountsViewModel: AccountsViewModel = koinViewModel(),
-    mainViewModel: MainViewModel = koinInject(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onSave: () -> Unit,
@@ -139,7 +137,7 @@ fun BudgetDetailScreen(
 
     LaunchedEffect(saveState) {
         if (saveState is SaveState.Success) {
-            mainViewModel.triggerGlobalRefresh()
+            onGlobalRefresh()
             delay(1200)
             onSave()
             viewModel.resetSaveState()
@@ -148,7 +146,7 @@ fun BudgetDetailScreen(
 
     LaunchedEffect(deleteResult) {
         if (deleteResult is Result.Success) {
-            mainViewModel.triggerGlobalRefresh()
+            onGlobalRefresh()
             onBack()
         }
     }

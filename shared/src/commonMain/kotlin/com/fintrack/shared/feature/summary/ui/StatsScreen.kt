@@ -39,21 +39,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import com.fintrack.shared.feature.summary.domain.model.TabType
 import com.fintrack.shared.feature.summary.ui.components.CategoryTotalsCardWithTabs
 import com.fintrack.shared.feature.summary.ui.components.SpendingHighlightsSection
 import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.ui.theme.PinkExpense
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun StatisticsScreen(
     selectedAccountId: String?,
+    refreshTrigger: Int,
     viewModel: StatisticsViewModel = koinViewModel(),
-    mainViewModel: MainViewModel = koinInject(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onCategoryClick: (categoryName: String, categoryId: String, isIncome: Boolean, startDate: String?, endDate: String?, accountId: String) -> Unit = { _, _, _, _, _, _ -> }
@@ -67,7 +65,6 @@ fun StatisticsScreen(
     val distributionResult by viewModel.distribution.collectAsStateWithLifecycle()
     val hasNextPeriod by viewModel.hasNextPeriod.collectAsStateWithLifecycle()
     val hasPreviousPeriod by viewModel.hasPreviousPeriod.collectAsStateWithLifecycle()
-    val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
 
     val safePeriod = selectedPeriod ?: remember(availableWeeks, availableMonths, availableYears) {

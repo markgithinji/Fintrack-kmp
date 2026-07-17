@@ -152,6 +152,7 @@ fun MainScreen(
                                     MainAppScaffold(
                                         isAuthenticated = isAuthenticated,
                                         authViewModel = authViewModel,
+                                        mainViewModel = mainViewModel,
                                         onLogout = { authViewModel.logout() }
                                     )
                                 }
