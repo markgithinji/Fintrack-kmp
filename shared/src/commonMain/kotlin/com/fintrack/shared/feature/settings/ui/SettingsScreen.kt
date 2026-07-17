@@ -119,6 +119,7 @@ import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.ui.permission.NotificationPermissionLauncher
 import com.fintrack.shared.feature.core.ui.permission.SmsPermissionLauncher
+import com.fintrack.shared.feature.core.ui.permission.PermissionRationaleDialog
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
@@ -191,6 +192,7 @@ fun SettingsScreen(
     var showSummaryTimePickerDialog by remember { mutableStateOf(false) }
     var showExportFormatDialog by remember { mutableStateOf(false) }
     var showSmsPermissionRequest by remember { mutableStateOf<SmsPermissionTarget?>(null) }
+    var showSmsRationale by remember { mutableStateOf<SmsPermissionTarget?>(null) }
     var showBillReminderDaysDialog by remember { mutableStateOf(false) }
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
@@ -341,7 +343,7 @@ fun SettingsScreen(
                             onCheckedChange = { 
                                 if (it) {
                                     activeSmsTarget = SmsPermissionTarget.MPESA
-                                    showSmsPermissionRequest = SmsPermissionTarget.MPESA
+                                    showSmsRationale = SmsPermissionTarget.MPESA
                                 } else {
                                     viewModel.setMpesaListenerEnabled(false)
                                 }
@@ -358,7 +360,7 @@ fun SettingsScreen(
                             onCheckedChange = { 
                                 if (it) {
                                     activeSmsTarget = SmsPermissionTarget.EQUITY
-                                    showSmsPermissionRequest = SmsPermissionTarget.EQUITY
+                                    showSmsRationale = SmsPermissionTarget.EQUITY
                                 } else {
                                     viewModel.setEquityListenerEnabled(false)
                                 }
@@ -707,6 +709,23 @@ fun SettingsScreen(
         onDismissTrigger = { viewModel.dismissPermissionRequest() }
     )
 
+    if (showSmsRationale != null) {
+        val targetName = if (showSmsRationale == SmsPermissionTarget.MPESA) "M-Pesa" else "Equity Bank"
+        PermissionRationaleDialog(
+            title = "Enable $targetName Tracking",
+            message = "FinTrack needs to read your SMS messages to automatically detect and log transactions from $targetName. Your financial data is processed privately on your device.",
+            icon = if (showSmsRationale == SmsPermissionTarget.MPESA) Icons.Default.Sms else Icons.Default.AccountBalance,
+            onConfirm = {
+                showSmsPermissionRequest = showSmsRationale
+                showSmsRationale = null
+            },
+            onDismiss = {
+                showSmsRationale = null
+                activeSmsTarget = null
+            }
+        )
+    }
+
     SmsPermissionLauncher(
         trigger = showSmsPermissionRequest != null,
         onResult = { granted ->
@@ -716,6 +735,8 @@ fun SettingsScreen(
                     SmsPermissionTarget.MPESA -> viewModel.setMpesaListenerEnabled(true)
                     SmsPermissionTarget.EQUITY -> viewModel.setEquityListenerEnabled(true)
                 }
+            } else if (!granted && target != null) {
+                toastMessage = "Permission denied. Automatic tracking requires SMS access." to true
             }
             activeSmsTarget = null
             showSmsPermissionRequest = null

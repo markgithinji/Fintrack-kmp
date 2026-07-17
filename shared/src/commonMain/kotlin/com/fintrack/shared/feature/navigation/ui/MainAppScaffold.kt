@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -39,6 +40,7 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -56,6 +59,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.ui.permission.SmsPermissionLauncher
+import com.fintrack.shared.feature.core.ui.permission.PermissionRationaleDialog
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.model.AppBarState
 import com.fintrack.shared.feature.navigation.model.Screen
@@ -73,6 +77,10 @@ fun MainAppScaffold(
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     onLogout: () -> Unit = {}
 ) {
+    val logger = remember { KMPLogger() }
+    SideEffect {
+        logger.error("MainAppScaffold", "TransactionViewModel INSTANCE: ${transactionsViewModel.hashCode()}")
+    }
     val navController = LocalNavController.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val visibleEntries by navController.visibleEntries.collectAsStateWithLifecycle()
@@ -81,14 +89,25 @@ fun MainAppScaffold(
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
+    var showSmsRationale by remember { mutableStateOf(false) }
 
     LaunchedEffect(importState) {
         if (importState is Result.Success) {
             toastMessage = "Sync completed successfully" to false
             transactionsViewModel.resetImportState()
         } else if (importState is Result.Error) {
-            toastMessage = ((importState as Result.Error).exception.message ?: "Sync failed") to true
-            transactionsViewModel.resetImportState()
+            val exception = (importState as Result.Error).exception
+            val message = exception.message ?: "Sync failed"
+            logger.error("MainAppScaffold", "Sync failed error: $message")
+            
+            // If it looks like a permission error, show rationale
+            if (message.contains("permission", ignoreCase = true)) {
+                showSmsRationale = true
+                // Don't reset state yet, let rationale handle it or just keep it in error
+            } else {
+                toastMessage = message to true
+                transactionsViewModel.resetImportState()
+            }
         }
     }
 
@@ -279,6 +298,7 @@ fun MainAppScaffold(
                                 isAuthenticated = isAuthenticated,
                                 paddingValues = paddingValues,
                                 authViewModel = authViewModel,
+                                transactionsViewModel = transactionsViewModel,
                                 mainViewModel = mainViewModel,
                                 onLogout = onLogout
                             )
@@ -319,11 +339,30 @@ fun MainAppScaffold(
         }
     }
 
+    if (showSmsRationale) {
+        PermissionRationaleDialog(
+            title = "Automatic Transaction Sync",
+            message = "FinTrack can automatically keep your transactions up to date by scanning SMS from M-Pesa and your bank. This keeps your dashboard accurate with zero manual effort.",
+            icon = Icons.Default.Sms,
+            onConfirm = {
+                showSmsRationale = false
+                showSmsPermissionRequest = true
+                transactionsViewModel.resetImportState()
+            },
+            onDismiss = {
+                showSmsRationale = false
+                transactionsViewModel.resetImportState()
+            }
+        )
+    }
+
     SmsPermissionLauncher(
         trigger = showSmsPermissionRequest,
         onResult = { granted ->
             if (granted) {
                 transactionsViewModel.importTransactions()
+            } else {
+                toastMessage = "Sync disabled. SMS permission is required to import transactions automatically." to true
             }
             showSmsPermissionRequest = false
         },

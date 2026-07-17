@@ -45,7 +45,7 @@ fun HomeScreen(
     refreshTrigger: Int,
     onGlobalRefresh: () -> Unit,
     accountsViewModel: AccountsViewModel = koinViewModel(),
-    transactionsViewModel: TransactionViewModel = koinViewModel(),
+    transactionsViewModel: TransactionViewModel,
     statsViewModel: StatisticsViewModel = koinViewModel(),
     settingsViewModel: SettingsViewModel = koinViewModel(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
@@ -126,6 +126,9 @@ fun HomeScreen(
     var lastProcessedRefreshTrigger by rememberSaveable { mutableIntStateOf(refreshTrigger) }
 
     val logger = remember { KMPLogger() }
+    SideEffect {
+        logger.error("HomeScreen", "TransactionViewModel INSTANCE: ${transactionsViewModel.hashCode()}")
+    }
 
     LaunchedEffect(refreshTrigger, selectedAccountResult) {
         val accountId = (selectedAccountResult as? Result.Success)?.data?.id
@@ -146,10 +149,6 @@ fun HomeScreen(
         if (accountsResult is Result.Error || (accountsResult is Result.Success && (accountsResult as Result.Success).data.isEmpty())) {
             accountsViewModel.reloadAccounts()
         }
-        
-        // Auto-sync transactions if enabled
-        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-        transactionsViewModel.autoSyncTransactions(accountId)
     }
 
     LaunchedEffect(selectedAccountResult) {

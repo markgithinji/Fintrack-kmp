@@ -75,6 +75,7 @@ class TransactionViewModel(
     private var lastAutoSyncTime: Instant? = null
 
     init {
+        logger.error("TransactionViewModel", "INSTANCE CREATED: ${this.hashCode()}")
         viewModelScope.launch {
             localCategoryDataSource.categories.collect {
                 _categories.value = it

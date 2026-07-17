@@ -45,15 +45,25 @@ class MpesaImporter(
 
         logger.info("SYNC_FLOW", "Mpesa account identified as: $accountId")
 
-        val cursor = context.contentResolver.query(
-            Telephony.Sms.Inbox.CONTENT_URI,
-            arrayOf(Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS, Telephony.Sms.Inbox.DATE),
-            "${Telephony.Sms.Inbox.ADDRESS} = ?",
-            arrayOf("MPESA"),
-            "${Telephony.Sms.Inbox.DATE} DESC"
-        )
+        val cursor = try {
+            context.contentResolver.query(
+                Telephony.Sms.Inbox.CONTENT_URI,
+                arrayOf(Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS, Telephony.Sms.Inbox.DATE),
+                "${Telephony.Sms.Inbox.ADDRESS} = ?",
+                arrayOf("MPESA"),
+                "${Telephony.Sms.Inbox.DATE} DESC"
+            )
+        } catch (e: SecurityException) {
+            logger.error("SYNC_FLOW", "Permission denied for reading SMS", e)
+            throw Exception("Permission denied: READ_SMS is required for M-Pesa sync", e)
+        }
 
-        cursor?.use {
+        if (cursor == null) {
+            logger.warning("SYNC_FLOW", "SMS cursor is null. This may be due to missing permissions or OS restrictions.")
+            throw Exception("Unable to access SMS. Please check app permissions.")
+        }
+
+        cursor.use {
             val bodyIndex = it.getColumnIndex(Telephony.Sms.Inbox.BODY)
             val dateIndex = it.getColumnIndex(Telephony.Sms.Inbox.DATE)
             val transactions = mutableListOf<Transaction>()

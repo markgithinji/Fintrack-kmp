@@ -25,6 +25,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.fintrack.shared.feature.auth.domain.model.AuthState
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
+import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import com.fintrack.shared.feature.auth.ui.LoginScreen
 import com.fintrack.shared.feature.auth.ui.RegisterScreen
 import com.fintrack.shared.feature.budget.ui.BudgetDetailScreen
@@ -53,6 +54,7 @@ fun AppNavigation(
     isAuthenticated: Boolean,
     paddingValues: PaddingValues,
     authViewModel: AuthViewModel,
+    transactionsViewModel: TransactionViewModel,
     mainViewModel: MainViewModel = koinInject(),
     onLogout: () -> Unit = {},
 ) {
@@ -222,6 +224,7 @@ fun AppNavigation(
 
             HomeScreen(
                 selectedAccountId = accountId,
+                transactionsViewModel = transactionsViewModel,
                 refreshTrigger = refreshTrigger,
                 onGlobalRefresh = onGlobalRefresh,
                 onAccountSelected = { mainViewModel.onAccountSelected(it) },
