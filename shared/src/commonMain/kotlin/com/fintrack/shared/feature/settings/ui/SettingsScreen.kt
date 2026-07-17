@@ -195,6 +195,7 @@ fun SettingsScreen(
     var showBillReminderDaysDialog by remember { mutableStateOf(false) }
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    var activeSmsTarget by remember { mutableStateOf<SmsPermissionTarget?>(null) }
 
     LaunchedEffect(refreshTrigger) {
         if (refreshTrigger > 0) {
@@ -205,7 +206,7 @@ fun SettingsScreen(
     LaunchedEffect(changePasswordState) {
         if (changePasswordState is SaveState.Success) {
             toastMessage = "Password updated successfully" to false
-            // Dismiss dialog first before resetting state to avoid button flicker
+            // Dismiss dialog first before resetting state
             showChangePasswordDialog = false
             viewModel.resetChangePasswordState()
         } else if (changePasswordState is SaveState.Error) {
@@ -340,6 +341,7 @@ fun SettingsScreen(
                             checked = isMpesaListenerEnabled,
                             onCheckedChange = { 
                                 if (it) {
+                                    activeSmsTarget = SmsPermissionTarget.MPESA
                                     showSmsPermissionRequest = SmsPermissionTarget.MPESA
                                 } else {
                                     viewModel.setMpesaListenerEnabled(false)
@@ -356,6 +358,7 @@ fun SettingsScreen(
                             checked = isEquityListenerEnabled,
                             onCheckedChange = { 
                                 if (it) {
+                                    activeSmsTarget = SmsPermissionTarget.EQUITY
                                     showSmsPermissionRequest = SmsPermissionTarget.EQUITY
                                 } else {
                                     viewModel.setEquityListenerEnabled(false)
@@ -708,13 +711,14 @@ fun SettingsScreen(
     SmsPermissionLauncher(
         trigger = showSmsPermissionRequest != null,
         onResult = { granted ->
-            val target = showSmsPermissionRequest
+            val target = activeSmsTarget
             if (granted && target != null) {
                 when (target) {
                     SmsPermissionTarget.MPESA -> viewModel.setMpesaListenerEnabled(true)
                     SmsPermissionTarget.EQUITY -> viewModel.setEquityListenerEnabled(true)
                 }
             }
+            activeSmsTarget = null
             showSmsPermissionRequest = null
         },
         onDismissTrigger = { showSmsPermissionRequest = null }
@@ -1613,7 +1617,7 @@ fun TrackedCategoriesSelectionDialog(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Reset Button - No animation to avoid scroll lag
+                // Reset Button
                 if (currentSelection.isNotEmpty()) {
                     OutlinedButton(
                         onClick = { currentSelection.clear() },
@@ -2222,18 +2226,8 @@ fun SettingsToggleItem(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
-    // Optimistic update state to prevent flicker
-    var internalChecked by remember(checked) { mutableStateOf(checked) }
-
-    fun handleToggle(newValue: Boolean) {
-        if (newValue != internalChecked) {
-            internalChecked = newValue
-            onCheckedChange(newValue)
-        }
-    }
-
     Surface(
-        onClick = { handleToggle(!internalChecked) },
+        onClick = { onCheckedChange(!checked) },
         modifier = Modifier.fillMaxWidth(),
         color = Color.Transparent
     ) {
@@ -2279,9 +2273,9 @@ fun SettingsToggleItem(
             }
             
             Switch(
-                checked = internalChecked,
-                onCheckedChange = { handleToggle(it) },
-                thumbContent = if (internalChecked) {
+                checked = checked,
+                onCheckedChange = { onCheckedChange(it) },
+                thumbContent = if (checked) {
                     {
                         Icon(
                             imageVector = Icons.Default.Check,
