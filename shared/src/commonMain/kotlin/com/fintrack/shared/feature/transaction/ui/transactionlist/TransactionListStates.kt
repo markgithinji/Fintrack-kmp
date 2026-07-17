@@ -57,7 +57,7 @@ fun TransactionListLoadingMoreState() {
 
 @Composable
 fun TransactionListErrorState(
-    message: String,
+    error: Throwable,
     onRetry: () -> Unit
 ) {
     Card(
@@ -69,7 +69,7 @@ fun TransactionListErrorState(
         CommonErrorState(
             modifier = Modifier.padding(16.dp),
             title = "Unable to Load Transactions",
-            errorMessage = message,
+            error = error,
             onRetry = onRetry
         )
     }

@@ -204,7 +204,7 @@ private fun TransactionListContent(
         } else if (refreshState is LoadState.Error && transactions.itemCount == 0) {
             item {
                 TransactionListErrorState(
-                    message = refreshState.error.message ?: "Failed to load transactions",
+                    error = refreshState.error,
                     onRetry = { transactions.retry() }
                 )
             }
@@ -258,7 +258,7 @@ private fun TransactionListContent(
             is LoadState.Error -> {
                 item {
                     TransactionListErrorState(
-                        message = appendState.error.message ?: "Failed to load more transactions",
+                        error = appendState.error,
                         onRetry = { transactions.retry() }
                     )
                 }

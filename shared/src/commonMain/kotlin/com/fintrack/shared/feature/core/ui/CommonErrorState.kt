@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.fintrack.shared.feature.core.data.model.ApiException
 import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
 
 @Composable
@@ -41,8 +40,7 @@ fun CommonErrorState(
 ) {
     val displayMessage = remember(error, errorMessage, isSuccess) {
         if (isSuccess) errorMessage ?: "Action completed successfully!"
-        else errorMessage ?: (error as? ApiException)?.getUserFriendlyMessage()
-        ?: error?.message ?: "An unexpected error occurred"
+        else errorMessage ?: error?.getUserFriendlyMessage() ?: "An unexpected error occurred"
     }
 
     val stateColor = if (isSuccess) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error

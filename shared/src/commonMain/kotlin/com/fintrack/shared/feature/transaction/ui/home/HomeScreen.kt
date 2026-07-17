@@ -224,6 +224,7 @@ fun HomeScreen(
                     onSyncErrorClick = { message -> syncErrorMessage = message },
                     onRetry = {
                         accountsViewModel.reloadAccounts()
+                        selectedAccountId?.let { accountsViewModel.selectAccount(it) }
                     }
                 )
             }

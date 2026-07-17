@@ -33,28 +33,40 @@ enum class AuthErrorType {
     UNKNOWN
 }
 
-fun ApiException.getUserFriendlyMessage(): String = when (this) {
-    is ApiException.Auth -> when (type) {
-        AuthErrorType.INVALID_CREDENTIALS -> "The email or password you entered is incorrect."
-        AuthErrorType.USER_NOT_FOUND -> "No account found with this email."
-        AuthErrorType.INVALID_PASSWORD -> "The password you entered is incorrect."
-        AuthErrorType.USER_ALREADY_EXISTS -> "An account with this email already exists."
-        AuthErrorType.WEAK_PASSWORD -> "Your password is too weak. Try a stronger one."
-        AuthErrorType.SESSION_EXPIRED, 
-        AuthErrorType.TOKEN_EXPIRED -> "Your session has expired. Please log in again."
-        AuthErrorType.TOKEN_REVOKED -> "This session has been revoked. Please log in again."
-        AuthErrorType.INVALID_TOKEN -> "Invalid authentication. Please log in again."
-        AuthErrorType.UNAUTHORIZED -> "You are not authorized to perform this action."
-        AuthErrorType.UNKNOWN -> "An authentication error occurred. Please try again."
+fun Throwable.getUserFriendlyMessage(): String {
+    if (this is ApiException) {
+        return when (this) {
+            is ApiException.Auth -> when (type) {
+                AuthErrorType.INVALID_CREDENTIALS -> "The email or password you entered is incorrect."
+                AuthErrorType.USER_NOT_FOUND -> "No account found with this email."
+                AuthErrorType.INVALID_PASSWORD -> "The password you entered is incorrect."
+                AuthErrorType.USER_ALREADY_EXISTS -> "An account with this email already exists."
+                AuthErrorType.WEAK_PASSWORD -> "Your password is too weak. Try a stronger one."
+                AuthErrorType.SESSION_EXPIRED,
+                AuthErrorType.TOKEN_EXPIRED -> "Your session has expired. Please log in again."
+                AuthErrorType.TOKEN_REVOKED -> "This session has been revoked. Please log in again."
+                AuthErrorType.INVALID_TOKEN -> "Invalid authentication. Please log in again."
+                AuthErrorType.UNAUTHORIZED -> "You are not authorized to perform this action."
+                AuthErrorType.UNKNOWN -> "An authentication error occurred. Please try again."
+            }
+            is ApiException.Network -> details.ifEmpty { "Connection failed. Please check your internet and try again." }
+            is ApiException.Validation -> details
+            is ApiException.NotFound -> "The requested information could not be found."
+            is ApiException.ServerError -> "Something went wrong on our end. We're working on it!"
+            is ApiException.Unauthorized -> "Authentication required. Please log in again."
+            is ApiException.Forbidden -> "You don't have permission to do this."
+            is ApiException.ClientError -> if (details.contains("{") || details.contains("[")) "We couldn't process your request. Please try again." else details
+            is ApiException.SerializationFailure -> "Data format error. Please try again later."
+            is ApiException.Unknown -> "An unexpected error occurred. Please try again."
+            else -> "An unexpected error occurred. Please try again."
+        }
     }
-    is ApiException.Network -> details.ifEmpty { "Connection failed. Please check your internet and try again." }
-    is ApiException.Validation -> details
-    is ApiException.NotFound -> "The requested information could not be found."
-    is ApiException.ServerError -> if (details.contains("Server error", ignoreCase = true)) details else "Something went wrong on our end. We're working on it!"
-    is ApiException.Unauthorized -> "Authentication required. Please log in again."
-    is ApiException.Forbidden -> "You don't have permission to do this."
-    is ApiException.ClientError -> details
-    is ApiException.SerializationFailure -> "Data format error. Please try again later."
-    is ApiException.Unknown -> "An unexpected error occurred: $details"
-    else -> "An unexpected error occurred. Please try again."
+
+    val message = this.message ?: ""
+    return when {
+        message.contains("timeout", ignoreCase = true) -> "Connection timed out. Please check your internet and try again."
+        message.contains("unresolved", ignoreCase = true) || message.contains("address", ignoreCase = true) -> "No internet connection. Please check your network."
+        message.contains("Connection refused", ignoreCase = true) -> "Unable to reach the server. It might be down."
+        else -> "An unexpected error occurred. Please try again."
+    }
 }

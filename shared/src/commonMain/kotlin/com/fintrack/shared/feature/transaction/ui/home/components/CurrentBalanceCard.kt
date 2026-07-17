@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.model.AccountType
+import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.CommonErrorState
@@ -192,7 +193,7 @@ fun CurrentBalanceCard(
 
                     is Result.Error -> {
                         CurrentBalanceErrorState(
-                            errorMessage = result.exception.message,
+                            error = result.exception,
                             onRetry = onRetry
                         )
                     }
@@ -269,9 +270,13 @@ private fun CurrentBalanceLoadingState() {
 
 @Composable
 private fun CurrentBalanceErrorState(
-    errorMessage: String?,
+    error: Throwable,
     onRetry: () -> Unit
 ) {
+    val displayMessage = remember(error) {
+        error.getUserFriendlyMessage()
+    }
+
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -286,7 +291,7 @@ private fun CurrentBalanceErrorState(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = errorMessage ?: "Please try again later",
+                text = displayMessage,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
                 textAlign = TextAlign.Center
@@ -623,7 +628,7 @@ fun AccountSelectionDialog(
 
                         is Result.Error -> {
                             AccountSelectionErrorState(
-                                errorMessage = accountsResult.exception.message,
+                                error = accountsResult.exception,
                                 onRetry = onRetry
                             )
                         }
@@ -685,13 +690,13 @@ private fun AccountSelectionLoadingState() {
 
 @Composable
 private fun AccountSelectionErrorState(
-    errorMessage: String?,
+    error: Throwable,
     onRetry: () -> Unit
 ) {
     CommonErrorState(
         modifier = Modifier.fillMaxWidth().height(200.dp),
         title = "Failed to load accounts",
-        errorMessage = errorMessage,
+        error = error,
         onRetry = onRetry
     )
 }
