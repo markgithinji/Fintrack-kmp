@@ -111,18 +111,32 @@ fun AccountsScreen(
     }
 
     var pendingDefaultAccountId by remember { mutableStateOf<String?>(null) }
+    var pendingMpesaLinked by remember { mutableStateOf(false) }
+    var pendingEquityLinked by remember { mutableStateOf(false) }
 
     LaunchedEffect(saveResult) {
         val result = saveResult
         if (result is Result.Success) {
             toastMessage = (if (isEditing) "Account updated" else "Account added") to false
             
-            // Handle pending default account assignment for new accounts
-            pendingDefaultAccountId?.let {
-                if (it == "NEW_ACCOUNT_PENDING") {
-                    settingsViewModel.setDefaultAccountId(result.data.id)
-                }
+            val accountId = result.data.id
+            
+            // Handle pending local settings for new accounts
+            if (pendingDefaultAccountId == "NEW_ACCOUNT_PENDING") {
+                settingsViewModel.setDefaultAccountId(accountId)
                 pendingDefaultAccountId = null
+            }
+            
+            if (pendingMpesaLinked) {
+                val currentIds = settingsViewModel.mpesaLinkedAccountIds.value
+                settingsViewModel.setMpesaLinkedAccountIds(currentIds + accountId)
+                pendingMpesaLinked = false
+            }
+            
+            if (pendingEquityLinked) {
+                val currentIds = settingsViewModel.equityLinkedAccountIds.value
+                settingsViewModel.setEquityLinkedAccountIds(currentIds + accountId)
+                pendingEquityLinked = false
             }
         }
     }
@@ -153,11 +167,29 @@ fun AccountsScreen(
 
                 is Result.Success -> {
                     val defaultAccountId by settingsViewModel.defaultAccountId.collectAsStateWithLifecycle()
+                    val mpesaLinkedAccountIds by settingsViewModel.mpesaLinkedAccountIds.collectAsStateWithLifecycle()
+                    val equityLinkedAccountIds by settingsViewModel.equityLinkedAccountIds.collectAsStateWithLifecycle()
+
                     val effectiveDefaultAccountId =
                         defaultAccountId ?: state.data.find { it.type == AccountType.MPESA }?.id
 
+                    val enrichedAccounts = remember(state.data, effectiveDefaultAccountId, mpesaLinkedAccountIds, equityLinkedAccountIds) {
+                        state.data.map { account ->
+                            val sources = mutableListOf<String>()
+                            if (mpesaLinkedAccountIds.contains(account.id)) sources.add("mpesa")
+                            if (equityLinkedAccountIds.contains(account.id)) sources.add("equity")
+                            account.copy(
+                                isDefault = account.id == effectiveDefaultAccountId,
+                                linkedSources = sources
+                            )
+                        }.sortedWith(
+                            compareByDescending<Account> { it.id == effectiveDefaultAccountId }
+                                .thenByDescending { it.createdAt }
+                        )
+                    }
+
                     AccountList(
-                        accounts = state.data,
+                        accounts = enrichedAccounts,
                         defaultAccountId = effectiveDefaultAccountId,
                         topPadding = paddingValues.calculateTopPadding() + 12.dp,
                         bottomPadding = paddingValues.calculateBottomPadding() + 32.dp,
@@ -203,10 +235,23 @@ fun AccountsScreen(
 
     showAccountDialog?.let { account ->
         val defaultAccountId by settingsViewModel.defaultAccountId.collectAsStateWithLifecycle()
+        val mpesaLinkedAccountIds by settingsViewModel.mpesaLinkedAccountIds.collectAsStateWithLifecycle()
+        val equityLinkedAccountIds by settingsViewModel.equityLinkedAccountIds.collectAsStateWithLifecycle()
+        
         val isOtherAccountDefault = defaultAccountId != null && defaultAccountId != account.id
+        val accounts = (accountsState as? Result.Success)?.data ?: emptyList()
+        val isOnlyAccount = accounts.size <= 1 || (accounts.size == 1 && accounts.first().id == account.id)
+
+        // Enrich the dialog account with local settings
+        val enrichedAccount = remember(account, mpesaLinkedAccountIds, equityLinkedAccountIds) {
+            val sources = mutableListOf<String>()
+            if (mpesaLinkedAccountIds.contains(account.id)) sources.add("mpesa")
+            if (equityLinkedAccountIds.contains(account.id)) sources.add("equity")
+            account.copy(linkedSources = sources)
+        }
 
         AccountDialog(
-            account = account,
+            account = enrichedAccount,
             isEditing = isEditing,
             isLoading = saveResult is Result.Loading ||
                     deleteResult is Result.Loading ||
@@ -217,6 +262,7 @@ fun AccountsScreen(
             accountType = account.type,
             isDefaultSelection = account.id == defaultAccountId,
             isOtherAccountDefault = isOtherAccountDefault,
+            isOnlyAccount = isOnlyAccount,
             onDismiss = {
                 if (!isOperating) {
                     showAccountDialog = null
@@ -230,7 +276,14 @@ fun AccountsScreen(
                         subtitle = "Confirm your identity to delete this account"
                     )
                     if (authResult is BiometricResult.Success || authResult is BiometricResult.NotAvailable) {
-                        accountsViewModel.removeAccount(account.id)
+                        // Also clear local settings on delete
+                        val accountId = account.id
+                        settingsViewModel.setMpesaLinkedAccountIds(settingsViewModel.mpesaLinkedAccountIds.value - accountId)
+                        settingsViewModel.setEquityLinkedAccountIds(settingsViewModel.equityLinkedAccountIds.value - accountId)
+                        if (defaultAccountId == accountId) {
+                            settingsViewModel.setDefaultAccountId(null)
+                        }
+                        accountsViewModel.removeAccount(accountId)
                     }
                 }
             },
@@ -248,24 +301,46 @@ fun AccountsScreen(
             onClearResults = { accountsViewModel.clearResults() },
             onConfirm = { name, type, sources, isDefault ->
                 println("ACCOUNTS_DEBUG: onConfirm clicked - Name: $name, Sources: $sources, isDefault: $isDefault")
+                
+                if (account.id.isNotEmpty()) {
+                    // Update local settings for existing account
+                    val accountId = account.id
+                    
+                    // Default Account
+                    if (isDefault) {
+                        settingsViewModel.setDefaultAccountId(accountId)
+                    } else if (accountId == defaultAccountId) {
+                        settingsViewModel.setDefaultAccountId(null)
+                    }
+                    
+                    // Sync Links
+                    val mpesaIds = settingsViewModel.mpesaLinkedAccountIds.value
+                    if (sources.contains("mpesa")) {
+                        settingsViewModel.setMpesaLinkedAccountIds(mpesaIds + accountId)
+                    } else {
+                        settingsViewModel.setMpesaLinkedAccountIds(mpesaIds - accountId)
+                    }
+                    
+                    val equityIds = settingsViewModel.equityLinkedAccountIds.value
+                    if (sources.contains("equity")) {
+                        settingsViewModel.setEquityLinkedAccountIds(equityIds + accountId)
+                    } else {
+                        settingsViewModel.setEquityLinkedAccountIds(equityIds - accountId)
+                    }
+                } else {
+                    // For new accounts, set pending flags
+                    if (isDefault) pendingDefaultAccountId = "NEW_ACCOUNT_PENDING"
+                    if (sources.contains("mpesa")) pendingMpesaLinked = true
+                    if (sources.contains("equity")) pendingEquityLinked = true
+                }
+
+                // Save to backend WITHOUT local preferences
                 accountsViewModel.saveAccount(account.copy(
                     name = name, 
                     type = type, 
-                    isDefault = isDefault,
-                    linkedSources = sources
+                    isDefault = false, // Backend doesn't need to know
+                    linkedSources = emptyList() // Backend doesn't need to know
                 ))
-                if (account.id.isNotEmpty()) {
-                    if (isDefault) {
-                        println("ACCOUNTS_DEBUG: Setting default account ID: ${account.id}")
-                        settingsViewModel.setDefaultAccountId(account.id)
-                    } else if (account.id == defaultAccountId) {
-                        println("ACCOUNTS_DEBUG: Clearing default account ID")
-                        settingsViewModel.setDefaultAccountId(null)
-                    }
-                } else if (isDefault) {
-                    println("ACCOUNTS_DEBUG: New account pending default assignment")
-                    pendingDefaultAccountId = "NEW_ACCOUNT_PENDING"
-                }
             }
         )
     }
@@ -497,14 +572,15 @@ fun AccountItem(
                 color = MaterialTheme.colorScheme.primary
             )
 
-            account.lastSyncedAt?.let { lastSync ->
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Synced ${lastSync.toRelativeString()}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                )
-            }
+            // Fixed space for sync message to prevent layout shifts
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = account.lastSyncedAt?.let { "Synced ${it.toRelativeString()}" } ?: "",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                maxLines = 1,
+                minLines = 1
+            )
         }
     }
 }
@@ -521,6 +597,7 @@ fun AccountDialog(
     accountType: AccountType,
     isDefaultSelection: Boolean,
     isOtherAccountDefault: Boolean,
+    isOnlyAccount: Boolean,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
     onClearData: () -> Unit,
@@ -531,10 +608,41 @@ fun AccountDialog(
     var type by remember(account.id) { mutableStateOf(accountType) }
     var linkedSources by remember(account.id) { mutableStateOf(account.linkedSources.toSet()) }
     var isDefault by remember(account.id) { 
-        mutableStateOf(isDefaultSelection || (type == AccountType.MPESA && !isOtherAccountDefault))
+        mutableStateOf(isDefaultSelection || isOnlyAccount || (type == AccountType.MPESA && !isOtherAccountDefault))
     }
     var showClearDataConfirm by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    // Logic to lock the default toggle: 
+    // 1. If it's already the default, it's locked (must change it from another account)
+    // 2. If it's the only account
+    // 3. If it's M-Pesa and no other account is default (fallback)
+    val isDefaultLocked = isDefaultSelection || isOnlyAccount || (type == AccountType.MPESA && !isOtherAccountDefault)
+
+    // Auto-detect options based on name for new accounts
+    LaunchedEffect(accountName) {
+        if (!isEditing && account.id.isEmpty()) {
+            val lowerName = accountName.lowercase()
+            if (lowerName.contains("mpesa")) {
+                if (!linkedSources.contains("mpesa")) {
+                    linkedSources = linkedSources + "mpesa"
+                    type = AccountType.MPESA
+                }
+            } else if (lowerName.contains("equity")) {
+                if (!linkedSources.contains("equity")) {
+                    linkedSources = linkedSources + "equity"
+                    type = AccountType.EQUITY
+                }
+            }
+        }
+    }
+
+    // Update default state when type or isOnlyAccount changes
+    LaunchedEffect(type, isOnlyAccount) {
+        if (isOnlyAccount || (type == AccountType.MPESA && !isOtherAccountDefault)) {
+            isDefault = true
+        }
+    }
 
     // Stay in loading state if save was successful to avoid flicker before dismissal
     val isEffectivelyLoading = isLoading || saveResult is Result.Success
@@ -698,9 +806,11 @@ fun AccountDialog(
                                 checked = linkedSources.contains("mpesa"),
                                 onCheckedChange = { checked ->
                                     linkedSources = if (checked) linkedSources + "mpesa" else linkedSources - "mpesa"
-                                    // Only auto-set default if the actual account type is MPESA
-                                    if (checked && type == AccountType.MPESA && !isOtherAccountDefault) {
-                                        isDefault = true
+                                    if (checked) {
+                                        type = AccountType.MPESA
+                                    } else if (type == AccountType.MPESA) {
+                                        // If we uncheck the primary source for this account type, revert to general
+                                        type = AccountType.GENERAL
                                     }
                                 },
                                 enabled = !isEffectivelyLoading
@@ -713,14 +823,25 @@ fun AccountDialog(
                                 checked = linkedSources.contains("equity"),
                                 onCheckedChange = { checked ->
                                     linkedSources = if (checked) linkedSources + "equity" else linkedSources - "equity"
+                                    if (checked) {
+                                        type = AccountType.EQUITY
+                                    } else if (type == AccountType.EQUITY) {
+                                        type = AccountType.GENERAL
+                                    }
                                 },
                                 enabled = !isEffectivelyLoading
                             )
 
-                            val isDefaultLocked = type == AccountType.MPESA && !isOtherAccountDefault
+                            val lockedSubtitle = when {
+                                isOnlyAccount -> "The only account must be default"
+                                isDefaultSelection -> "To change default, select another account"
+                                isDefaultLocked -> "M-Pesa is default when no other account is set"
+                                else -> "Loads this account first"
+                            }
+
                             AccountOptionRow(
                                 title = "Set as Default",
-                                subtitle = if (isDefaultLocked) "M-Pesa is default when no other account is set" else "Loads this account first",
+                                subtitle = lockedSubtitle,
                                 icon = Icons.Default.Star,
                                 checked = isDefault,
                                 onCheckedChange = { isDefault = it },
@@ -866,6 +987,8 @@ private fun AccountOptionRow(
         }
     }
 
+    val contentAlpha = if (enabled) 1f else 0.4f
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -878,7 +1001,11 @@ private fun AccountOptionRow(
             modifier = Modifier
                 .size(36.dp)
                 .background(
-                    color = if (internalChecked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                    color = if (internalChecked) {
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = contentAlpha)
+                    } else {
+                        MaterialTheme.colorScheme.surface.copy(alpha = contentAlpha)
+                    },
                     shape = CircleShape
                 ),
             contentAlignment = Alignment.Center
@@ -886,7 +1013,11 @@ private fun AccountOptionRow(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = if (internalChecked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = if (internalChecked) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = contentAlpha)
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha)
+                },
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -898,13 +1029,13 @@ private fun AccountOptionRow(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha)
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.labelSmall,
                 lineHeight = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha)
             )
         }
 

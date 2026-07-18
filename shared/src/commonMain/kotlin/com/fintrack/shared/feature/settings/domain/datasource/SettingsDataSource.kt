@@ -33,8 +33,11 @@ interface SettingsDataSource {
     val mpesaSimSlot: StateFlow<Int?>
     suspend fun setMpesaSimSlot(slot: Int?)
 
-    val mpesaAccountId: StateFlow<String?>
-    suspend fun setMpesaAccountId(accountId: String?)
+    val mpesaLinkedAccountIds: StateFlow<Set<String>>
+    suspend fun setMpesaLinkedAccountIds(ids: Set<String>)
+
+    val equityLinkedAccountIds: StateFlow<Set<String>>
+    suspend fun setEquityLinkedAccountIds(ids: Set<String>)
 
     val isMpesaListenerEnabled: StateFlow<Boolean>
     suspend fun setMpesaListenerEnabled(enabled: Boolean)

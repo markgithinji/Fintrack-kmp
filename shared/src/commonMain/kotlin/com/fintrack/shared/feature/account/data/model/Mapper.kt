@@ -7,7 +7,8 @@ fun Account.toCreateRequest(): CreateAccountRequest = CreateAccountRequest(
     name = this.name,
     type = this.type,
     balance = this.balance,
-    linkedSources = this.linkedSources
+    linkedSources = this.linkedSources,
+    isDefault = this.isDefault
 )
 
 fun Account.toUpdateRequest(): UpdateAccountRequest = UpdateAccountRequest(
@@ -15,7 +16,8 @@ fun Account.toUpdateRequest(): UpdateAccountRequest = UpdateAccountRequest(
     type = this.type,
     balance = this.balance,
     lastSyncedAt = this.lastSyncedAt,
-    linkedSources = this.linkedSources
+    linkedSources = this.linkedSources,
+    isDefault = this.isDefault
 )
 
 fun AccountDto.toDomain(): Account = Account(

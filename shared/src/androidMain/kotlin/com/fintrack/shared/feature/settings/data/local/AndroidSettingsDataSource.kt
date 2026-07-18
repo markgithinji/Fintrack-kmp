@@ -26,7 +26,8 @@ class AndroidSettingsDataSource(
     private val _reminderFlow = MutableStateFlow(false)
     private val _reminderTimeFlow = MutableStateFlow(LocalTime(20, 0))
     private val _mpesaSimSlotFlow = MutableStateFlow<Int?>(null)
-    private val _mpesaAccountIdFlow = MutableStateFlow<String?>(null)
+    private val _mpesaLinkedAccountIdsFlow = MutableStateFlow<Set<String>>(emptySet())
+    private val _equityLinkedAccountIdsFlow = MutableStateFlow<Set<String>>(emptySet())
     private val _mpesaListenerFlow = MutableStateFlow(false)
     private val _equityListenerFlow = MutableStateFlow(false)
     private val _budgetAlertsEnabledFlow = MutableStateFlow(false)
@@ -67,8 +68,11 @@ class AndroidSettingsDataSource(
         val mpesaSimSlot = if (prefs.contains("mpesa_sim_slot")) prefs.getInt("mpesa_sim_slot", -1) else -1
         _mpesaSimSlotFlow.update { if (mpesaSimSlot == -1) null else mpesaSimSlot }
 
-        val mpesaAccountId = prefs.getString("mpesa_account_id", null)
-        _mpesaAccountIdFlow.update { mpesaAccountId }
+        val mpesaLinkedAccountIds = prefs.getStringSet("mpesa_linked_account_ids", emptySet()) ?: emptySet()
+        _mpesaLinkedAccountIdsFlow.update { mpesaLinkedAccountIds }
+
+        val equityLinkedAccountIds = prefs.getStringSet("equity_linked_account_ids", emptySet()) ?: emptySet()
+        _equityLinkedAccountIdsFlow.update { equityLinkedAccountIds }
 
         val mpesaListenerEnabled = prefs.getBoolean("mpesa_listener_enabled", false)
         _mpesaListenerFlow.update { mpesaListenerEnabled }
@@ -189,17 +193,22 @@ class AndroidSettingsDataSource(
         _mpesaSimSlotFlow.value = slot
     }
 
-    override val mpesaAccountId: StateFlow<String?> = _mpesaAccountIdFlow.asStateFlow()
+    override val mpesaLinkedAccountIds: StateFlow<Set<String>> = _mpesaLinkedAccountIdsFlow.asStateFlow()
 
-    override suspend fun setMpesaAccountId(accountId: String?) {
+    override suspend fun setMpesaLinkedAccountIds(ids: Set<String>) {
         prefs.edit {
-            if (accountId == null) {
-                remove("mpesa_account_id")
-            } else {
-                putString("mpesa_account_id", accountId)
-            }
+            putStringSet("mpesa_linked_account_ids", ids)
         }
-        _mpesaAccountIdFlow.value = accountId
+        _mpesaLinkedAccountIdsFlow.value = ids
+    }
+
+    override val equityLinkedAccountIds: StateFlow<Set<String>> = _equityLinkedAccountIdsFlow.asStateFlow()
+
+    override suspend fun setEquityLinkedAccountIds(ids: Set<String>) {
+        prefs.edit {
+            putStringSet("equity_linked_account_ids", ids)
+        }
+        _equityLinkedAccountIdsFlow.value = ids
     }
 
     override val isMpesaListenerEnabled: StateFlow<Boolean> = _mpesaListenerFlow.asStateFlow()

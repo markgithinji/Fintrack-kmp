@@ -31,7 +31,8 @@ val transactionModule = module {
         createTransactionImporter(
             transactionRepository = get(),
             accountRepository = get(),
-            categoryRepository = get()
+            categoryRepository = get(),
+            settingsDataSource = get()
         )
     }
 

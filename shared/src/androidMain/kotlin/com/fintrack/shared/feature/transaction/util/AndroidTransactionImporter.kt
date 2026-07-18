@@ -7,6 +7,7 @@ import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.logger.KMPLogger
+import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.transaction.util.EquityImporter
 import com.fintrack.shared.feature.transaction.util.MpesaImporter
 
@@ -20,6 +21,7 @@ actual fun createTransactionImporter(
     transactionRepository: TransactionRepository,
     accountRepository: AccountRepository,
     categoryRepository: CategoryRepository,
+    settingsDataSource: SettingsDataSource
 ): TransactionImporter {
     val context = importerContext ?: throw IllegalStateException("TransactionImporter not initialized. Call initTransactionImporter(context)")
     val logger = KMPLogger()
@@ -34,18 +36,15 @@ actual fun createTransactionImporter(
             val accountsResult = accountRepository.getAccounts()
             val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
             
-            val mpesaImporter = MpesaImporter(context, transactionRepository, accountRepository, categoryRepository)
-            val equityImporter = EquityImporter(context, transactionRepository, accountRepository, categoryRepository)
+            val mpesaImporter = MpesaImporter(context, transactionRepository, accountRepository, categoryRepository, settingsDataSource)
+            val equityImporter = EquityImporter(context, transactionRepository, accountRepository, categoryRepository, settingsDataSource)
 
             if (targetAccountId != null) {
-                val targetAccount = accounts.find { it.id == targetAccountId }
-                val hasMpesa = targetAccount?.linkedSources?.contains("mpesa") == true || 
-                              targetAccount?.type == AccountType.MPESA || 
-                              targetAccount?.name?.lowercase() == "mpesa"
+                val mpesaLinkedAccountIds = settingsDataSource.mpesaLinkedAccountIds.value
+                val equityLinkedAccountIds = settingsDataSource.equityLinkedAccountIds.value
                 
-                val hasEquity = targetAccount?.linkedSources?.contains("equity") == true || 
-                               targetAccount?.type == AccountType.EQUITY || 
-                               targetAccount?.name?.lowercase()?.contains("equity") == true
+                val hasMpesa = mpesaLinkedAccountIds.contains(targetAccountId)
+                val hasEquity = equityLinkedAccountIds.contains(targetAccountId)
 
                 when {
                     hasMpesa && hasEquity -> {
@@ -62,21 +61,20 @@ actual fun createTransactionImporter(
                         equityImporter.importHistory(targetAccountId, isPortfolioSeed, onProgress)
                     }
                     else -> {
-                        logger.warning("SYNC_FLOW", "Account $targetAccountId is not a linked account type")
+                        logger.warning("SYNC_FLOW", "Account $targetAccountId is not a locally linked sync account")
                         onProgress(1.0f)
                     }
                 }
                 return
             }
 
-            val mpesaAccount = accounts.find { 
-                it.linkedSources.contains("mpesa") || it.type == AccountType.MPESA || it.name.lowercase() == "mpesa" 
-            }
-            val equityAccount = accounts.find { 
-                it.linkedSources.contains("equity") || it.type == AccountType.EQUITY || it.name.lowercase().contains("equity") 
-            }
+            val mpesaLinkedAccountIds = settingsDataSource.mpesaLinkedAccountIds.value
+            val equityLinkedAccountIds = settingsDataSource.equityLinkedAccountIds.value
+            
+            val mpesaAccount = accounts.find { mpesaLinkedAccountIds.contains(it.id) }
+            val equityAccount = accounts.find { equityLinkedAccountIds.contains(it.id) }
 
-            logger.info("SYNC_FLOW", "Found accounts for global sync - Mpesa: ${mpesaAccount?.id}, Equity: ${equityAccount?.id}")
+            logger.info("SYNC_FLOW", "Found accounts for global sync (Local Settings) - Mpesa: ${mpesaAccount?.id}, Equity: ${equityAccount?.id}")
 
             when {
                 mpesaAccount != null && equityAccount != null -> {

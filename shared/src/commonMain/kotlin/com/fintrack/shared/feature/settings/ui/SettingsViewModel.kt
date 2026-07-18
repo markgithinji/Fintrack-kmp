@@ -107,6 +107,8 @@ class SettingsViewModel(
     val budgetAlertsEnabled: StateFlow<Boolean> = settingsDataSource.budgetAlertsEnabled
     val budgetAlertThresholds: StateFlow<Set<Int>> = settingsDataSource.budgetAlertThresholds
     val alertBudgetId: StateFlow<String?> = settingsDataSource.alertBudgetId
+    val mpesaLinkedAccountIds: StateFlow<Set<String>> = settingsDataSource.mpesaLinkedAccountIds
+    val equityLinkedAccountIds: StateFlow<Set<String>> = settingsDataSource.equityLinkedAccountIds
     val isBillReminderEnabled: StateFlow<Boolean> = settingsDataSource.isBillReminderEnabled
     val billReminderDaysBefore: StateFlow<Int> = settingsDataSource.billReminderDaysBefore
     val isDailySummaryEnabled: StateFlow<Boolean> = settingsDataSource.isDailySummaryEnabled
@@ -270,6 +272,18 @@ class SettingsViewModel(
     fun setAlertBudgetId(budgetId: String?) {
         viewModelScope.launch {
             settingsDataSource.setAlertBudgetId(budgetId)
+        }
+    }
+
+    fun setMpesaLinkedAccountIds(ids: Set<String>) {
+        viewModelScope.launch {
+            settingsDataSource.setMpesaLinkedAccountIds(ids)
+        }
+    }
+
+    fun setEquityLinkedAccountIds(ids: Set<String>) {
+        viewModelScope.launch {
+            settingsDataSource.setEquityLinkedAccountIds(ids)
         }
     }
 

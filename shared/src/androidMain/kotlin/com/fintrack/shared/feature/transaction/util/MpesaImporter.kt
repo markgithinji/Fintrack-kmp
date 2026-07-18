@@ -13,6 +13,7 @@ import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.time.Clock
 import kotlin.time.Instant
+import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -21,7 +22,8 @@ class MpesaImporter(
     private val context: Context,
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val settingsDataSource: SettingsDataSource
 ) : TransactionImporter {
     private val logger = KMPLogger()
     private val portfolioSeeder = PortfolioSeeder()
@@ -44,7 +46,8 @@ class MpesaImporter(
         
         val accountsResult = accountRepository.getAccounts()
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
-        val accountId = targetAccountId ?: accounts.find { it.linkedSources.contains("mpesa") || it.type == AccountType.MPESA }?.id
+        val mpesaLinkedAccountIds = settingsDataSource.mpesaLinkedAccountIds.value
+        val accountId = targetAccountId ?: accounts.find { mpesaLinkedAccountIds.contains(it.id) || it.type == AccountType.MPESA }?.id
             ?: accounts.find { it.name.lowercase() == "mpesa" }?.id 
             ?: "mpesa"
 

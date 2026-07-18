@@ -4,6 +4,8 @@ import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 
+import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
+
 interface TransactionImporter {
     suspend fun importHistory(
         targetAccountId: String? = null,
@@ -15,5 +17,6 @@ interface TransactionImporter {
 expect fun createTransactionImporter(
     transactionRepository: TransactionRepository,
     accountRepository: AccountRepository,
-    categoryRepository: CategoryRepository
+    categoryRepository: CategoryRepository,
+    settingsDataSource: SettingsDataSource
 ): TransactionImporter
