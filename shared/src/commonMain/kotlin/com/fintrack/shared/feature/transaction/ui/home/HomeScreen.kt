@@ -27,6 +27,7 @@ import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.navigation.ui.SmsSyncSignal
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
@@ -43,9 +44,11 @@ fun HomeScreen(
     selectedAccountId: String?,
     onAccountSelected: (String) -> Unit,
     refreshTrigger: Int,
+    smsSyncSignal: SmsSyncSignal? = null,
     onGlobalRefresh: () -> Unit,
+    onSmsPermissionRequired: () -> Unit,
     accountsViewModel: AccountsViewModel = koinViewModel(),
-    transactionsViewModel: TransactionViewModel,
+    transactionsViewModel: TransactionViewModel = koinViewModel(),
     statsViewModel: StatisticsViewModel = koinViewModel(),
     settingsViewModel: SettingsViewModel = koinViewModel(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
@@ -113,11 +116,23 @@ fun HomeScreen(
     }
 
 
+    LaunchedEffect(smsSyncSignal) {
+        if (smsSyncSignal != null) {
+            transactionsViewModel.importTransactions(smsSyncSignal.accountId)
+        }
+    }
+
     LaunchedEffect(importState) {
         if (importState is Result.Success) {
             onGlobalRefresh()
             delay(1500)
             transactionsViewModel.resetImportState()
+        } else if (importState is Result.Error) {
+            val message = (importState as Result.Error).exception.message ?: ""
+            if (message.contains("permission", ignoreCase = true)) {
+                onSmsPermissionRequired()
+                // We don't reset state here, let the rationale/scaffold handle it
+            }
         }
     }
 
@@ -132,9 +147,7 @@ fun HomeScreen(
 
     LaunchedEffect(refreshTrigger, selectedAccountResult) {
         val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-        logger.error("HomeScreen", "REFRESH CHECK: trigger=$refreshTrigger, last=$lastProcessedRefreshTrigger, accountId=$accountId")
         if (accountId != null && refreshTrigger > lastProcessedRefreshTrigger) {
-            logger.error("HomeScreen", "PERFORMING FORCED REFRESH for account: $accountId")
             accountsViewModel.reloadAccounts(showLoading = false)
             transactionsViewModel.loadRecentTransactions(accountId, force = true)
             statsViewModel.loadOverview(accountId, force = true)

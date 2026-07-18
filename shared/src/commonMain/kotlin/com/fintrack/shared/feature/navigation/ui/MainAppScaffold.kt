@@ -40,7 +40,6 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,21 +70,16 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun MainAppScaffold(
-    isAuthenticated: Boolean,
-    authViewModel: AuthViewModel,
     mainViewModel: MainViewModel,
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     onLogout: () -> Unit = {}
 ) {
-    val logger = remember { KMPLogger() }
-    SideEffect {
-        logger.error("MainAppScaffold", "TransactionViewModel INSTANCE: ${transactionsViewModel.hashCode()}")
-    }
     val navController = LocalNavController.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val visibleEntries by navController.visibleEntries.collectAsStateWithLifecycle()
     val currentDestination = navBackStackEntry?.destination
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
+    val smsSyncSignal by mainViewModel.smsSyncTrigger.collectAsStateWithLifecycle()
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
@@ -98,13 +92,9 @@ fun MainAppScaffold(
         } else if (importState is Result.Error) {
             val exception = (importState as Result.Error).exception
             val message = exception.message ?: "Sync failed"
-            logger.error("MainAppScaffold", "Sync failed error: $message")
             
-            // If it looks like a permission error, show rationale
-            if (message.contains("permission", ignoreCase = true)) {
-                showSmsRationale = true
-                // Don't reset state yet, let rationale handle it or just keep it in error
-            } else {
+            // If it's a permission error, we let HomeScreen trigger the rationale callback
+            if (!message.contains("permission", ignoreCase = true)) {
                 toastMessage = message to true
                 transactionsViewModel.resetImportState()
             }
@@ -294,13 +284,12 @@ fun MainAppScaffold(
                 Box(modifier = Modifier.weight(1f)) {
                     SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
                         CompositionLocalProvider(LocalSharedTransitionScope provides this) {
-                            AppNavigation(
-                                isAuthenticated = isAuthenticated,
+                            MainNavigation(
                                 paddingValues = paddingValues,
-                                authViewModel = authViewModel,
-                                transactionsViewModel = transactionsViewModel,
+                                smsSyncSignal = smsSyncSignal,
                                 mainViewModel = mainViewModel,
-                                onLogout = onLogout
+                                onLogout = onLogout,
+                                onSmsPermissionRequired = { showSmsRationale = true }
                             )
                         }
                     }
@@ -360,7 +349,7 @@ fun MainAppScaffold(
         trigger = showSmsPermissionRequest,
         onResult = { granted ->
             if (granted) {
-                transactionsViewModel.importTransactions()
+                mainViewModel.triggerSmsSync()
             } else {
                 toastMessage = "Sync disabled. SMS permission is required to import transactions automatically." to true
             }

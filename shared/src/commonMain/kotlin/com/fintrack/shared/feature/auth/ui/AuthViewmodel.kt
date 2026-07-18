@@ -78,12 +78,14 @@ class AuthViewModel(
                         _authStatus.value = AuthState.Success(false)
                     }
                 } else {
-                    // Only update authStatus to Success(true) if we were explicitly not authenticated
-                    if (currentStatus is AuthState.Success && !currentStatus.data) {
-
-                        // If we are currently logging in or just succeeded, delay to let UI show success
+                    // Update authStatus to Success(true) if we have a token but aren't globally authenticated yet.
+                    // We check against AuthState.Success(true) explicitly.
+                    val isGloballyAuthenticated = (currentStatus as? AuthState.Success)?.data ?: false
+                    
+                    if (!isGloballyAuthenticated) {
+                        // If we are currently logging in or just succeeded, delay to let UI show success on the button
                         if (_loginState.value !is AuthState.Idle || _registerState.value !is AuthState.Idle) {
-                            delay(1000)
+                            delay(1500)
                         }
 
                         _authStatus.value = AuthState.Success(true)
@@ -137,8 +139,8 @@ class AuthViewModel(
                     userRepository.refreshProfile()
 
                     // Set login state to success to show success on button
+                    // The global authStatus will be updated by the token observer with a delay
                     _loginState.value = AuthState.Success(result.data)
-                    _authStatus.value = AuthState.Success(true)
                 }
 
                 is Result.Error -> {
@@ -273,8 +275,8 @@ class AuthViewModel(
                     userRepository.refreshProfile()
 
                     // Set register state to success to show success on button
+                    // The global authStatus will be updated by the token observer with a delay
                     _registerState.value = AuthState.Success(result.data)
-                    _authStatus.value = AuthState.Success(true)
                 }
 
                 is Result.Error -> {

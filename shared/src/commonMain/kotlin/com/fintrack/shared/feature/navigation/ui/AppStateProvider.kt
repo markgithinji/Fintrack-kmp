@@ -60,9 +60,9 @@ fun BigDecimal.toCurrencyString(): String {
 @Composable
 fun AppStateProvider(
     viewModel: MainViewModel = koinInject(),
-    navController: NavHostController = rememberNavController(),
     content: @Composable () -> Unit
 ) {
+    val navController = rememberNavController()
     val currency by viewModel.currency.collectAsStateWithLifecycle()
     val isBalanceHidden by viewModel.isBalanceHidden.collectAsStateWithLifecycle()
     val showDecimals by viewModel.showDecimals.collectAsStateWithLifecycle()

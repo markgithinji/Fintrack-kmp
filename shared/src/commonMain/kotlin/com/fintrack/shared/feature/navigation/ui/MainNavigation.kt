@@ -1,21 +1,10 @@
 package com.fintrack.shared.feature.navigation.ui
 
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -23,198 +12,103 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.fintrack.shared.feature.auth.domain.model.AuthState
-import com.fintrack.shared.feature.auth.ui.AuthViewModel
-import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
-import com.fintrack.shared.feature.auth.ui.LoginScreen
-import com.fintrack.shared.feature.auth.ui.RegisterScreen
+import com.fintrack.shared.feature.account.ui.AccountsScreen
 import com.fintrack.shared.feature.budget.ui.BudgetDetailScreen
 import com.fintrack.shared.feature.budget.ui.BudgetScreen
-import com.fintrack.shared.feature.account.ui.AccountsScreen
-import com.fintrack.shared.feature.user.ui.EditProfileScreen
-import com.fintrack.shared.feature.user.ui.ProfileScreen
+import com.fintrack.shared.feature.category.ui.CategoryManagementScreen
+import com.fintrack.shared.feature.navigation.model.Screen
 import com.fintrack.shared.feature.settings.ui.SettingsScreen
 import com.fintrack.shared.feature.summary.ui.StatisticsScreen
 import com.fintrack.shared.feature.transaction.ui.addtransaction.AddTransactionScreen
 import com.fintrack.shared.feature.transaction.ui.home.HomeScreen
 import com.fintrack.shared.feature.transaction.ui.transactionlist.TransactionListScreen
-import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
+import com.fintrack.shared.feature.user.ui.EditProfileScreen
+import com.fintrack.shared.feature.user.ui.ProfileScreen
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
-import com.fintrack.shared.feature.category.ui.CategoryManagementScreen
-import com.fintrack.shared.feature.navigation.model.Screen
+import com.fintrack.shared.feature.navigation.ui.isMorphScreen
+import com.fintrack.shared.feature.navigation.ui.isProfileDetailScreen
+import com.fintrack.shared.feature.navigation.ui.isMainScreen
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun AppNavigation(
-    isAuthenticated: Boolean,
+fun MainNavigation(
     paddingValues: PaddingValues,
-    authViewModel: AuthViewModel,
-    transactionsViewModel: TransactionViewModel,
+    smsSyncSignal: SmsSyncSignal?,
     mainViewModel: MainViewModel = koinInject(),
-    onLogout: () -> Unit = {},
+    onLogout: () -> Unit,
+    onSmsPermissionRequired: () -> Unit
 ) {
     val navController = LocalNavController.current
     val selectedAccountId by mainViewModel.selectedAccountId.collectAsStateWithLifecycle()
     val refreshTrigger by mainViewModel.refreshTrigger.collectAsStateWithLifecycle()
     val onGlobalRefresh = remember { { mainViewModel.triggerGlobalRefresh() } }
 
-    val startDestination: Any = remember(isAuthenticated) {
-        if (isAuthenticated) Screen.Home() else Screen.Login
-    }
-
-    // Navigation Guard: Kick user to Login if session expires or unauthorized access
-    LaunchedEffect(isAuthenticated) {
-        val currentRoute = navController.currentBackStackEntry?.destination
-        val isAuthRoute = currentRoute?.isAuthScreen() == true
-
-        if (!isAuthenticated) {
-            if (!isAuthRoute) {
-                navController.navigate(Screen.Login) {
-                    popUpTo(0) { inclusive = true }
-                    launchSingleTop = true
-                }
-            }
-        } else {
-            // If authenticated and still on an auth screen, move to Home
-            if (isAuthRoute) {
-                navController.navigate(Screen.Home()) {
-                    popUpTo(0) { inclusive = true }
-                    launchSingleTop = true
-                }
-            }
-        }
-    }
-
-    // Navigation Guard: Prevent navigation to protected routes when not authenticated
-    DisposableEffect(navController) {
-        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
-            val isAuthRoute = destination.isAuthScreen()
-            val currentStatus = authViewModel.authStatus.value
-            val isCurrentlyAuthenticated = (currentStatus as? AuthState.Success)?.data ?: false
-            
-            if (!isAuthRoute && !isCurrentlyAuthenticated) {
-                navController.navigate(Screen.Login) {
-                    popUpTo(0) { inclusive = true }
-                    launchSingleTop = true
-                }
-            }
-        }
-        navController.addOnDestinationChangedListener(listener)
-        onDispose {
-            navController.removeOnDestinationChangedListener(listener)
-        }
-    }
-
     NavHost(
         navController = navController,
-        startDestination = startDestination,
+        startDestination = Screen.Home(),
         modifier = Modifier.fillMaxSize(),
         enterTransition = {
-            val isToAuth = targetState.destination.isAuthScreen()
-            val isFromAuth = initialState.destination.isAuthScreen()
-            val isToMorphScreen = targetState.destination.isMorphScreen()
-            val isToProfileDetail = targetState.destination.isProfileDetailScreen()
-
-            if (isFromAuth && !isToAuth) { // Login success
-                scaleIn(
-                    initialScale = 0.85f, 
-                    animationSpec = tween(500, easing = FastOutSlowInEasing)
-                ) + fadeIn(animationSpec = tween(500)) +
-                slideInVertically(
-                    initialOffsetY = { it / 10 }, 
-                    animationSpec = tween(500, easing = FastOutSlowInEasing)
-                )
-            } else if (isToAuth && !isFromAuth) { // Logout
-                fadeIn(animationSpec = tween(300))
-            } else if (isToAuth && isFromAuth) { // Between Login/Register
-                fadeIn(animationSpec = tween(250))
-            } else if (isToMorphScreen) {
+            if (targetState.destination.isMorphScreen()) {
                 slideInVertically(
                     initialOffsetY = { it },
                     animationSpec = tween(350, easing = FastOutSlowInEasing)
                 ) + fadeIn(animationSpec = tween(300))
-            } else if (isToProfileDetail) {
+            } else if (targetState.destination.isProfileDetailScreen()) {
                 slideInHorizontally(
                     initialOffsetX = { it },
                     animationSpec = tween(300, easing = FastOutSlowInEasing)
                 )
             } else {
-                EnterTransition.None
+                fadeIn(animationSpec = tween(250))
             }
         },
         exitTransition = {
-            val isToAuth = targetState.destination.isAuthScreen()
-            val isFromAuth = initialState.destination.isAuthScreen()
-            val isFromMorphScreen = initialState.destination.isMorphScreen()
-            val isFromProfileDetail = initialState.destination.isProfileDetailScreen()
-            val isToProfileDetail = targetState.destination.isProfileDetailScreen()
-
-            if (isFromAuth && !isToAuth) { // Login success
-                scaleOut(targetScale = 1.1f, animationSpec = tween(500)) + fadeOut(animationSpec = tween(500))
-            } else if (isToAuth && !isFromAuth) { // Logout
-                scaleOut(targetScale = 0.9f, animationSpec = tween(500)) + fadeOut(animationSpec = tween(500))
-            } else if (isToAuth && isFromAuth) { // Between Login/Register
-                fadeOut(animationSpec = tween(300))
-            } else if (isFromMorphScreen) {
+            if (initialState.destination.isMorphScreen()) {
                 slideOutVertically(
                     targetOffsetY = { it },
                     animationSpec = tween(350, easing = FastOutSlowInEasing)
                 ) + fadeOut(animationSpec = tween(300))
-            } else if (isFromProfileDetail) {
+            } else if (initialState.destination.isProfileDetailScreen()) {
                 slideOutHorizontally(
                     targetOffsetX = { it },
                     animationSpec = tween(300, easing = FastOutSlowInEasing)
                 )
-            } else if (isToProfileDetail) {
-                // When Profile is being covered by a detail screen, slide it slightly left
+            } else if (targetState.destination.isProfileDetailScreen()) {
                 slideOutHorizontally(
                     targetOffsetX = { -it / 4 },
                     animationSpec = tween(300, easing = FastOutSlowInEasing)
                 )
             } else {
-                ExitTransition.None
+                fadeOut(animationSpec = tween(250))
             }
         },
-        popEnterTransition = { 
-            val isToMorphScreen = targetState.destination.isMorphScreen()
-            val isToProfileDetail = targetState.destination.isProfileDetailScreen()
-            val isToProfile = targetState.destination.hasRoute<Screen.Profile>()
-
-            if (isToMorphScreen || targetState.destination.isMainScreen()) {
+        popEnterTransition = {
+            if (targetState.destination.isMorphScreen() || targetState.destination.isMainScreen()) {
                 fadeIn(animationSpec = tween(250))
-            } else if (isToProfileDetail) {
-                fadeIn(animationSpec = tween(250))
-            } else if (isToProfile) {
-                // When popping BACK to Profile from a detail screen
+            } else if (targetState.destination.hasRoute<Screen.Profile>()) {
                 slideInHorizontally(
                     initialOffsetX = { -it / 4 },
                     animationSpec = tween(300, easing = FastOutSlowInEasing)
                 )
             } else {
-                EnterTransition.None
+                fadeIn(animationSpec = tween(250))
             }
         },
         popExitTransition = {
-            val isFromMorphScreen = initialState.destination.isMorphScreen()
-            val isFromProfileDetail = initialState.destination.isProfileDetailScreen()
-
-            if (isFromMorphScreen) {
+            if (initialState.destination.isMorphScreen()) {
                 slideOutVertically(
                     targetOffsetY = { it },
                     animationSpec = tween(350, easing = FastOutSlowInEasing)
                 ) + fadeOut(animationSpec = tween(300))
-            } else if (isFromProfileDetail) {
+            } else if (initialState.destination.isProfileDetailScreen()) {
                 slideOutHorizontally(
                     targetOffsetX = { it },
                     animationSpec = tween(300, easing = FastOutSlowInEasing)
                 )
             } else {
-                ExitTransition.None
+                fadeOut(animationSpec = tween(250))
             }
         }
     ) {
@@ -224,10 +118,11 @@ fun AppNavigation(
 
             HomeScreen(
                 selectedAccountId = accountId,
-                transactionsViewModel = transactionsViewModel,
                 refreshTrigger = refreshTrigger,
+                smsSyncSignal = smsSyncSignal,
                 onGlobalRefresh = onGlobalRefresh,
                 onAccountSelected = { mainViewModel.onAccountSelected(it) },
+                onSmsPermissionRequired = onSmsPermissionRequired,
                 paddingValues = paddingValues,
                 animatedVisibilityScope = this,
                 onEditTransaction = { transactionId ->
@@ -353,38 +248,6 @@ fun AppNavigation(
                 animatedVisibilityScope = this,
                 onSave = { navController.popBackStack() },
                 onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable<Screen.Login> { 
-            LoginScreen(
-                viewModel = authViewModel,
-                onLoginSuccess = {
-                    authViewModel.clearAuthStates()
-                },
-                onSignUp = {
-                    navController.navigate(Screen.Register) {
-                        popUpTo(Screen.Login) { inclusive = true }
-                    }
-                },
-                onForgotPassword = {
-                },
-                modifier = Modifier.padding(paddingValues)
-            )
-        }
-
-        composable<Screen.Register> { 
-            RegisterScreen(
-                viewModel = authViewModel,
-                onRegisterSuccess = {
-                    authViewModel.clearAuthStates()
-                },
-                onLogin = {
-                    navController.navigate(Screen.Login) {
-                        popUpTo(Screen.Register) { inclusive = true }
-                    }
-                },
-                modifier = Modifier.padding(paddingValues)
             )
         }
 

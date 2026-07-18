@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
 
 class MainViewModel(
     private val settingsDataSource: SettingsDataSource,
@@ -31,6 +32,9 @@ class MainViewModel(
 
     private val _refreshTrigger = MutableStateFlow(0)
     val refreshTrigger: StateFlow<Int> = _refreshTrigger.asStateFlow()
+
+    private val _smsSyncTrigger = MutableStateFlow<SmsSyncSignal?>(null)
+    val smsSyncTrigger: StateFlow<SmsSyncSignal?> = _smsSyncTrigger.asStateFlow()
 
     // Global states that multiple screens care about
     val isBalanceHidden = settingsDataSource.isBalanceHidden
@@ -98,6 +102,13 @@ class MainViewModel(
         _selectedAccountId.value = id
     }
 
+    fun triggerSmsSync(accountId: String? = null) {
+        _smsSyncTrigger.value = SmsSyncSignal(
+            accountId = accountId ?: _selectedAccountId.value,
+            timestamp = Clock.System.now().toEpochMilliseconds()
+        )
+    }
+
     fun triggerGlobalRefresh() {
         viewModelScope.launch {
             val newValue = _refreshTrigger.value + 1
@@ -125,3 +136,5 @@ class MainViewModel(
         }
     }
 }
+
+data class SmsSyncSignal(val accountId: String?, val timestamp: Long)

@@ -7,13 +7,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.auth.domain.model.AuthState
@@ -24,6 +18,7 @@ import com.fintrack.shared.feature.navigation.model.Screen
 import com.fintrack.shared.feature.navigation.ui.components.AuthErrorScreen
 import com.fintrack.shared.feature.navigation.ui.components.AuthLoadingScreen
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
+import com.fintrack.shared.feature.settings.domain.util.rememberBiometricAuthenticator
 import com.fintrack.shared.ui.theme.FinanceTrackerTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -45,40 +40,37 @@ fun MainScreen(
     }
 
     FinanceTrackerTheme(darkTheme = isDarkTheme) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background,
-        ) {
-            AppStateProvider(viewModel = mainViewModel) {
-                val navController = LocalNavController.current
+        val biometricAuthenticator = rememberBiometricAuthenticator()
+        
+        // Provide biometric authenticator at the root so it's available to all branches
+        CompositionLocalProvider(LocalBiometricAuthenticator provides biometricAuthenticator) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background,
+            ) {
                 val authViewModel: AuthViewModel = koinViewModel()
                 val authStatusState by authViewModel.authStatus.collectAsStateWithLifecycle()
                 val isAppLocked by authViewModel.isAppLocked.collectAsStateWithLifecycle()
-                val biometricAuthenticator = LocalBiometricAuthenticator.current
                 val scope = rememberCoroutineScope()
-
+                
                 // Track the last error for smooth transitions on retry
                 var lastError by remember { mutableStateOf<AuthState.Error?>(null) }
 
                 LaunchedEffect(authStatusState) {
-                    when (authStatusState) {
-                        is AuthState.Error -> lastError = authStatusState as AuthState.Error
+                    val state = authStatusState
+                    when (state) {
+                        is AuthState.Error -> lastError = state
                         is AuthState.Success -> {
-                            if (lastError != null) {
+                            val isAuthenticated = state.data
+                            if (!isAuthenticated) {
+                                // Clear errors immediately on logout for a clean transition
+                                lastError = null
+                            } else if (lastError != null) {
                                 delay(1500)
                                 lastError = null
                             }
                         }
                         else -> {}
-                    }
-                }
-
-                // Handle initial navigation (e.g., from notifications)
-                LaunchedEffect(initialTransactionId, authStatusState) {
-                    val auth = authStatusState
-                    if (initialTransactionId != null && auth is AuthState.Success && auth.data) {
-                        navController.navigate(Screen.AddTransaction(initialTransactionId))
-                        onTransactionIdConsumed()
                     }
                 }
 
@@ -94,7 +86,7 @@ fun MainScreen(
                                 fadeOut(animationSpec = tween(600)) + 
                                 scaleOut(targetScale = 1.08f, animationSpec = tween(600, easing = FastOutSlowInEasing))
                             )
-                        } else if (initialState.second is AuthState.Loading && targetState.second is AuthState.Success) {
+                        } else if (initialState.second is AuthState.Loading && targetState.second is AuthState.Success<*>) {
                             // Transition from Loading to Success (App start)
                             (fadeIn(animationSpec = tween(800)) + 
                              scaleIn(initialScale = 0.85f, animationSpec = tween(800, easing = FastOutSlowInEasing))
@@ -149,12 +141,31 @@ fun MainScreen(
                                     )
                                 } else {
                                     val isAuthenticated = (authState as? AuthState.Success)?.data ?: false
-                                    MainAppScaffold(
-                                        isAuthenticated = isAuthenticated,
-                                        authViewModel = authViewModel,
-                                        mainViewModel = mainViewModel,
-                                        onLogout = { authViewModel.logout() }
-                                    )
+                                    
+                                    if (isAuthenticated) {
+                                        // Entering the Main App "Room"
+                                        AppStateProvider(viewModel = mainViewModel) {
+                                            val navController = LocalNavController.current
+                                            
+                                            // Handle deep-linking / initial navigation inside the active session
+                                            LaunchedEffect(initialTransactionId) {
+                                                if (initialTransactionId != null) {
+                                                    navController.navigate(Screen.AddTransaction(initialTransactionId))
+                                                    onTransactionIdConsumed()
+                                                }
+                                            }
+
+                                            MainAppScaffold(
+                                                mainViewModel = mainViewModel,
+                                                onLogout = { authViewModel.logout() }
+                                            )
+                                        }
+                                    } else {
+                                        // Entering the Auth "Room"
+                                        AuthNavigation(
+                                            authViewModel = authViewModel
+                                        )
+                                    }
                                 }
                             }
                         }
