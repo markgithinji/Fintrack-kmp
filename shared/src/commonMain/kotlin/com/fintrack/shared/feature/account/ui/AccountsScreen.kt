@@ -182,10 +182,7 @@ fun AccountsScreen(
                                 isDefault = account.id == effectiveDefaultAccountId,
                                 linkedSources = sources
                             )
-                        }.sortedWith(
-                            compareByDescending<Account> { it.id == effectiveDefaultAccountId }
-                                .thenByDescending { it.createdAt }
-                        )
+                        }.sortedBy { it.createdAt }
                     }
 
                     AccountList(
@@ -763,7 +760,8 @@ fun AccountDialog(
                     placeholder = { Text("e.g. Personal Savings") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    enabled = !isLoading && !account.isDefault,
+                    enabled = !account.isDefault,
+                    readOnly = isLoading,
                     isError = saveError != null,
                     supportingText = saveError?.let { { Text(it) } },
                     shape = RoundedCornerShape(12.dp),
@@ -813,7 +811,8 @@ fun AccountDialog(
                                         type = AccountType.GENERAL
                                     }
                                 },
-                                enabled = !isEffectivelyLoading
+                                enabled = true,
+                                isBusy = isEffectivelyLoading
                             )
 
                             AccountOptionRow(
@@ -829,7 +828,8 @@ fun AccountDialog(
                                         type = AccountType.GENERAL
                                     }
                                 },
-                                enabled = !isEffectivelyLoading
+                                enabled = true,
+                                isBusy = isEffectivelyLoading
                             )
 
                             val lockedSubtitle = when {
@@ -845,7 +845,8 @@ fun AccountDialog(
                                 icon = Icons.Default.Star,
                                 checked = isDefault,
                                 onCheckedChange = { isDefault = it },
-                                enabled = !isEffectivelyLoading && !isDefaultLocked
+                                enabled = !isDefaultLocked,
+                                isBusy = isEffectivelyLoading
                             )
 
                             if (isEditing) {
@@ -869,7 +870,7 @@ fun AccountDialog(
                 ) {
                     TextButton(
                         onClick = onDismiss,
-                        enabled = !isLoading
+                        enabled = !isEffectivelyLoading
                     ) {
                         Text("Cancel", fontWeight = FontWeight.SemiBold)
                     }
@@ -885,7 +886,7 @@ fun AccountDialog(
                                 isDefault
                             )
                         },
-                        enabled = accountName.isNotBlank() && !isLoading && (hasChanges || !isEditing),
+                        enabled = accountName.isNotBlank() && !isEffectivelyLoading && (hasChanges || !isEditing),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
                     ) {
@@ -975,13 +976,14 @@ private fun AccountOptionRow(
     icon: ImageVector,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    enabled: Boolean
+    enabled: Boolean,
+    isBusy: Boolean = false
 ) {
     // Optimistic update state to prevent flicker
     var internalChecked by remember(checked) { mutableStateOf(checked) }
 
     fun handleToggle(newValue: Boolean) {
-        if (enabled && newValue != internalChecked) {
+        if (enabled && !isBusy && newValue != internalChecked) {
             internalChecked = newValue
             onCheckedChange(newValue)
         }
@@ -993,7 +995,7 @@ private fun AccountOptionRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .clickable(enabled = enabled) { handleToggle(!internalChecked) }
+            .clickable(enabled = enabled && !isBusy) { handleToggle(!internalChecked) }
             .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
