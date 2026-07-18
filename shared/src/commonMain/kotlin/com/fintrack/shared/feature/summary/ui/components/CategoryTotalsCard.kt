@@ -280,7 +280,7 @@ fun CategoryTotalsCardWithTabs(
                                         displayModels.add(
                                             CategoryDisplayModel(
                                                 name = "Transaction Fees",
-                                                categoryId = "transaction_cost",
+                                                categoryId = "00000000-0000-4000-a000-000000000028",
                                                 amount = result.data.totalTransactionCost,
                                                 count = 0
                                             )

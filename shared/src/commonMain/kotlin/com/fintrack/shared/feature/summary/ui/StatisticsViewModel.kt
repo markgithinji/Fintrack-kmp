@@ -190,13 +190,15 @@ class StatisticsViewModel(
                 targetFlow.value = Result.Loading
             }
             
-            targetFlow.value = summaryRepository.getDistributionSummary(
+            val distribution = summaryRepository.getDistributionSummary(
                 weekOrMonthCode = weekOrMonthCode,
                 type = type.apiName,
                 start = start,
                 end = end,
                 accountId = accountId
             )
+            
+            targetFlow.value = distribution
         }
 
         when (type) {
