@@ -336,23 +336,6 @@ fun SettingsScreen(
                                 onGlobalRefresh()
                             }
                         )
-
-                        if (isSmsRationaleHidden) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                thickness = 0.5.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-                            )
-
-                            SettingsItem(
-                                title = "Reset Explanations",
-                                subtitle = "Show tracking permission dialogs again",
-                                icon = Icons.Default.Refresh,
-                                iconContainerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
-                                iconTint = MaterialTheme.colorScheme.secondary,
-                                onClick = { viewModel.setSmsRationaleHidden(false) }
-                            )
-                        }
                     }
 
                     SettingsSection(title = "M-Pesa Tracking") {

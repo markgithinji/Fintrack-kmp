@@ -38,7 +38,7 @@ fun MainNavigation(
     smsSyncSignal: SmsSyncSignal?,
     mainViewModel: MainViewModel = koinInject(),
     onLogout: () -> Unit,
-    onSmsPermissionRequired: () -> Unit
+    onSmsPermissionRequired: (forceRationale: Boolean) -> Unit
 ) {
     val navController = LocalNavController.current
     val selectedAccountId by mainViewModel.selectedAccountId.collectAsStateWithLifecycle()

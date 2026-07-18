@@ -46,7 +46,7 @@ fun HomeScreen(
     refreshTrigger: Int,
     smsSyncSignal: SmsSyncSignal? = null,
     onGlobalRefresh: () -> Unit,
-    onSmsPermissionRequired: () -> Unit,
+    onSmsPermissionRequired: (forceRationale: Boolean) -> Unit,
     onShowToast: (String, Boolean) -> Unit,
     accountsViewModel: AccountsViewModel = koinViewModel(),
     transactionsViewModel: TransactionViewModel = koinViewModel(),
@@ -68,6 +68,8 @@ fun HomeScreen(
     val isEquityListenerEnabled by settingsViewModel.isEquityListenerEnabled.collectAsStateWithLifecycle()
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
     val importProgress by transactionsViewModel.importProgress.collectAsStateWithLifecycle()
+
+    var isManualSyncInProgress by remember { mutableStateOf(false) }
 
     LaunchedEffect(selectedAccountId) {
         selectedAccountId?.let { accountsViewModel.selectAccount(it) }
@@ -126,12 +128,13 @@ fun HomeScreen(
             onGlobalRefresh()
             delay(1500)
             transactionsViewModel.resetImportState()
+            isManualSyncInProgress = false
         } else if (importState is Result.Error) {
             val message = (importState as Result.Error).exception.message ?: ""
             if (message.contains("permission", ignoreCase = true)) {
-                onSmsPermissionRequired()
-                // We don't reset state here, let the rationale/scaffold handle it
+                onSmsPermissionRequired(isManualSyncInProgress)
             }
+            isManualSyncInProgress = false
         }
     }
 
@@ -227,10 +230,13 @@ fun HomeScreen(
                     },
                     onToggleBalanceVisibility = { settingsViewModel.setBalanceHidden(it) },
                     onManualSync = { 
+                        isManualSyncInProgress = true
                         val accountId = (selectedAccountResult as? Result.Success)?.data?.id
                         transactionsViewModel.importTransactions(accountId) 
                     },
-                    onSyncErrorClick = { message -> onShowToast(message, true) },
+                    onSyncErrorClick = { message -> 
+                        onShowToast(message, true) 
+                    },
                     onRetry = {
                         accountsViewModel.reloadAccounts()
                         selectedAccountId?.let { accountsViewModel.selectAccount(it) }
@@ -268,6 +274,10 @@ fun HomeScreen(
                     },
                     onTransactionClick = { transaction ->
                         transaction.id?.let { id -> onEditTransaction(id) }
+                    },
+                    onRetry = {
+                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                        transactionsViewModel.loadRecentTransactions(accountId, force = true)
                     }
                 )
             }

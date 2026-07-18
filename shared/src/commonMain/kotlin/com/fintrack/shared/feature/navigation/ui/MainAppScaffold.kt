@@ -101,7 +101,6 @@ fun MainAppScaffold(
             // If it's a permission error, we let HomeScreen trigger the rationale callback
             if (!message.contains("permission", ignoreCase = true)) {
                 mainViewModel.showToast(message, isError = true)
-                transactionsViewModel.resetImportState()
             }
         }
     }
@@ -320,8 +319,10 @@ fun MainAppScaffold(
                                 smsSyncSignal = smsSyncSignal,
                                 mainViewModel = mainViewModel,
                                 onLogout = onLogout,
-                                onSmsPermissionRequired = {
-                                    if (isSmsRationaleHidden) {
+                                onSmsPermissionRequired = { force ->
+                                    if (force) {
+                                        showSmsRationale = true
+                                    } else if (isSmsRationaleHidden) {
                                         showSmsPermissionRequest = true
                                     } else {
                                         showSmsRationale = true
@@ -342,7 +343,7 @@ fun MainAppScaffold(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .windowInsetsPadding(WindowInsets.navigationBars)
-                    .padding(bottom = if (showBottomBarNow) 72.dp else 12.dp)
+                    .padding(bottom = if (showBottomBarNow) 100.dp else 24.dp)
             )
         }
 
@@ -377,14 +378,12 @@ fun MainAppScaffold(
                 }
                 showSmsRationale = false
                 showSmsPermissionRequest = true
-                transactionsViewModel.resetImportState()
             },
             onDismiss = { dontShowAgain ->
                 if (dontShowAgain) {
                     mainViewModel.setSmsRationaleHidden(true)
                 }
                 showSmsRationale = false
-                transactionsViewModel.resetImportState()
             }
         )
     }
@@ -394,11 +393,6 @@ fun MainAppScaffold(
         onResult = { granted ->
             if (granted) {
                 mainViewModel.triggerSmsSync()
-            } else {
-                mainViewModel.showToast(
-                    "Sync disabled. SMS permission is required to import transactions automatically.",
-                    isError = true
-                )
             }
             showSmsPermissionRequest = false
         },
