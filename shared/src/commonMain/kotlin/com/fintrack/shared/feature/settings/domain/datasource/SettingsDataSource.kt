@@ -74,4 +74,7 @@ interface SettingsDataSource {
 
     val exportFormat: StateFlow<ExportFormat>
     suspend fun setExportFormat(format: ExportFormat)
+
+    val isSmsRationaleHidden: StateFlow<Boolean>
+    suspend fun setSmsRationaleHidden(hidden: Boolean)
 }

@@ -40,6 +40,7 @@ class AndroidSettingsDataSource(
     private val _showDecimalsFlow = MutableStateFlow(true)
     private val _defaultAccountIdFlow = MutableStateFlow<String?>(null)
     private val _exportFormatFlow = MutableStateFlow(ExportFormat.CSV)
+    private val _smsRationaleHiddenFlow = MutableStateFlow(false)
 
     init {
         val themeName = prefs.getString("app_theme", AppTheme.SYSTEM.name)
@@ -107,6 +108,9 @@ class AndroidSettingsDataSource(
 
         val exportFormatName = prefs.getString("export_format", ExportFormat.CSV.name) ?: ExportFormat.CSV.name
         _exportFormatFlow.update { try { ExportFormat.valueOf(exportFormatName) } catch (e: Exception) { ExportFormat.CSV } }
+
+        val smsRationaleHidden = prefs.getBoolean("sms_rationale_hidden", false)
+        _smsRationaleHiddenFlow.update { smsRationaleHidden }
     }
 
     override val theme: StateFlow<AppTheme> = _themeFlow.asStateFlow()
@@ -321,5 +325,14 @@ class AndroidSettingsDataSource(
             putString("export_format", format.name)
         }
         _exportFormatFlow.value = format
+    }
+
+    override val isSmsRationaleHidden: StateFlow<Boolean> = _smsRationaleHiddenFlow.asStateFlow()
+
+    override suspend fun setSmsRationaleHidden(hidden: Boolean) {
+        prefs.edit {
+            putBoolean("sms_rationale_hidden", hidden)
+        }
+        _smsRationaleHiddenFlow.value = hidden
     }
 }

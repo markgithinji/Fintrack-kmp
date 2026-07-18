@@ -140,7 +140,7 @@ class MpesaImporter(
         logger.info("SYNC_FLOW", "Scanning complete. Found ${transactions.size} valid transactions to upload.")
 
         if (isPortfolioSeed) {
-            logger.info("SYNC_FLOW", "Portfolio Seeding: Injecting dummy transactions for screenshots...")
+            logger.info("SYNC_FLOW", "Portfolio Seeding: Injecting dummy transactions for app exploration...")
             val dummyTransactions = portfolioSeeder.generateDummyTransactions(accountId, categories)
             transactions.addAll(dummyTransactions)
             logger.info("SYNC_FLOW", "Portfolio Seeding: Added ${dummyTransactions.size} dummy transactions. Total now: ${transactions.size}")
@@ -191,10 +191,16 @@ class MpesaImporter(
                                    !account.linkedSources.contains("bank")
             
             val currentAppBalance = account.balance ?: BigDecimal.ZERO
-            val newBalance = if (isPureMpesaAccount) (latestBalance ?: currentAppBalance) else currentAppBalance
+            val newBalance = if (isPortfolioSeed) {
+                BigDecimal.fromInt(72450) // Nice rounded-ish balance for screenshots
+            } else if (isPureMpesaAccount) {
+                latestBalance ?: currentAppBalance
+            } else {
+                currentAppBalance
+            }
             val now = Clock.System.now()
             
-            logger.info("SYNC_FLOW", "Updating Mpesa account state. Pure Mpesa: $isPureMpesaAccount, Balance: $newBalance, Synced: $now")
+            logger.info("SYNC_FLOW", "Updating Mpesa account state. Pure Mpesa: $isPureMpesaAccount, Balance: $newBalance, Seed: $isPortfolioSeed")
             accountRepository.addOrUpdateAccount(account.copy(
                 balance = newBalance,
                 lastSyncedAt = now

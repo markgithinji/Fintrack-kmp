@@ -161,6 +161,7 @@ fun SettingsScreen(
     val isWeeklySummaryEnabled by viewModel.isWeeklySummaryEnabled.collectAsStateWithLifecycle()
     val summaryNotificationTime by viewModel.summaryNotificationTime.collectAsStateWithLifecycle()
     val exportFormat by viewModel.exportFormat.collectAsStateWithLifecycle()
+    val isSmsRationaleHidden by viewModel.isSmsRationaleHidden.collectAsStateWithLifecycle()
     val budgetsResult by viewModel.budgets.collectAsStateWithLifecycle()
     val reminderTime by viewModel.reminderTime.collectAsStateWithLifecycle()
     val showPermissionRequest by viewModel.showPermissionRequest.collectAsStateWithLifecycle()
@@ -335,6 +336,23 @@ fun SettingsScreen(
                                 onGlobalRefresh()
                             }
                         )
+
+                        if (isSmsRationaleHidden) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                thickness = 0.5.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                            )
+
+                            SettingsItem(
+                                title = "Reset Explanations",
+                                subtitle = "Show tracking permission dialogs again",
+                                icon = Icons.Default.Refresh,
+                                iconContainerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
+                                iconTint = MaterialTheme.colorScheme.secondary,
+                                onClick = { viewModel.setSmsRationaleHidden(false) }
+                            )
+                        }
                     }
 
                     SettingsSection(title = "M-Pesa Tracking") {
@@ -343,10 +361,15 @@ fun SettingsScreen(
                             subtitle = "Automatically log M-Pesa SMS",
                             icon = Icons.Default.Sms,
                             checked = isMpesaListenerEnabled,
-                            onCheckedChange = { 
-                                if (it) {
-                                    activeSmsTarget = SmsPermissionTarget.MPESA
-                                    showSmsRationale = SmsPermissionTarget.MPESA
+                            onCheckedChange = { enabled ->
+                                if (enabled) {
+                                    if (isSmsRationaleHidden) {
+                                        showSmsPermissionRequest = SmsPermissionTarget.MPESA
+                                        activeSmsTarget = SmsPermissionTarget.MPESA
+                                    } else {
+                                        activeSmsTarget = SmsPermissionTarget.MPESA
+                                        showSmsRationale = SmsPermissionTarget.MPESA
+                                    }
                                 } else {
                                     viewModel.setMpesaListenerEnabled(false)
                                 }
@@ -360,10 +383,15 @@ fun SettingsScreen(
                             subtitle = "Automatically log Equity Bank SMS",
                             icon = Icons.Default.AccountBalance,
                             checked = isEquityListenerEnabled,
-                            onCheckedChange = { 
-                                if (it) {
-                                    activeSmsTarget = SmsPermissionTarget.EQUITY
-                                    showSmsRationale = SmsPermissionTarget.EQUITY
+                            onCheckedChange = { enabled ->
+                                if (enabled) {
+                                    if (isSmsRationaleHidden) {
+                                        showSmsPermissionRequest = SmsPermissionTarget.EQUITY
+                                        activeSmsTarget = SmsPermissionTarget.EQUITY
+                                    } else {
+                                        activeSmsTarget = SmsPermissionTarget.EQUITY
+                                        showSmsRationale = SmsPermissionTarget.EQUITY
+                                    }
                                 } else {
                                     viewModel.setEquityListenerEnabled(false)
                                 }
@@ -612,7 +640,7 @@ fun SettingsScreen(
                             is SaveState.Loading -> "Seeding... ${(seedProgress * 100).toInt()}%"
                             is SaveState.Success -> "Successfully seeded!"
                             is SaveState.Error -> "Failed to seed data"
-                            else -> "Populate charts with 2 months of sample data"
+                            else -> "Populate charts with 6 months of sample data"
                         }
                         
                         val iconColor = if (seedState is SaveState.Success) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
@@ -738,7 +766,10 @@ fun SettingsScreen(
             title = "Enable $targetName Tracking",
             message = "FinTrack needs to read your SMS messages to automatically detect and log transactions from $targetName. Your financial data is processed privately on your device.",
             icon = if (showSmsRationale == SmsPermissionTarget.MPESA) Icons.Default.Sms else Icons.Default.AccountBalance,
-            onConfirm = {
+            onConfirm = { dontShowAgain ->
+                if (dontShowAgain) {
+                    viewModel.setSmsRationaleHidden(true)
+                }
                 showSmsPermissionRequest = showSmsRationale
                 showSmsRationale = null
             },
@@ -893,15 +924,22 @@ fun SettingsScreen(
     }
 
     if (showSeedConfirmation) {
+        val seedMessage = if (seedState is SaveState.Loading) {
+            "Seeding dummy transactions... ${(seedProgress * 100).toInt()}% complete. Please wait while we populate your charts."
+        } else {
+            "This will generate multiple transactions per day for the last 6 months to populate your charts with rich data. This helps in exploring the app's features and visualizations. Real data is not affected."
+        }
+
         ConfirmationDialog(
             title = "Seed Portfolio Data",
-            message = "This will generate multiple transactions per day for the last 2 months to populate your charts with rich data. This is useful for portfolio screenshots. Real data is not affected.",
+            message = seedMessage,
             confirmLabel = "Seed Now",
             isLoading = seedState is SaveState.Loading,
             isSuccess = seedState is SaveState.Success,
             errorMessage = (seedState as? SaveState.Error)?.exception?.message,
             successTitle = "Seeding Complete",
             successMessage = "The dummy transactions have been successfully added to your account.",
+            autoDismiss = false,
             onConfirm = { viewModel.seedPortfolioData() },
             onDismiss = {
                 showSeedConfirmation = false

@@ -150,7 +150,7 @@ class EquityImporter(
         logger.info("SYNC_FLOW", "Scanning complete. Found ${transactions.size} valid Equity transactions to upload.")
 
         if (isPortfolioSeed) {
-            logger.info("SYNC_FLOW", "Portfolio Seeding: Injecting dummy transactions for screenshots...")
+            logger.info("SYNC_FLOW", "Portfolio Seeding: Injecting dummy transactions for app exploration...")
             val dummyTransactions = portfolioSeeder.generateDummyTransactions(accountId, categories)
             transactions.addAll(dummyTransactions)
             logger.info("SYNC_FLOW", "Portfolio Seeding: Added ${dummyTransactions.size} dummy transactions. Total now: ${transactions.size}")
@@ -191,14 +191,18 @@ class EquityImporter(
         
         logger.info("SYNC_FLOW", "Equity import process completed successfully")
 
-        // Update account state (last synced time only - we don't send final balance for Equity)
+        // Update account state (last synced time and balance for seeding)
         val accountResult = accountRepository.getAccountById(accountId)
         if (accountResult is Result.Success) {
             val account = accountResult.data
             val now = Clock.System.now()
             
-            logger.info("SYNC_FLOW", "Updating Equity account state. Synced: $now")
+            // For seeding, set a realistic balance. For normal sync, keep existing.
+            val newBalance = if (isPortfolioSeed) BigDecimal.fromInt(145800) else account.balance
+            
+            logger.info("SYNC_FLOW", "Updating Equity account state. Balance: $newBalance, Synced: $now")
             accountRepository.addOrUpdateAccount(account.copy(
+                balance = newBalance,
                 lastSyncedAt = now
             ))
         }

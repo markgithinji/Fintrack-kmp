@@ -1,13 +1,15 @@
 package com.fintrack.shared.feature.core.ui.permission
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -20,9 +22,11 @@ fun PermissionRationaleDialog(
     title: String,
     message: String,
     icon: ImageVector,
-    onConfirm: () -> Unit,
+    onConfirm: (Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
+    var dontShowAgain by remember { mutableStateOf(false) }
+
     BasicAlertDialog(
         onDismissRequest = onDismiss,
         properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
@@ -65,6 +69,27 @@ fun PermissionRationaleDialog(
                     lineHeight = 20.sp
                 )
                 
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = dontShowAgain,
+                        onCheckedChange = { dontShowAgain = it }
+                    )
+                    Text(
+                        text = "Don't show this explanation again",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(32.dp))
                 
                 Row(
@@ -79,7 +104,7 @@ fun PermissionRationaleDialog(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
-                        onClick = onConfirm,
+                        onClick = { onConfirm(dontShowAgain) },
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.height(48.dp),
                         contentPadding = PaddingValues(horizontal = 24.dp)

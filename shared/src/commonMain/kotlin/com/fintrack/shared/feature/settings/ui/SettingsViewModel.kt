@@ -115,6 +115,7 @@ class SettingsViewModel(
     val showDecimals: StateFlow<Boolean> = settingsDataSource.showDecimals
     val defaultAccountId: StateFlow<String?> = settingsDataSource.defaultAccountId
     val exportFormat: StateFlow<ExportFormat> = settingsDataSource.exportFormat
+    val isSmsRationaleHidden: StateFlow<Boolean> = settingsDataSource.isSmsRationaleHidden
 
     val allCategories: StateFlow<List<Category>> = localCategoryDataSource.categories
         .map { categories ->
@@ -321,6 +322,12 @@ class SettingsViewModel(
     fun setExportFormat(format: ExportFormat) {
         viewModelScope.launch {
             settingsDataSource.setExportFormat(format)
+        }
+    }
+
+    fun setSmsRationaleHidden(hidden: Boolean) {
+        viewModelScope.launch {
+            settingsDataSource.setSmsRationaleHidden(hidden)
         }
     }
 

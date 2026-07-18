@@ -11,15 +11,18 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.random.Random
 
 /**
- * PortfolioSeeder provides dummy transaction data for portfolio demonstrations.
+ * PortfolioSeeder provides dummy transaction data for app exploration and testing.
  * This can be easily toggled in the Importers to show a populated UI without using real data.
  */
 class PortfolioSeeder {
     
+    /**
+     * Generates a list of dummy transactions for app exploration and testing.
+     */
     fun generateDummyTransactions(
         accountId: String,
         categories: List<Category>,
-        daysCount: Int = 60
+        daysCount: Int = 180
     ): List<Transaction> {
         val dummyTransactions = mutableListOf<Transaction>()
         val now = Clock.System.now()
@@ -53,7 +56,11 @@ class PortfolioSeeder {
                 }
                 
                 val description = if (isIncome) incomeSources.random(random) else merchants.random(random)
-                val code = "SEED${dayOffset}_$i${random.nextInt(1000)}"
+                
+                // Generate a realistic-looking transaction code (e.g., RGH1234567)
+                val charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                val randomCode = (1..10).map { charset.random(random) }.joinToString("")
+                val code = "DEMO_$randomCode"
 
                 dummyTransactions.add(
                     Transaction(
@@ -64,7 +71,7 @@ class PortfolioSeeder {
                         category = category.name,
                         categoryId = category.id,
                         dateTime = timestamp,
-                        description = "SEED: $description",
+                        description = description,
                         externalId = code,
                         balance = null
                     )

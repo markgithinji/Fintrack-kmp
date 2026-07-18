@@ -24,6 +24,7 @@ class IOSSettingsDataSource : SettingsDataSource {
     private val _mpesaSimSlotFlow = MutableStateFlow<Int?>(null)
     private val _mpesaAccountIdFlow = MutableStateFlow<String?>(null)
     private val _mpesaListenerFlow = MutableStateFlow(false)
+    private val _equityListenerFlow = MutableStateFlow(false)
     private val _budgetAlertsEnabledFlow = MutableStateFlow(false)
     private val _budgetAlertThresholdsFlow = MutableStateFlow(setOf(50, 80, 100))
     private val _alertBudgetIdFlow = MutableStateFlow<String?>(null)
@@ -35,6 +36,7 @@ class IOSSettingsDataSource : SettingsDataSource {
     private val _showDecimalsFlow = MutableStateFlow(true)
     private val _defaultAccountIdFlow = MutableStateFlow<String?>(null)
     private val _exportFormatFlow = MutableStateFlow(ExportFormat.CSV)
+    private val _smsRationaleHiddenFlow = MutableStateFlow(false)
 
     init {
         val themeName = userDefaults.stringForKey("app_theme") ?: AppTheme.SYSTEM.name
@@ -66,6 +68,9 @@ class IOSSettingsDataSource : SettingsDataSource {
 
         val mpesaListenerEnabled = if (userDefaults.objectForKey("mpesa_listener_enabled") != null) userDefaults.boolForKey("mpesa_listener_enabled") else false
         _mpesaListenerFlow.value = mpesaListenerEnabled
+
+        val equityListenerEnabled = if (userDefaults.objectForKey("equity_listener_enabled") != null) userDefaults.boolForKey("equity_listener_enabled") else false
+        _equityListenerFlow.value = equityListenerEnabled
 
         val budgetAlertsEnabled = userDefaults.boolForKey("budget_alerts_enabled")
         _budgetAlertsEnabledFlow.value = budgetAlertsEnabled
@@ -99,6 +104,8 @@ class IOSSettingsDataSource : SettingsDataSource {
 
         val exportFormatName = userDefaults.stringForKey("export_format") ?: ExportFormat.CSV.name
         _exportFormatFlow.value = try { ExportFormat.valueOf(exportFormatName) } catch (e: Exception) { ExportFormat.CSV }
+
+        _smsRationaleHiddenFlow.value = userDefaults.boolForKey("sms_rationale_hidden")
     }
 
     override val theme: StateFlow<AppTheme> = _themeFlow.asStateFlow()
@@ -177,6 +184,13 @@ class IOSSettingsDataSource : SettingsDataSource {
     override suspend fun setMpesaListenerEnabled(enabled: Boolean) {
         userDefaults.setBool(enabled, "mpesa_listener_enabled")
         _mpesaListenerFlow.value = enabled
+    }
+
+    override val isEquityListenerEnabled: StateFlow<Boolean> = _equityListenerFlow.asStateFlow()
+
+    override suspend fun setEquityListenerEnabled(enabled: Boolean) {
+        userDefaults.setBool(enabled, "equity_listener_enabled")
+        _equityListenerFlow.value = enabled
     }
 
     override val budgetAlertsEnabled: StateFlow<Boolean> = _budgetAlertsEnabledFlow.asStateFlow()
@@ -262,6 +276,13 @@ class IOSSettingsDataSource : SettingsDataSource {
     override suspend fun setExportFormat(format: ExportFormat) {
         userDefaults.setObject(format.name, "export_format")
         _exportFormatFlow.value = format
+    }
+
+    override val isSmsRationaleHidden: StateFlow<Boolean> = _smsRationaleHiddenFlow.asStateFlow()
+
+    override suspend fun setSmsRationaleHidden(hidden: Boolean) {
+        userDefaults.setBool(hidden, "sms_rationale_hidden")
+        _smsRationaleHiddenFlow.value = hidden
     }
 }
 
