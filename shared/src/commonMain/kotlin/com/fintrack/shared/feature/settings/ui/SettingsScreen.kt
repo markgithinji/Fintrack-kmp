@@ -773,7 +773,10 @@ fun SettingsScreen(
                 showSmsPermissionRequest = showSmsRationale
                 showSmsRationale = null
             },
-            onDismiss = {
+            onDismiss = { dontShowAgain ->
+                if (dontShowAgain) {
+                    viewModel.setSmsRationaleHidden(true)
+                }
                 showSmsRationale = null
                 activeSmsTarget = null
             }

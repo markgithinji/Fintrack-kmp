@@ -83,6 +83,7 @@ fun MainAppScaffold(
     val currentDestination = navBackStackEntry?.destination
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
     val smsSyncSignal by mainViewModel.smsSyncTrigger.collectAsStateWithLifecycle()
+    val isSmsRationaleHidden by mainViewModel.isSmsRationaleHidden.collectAsStateWithLifecycle()
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
@@ -318,7 +319,13 @@ fun MainAppScaffold(
                                 smsSyncSignal = smsSyncSignal,
                                 mainViewModel = mainViewModel,
                                 onLogout = onLogout,
-                                onSmsPermissionRequired = { showSmsRationale = true }
+                                onSmsPermissionRequired = {
+                                    if (isSmsRationaleHidden) {
+                                        showSmsPermissionRequest = true
+                                    } else {
+                                        showSmsRationale = true
+                                    }
+                                }
                             )
                         }
                     }
@@ -362,12 +369,18 @@ fun MainAppScaffold(
             title = "Automatic Transaction Sync",
             message = "FinTrack can automatically keep your transactions up to date by scanning SMS from M-Pesa and your bank. This keeps your dashboard accurate with zero manual effort.",
             icon = Icons.Default.Sms,
-            onConfirm = {
+            onConfirm = { dontShowAgain ->
+                if (dontShowAgain) {
+                    mainViewModel.setSmsRationaleHidden(true)
+                }
                 showSmsRationale = false
                 showSmsPermissionRequest = true
                 transactionsViewModel.resetImportState()
             },
-            onDismiss = {
+            onDismiss = { dontShowAgain ->
+                if (dontShowAgain) {
+                    mainViewModel.setSmsRationaleHidden(true)
+                }
                 showSmsRationale = false
                 transactionsViewModel.resetImportState()
             }

@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.core.ui.permission
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -23,12 +24,12 @@ fun PermissionRationaleDialog(
     message: String,
     icon: ImageVector,
     onConfirm: (Boolean) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: (Boolean) -> Unit
 ) {
     var dontShowAgain by remember { mutableStateOf(false) }
 
     BasicAlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { onDismiss(dontShowAgain) },
         properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier
             .padding(28.dp)
@@ -76,13 +77,17 @@ fun PermissionRationaleDialog(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                        .clickable { dontShowAgain = !dontShowAgain }
+                        .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Checkbox(
-                        checked = dontShowAgain,
-                        onCheckedChange = { dontShowAgain = it }
-                    )
+                    Box(modifier = Modifier.width(26.dp), contentAlignment = Alignment.CenterStart) {
+                        Checkbox(
+                            checked = dontShowAgain,
+                            onCheckedChange = { dontShowAgain = it },
+                            modifier = Modifier.offset(x = (-14).dp)
+                        )
+                    }
                     Text(
                         text = "Don't show this explanation again",
                         style = MaterialTheme.typography.bodySmall,
@@ -97,7 +102,7 @@ fun PermissionRationaleDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(
-                        onClick = onDismiss,
+                        onClick = { onDismiss(dontShowAgain) },
                         modifier = Modifier.height(48.dp)
                     ) {
                         Text("Not Now")

@@ -42,6 +42,7 @@ class MainViewModel(
     val theme = settingsDataSource.theme
     val showDecimals = settingsDataSource.showDecimals
     val timeFormat = settingsDataSource.timeFormat
+    val isSmsRationaleHidden = settingsDataSource.isSmsRationaleHidden
     val userProfile = userRepository.getUserProfile()
 
     init {
@@ -107,6 +108,12 @@ class MainViewModel(
             accountId = accountId ?: _selectedAccountId.value,
             timestamp = Clock.System.now().toEpochMilliseconds()
         )
+    }
+
+    fun setSmsRationaleHidden(hidden: Boolean) {
+        viewModelScope.launch {
+            settingsDataSource.setSmsRationaleHidden(hidden)
+        }
     }
 
     fun triggerGlobalRefresh() {
