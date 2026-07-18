@@ -176,6 +176,8 @@ fun SettingsScreen(
     val changePasswordFormState by viewModel.changePasswordFormState.collectAsStateWithLifecycle()
     val changePasswordState by viewModel.changePasswordState.collectAsStateWithLifecycle()
     val deleteAccountState by viewModel.deleteAccountState.collectAsStateWithLifecycle()
+    val seedState by viewModel.seedState.collectAsStateWithLifecycle()
+    val seedProgress by viewModel.seedProgress.collectAsStateWithLifecycle()
 
     val biometricAuthenticator: BiometricAuthenticator = koinInject()
     val scope = rememberCoroutineScope()
@@ -194,6 +196,7 @@ fun SettingsScreen(
     var showSmsPermissionRequest by remember { mutableStateOf<SmsPermissionTarget?>(null) }
     var showSmsRationale by remember { mutableStateOf<SmsPermissionTarget?>(null) }
     var showBillReminderDaysDialog by remember { mutableStateOf(false) }
+    var showSeedConfirmation by remember { mutableStateOf(false) }
 
     var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var activeSmsTarget by remember { mutableStateOf<SmsPermissionTarget?>(null) }
@@ -603,6 +606,26 @@ fun SettingsScreen(
                             onClick = { showDeleteAccountDialog = true }
                         )
                     }
+
+                    SettingsSection(title = "Portfolio Demo") {
+                        val seedSubtitle = when (seedState) {
+                            is SaveState.Loading -> "Seeding... ${(seedProgress * 100).toInt()}%"
+                            is SaveState.Success -> "Successfully seeded!"
+                            is SaveState.Error -> "Failed to seed data"
+                            else -> "Populate charts with 2 months of sample data"
+                        }
+                        
+                        val iconColor = if (seedState is SaveState.Success) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
+                        
+                        SettingsItem(
+                            title = "Seed Dummy Data",
+                            subtitle = seedSubtitle,
+                            icon = if (seedState is SaveState.Success) Icons.Default.Check else Icons.Default.Refresh,
+                            iconTint = iconColor,
+                            iconContainerColor = iconColor.copy(alpha = 0.12f),
+                            onClick = { showSeedConfirmation = true }
+                        )
+                    }
                     
                     SettingsSection(title = "About") {
                         SettingsItem(
@@ -866,6 +889,25 @@ fun SettingsScreen(
                 showBillReminderDaysDialog = false
             },
             onDismiss = { showBillReminderDaysDialog = false }
+        )
+    }
+
+    if (showSeedConfirmation) {
+        ConfirmationDialog(
+            title = "Seed Portfolio Data",
+            message = "This will generate multiple transactions per day for the last 2 months to populate your charts with rich data. This is useful for portfolio screenshots. Real data is not affected.",
+            confirmLabel = "Seed Now",
+            isLoading = seedState is SaveState.Loading,
+            isSuccess = seedState is SaveState.Success,
+            errorMessage = (seedState as? SaveState.Error)?.exception?.message,
+            successTitle = "Seeding Complete",
+            successMessage = "The dummy transactions have been successfully added to your account.",
+            onConfirm = { viewModel.seedPortfolioData() },
+            onDismiss = {
+                showSeedConfirmation = false
+                viewModel.resetSeedState()
+                onGlobalRefresh()
+            }
         )
     }
 

@@ -458,10 +458,10 @@ class TransactionViewModel(
         }
     }
 
-    fun importTransactions(accountId: String? = null) {
+    fun importTransactions(accountId: String? = null, isPortfolioSeed: Boolean = false) {
         logger.info(
             "SYNC_FLOW",
-            "importTransactions triggered for account: $accountId. Current state: ${_importState.value}"
+            "importTransactions triggered for account: $accountId, isPortfolioSeed: $isPortfolioSeed. Current state: ${_importState.value}"
         )
         if (_importState.value is Result.Loading) {
             logger.info("SYNC_FLOW", "Already importing, skipping.")
@@ -472,9 +472,9 @@ class TransactionViewModel(
         importJob = viewModelScope.launch {
             _importState.value = Result.Loading
             _importProgress.value = 0f
-            logger.info("SYNC_FLOW", "Starting transaction import job")
+            logger.info("SYNC_FLOW", "Starting transaction import job (isPortfolioSeed=$isPortfolioSeed)")
             try {
-                transactionImporter.importHistory(accountId) { progress ->
+                transactionImporter.importHistory(accountId, isPortfolioSeed) { progress ->
                     _importProgress.value = progress
                 }
                 logger.info("SYNC_FLOW", "Transaction import completed successfully")

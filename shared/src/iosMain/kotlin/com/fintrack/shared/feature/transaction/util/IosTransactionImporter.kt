@@ -5,7 +5,11 @@ import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 
 class IosTransactionImporter : TransactionImporter {
-    override suspend fun importHistory(targetAccountId: String?, onProgress: (Float) -> Unit) {
+    override suspend fun importHistory(
+        targetAccountId: String?,
+        isPortfolioSeed: Boolean,
+        onProgress: (Float) -> Unit
+    ) {
         onProgress(1.0f)
     }
 }

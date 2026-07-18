@@ -25,7 +25,10 @@ fun PermissionRationaleDialog(
 ) {
     BasicAlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.padding(28.dp)
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier
+            .padding(28.dp)
+            .widthIn(max = 440.dp)
     ) {
         Surface(
             shape = RoundedCornerShape(28.dp),
@@ -34,22 +37,22 @@ fun PermissionRationaleDialog(
         ) {
             Column(
                 modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.Start
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(32.dp)
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Start
                 )
                 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -58,22 +61,28 @@ fun PermissionRationaleDialog(
                     text = message,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Start,
+                    lineHeight = 20.sp
                 )
                 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
                 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) {
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.height(48.dp)
+                    ) {
                         Text("Not Now")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = onConfirm,
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.height(48.dp),
+                        contentPadding = PaddingValues(horizontal = 24.dp)
                     ) {
                         Text("Continue")
                     }

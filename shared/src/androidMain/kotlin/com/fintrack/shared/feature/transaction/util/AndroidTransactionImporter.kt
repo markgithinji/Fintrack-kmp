@@ -25,8 +25,12 @@ actual fun createTransactionImporter(
     val logger = KMPLogger()
     
     return object : TransactionImporter {
-        override suspend fun importHistory(targetAccountId: String?, onProgress: (Float) -> Unit) {
-            logger.info("SYNC_FLOW", "AndroidTransactionImporter: importHistory started. Target: $targetAccountId")
+        override suspend fun importHistory(
+            targetAccountId: String?,
+            isPortfolioSeed: Boolean,
+            onProgress: (Float) -> Unit
+        ) {
+            logger.info("SYNC_FLOW", "AndroidTransactionImporter: importHistory started. Target: $targetAccountId, PortfolioSeed: $isPortfolioSeed")
             val accountsResult = accountRepository.getAccounts()
             val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
             
@@ -46,16 +50,16 @@ actual fun createTransactionImporter(
                 when {
                     hasMpesa && hasEquity -> {
                         logger.info("SYNC_FLOW", "Importing both Mpesa and Equity for account: $targetAccountId")
-                        mpesaImporter.importHistory(targetAccountId) { onProgress(it * 0.5f) }
-                        equityImporter.importHistory(targetAccountId) { onProgress(0.5f + (it * 0.5f)) }
+                        mpesaImporter.importHistory(targetAccountId, isPortfolioSeed) { onProgress(it * 0.5f) }
+                        equityImporter.importHistory(targetAccountId, isPortfolioSeed) { onProgress(0.5f + (it * 0.5f)) }
                     }
                     hasMpesa -> {
                         logger.info("SYNC_FLOW", "Importing specific Mpesa account: $targetAccountId")
-                        mpesaImporter.importHistory(targetAccountId, onProgress)
+                        mpesaImporter.importHistory(targetAccountId, isPortfolioSeed, onProgress)
                     }
                     hasEquity -> {
                         logger.info("SYNC_FLOW", "Importing specific Equity account: $targetAccountId")
-                        equityImporter.importHistory(targetAccountId, onProgress)
+                        equityImporter.importHistory(targetAccountId, isPortfolioSeed, onProgress)
                     }
                     else -> {
                         logger.warning("SYNC_FLOW", "Account $targetAccountId is not a linked account type")
@@ -77,20 +81,20 @@ actual fun createTransactionImporter(
             when {
                 mpesaAccount != null && equityAccount != null -> {
                     logger.info("SYNC_FLOW", "Importing both Mpesa and Equity")
-                    mpesaImporter.importHistory(null) { progress ->
+                    mpesaImporter.importHistory(null, isPortfolioSeed) { progress ->
                         onProgress(progress * 0.5f)
                     }
-                    equityImporter.importHistory(null) { progress ->
+                    equityImporter.importHistory(null, isPortfolioSeed) { progress ->
                         onProgress(0.5f + (progress * 0.5f))
                     }
                 }
                 mpesaAccount != null -> {
                     logger.info("SYNC_FLOW", "Importing Mpesa only")
-                    mpesaImporter.importHistory(null, onProgress)
+                    mpesaImporter.importHistory(null, isPortfolioSeed, onProgress)
                 }
                 equityAccount != null -> {
                     logger.info("SYNC_FLOW", "Importing Equity only")
-                    equityImporter.importHistory(null, onProgress)
+                    equityImporter.importHistory(null, isPortfolioSeed, onProgress)
                 }
                 else -> {
                     logger.warning("SYNC_FLOW", "No suitable accounts found for import")

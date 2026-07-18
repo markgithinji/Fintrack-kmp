@@ -21,6 +21,7 @@ import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.settings.domain.model.ExportFormat
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import com.fintrack.shared.feature.settings.domain.util.NotificationService
+import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
 import com.fintrack.shared.feature.transaction.domain.usecase.ExportTransactionsUseCase
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
 import com.fintrack.shared.feature.user.domain.usecase.DeleteAccountUseCase
@@ -48,6 +49,7 @@ class SettingsViewModel(
     private val syncCategoriesUseCase: SyncCategoriesUseCase,
     private val accountRepository: AccountRepository,
     private val budgetRepository: BudgetRepository,
+    private val transactionImporter: TransactionImporter,
 ) : ViewModel() {
 
     private val logger = KMPLogger()
@@ -85,6 +87,12 @@ class SettingsViewModel(
 
     private val _deleteAccountState = MutableStateFlow<SaveState<Unit>>(SaveState.Idle)
     val deleteAccountState: StateFlow<SaveState<Unit>> = _deleteAccountState.asStateFlow()
+
+    private val _seedProgress = MutableStateFlow(0f)
+    val seedProgress: StateFlow<Float> = _seedProgress.asStateFlow()
+
+    private val _seedState = MutableStateFlow<SaveState<Unit>>(SaveState.Idle)
+    val seedState: StateFlow<SaveState<Unit>> = _seedState.asStateFlow()
 
     // Settings Flows
     val theme: StateFlow<AppTheme> = settingsDataSource.theme
@@ -463,6 +471,35 @@ class SettingsViewModel(
             }
             _isLoading.value = false
         }
+    }
+
+    fun seedPortfolioData() {
+        viewModelScope.launch {
+            _seedState.value = SaveState.Loading
+            _seedProgress.value = 0f
+            try {
+                // Seed for the primary M-Pesa account if found, otherwise first account
+                val accounts = _accounts.value
+                val targetAccountId = accounts.find { it.name.lowercase().contains("mpesa") }?.id 
+                    ?: accounts.firstOrNull()?.id
+
+                transactionImporter.importHistory(
+                    targetAccountId = targetAccountId,
+                    isPortfolioSeed = true
+                ) { progress ->
+                    _seedProgress.value = progress
+                }
+                _seedState.value = SaveState.Success(Unit)
+            } catch (e: Exception) {
+                _seedState.value = SaveState.Error(e)
+                _error.value = "Failed to seed portfolio data: ${e.message}"
+            }
+        }
+    }
+
+    fun resetSeedState() {
+        _seedState.value = SaveState.Idle
+        _seedProgress.value = 0f
     }
 }
 

@@ -26,7 +26,8 @@ val settingsModule = module {
             localCategoryDataSource = get(),
             syncCategoriesUseCase = get(),
             accountRepository = get(),
-            budgetRepository = get()
+            budgetRepository = get(),
+            transactionImporter = get()
         )
     }
 }
