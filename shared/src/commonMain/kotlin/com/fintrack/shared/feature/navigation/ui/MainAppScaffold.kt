@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
@@ -84,14 +85,14 @@ fun MainAppScaffold(
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
     val smsSyncSignal by mainViewModel.smsSyncTrigger.collectAsStateWithLifecycle()
     val isSmsRationaleHidden by mainViewModel.isSmsRationaleHidden.collectAsStateWithLifecycle()
+    val toastMessage by mainViewModel.toastMessage.collectAsStateWithLifecycle()
 
-    var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
     var showSmsRationale by remember { mutableStateOf(false) }
 
     LaunchedEffect(importState) {
         if (importState is Result.Success) {
-            toastMessage = "Sync completed successfully" to false
+            mainViewModel.showToast("Sync completed successfully")
             transactionsViewModel.resetImportState()
         } else if (importState is Result.Error) {
             val exception = (importState as Result.Error).exception
@@ -99,7 +100,7 @@ fun MainAppScaffold(
             
             // If it's a permission error, we let HomeScreen trigger the rationale callback
             if (!message.contains("permission", ignoreCase = true)) {
-                toastMessage = message to true
+                mainViewModel.showToast(message, isError = true)
                 transactionsViewModel.resetImportState()
             }
         }
@@ -337,10 +338,11 @@ fun MainAppScaffold(
             MaterialToast(
                 message = message,
                 isError = isError,
-                onDismiss = { toastMessage = null },
+                onDismiss = { mainViewModel.clearToast() },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = if (showBottomBarNow) 72.dp else 24.dp)
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+                    .padding(bottom = if (showBottomBarNow) 72.dp else 12.dp)
             )
         }
 
@@ -393,7 +395,10 @@ fun MainAppScaffold(
             if (granted) {
                 mainViewModel.triggerSmsSync()
             } else {
-                toastMessage = "Sync disabled. SMS permission is required to import transactions automatically." to true
+                mainViewModel.showToast(
+                    "Sync disabled. SMS permission is required to import transactions automatically.",
+                    isError = true
+                )
             }
             showSmsPermissionRequest = false
         },

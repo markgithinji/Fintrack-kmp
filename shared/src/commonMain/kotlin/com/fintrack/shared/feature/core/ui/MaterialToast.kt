@@ -63,7 +63,6 @@ fun MaterialToast(
         modifier = modifier
             .fillMaxWidth()
             .padding(16.dp)
-            .statusBarsPadding()
     ) {
         AnimatedVisibility(
             visible = isVisible,

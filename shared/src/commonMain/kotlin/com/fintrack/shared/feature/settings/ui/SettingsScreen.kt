@@ -141,6 +141,7 @@ fun SettingsScreen(
     refreshTrigger: Int,
     onGlobalRefresh: () -> Unit,
     paddingValues: PaddingValues = PaddingValues(0.dp),
+    onShowToast: (String, Boolean) -> Unit = { _, _ -> },
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val currentCurrency by viewModel.currency.collectAsStateWithLifecycle()
@@ -199,7 +200,6 @@ fun SettingsScreen(
     var showBillReminderDaysDialog by remember { mutableStateOf(false) }
     var showSeedConfirmation by remember { mutableStateOf(false) }
 
-    var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var activeSmsTarget by remember { mutableStateOf<SmsPermissionTarget?>(null) }
 
     LaunchedEffect(refreshTrigger) {
@@ -210,26 +210,26 @@ fun SettingsScreen(
 
     LaunchedEffect(changePasswordState) {
         if (changePasswordState is SaveState.Success) {
-            toastMessage = "Password updated successfully" to false
+            onShowToast("Password updated successfully", false)
             // Dismiss dialog first before resetting state
             showChangePasswordDialog = false
             viewModel.resetChangePasswordState()
         } else if (changePasswordState is SaveState.Error) {
             val exception = (changePasswordState as SaveState.Error).exception
-            toastMessage = (exception.message ?: "Update failed") to true
+            onShowToast(exception.message ?: "Update failed", true)
         }
     }
 
     LaunchedEffect(exportResult) {
         exportResult?.let { path ->
-            toastMessage = "Data exported to: $path" to false
+            onShowToast("Data exported to: $path", false)
             viewModel.clearExportResult()
         }
     }
 
     LaunchedEffect(error) {
         error?.let { message ->
-            toastMessage = message to true
+            onShowToast(message, true)
         }
     }
 
@@ -680,17 +680,6 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(32.dp))
                 }
             }
-
-            toastMessage?.let { (message, isError) ->
-                MaterialToast(
-                    message = message,
-                    isError = isError,
-                    onDismiss = { toastMessage = null },
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = paddingValues.calculateBottomPadding() + 20.dp)
-                )
-            }
         }
     }
 
@@ -793,7 +782,7 @@ fun SettingsScreen(
                     SmsPermissionTarget.EQUITY -> viewModel.setEquityListenerEnabled(true)
                 }
             } else if (!granted && target != null) {
-                toastMessage = "Permission denied. Automatic tracking requires SMS access." to true
+                onShowToast("Permission denied. Automatic tracking requires SMS access.", true)
             }
             activeSmsTarget = null
             showSmsPermissionRequest = null

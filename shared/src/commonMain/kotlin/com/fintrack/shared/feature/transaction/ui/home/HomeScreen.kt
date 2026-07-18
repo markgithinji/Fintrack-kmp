@@ -47,6 +47,7 @@ fun HomeScreen(
     smsSyncSignal: SmsSyncSignal? = null,
     onGlobalRefresh: () -> Unit,
     onSmsPermissionRequired: () -> Unit,
+    onShowToast: (String, Boolean) -> Unit,
     accountsViewModel: AccountsViewModel = koinViewModel(),
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     statsViewModel: StatisticsViewModel = koinViewModel(),
@@ -67,8 +68,6 @@ fun HomeScreen(
     val isEquityListenerEnabled by settingsViewModel.isEquityListenerEnabled.collectAsStateWithLifecycle()
     val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
     val importProgress by transactionsViewModel.importProgress.collectAsStateWithLifecycle()
-
-    var syncErrorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(selectedAccountId) {
         selectedAccountId?.let { accountsViewModel.selectAccount(it) }
@@ -231,7 +230,7 @@ fun HomeScreen(
                         val accountId = (selectedAccountResult as? Result.Success)?.data?.id
                         transactionsViewModel.importTransactions(accountId) 
                     },
-                    onSyncErrorClick = { message -> syncErrorMessage = message },
+                    onSyncErrorClick = { message -> onShowToast(message, true) },
                     onRetry = {
                         accountsViewModel.reloadAccounts()
                         selectedAccountId?.let { accountsViewModel.selectAccount(it) }
@@ -272,17 +271,6 @@ fun HomeScreen(
                     }
                 )
             }
-        }
-
-        syncErrorMessage?.let { message ->
-            MaterialToast(
-                message = message,
-                isError = true,
-                onDismiss = { syncErrorMessage = null },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = paddingValues.calculateBottomPadding() + 16.dp)
-            )
         }
     }
 }

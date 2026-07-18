@@ -123,6 +123,7 @@ fun MainNavigation(
                 onGlobalRefresh = onGlobalRefresh,
                 onAccountSelected = { mainViewModel.onAccountSelected(it) },
                 onSmsPermissionRequired = onSmsPermissionRequired,
+                onShowToast = { message, isError -> mainViewModel.showToast(message, isError) },
                 paddingValues = paddingValues,
                 animatedVisibilityScope = this,
                 onEditTransaction = { transactionId ->
@@ -233,6 +234,7 @@ fun MainNavigation(
             SettingsScreen(
                 refreshTrigger = refreshTrigger,
                 onGlobalRefresh = onGlobalRefresh,
+                onShowToast = { message, isError -> mainViewModel.showToast(message, isError) },
                 paddingValues = paddingValues
             )
         }

@@ -45,6 +45,17 @@ class MainViewModel(
     val isSmsRationaleHidden = settingsDataSource.isSmsRationaleHidden
     val userProfile = userRepository.getUserProfile()
 
+    private val _toastMessage = MutableStateFlow<Pair<String, Boolean>?>(null)
+    val toastMessage: StateFlow<Pair<String, Boolean>?> = _toastMessage.asStateFlow()
+
+    fun showToast(message: String, isError: Boolean = false) {
+        _toastMessage.value = message to isError
+    }
+
+    fun clearToast() {
+        _toastMessage.value = null
+    }
+
     init {
         // Initialize selected account from default settings or first available account
         viewModelScope.launch {
