@@ -17,6 +17,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import com.fintrack.shared.feature.core.logger.KMPLogger
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PermissionRationaleDialog(
@@ -26,6 +28,7 @@ fun PermissionRationaleDialog(
     onConfirm: (Boolean) -> Unit,
     onDismiss: (Boolean) -> Unit
 ) {
+    val logger = remember { KMPLogger() }
     var dontShowAgain by remember { mutableStateOf(false) }
 
     BasicAlertDialog(
@@ -81,17 +84,16 @@ fun PermissionRationaleDialog(
                         .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(modifier = Modifier.width(26.dp), contentAlignment = Alignment.CenterStart) {
-                        Checkbox(
-                            checked = dontShowAgain,
-                            onCheckedChange = { dontShowAgain = it },
-                            modifier = Modifier.offset(x = (-14).dp)
-                        )
-                    }
+                    Checkbox(
+                        checked = dontShowAgain,
+                        onCheckedChange = { dontShowAgain = it },
+                        modifier = Modifier.offset(x = (-8).dp)
+                    )
                     Text(
                         text = "Don't show this explanation again",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.offset(x = (-8).dp)
                     )
                 }
 
@@ -109,7 +111,10 @@ fun PermissionRationaleDialog(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
-                        onClick = { onConfirm(dontShowAgain) },
+                        onClick = { 
+                            logger.info("PERMISSION", "Rationale 'Continue' clicked. dontShowAgain: $dontShowAgain")
+                            onConfirm(dontShowAgain) 
+                        },
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.height(48.dp),
                         contentPadding = PaddingValues(horizontal = 24.dp)

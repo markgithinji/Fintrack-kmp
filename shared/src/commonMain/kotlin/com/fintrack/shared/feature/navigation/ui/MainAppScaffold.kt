@@ -367,12 +367,15 @@ fun MainAppScaffold(
         }
     }
 
+    val logger = remember { KMPLogger() }
+
     if (showSmsRationale) {
         PermissionRationaleDialog(
             title = "Automatic Transaction Sync",
             message = "FinTrack can automatically keep your transactions up to date by scanning SMS from M-Pesa and your bank. This keeps your dashboard accurate with zero manual effort.",
             icon = Icons.Default.Sms,
             onConfirm = { dontShowAgain ->
+                logger.info("PERMISSION", "MainAppScaffold: Rationale confirmed. dontShowAgain=$dontShowAgain")
                 if (dontShowAgain) {
                     mainViewModel.setSmsRationaleHidden(true)
                 }
@@ -380,6 +383,7 @@ fun MainAppScaffold(
                 showSmsPermissionRequest = true
             },
             onDismiss = { dontShowAgain ->
+                logger.info("PERMISSION", "MainAppScaffold: Rationale dismissed. dontShowAgain=$dontShowAgain")
                 if (dontShowAgain) {
                     mainViewModel.setSmsRationaleHidden(true)
                 }
@@ -391,11 +395,17 @@ fun MainAppScaffold(
     SmsPermissionLauncher(
         trigger = showSmsPermissionRequest,
         onResult = { granted ->
+            logger.info("PERMISSION", "MainAppScaffold: SmsPermissionLauncher result=$granted")
             if (granted) {
                 mainViewModel.triggerSmsSync()
+            } else {
+                mainViewModel.showToast("Permission denied. Enable SMS access in Phone Settings to use automatic sync.", true)
             }
             showSmsPermissionRequest = false
         },
-        onDismissTrigger = { showSmsPermissionRequest = false }
+        onDismissTrigger = { 
+            logger.info("PERMISSION", "MainAppScaffold: SmsPermissionLauncher dismissed")
+            showSmsPermissionRequest = false 
+        }
     )
 }
