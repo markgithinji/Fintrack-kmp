@@ -111,6 +111,9 @@ Fintrack KMP prioritizes a fluid user experience with high-quality animations an
 3. **Environment**: 
    - **Android**: Studio Koala+
    - **iOS**: Xcode 15+
+4. **Quick Start (Data Seeding)**: To quickly test the app's features with realistic data without manual entry, use the **Portfolio Seeding** tool. 
+   - Go to **Profile** > **Settings** > **Seed Dummy Data**.
+   - This will generate 6 months of historical transactions to populate all charts and analytics.
 
 To connect the app to a local instance of the backend during development:
 
