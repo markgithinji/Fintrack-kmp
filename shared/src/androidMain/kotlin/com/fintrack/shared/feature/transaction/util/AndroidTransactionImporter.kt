@@ -1,7 +1,6 @@
 package com.fintrack.shared.feature.transaction.domain.util
 
 import android.content.Context
-import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
@@ -47,6 +46,11 @@ actual fun createTransactionImporter(
                 val hasEquity = equityLinkedAccountIds.contains(targetAccountId)
 
                 when {
+                    isPortfolioSeed -> {
+                        logger.info("SYNC_FLOW", "Portfolio Seeding: Force seeding dummy data to account: $targetAccountId")
+                        // Default to Mpesa-style seeding for demo purposes
+                        mpesaImporter.importHistory(targetAccountId, isPortfolioSeed, onProgress)
+                    }
                     hasMpesa && hasEquity -> {
                         logger.info("SYNC_FLOW", "Importing both Mpesa and Equity for account: $targetAccountId")
                         mpesaImporter.importHistory(targetAccountId, isPortfolioSeed) { onProgress(it * 0.5f) }
@@ -93,6 +97,11 @@ actual fun createTransactionImporter(
                 equityAccount != null -> {
                     logger.info("SYNC_FLOW", "Importing Equity only")
                     equityImporter.importHistory(null, isPortfolioSeed, onProgress)
+                }
+                isPortfolioSeed -> {
+                    logger.info("SYNC_FLOW", "Portfolio Seeding (Global): No linked accounts found, seeding to first available account")
+                    val fallbackAccount = accounts.find { it.name.lowercase().contains("mpesa") } ?: accounts.firstOrNull()
+                    mpesaImporter.importHistory(fallbackAccount?.id, isPortfolioSeed, onProgress)
                 }
                 else -> {
                     logger.warning("SYNC_FLOW", "No suitable accounts found for import")

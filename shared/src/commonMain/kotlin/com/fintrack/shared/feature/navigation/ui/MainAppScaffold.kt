@@ -29,9 +29,12 @@ import androidx.compose.material.icons.filled.Sms
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
@@ -127,6 +130,22 @@ fun MainAppScaffold(
     val adaptiveInfo = currentWindowAdaptiveInfo()
     val suiteType = NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(adaptiveInfo)
 
+    val itemColors = NavigationBarItemDefaults.colors(
+        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        selectedTextColor = MaterialTheme.colorScheme.onSurface,
+        indicatorColor = MaterialTheme.colorScheme.secondary,
+        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+
+    val railItemColors = NavigationRailItemDefaults.colors(
+        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        selectedTextColor = MaterialTheme.colorScheme.onSurface,
+        indicatorColor = MaterialTheme.colorScheme.secondary,
+        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -151,7 +170,8 @@ fun MainAppScaffold(
                         ) {
                             NavigationBar(
                                 containerColor = MaterialTheme.colorScheme.surface,
-                                contentColor = MaterialTheme.colorScheme.onSurface
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                                tonalElevation = NavigationBarDefaults.Elevation
                             ) {
                                 NavigationBarItem(
                                     selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Home>() } == true,
@@ -163,7 +183,8 @@ fun MainAppScaffold(
                                         }
                                     },
                                     icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                                    label = { Text("Home") }
+                                    label = { Text("Home") },
+                                    colors = itemColors
                                 )
                                 NavigationBarItem(
                                     selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Statistics>() } == true,
@@ -175,7 +196,8 @@ fun MainAppScaffold(
                                         }
                                     },
                                     icon = { Icon(Icons.Default.BarChart, contentDescription = "Stats") },
-                                    label = { Text("Stats") }
+                                    label = { Text("Stats") },
+                                    colors = itemColors
                                 )
 
                                 // Spacing for the FAB
@@ -184,7 +206,8 @@ fun MainAppScaffold(
                                     icon = { Box(Modifier.size(1.dp)) },
                                     label = { Text("") },
                                     enabled = false,
-                                    onClick = {}
+                                    onClick = {},
+                                    colors = itemColors
                                 )
 
                                 NavigationBarItem(
@@ -197,7 +220,8 @@ fun MainAppScaffold(
                                         }
                                     },
                                     icon = { Icon(Icons.Default.Info, contentDescription = "Budget") },
-                                    label = { Text("Budget") }
+                                    label = { Text("Budget") },
+                                    colors = itemColors
                                 )
                                 NavigationBarItem(
                                     selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Profile>() } == true,
@@ -209,7 +233,8 @@ fun MainAppScaffold(
                                         }
                                     },
                                     icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-                                    label = { Text("Profile") }
+                                    label = { Text("Profile") },
+                                    colors = itemColors
                                 )
                             }
                         }
@@ -238,7 +263,8 @@ fun MainAppScaffold(
                                     }
                                 },
                                 icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                                label = { Text("Home") }
+                                label = { Text("Home") },
+                                colors = railItemColors
                             )
                             NavigationRailItem(
                                 selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Statistics>() } == true,
@@ -250,7 +276,8 @@ fun MainAppScaffold(
                                     }
                                 },
                                 icon = { Icon(Icons.Default.BarChart, contentDescription = "Stats") },
-                                label = { Text("Stats") }
+                                label = { Text("Stats") },
+                                colors = railItemColors
                             )
 
                             NavigationRailItem(
@@ -263,7 +290,8 @@ fun MainAppScaffold(
                                     }
                                 },
                                 icon = { Icon(Icons.Default.Info, contentDescription = "Budget") },
-                                label = { Text("Budget") }
+                                label = { Text("Budget") },
+                                colors = railItemColors
                             )
                             NavigationRailItem(
                                 selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Profile>() } == true,
@@ -275,7 +303,8 @@ fun MainAppScaffold(
                                     }
                                 },
                                 icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-                                label = { Text("Profile") }
+                                label = { Text("Profile") },
+                                colors = railItemColors
                             )
                         }
                     }
