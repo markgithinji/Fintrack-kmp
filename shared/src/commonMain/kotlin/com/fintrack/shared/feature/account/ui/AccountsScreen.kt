@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -34,6 +36,8 @@ import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -235,7 +239,6 @@ fun AccountsScreen(
         val mpesaLinkedAccountIds by settingsViewModel.mpesaLinkedAccountIds.collectAsStateWithLifecycle()
         val equityLinkedAccountIds by settingsViewModel.equityLinkedAccountIds.collectAsStateWithLifecycle()
         
-        val isOtherAccountDefault = defaultAccountId != null && defaultAccountId != account.id
         val accounts = (accountsState as? Result.Success)?.data ?: emptyList()
         val isOnlyAccount = accounts.size <= 1 || (accounts.size == 1 && accounts.first().id == account.id)
 
@@ -258,7 +261,6 @@ fun AccountsScreen(
             clearDataResult = clearDataResult,
             accountType = account.type,
             isDefaultSelection = account.id == defaultAccountId,
-            isOtherAccountDefault = isOtherAccountDefault,
             isOnlyAccount = isOnlyAccount,
             onDismiss = {
                 if (!isOperating) {
@@ -593,7 +595,6 @@ fun AccountDialog(
     clearDataResult: Result<Unit>?,
     accountType: AccountType,
     isDefaultSelection: Boolean,
-    isOtherAccountDefault: Boolean,
     isOnlyAccount: Boolean,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
@@ -605,7 +606,7 @@ fun AccountDialog(
     var type by remember(account.id) { mutableStateOf(accountType) }
     var linkedSources by remember(account.id) { mutableStateOf(account.linkedSources.toSet()) }
     var isDefault by remember(account.id) { 
-        mutableStateOf(isDefaultSelection || isOnlyAccount || (type == AccountType.MPESA && !isOtherAccountDefault))
+        mutableStateOf(isDefaultSelection || isOnlyAccount)
     }
     var showClearDataConfirm by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -614,29 +615,33 @@ fun AccountDialog(
     // 1. If it's already the default, it's locked (must change it from another account)
     // 2. If it's the only account
     // 3. If it's M-Pesa and no other account is default (fallback)
-    val isDefaultLocked = isDefaultSelection || isOnlyAccount || (type == AccountType.MPESA && !isOtherAccountDefault)
+    val isDefaultLocked = isDefaultSelection || isOnlyAccount
 
     // Auto-detect options based on name for new accounts
     LaunchedEffect(accountName) {
         if (!isEditing && account.id.isEmpty()) {
             val lowerName = accountName.lowercase()
-            if (lowerName.contains("mpesa")) {
-                if (!linkedSources.contains("mpesa")) {
-                    linkedSources = linkedSources + "mpesa"
+            when {
+                lowerName.contains("mpesa") -> {
+                    if (!linkedSources.contains("mpesa")) linkedSources = linkedSources + "mpesa"
                     type = AccountType.MPESA
                 }
-            } else if (lowerName.contains("equity")) {
-                if (!linkedSources.contains("equity")) {
-                    linkedSources = linkedSources + "equity"
-                    type = AccountType.EQUITY
+                lowerName.contains("equity") -> {
+                    if (!linkedSources.contains("equity")) linkedSources = linkedSources + "equity"
+                    type = AccountType.BANK
                 }
+                lowerName.contains("cash") -> type = AccountType.CASH
+                lowerName.contains("wallet") -> type = AccountType.WALLET
+                lowerName.contains("savings") -> type = AccountType.SAVINGS
+                lowerName.contains("bank") -> type = AccountType.BANK
+                lowerName.contains("checking") -> type = AccountType.BANK
             }
         }
     }
 
-    // Update default state when type or isOnlyAccount changes
-    LaunchedEffect(type, isOnlyAccount) {
-        if (isOnlyAccount || (type == AccountType.MPESA && !isOtherAccountDefault)) {
+    // Update default state when isOnlyAccount changes
+    LaunchedEffect(isOnlyAccount) {
+        if (isOnlyAccount) {
             isDefault = true
         }
     }
@@ -777,6 +782,57 @@ fun AccountDialog(
                     }
                 )
 
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "VISUAL STYLE",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(horizontal = 4.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(AccountType.entries) { accountType ->
+                            val icon = AccountIcon.fromAccountType(accountType, "")
+                            FilterChip(
+                                selected = type == accountType,
+                                onClick = { type = accountType },
+                                label = { 
+                                    Text(
+                                        text = accountType.name.lowercase().replaceFirstChar { it.uppercase() },
+                                        style = MaterialTheme.typography.labelMedium
+                                    ) 
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = icon.icon,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = if (type == accountType) icon.color else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = icon.color.copy(alpha = 0.15f),
+                                    selectedLabelColor = icon.color,
+                                    selectedLeadingIconColor = icon.color
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = type == accountType,
+                                    selectedBorderColor = icon.color.copy(alpha = 0.5f),
+                                    selectedBorderWidth = 1.dp
+                                )
+                            )
+                        }
+                    }
+                }
+
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         text = "ACCOUNT OPTIONS",
@@ -804,12 +860,6 @@ fun AccountDialog(
                                 checked = linkedSources.contains("mpesa"),
                                 onCheckedChange = { checked ->
                                     linkedSources = if (checked) linkedSources + "mpesa" else linkedSources - "mpesa"
-                                    if (checked) {
-                                        type = AccountType.MPESA
-                                    } else if (type == AccountType.MPESA) {
-                                        // If we uncheck the primary source for this account type, revert to general
-                                        type = AccountType.GENERAL
-                                    }
                                 },
                                 enabled = true,
                                 isBusy = isEffectivelyLoading
@@ -822,11 +872,6 @@ fun AccountDialog(
                                 checked = linkedSources.contains("equity"),
                                 onCheckedChange = { checked ->
                                     linkedSources = if (checked) linkedSources + "equity" else linkedSources - "equity"
-                                    if (checked) {
-                                        type = AccountType.EQUITY
-                                    } else if (type == AccountType.EQUITY) {
-                                        type = AccountType.GENERAL
-                                    }
                                 },
                                 enabled = true,
                                 isBusy = isEffectivelyLoading
@@ -835,7 +880,6 @@ fun AccountDialog(
                             val lockedSubtitle = when {
                                 isOnlyAccount -> "The only account must be default"
                                 isDefaultSelection -> "To change default, select another account"
-                                isDefaultLocked -> "M-Pesa is default when no other account is set"
                                 else -> "Loads this account first"
                             }
 

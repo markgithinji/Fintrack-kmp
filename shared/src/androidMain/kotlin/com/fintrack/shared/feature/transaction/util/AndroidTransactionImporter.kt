@@ -41,22 +41,11 @@ actual fun createTransactionImporter(
             val equityImporter = EquityImporter(context, transactionRepository, accountRepository, categoryRepository, settingsDataSource)
 
             if (targetAccountId != null) {
-                val mpesaLinkedAccountIds = settingsDataSource.mpesaLinkedAccountIds.value
-                val equityLinkedAccountIds = settingsDataSource.equityLinkedAccountIds.value
-                
                 val targetAccount = accounts.find { it.id == targetAccountId }
                 logger.info("SYNC_FLOW", "Target account found in list: ${targetAccount?.name} (Type: ${targetAccount?.type}, Sources: ${targetAccount?.linkedSources})")
                 
-                val nameLower = targetAccount?.name?.lowercase() ?: ""
-                val hasMpesa = mpesaLinkedAccountIds.contains(targetAccountId) || 
-                              targetAccount?.type == com.fintrack.shared.feature.account.domain.model.AccountType.MPESA ||
-                              targetAccount?.linkedSources?.contains("mpesa") == true ||
-                              nameLower.contains("mpesa")
-                
-                val hasEquity = equityLinkedAccountIds.contains(targetAccountId) ||
-                               targetAccount?.type == com.fintrack.shared.feature.account.domain.model.AccountType.EQUITY ||
-                               targetAccount?.linkedSources?.contains("equity") == true ||
-                               nameLower.contains("equity")
+                val hasMpesa = targetAccount?.linkedSources?.contains("mpesa") == true
+                val hasEquity = targetAccount?.linkedSources?.contains("equity") == true
 
                 logger.info("SYNC_FLOW", "Identification result - hasMpesa: $hasMpesa, hasEquity: $hasEquity")
 
@@ -88,21 +77,8 @@ actual fun createTransactionImporter(
                 return
             }
 
-            val mpesaLinkedAccountIds = settingsDataSource.mpesaLinkedAccountIds.value
-            val equityLinkedAccountIds = settingsDataSource.equityLinkedAccountIds.value
-            
-            val mpesaAccount = accounts.find { 
-                it.id in mpesaLinkedAccountIds || 
-                it.type == com.fintrack.shared.feature.account.domain.model.AccountType.MPESA ||
-                it.linkedSources.contains("mpesa") ||
-                it.name.lowercase().contains("mpesa")
-            }
-            val equityAccount = accounts.find { 
-                it.id in equityLinkedAccountIds || 
-                it.type == com.fintrack.shared.feature.account.domain.model.AccountType.EQUITY ||
-                it.linkedSources.contains("equity") ||
-                it.name.lowercase().contains("equity")
-            }
+            val mpesaAccount = accounts.find { it.linkedSources.contains("mpesa") }
+            val equityAccount = accounts.find { it.linkedSources.contains("equity") }
 
             logger.info("SYNC_FLOW", "Found accounts for global sync (Local Settings) - Mpesa: ${mpesaAccount?.id}, Equity: ${equityAccount?.id}")
 

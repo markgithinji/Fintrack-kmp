@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.account.data.model
 
-import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.core.data.serialization.BigDecimalSerializer
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.serialization.Serializable
@@ -17,7 +16,7 @@ data class AccountDto(
     @Serializable(with = BigDecimalSerializer::class)
     val expense: BigDecimal? = null,
     val isDefault: Boolean? = false,
-    val type: AccountType? = AccountType.GENERAL,
+    val type: AccountTypeDto? = AccountTypeDto.OTHER,
     val linkedSources: List<String>? = emptyList(),
     val createdAt: Instant? = null,
     val lastSyncedAt: Instant? = null,

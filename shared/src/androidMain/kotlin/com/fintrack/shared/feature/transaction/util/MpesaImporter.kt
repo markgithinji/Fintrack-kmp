@@ -50,10 +50,7 @@ class MpesaImporter(
         
         val accountsResult = accountRepository.getAccounts()
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
-        val mpesaLinkedAccountIds = settingsDataSource.mpesaLinkedAccountIds.value
-        val accountId = targetAccountId ?: accounts.find { mpesaLinkedAccountIds.contains(it.id) || it.type == AccountType.MPESA }?.id
-            ?: accounts.find { it.name.lowercase() == "mpesa" }?.id 
-            ?: "mpesa"
+        val accountId = targetAccountId ?: accounts.find { it.linkedSources.contains("mpesa") }?.id ?: "mpesa"
 
         logger.info("SYNC_FLOW", "Mpesa account identified as: $accountId")
 

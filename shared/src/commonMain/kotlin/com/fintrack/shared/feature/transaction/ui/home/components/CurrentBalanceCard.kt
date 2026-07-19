@@ -175,8 +175,8 @@ fun CurrentBalanceCard(
                             CurrentBalanceSuccessState(
                                 account = currentData,
                                 isBalanceHidden = isBalanceHidden,
-                                isMpesaLinked = currentData.type == AccountType.MPESA,
-                                isEquityLinked = currentData.type == AccountType.EQUITY,
+                                isMpesaLinked = currentData.linkedSources.contains("mpesa"),
+                                isEquityLinked = currentData.linkedSources.contains("equity"),
                                 isMpesaAutoSyncEnabled = isMpesaAutoSyncEnabled,
                                 isEquityAutoSyncEnabled = isEquityAutoSyncEnabled,
                                 importState = importState,
@@ -202,8 +202,8 @@ fun CurrentBalanceCard(
                         CurrentBalanceSuccessState(
                             account = result.data,
                             isBalanceHidden = isBalanceHidden,
-                            isMpesaLinked = result.data.type == AccountType.MPESA,
-                            isEquityLinked = result.data.type == AccountType.EQUITY,
+                            isMpesaLinked = result.data.linkedSources.contains("mpesa"),
+                            isEquityLinked = result.data.linkedSources.contains("equity"),
                             isMpesaAutoSyncEnabled = isMpesaAutoSyncEnabled,
                             isEquityAutoSyncEnabled = isEquityAutoSyncEnabled,
                             importState = importState,

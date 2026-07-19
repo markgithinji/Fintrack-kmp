@@ -10,14 +10,17 @@ data class Account(
     val income: BigDecimal? = null,
     val expense: BigDecimal? = null,
     val isDefault: Boolean = false,
-    val type: AccountType = AccountType.GENERAL,
+    val type: AccountType = AccountType.OTHER,
     val linkedSources: List<String> = emptyList(),
     val createdAt: Instant? = null,
     val lastSyncedAt: Instant? = null,
 )
 
 enum class AccountType {
-    GENERAL,
+    OTHER,
     MPESA,
-    EQUITY
+    BANK,
+    CASH,
+    WALLET,
+    SAVINGS
 }

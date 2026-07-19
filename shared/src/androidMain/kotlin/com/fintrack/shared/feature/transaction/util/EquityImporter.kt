@@ -50,10 +50,7 @@ class EquityImporter(
         
         val accountsResult = accountRepository.getAccounts()
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
-        val equityLinkedAccountIds = settingsDataSource.equityLinkedAccountIds.value
-        val accountId = targetAccountId ?: accounts.find { equityLinkedAccountIds.contains(it.id) || it.type == AccountType.EQUITY }?.id
-            ?: accounts.find { it.name.lowercase().contains("equity") }?.id
-            ?: "equity"
+        val accountId = targetAccountId ?: accounts.find { it.linkedSources.contains("equity") }?.id ?: "equity"
 
         logger.info("SYNC_FLOW", "Equity account identified as: $accountId")
 

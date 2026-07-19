@@ -19,12 +19,15 @@ sealed class AccountIcon(val icon: ImageVector, val color: Color) {
     object Default : AccountIcon(Icons.Default.AccountBalance, Color(0xFF616161))
 
     companion object {
-        /** Map account names or types to icons */
+        /** Map account types to icons */
         fun fromAccountType(type: AccountType, name: String): AccountIcon {
             return when (type) {
                 AccountType.MPESA -> Mpesa
-                AccountType.EQUITY -> Equity
-                AccountType.GENERAL -> fromAccountName(name)
+                AccountType.BANK -> Bank
+                AccountType.CASH -> Cash
+                AccountType.WALLET -> Wallet
+                AccountType.SAVINGS -> Savings
+                AccountType.OTHER -> fromAccountName(name)
             }
         }
 
