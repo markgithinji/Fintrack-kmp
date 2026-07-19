@@ -89,20 +89,11 @@ class TransactionViewModel(
     fun importTransactions(accountId: String? = null, isPortfolioSeed: Boolean = false) {
         if (_importState.value[accountId] is Result.Loading) return
         
-        // Safety check: Don't trigger loading UI for accounts that aren't linked to SMS
-        // We allow null (global sync) or accounts with linked sources
-        // Special case: Portfolio seeding always allowed
-        if (!isPortfolioSeed && accountId != null) {
-            val account = (repo as? com.fintrack.shared.feature.transaction.data.TransactionRepositoryImpl)?.let {
-               // We don't have easy access to the account here without another repo call or passing it in
-            }
-        }
+        // Stop any existing sync and clean up loading states to avoid stale indicators
+        cancelImport()
 
         lastAutoSyncTimes[accountId] = Clock.System.now()
-        importJob?.cancel()
         importJob = viewModelScope.launch {
-            // We'll let the importer decide if it should actually show loading
-            // If it returns immediately, the UI flicker will be minimal, but better to avoid it entirely
             _importState.update { it + (accountId to Result.Loading) }
             _importProgress.update { it + (accountId to 0f) }
             try {
@@ -135,6 +126,12 @@ class TransactionViewModel(
         importJob?.cancel()
         _importState.update { currentMap ->
             currentMap.filterValues { it !is Result.Loading }
+        }
+        _importProgress.update { currentMap ->
+            // Also clean up progress for accounts that were loading
+            currentMap.filter { entry -> 
+                _importState.value[entry.key] !is Result.Loading 
+            }
         }
     }
 
