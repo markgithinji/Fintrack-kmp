@@ -351,6 +351,8 @@ class AuthViewModel(
                 logger.error(LogTags.AUTH, "Logout error", e)
             } finally {
                 tokenDataSource.clearTokens()
+                userRepository.clearProfile()
+                settingsDataSource.clear()
                 _authStatus.value = AuthState.Success(false)
 
                 // Reset states

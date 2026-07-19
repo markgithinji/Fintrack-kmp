@@ -56,4 +56,8 @@ class UserRepositoryImpl(
         api.deleteUser()
         _userProfile.value = null
     }
+
+    override fun clearProfile() {
+        _userProfile.value = null
+    }
 }

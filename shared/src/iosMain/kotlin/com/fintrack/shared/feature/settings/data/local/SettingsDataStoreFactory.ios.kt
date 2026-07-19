@@ -291,6 +291,38 @@ class IOSSettingsDataSource : SettingsDataSource {
         userDefaults.setBool(hidden, "sms_rationale_hidden")
         _smsRationaleHiddenFlow.value = hidden
     }
+
+    override suspend fun clear() {
+        val keys = userDefaults.dictionaryRepresentation().keys
+        keys.forEach { key ->
+            if (key is String) userDefaults.removeObjectForKey(key)
+        }
+        
+        _themeFlow.value = AppTheme.SYSTEM
+        _timeFormatFlow.value = TimeFormat.TWENTY_FOUR_HOUR
+        _currencyFlow.value = Currency.KES
+        _biometricFlow.value = false
+        _balanceHiddenFlow.value = false
+        _reminderFlow.value = false
+        _reminderTimeFlow.value = LocalTime(20, 0)
+        _mpesaSimSlotFlow.value = null
+        _mpesaLinkedAccountIdsFlow.value = emptySet()
+        _equityLinkedAccountIdsFlow.value = emptySet()
+        _mpesaListenerFlow.value = false
+        _equityListenerFlow.value = false
+        _budgetAlertsEnabledFlow.value = false
+        _budgetAlertThresholdsFlow.value = setOf(50, 80, 100)
+        _alertBudgetIdFlow.value = null
+        _billReminderEnabledFlow.value = false
+        _billReminderDaysBeforeFlow.value = 2
+        _dailySummaryEnabledFlow.value = false
+        _weeklySummaryEnabledFlow.value = false
+        _summaryNotificationTimeFlow.value = LocalTime(8, 0)
+        _showDecimalsFlow.value = true
+        _defaultAccountIdFlow.value = null
+        _exportFormatFlow.value = ExportFormat.CSV
+        _smsRationaleHiddenFlow.value = false
+    }
 }
 
 actual fun createSettingsDataSource(): SettingsDataSource {

@@ -10,4 +10,5 @@ interface UserRepository {
     suspend fun updateProfile(name: String, email: String): Result<User>
     suspend fun updateTrackedCategories(categories: List<String>): Result<User>
     suspend fun deleteAccount(): Result<Unit>
+    fun clearProfile()
 }

@@ -70,26 +70,28 @@ class MainViewModel(
                         } else if (_selectedAccountId.value == null) {
                             fetchAndSelectFirstAccount()
                         }
+                        
+                        // Maintenance tasks that need a token
+                        checkBudgets()
+                        syncBills()
                     } else {
                         _selectedAccountId.value = null
+                        _refreshTrigger.value = 0
                     }
                 }
         }
 
-        // Maintenance tasks
+        // Maintenance tasks that react to settings changes
         viewModelScope.launch {
-            // Initial checks
-            checkBudgets()
-            syncBills()
-
             // React to settings changes for bills
             combine(
+                tokenDataSource.accessToken,
                 settingsDataSource.isBillReminderEnabled,
                 settingsDataSource.billReminderDaysBefore,
-            ) { enabled, days -> enabled to days }
+            ) { token, enabled, days -> Triple(token, enabled, days) }
                 .distinctUntilChanged()
-                .collectLatest { (enabled, _) ->
-                    if (enabled) {
+                .collectLatest { (token, enabled, _) ->
+                    if (token != null && enabled) {
                         syncBills()
                     }
                 }

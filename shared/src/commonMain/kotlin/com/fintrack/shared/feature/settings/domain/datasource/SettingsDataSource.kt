@@ -80,4 +80,6 @@ interface SettingsDataSource {
 
     val isSmsRationaleHidden: StateFlow<Boolean>
     suspend fun setSmsRationaleHidden(hidden: Boolean)
+
+    suspend fun clear()
 }
