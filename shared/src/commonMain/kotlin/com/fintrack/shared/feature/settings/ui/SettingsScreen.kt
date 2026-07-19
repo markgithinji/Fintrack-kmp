@@ -771,7 +771,7 @@ fun SettingsScreen(
                     SmsPermissionTarget.EQUITY -> viewModel.setEquityListenerEnabled(true)
                 }
             } else if (!granted && target != null) {
-                onShowToast("Permission denied. Enable SMS access in Phone Settings for automatic tracking.", true)
+                onShowToast("Permission denied. Enable SMS permissions in Phone Settings for automatic tracking.", true)
             }
             activeSmsTarget = null
             showSmsPermissionRequest = null

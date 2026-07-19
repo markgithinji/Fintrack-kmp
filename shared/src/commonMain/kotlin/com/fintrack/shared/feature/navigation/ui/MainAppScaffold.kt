@@ -87,6 +87,8 @@ fun MainAppScaffold(
     val isSmsRationaleHidden by mainViewModel.isSmsRationaleHidden.collectAsStateWithLifecycle()
     val toastMessage by mainViewModel.toastMessage.collectAsStateWithLifecycle()
 
+    val logger = remember { KMPLogger() }
+
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
     var showSmsRationale by remember { mutableStateOf(false) }
 
@@ -319,12 +321,25 @@ fun MainAppScaffold(
                                 mainViewModel = mainViewModel,
                                 onLogout = onLogout,
                                 onSmsPermissionRequired = { force ->
+                                    logger.info("PERMISSION", "onSmsPermissionRequired: force=$force, isSmsRationaleHidden=$isSmsRationaleHidden")
                                     if (force) {
-                                        showSmsRationale = true
-                                    } else if (isSmsRationaleHidden) {
-                                        showSmsPermissionRequest = true
+                                        // Manual sync: always request permission
+                                        if (isSmsRationaleHidden) {
+                                            logger.info("PERMISSION", "Manual sync with hidden rationale: showing permission request")
+                                            showSmsPermissionRequest = true
+                                        } else {
+                                            logger.info("PERMISSION", "Manual sync with visible rationale: showing rationale dialog")
+                                            showSmsRationale = true
+                                        }
                                     } else {
-                                        showSmsRationale = true
+                                        // Auto-sync: only show if the user hasn't opted out of the explanation
+                                        // If rationale is hidden, we skip the request to avoid nagging on app open
+                                        if (!isSmsRationaleHidden) {
+                                            logger.info("PERMISSION", "Auto-sync with visible rationale: showing rationale dialog")
+                                            showSmsRationale = true
+                                        } else {
+                                            logger.info("PERMISSION", "Auto-sync with hidden rationale: skipping request to avoid nagging")
+                                        }
                                     }
                                 }
                             )
@@ -366,8 +381,6 @@ fun MainAppScaffold(
         }
     }
 
-    val logger = remember { KMPLogger() }
-
     if (showSmsRationale) {
         PermissionRationaleDialog(
             title = "Automatic Transaction Sync",
@@ -398,7 +411,7 @@ fun MainAppScaffold(
             if (granted) {
                 mainViewModel.triggerSmsSync()
             } else {
-                mainViewModel.showToast("Permission denied. Enable SMS access in Phone Settings to use automatic sync.", true)
+                mainViewModel.showToast("Permission denied. Enable SMS permissions in Phone Settings to use automatic sync.", true)
             }
             showSmsPermissionRequest = false
         },
