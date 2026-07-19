@@ -68,6 +68,7 @@ import com.fintrack.shared.feature.navigation.model.AppBarState
 import com.fintrack.shared.feature.navigation.model.Screen
 import com.fintrack.shared.feature.navigation.ui.components.AddTransactionFAB
 import com.fintrack.shared.feature.navigation.ui.components.AppTopBar
+import com.fintrack.shared.feature.core.ui.util.navigateThrottled
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -181,7 +182,7 @@ fun MainAppScaffold(
                                 NavigationBarItem(
                                     selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Home>() } == true,
                                     onClick = {
-                                        navController.navigate(Screen.Home()) {
+                                        navController.navigateThrottled(Screen.Home()) {
                                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                                             launchSingleTop = true
                                             restoreState = true
@@ -194,7 +195,7 @@ fun MainAppScaffold(
                                 NavigationBarItem(
                                     selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Statistics>() } == true,
                                     onClick = {
-                                        navController.navigate(Screen.Statistics()) {
+                                        navController.navigateThrottled(Screen.Statistics()) {
                                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                                             launchSingleTop = true
                                             restoreState = true
@@ -218,7 +219,7 @@ fun MainAppScaffold(
                                 NavigationBarItem(
                                     selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Budget>() } == true,
                                     onClick = {
-                                        navController.navigate(Screen.Budget) {
+                                        navController.navigateThrottled(Screen.Budget) {
                                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                                             launchSingleTop = true
                                             restoreState = true
@@ -231,7 +232,7 @@ fun MainAppScaffold(
                                 NavigationBarItem(
                                     selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Profile>() } == true,
                                     onClick = {
-                                        navController.navigate(Screen.Profile) {
+                                        navController.navigateThrottled(Screen.Profile) {
                                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                                             launchSingleTop = true
                                             restoreState = true
@@ -261,7 +262,7 @@ fun MainAppScaffold(
                             NavigationRailItem(
                                 selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Home>() } == true,
                                 onClick = {
-                                    navController.navigate(Screen.Home()) {
+                                    navController.navigateThrottled(Screen.Home()) {
                                         popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                                         launchSingleTop = true
                                         restoreState = true
@@ -274,7 +275,7 @@ fun MainAppScaffold(
                             NavigationRailItem(
                                 selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Statistics>() } == true,
                                 onClick = {
-                                    navController.navigate(Screen.Statistics()) {
+                                    navController.navigateThrottled(Screen.Statistics()) {
                                         popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                                         launchSingleTop = true
                                         restoreState = true
@@ -288,7 +289,7 @@ fun MainAppScaffold(
                             NavigationRailItem(
                                 selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Budget>() } == true,
                                 onClick = {
-                                    navController.navigate(Screen.Budget) {
+                                    navController.navigateThrottled(Screen.Budget) {
                                         popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                                         launchSingleTop = true
                                         restoreState = true
@@ -301,7 +302,7 @@ fun MainAppScaffold(
                             NavigationRailItem(
                                 selected = currentDestination?.hierarchy?.any { it.hasRoute<Screen.Profile>() } == true,
                                 onClick = {
-                                    navController.navigate(Screen.Profile) {
+                                    navController.navigateThrottled(Screen.Profile) {
                                         popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                                         launchSingleTop = true
                                         restoreState = true
@@ -378,7 +379,7 @@ fun MainAppScaffold(
                 .zIndex(100f)
         ) {
             AddTransactionFAB(
-                onClick = { navController.navigate(Screen.AddTransaction()) },
+                onClick = { navController.navigateThrottled(Screen.AddTransaction()) },
                 modifier = Modifier.padding(bottom = 92.dp)
             )
         }

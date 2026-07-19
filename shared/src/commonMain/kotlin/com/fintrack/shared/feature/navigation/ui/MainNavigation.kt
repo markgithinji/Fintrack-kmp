@@ -29,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.navigation.ui.isMorphScreen
 import com.fintrack.shared.feature.navigation.ui.isProfileDetailScreen
 import com.fintrack.shared.feature.navigation.ui.isMainScreen
+import com.fintrack.shared.feature.core.ui.util.navigateThrottled
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -130,10 +131,10 @@ fun MainNavigation(
                 paddingValues = paddingValues,
                 animatedVisibilityScope = this,
                 onEditTransaction = { transactionId ->
-                    navController.navigate(Screen.AddTransaction(transactionId))
+                    navController.navigateThrottled(Screen.AddTransaction(transactionId))
                 },
                 onCardClick = { accountIdParam, isIncome ->
-                    navController.navigate(
+                    navController.navigateThrottled(
                         Screen.TransactionList(
                             accountId = accountIdParam,
                             isIncome = isIncome
@@ -167,7 +168,7 @@ fun MainNavigation(
                 animatedVisibilityScope = this,
                 onCategoryClick = { categoryName: String, categoryId: String, isIncome: Boolean, startDate: String?, endDate: String?, accountIdParam: String ->
                     val isTransactionCost = categoryId == "transaction_cost" || categoryName == "Transaction Fees"
-                    navController.navigate(
+                    navController.navigateThrottled(
                         Screen.TransactionList(
                             accountId = accountIdParam.ifEmpty { accountId ?: "" },
                             isIncome = if (isTransactionCost) null else isIncome,
@@ -188,10 +189,10 @@ fun MainNavigation(
                 paddingValues = paddingValues,
                 animatedVisibilityScope = this,
                 onAddBudget = {
-                    navController.navigate(Screen.BudgetDetail(null))
+                    navController.navigateThrottled(Screen.BudgetDetail(null))
                 },
                 onBudgetClick = { budgetWithStatus ->
-                    navController.navigate(
+                    navController.navigateThrottled(
                         Screen.BudgetDetail(
                             budgetWithStatus.budget.id
                         )
@@ -203,10 +204,10 @@ fun MainNavigation(
         composable<Screen.Profile> { 
             ProfileScreen(
                 paddingValues = paddingValues,
-                onNavigateToAccounts = { navController.navigate(Screen.Accounts) },
-                onNavigateToCategories = { navController.navigate(Screen.Categories) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings) },
-                onNavigateToEditProfile = { navController.navigate(Screen.EditProfile) },
+                onNavigateToAccounts = { navController.navigateThrottled(Screen.Accounts) },
+                onNavigateToCategories = { navController.navigateThrottled(Screen.Categories) },
+                onNavigateToSettings = { navController.navigateThrottled(Screen.Settings) },
+                onNavigateToEditProfile = { navController.navigateThrottled(Screen.EditProfile) },
                 onLogout = onLogout
             )
         }
@@ -277,7 +278,7 @@ fun MainNavigation(
                 paddingValues = paddingValues,
                 animatedVisibilityScope = this,
                 onEditTransaction = { transactionId ->
-                    navController.navigate(Screen.AddTransaction(transactionId))
+                    navController.navigateThrottled(Screen.AddTransaction(transactionId))
                 }
             )
         }

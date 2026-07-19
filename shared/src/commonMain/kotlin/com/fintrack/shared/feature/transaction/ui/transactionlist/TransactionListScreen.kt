@@ -35,6 +35,7 @@ import androidx.paging.compose.*
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsHeaderDate
 import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
+import com.fintrack.shared.feature.core.ui.util.rememberThrottleClick
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
@@ -118,6 +119,7 @@ fun TransactionListScreen(
     }
 
     var includeFees by remember { mutableStateOf(true) }
+    val throttledOnEditTransaction = rememberThrottleClick(onClick = onEditTransaction)
 
     TransactionListContent(
         transactionCounts = transactionCounts,
@@ -132,7 +134,7 @@ fun TransactionListScreen(
         paddingValues = paddingValues,
         animatedVisibilityScope = animatedVisibilityScope,
         sharedTransitionScope = sharedTransitionScope,
-        onTransactionClick = onEditTransaction,
+        onTransactionClick = throttledOnEditTransaction,
         modifier = (if (sharedTransitionScope != null) {
             with(sharedTransitionScope) {
                 Modifier.sharedBounds(

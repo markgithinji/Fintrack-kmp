@@ -64,6 +64,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.CommonErrorState
+import com.fintrack.shared.feature.core.ui.util.rememberThrottleClick
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
 import com.fintrack.shared.feature.core.util.formatToSinglePrecision
@@ -89,6 +90,9 @@ fun BudgetScreen(
 
     val budgets by viewModel.budgets.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
+    
+    val throttledOnBudgetClick = rememberThrottleClick(onClick = onBudgetClick)
+    val throttledOnAddBudget = rememberThrottleClick(onClick = onAddBudget)
 
     LaunchedEffect(refreshTrigger) {
         if (refreshTrigger > 0) {
@@ -131,7 +135,7 @@ fun BudgetScreen(
                         item {
                             with(sharedTransitionScope) {
                                 SexyAddBudgetButton(
-                                    onClick = onAddBudget,
+                                    onClick = throttledOnAddBudget,
                                     modifier = Modifier
                                         .padding(horizontal = 16.dp, vertical = 8.dp)
                                         .sharedBounds(
@@ -153,7 +157,7 @@ fun BudgetScreen(
                             with(sharedTransitionScope) {
                                 BudgetItem(
                                     budgetWithStatus = budgetWithStatus,
-                                    onClick = { onBudgetClick(budgetWithStatus) },
+                                    onClick = { throttledOnBudgetClick(budgetWithStatus) },
                                     modifier = Modifier
                                         .animateItem()
                                         .sharedBounds(
@@ -173,7 +177,7 @@ fun BudgetScreen(
                     } else {
                         item {
                             BudgetEmptyState(
-                                onAddBudget = onAddBudget,
+                                onAddBudget = throttledOnAddBudget,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }

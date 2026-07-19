@@ -26,6 +26,7 @@ import kotlinx.coroutines.delay
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
 import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.ui.MaterialToast
+import com.fintrack.shared.feature.core.ui.util.rememberThrottleClick
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.ui.SmsSyncSignal
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
@@ -108,6 +109,10 @@ fun HomeScreen(
     val importProgress = importProgressMap[accountId] ?: 0f
 
     var isManualSyncInProgress by remember { mutableStateOf(false) }
+    val throttledOnEditTransaction = rememberThrottleClick(onClick = onEditTransaction)
+    val throttledOnCardClick = rememberThrottleClick<Pair<String, Boolean?>> { (accId, isInc) -> 
+        onCardClick(accId, isInc) 
+    }
 
     LaunchedEffect(selectedAccountId) {
         selectedAccountId?.let { accountsViewModel.selectAccount(it) }
@@ -302,7 +307,7 @@ fun HomeScreen(
                     animatedVisibilityScope = animatedVisibilityScope,
                     onCardClick = { isIncome ->
                         val accountId = (enrichedSelectedAccount as? Result.Success)?.data?.id
-                        accountId?.let { onCardClick(it, isIncome) }
+                        accountId?.let { throttledOnCardClick(it to isIncome) }
                     }
                 )
             }
@@ -321,14 +326,14 @@ fun HomeScreen(
                     animatedVisibilityScope = animatedVisibilityScope,
                     accountId = (enrichedSelectedAccount as? Result.Success)?.data?.id,
                     onViewAllClick = {
-                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-                        accountId?.let { onCardClick(it, null) }
+                        val accountId = (enrichedSelectedAccount as? Result.Success)?.data?.id
+                        accountId?.let { throttledOnCardClick(it to null) }
                     },
                     onTransactionClick = { transaction ->
-                        transaction.id?.let { id -> onEditTransaction(id) }
+                        transaction.id?.let { id -> throttledOnEditTransaction(id) }
                     },
                     onRetry = {
-                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                        val accountId = (enrichedSelectedAccount as? Result.Success)?.data?.id
                         accountId?.let { transactionsViewModel.loadRecentTransactions(it, force = true) }
                     }
                 )

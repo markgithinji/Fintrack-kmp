@@ -147,7 +147,7 @@ class TransactionViewModel(
         viewModelScope.launch { syncCategoriesUseCase() }
     }
 
-    fun loadRecentTransactions(accountId: String, limit: Int = 10, force: Boolean = false) {
+    fun loadRecentTransactions(accountId: String, limit: Int = 7, force: Boolean = false) {
         if (!force && accountId == lastLoadedRecentAccountId && _recentTransactions.value is Result.Success) return
         lastLoadedRecentAccountId = accountId
         recentTransactionsJob?.cancel()
