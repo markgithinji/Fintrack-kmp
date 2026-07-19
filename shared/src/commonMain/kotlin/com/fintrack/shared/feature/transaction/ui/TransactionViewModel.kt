@@ -468,6 +468,9 @@ class TransactionViewModel(
             return
         }
 
+        // Update cooldown timer on any sync start
+        lastAutoSyncTime = Clock.System.now()
+
         importJob?.cancel()
         importJob = viewModelScope.launch {
             _importState.value = Result.Loading

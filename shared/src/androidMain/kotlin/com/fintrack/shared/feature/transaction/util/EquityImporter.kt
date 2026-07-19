@@ -18,6 +18,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+
 class EquityImporter(
     private val context: Context,
     private val transactionRepository: TransactionRepository,
@@ -33,7 +37,7 @@ class EquityImporter(
         isPortfolioSeed: Boolean,
         onProgress: (Float) -> Unit
     ): Unit = withContext(Dispatchers.IO) {
-        // logger.info("SYNC_FLOW", "EquityImporter: importHistory started for account: $targetAccountId")
+        // logger.info("EquityImporter: importHistory started for account: $targetAccountId")
         onProgress(0.05f)
         
         // Fetch categories and rules first to map inferred category names to IDs
@@ -42,7 +46,7 @@ class EquityImporter(
         
         val rulesResult = categoryRepository.getCategoryRules()
         val rules = (rulesResult as? Result.Success)?.data ?: emptyList()
-        // logger.info("SYNC_FLOW", "EquityImporter: Fetched ${rules.size} dynamic categorization rules from backend")
+        // logger.info("EquityImporter: Fetched ${rules.size} dynamic categorization rules from backend")
         
         val accountsResult = accountRepository.getAccounts()
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
@@ -52,6 +56,17 @@ class EquityImporter(
             ?: "equity"
 
         logger.info("SYNC_FLOW", "Equity account identified as: $accountId")
+
+        // Check for SMS permission first explicitly
+        val permissionStatus = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS)
+        if (permissionStatus != PackageManager.PERMISSION_GRANTED) {
+            logger.error("SYNC_FLOW", "EquityImporter: SMS permission NOT granted. Status: $permissionStatus")
+            if (isPortfolioSeed) {
+                logger.warning("SYNC_FLOW", "EquityImporter: Permission missing, but proceeding with portfolio seeding only.")
+            } else {
+                throw Exception("Permission denied: READ_SMS is required for Equity Bank sync")
+            }
+        }
 
         // Search for both "EquitBank" and "EquityBank" and "EQUITY"
         val cursor = try {

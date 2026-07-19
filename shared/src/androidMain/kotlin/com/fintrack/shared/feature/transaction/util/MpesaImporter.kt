@@ -18,6 +18,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+
 class MpesaImporter(
     private val context: Context,
     private val transactionRepository: TransactionRepository,
@@ -53,7 +57,19 @@ class MpesaImporter(
 
         logger.info("SYNC_FLOW", "Mpesa account identified as: $accountId")
 
+        // Check for SMS permission first explicitly
+        val permissionStatus = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS)
+        if (permissionStatus != PackageManager.PERMISSION_GRANTED) {
+            logger.error("SYNC_FLOW", "SMS permission NOT granted. Status: $permissionStatus")
+            if (isPortfolioSeed) {
+                logger.warning("SYNC_FLOW", "Permission missing, but proceeding with portfolio seeding only.")
+            } else {
+                throw Exception("Permission denied: READ_SMS is required for M-Pesa sync")
+            }
+        }
+
         val cursor = try {
+            logger.info("SYNC_FLOW", "Querying SMS inbox for address=MPESA")
             context.contentResolver.query(
                 Telephony.Sms.Inbox.CONTENT_URI,
                 arrayOf(Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS, Telephony.Sms.Inbox.DATE),
@@ -62,13 +78,19 @@ class MpesaImporter(
                 "${Telephony.Sms.Inbox.DATE} DESC"
             )
         } catch (e: SecurityException) {
+            logger.error("SYNC_FLOW", "SecurityException during SMS query", e)
             if (isPortfolioSeed) {
                 logger.warning("SYNC_FLOW", "Permission denied for SMS, but proceeding with portfolio seeding only.")
                 null
             } else {
-                logger.error("SYNC_FLOW", "Permission denied for reading SMS", e)
                 throw Exception("Permission denied: READ_SMS is required for M-Pesa sync", e)
             }
+        }
+
+        if (cursor == null) {
+            logger.warning("SYNC_FLOW", "SMS cursor is NULL")
+        } else {
+            logger.info("SYNC_FLOW", "SMS cursor returned with ${cursor.count} rows")
         }
 
         val transactions = mutableListOf<Transaction>()

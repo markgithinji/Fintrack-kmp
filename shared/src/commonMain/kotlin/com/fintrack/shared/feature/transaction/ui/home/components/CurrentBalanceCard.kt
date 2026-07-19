@@ -501,21 +501,7 @@ private fun CurrentBalanceSuccessState(
                                     }
 
                                     null -> {
-                                        Surface(
-                                            onClick = onManualSync,
-                                            shape = CircleShape,
-                                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
-                                            modifier = Modifier.size(24.dp)
-                                        ) {
-                                            Box(contentAlignment = Alignment.Center) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Sync,
-                                                    contentDescription = "Sync Now",
-                                                    tint = MaterialTheme.colorScheme.onPrimary,
-                                                    modifier = Modifier.size(14.dp)
-                                                )
-                                            }
-                                        }
+                                        // No manual sync icon shown by default, as auto-sync is handled on app open
                                     }
                                 }
                             }

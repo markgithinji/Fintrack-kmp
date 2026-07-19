@@ -9,7 +9,6 @@ import com.fintrack.shared.feature.transaction.domain.usecase.SyncRecurringBills
 import com.fintrack.shared.feature.transaction.domain.usecase.ValidateTransactionUseCase
 import com.fintrack.shared.feature.transaction.domain.util.createTransactionImporter
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
-import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val transactionModule = module {
@@ -36,7 +35,7 @@ val transactionModule = module {
         )
     }
 
-    viewModel {
+    single {
         TransactionViewModel(
             repo = get(),
             localCategoryDataSource = get(),

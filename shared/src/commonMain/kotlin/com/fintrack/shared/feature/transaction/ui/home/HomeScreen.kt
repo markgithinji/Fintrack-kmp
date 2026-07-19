@@ -123,29 +123,34 @@ fun HomeScreen(
         }
     }
 
+    val logger = remember { KMPLogger() }
+
     LaunchedEffect(importState) {
+        logger.info("HomeScreen", "importState changed: $importState")
         if (importState is Result.Success) {
+            logger.info("HomeScreen", "Sync success detected in UI")
             onGlobalRefresh()
             delay(1500)
             transactionsViewModel.resetImportState()
             isManualSyncInProgress = false
         } else if (importState is Result.Error) {
-            val message = (importState as Result.Error).exception.message ?: ""
-            if (message.contains("permission", ignoreCase = true)) {
+            val error = (importState as Result.Error).exception
+            val message = error.message ?: ""
+            logger.error("HomeScreen", "Sync error detected in UI: $message", error)
+            if (message.contains("permission", ignoreCase = true) || message.contains("access", ignoreCase = true)) {
+                logger.info("HomeScreen", "Triggering permission rationale from UI")
                 onSmsPermissionRequired(isManualSyncInProgress)
             }
             isManualSyncInProgress = false
         }
     }
+    SideEffect {
+        logger.error("HomeScreen", "TransactionViewModel INSTANCE: ${transactionsViewModel.hashCode()}")
+    }
 
     // Keep track of the last processed refresh trigger to avoid redundant refreshes on re-entry
     // We use rememberSaveable to ensure it persists across navigation
     var lastProcessedRefreshTrigger by rememberSaveable { mutableIntStateOf(refreshTrigger) }
-
-    val logger = remember { KMPLogger() }
-    SideEffect {
-        logger.error("HomeScreen", "TransactionViewModel INSTANCE: ${transactionsViewModel.hashCode()}")
-    }
 
     LaunchedEffect(refreshTrigger, selectedAccountResult) {
         val accountId = (selectedAccountResult as? Result.Success)?.data?.id

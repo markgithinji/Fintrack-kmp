@@ -92,7 +92,6 @@ fun MainAppScaffold(
 
     LaunchedEffect(importState) {
         if (importState is Result.Success) {
-            mainViewModel.showToast("Sync completed successfully")
             transactionsViewModel.resetImportState()
         } else if (importState is Result.Error) {
             val exception = (importState as Result.Error).exception
@@ -362,7 +361,7 @@ fun MainAppScaffold(
         ) {
             AddTransactionFAB(
                 onClick = { navController.navigate(Screen.AddTransaction()) },
-                modifier = Modifier.padding(bottom = 85.dp)
+                modifier = Modifier.padding(bottom = 92.dp)
             )
         }
     }
