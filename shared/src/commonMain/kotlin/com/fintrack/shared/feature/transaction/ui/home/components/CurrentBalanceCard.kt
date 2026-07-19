@@ -331,6 +331,7 @@ private fun CurrentBalanceSuccessState(
     onSyncErrorClick: (String) -> Unit
 ) {
     val balance = account.balance ?: BigDecimal.ZERO
+    // Correctly determine if sync status should be shown based on account linkage
     val isLinkedAccount = isMpesaLinked || isEquityLinked
     
     val logger = remember { KMPLogger() }

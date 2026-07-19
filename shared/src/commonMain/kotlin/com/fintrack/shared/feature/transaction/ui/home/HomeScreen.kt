@@ -66,8 +66,46 @@ fun HomeScreen(
     val defaultAccountId by settingsViewModel.defaultAccountId.collectAsStateWithLifecycle()
     val isMpesaListenerEnabled by settingsViewModel.isMpesaListenerEnabled.collectAsStateWithLifecycle()
     val isEquityListenerEnabled by settingsViewModel.isEquityListenerEnabled.collectAsStateWithLifecycle()
-    val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
-    val importProgress by transactionsViewModel.importProgress.collectAsStateWithLifecycle()
+    val mpesaLinkedAccountIds by settingsViewModel.mpesaLinkedAccountIds.collectAsStateWithLifecycle()
+    val equityLinkedAccountIds by settingsViewModel.equityLinkedAccountIds.collectAsStateWithLifecycle()
+    val importStateMap by transactionsViewModel.importState.collectAsStateWithLifecycle()
+    val importProgressMap by transactionsViewModel.importProgress.collectAsStateWithLifecycle()
+
+    val enrichedSelectedAccount = remember(selectedAccountResult, mpesaLinkedAccountIds, equityLinkedAccountIds, defaultAccountId) {
+        if (selectedAccountResult is Result.Success) {
+            val account = (selectedAccountResult as Result.Success).data
+            val sources = mutableListOf<String>()
+            if (mpesaLinkedAccountIds.contains(account.id)) sources.add("mpesa")
+            if (equityLinkedAccountIds.contains(account.id)) sources.add("equity")
+            Result.Success(account.copy(
+                isDefault = account.id == defaultAccountId,
+                linkedSources = sources
+            ))
+        } else {
+            selectedAccountResult
+        }
+    }
+
+    val enrichedAccountsResult = remember(accountsResult, mpesaLinkedAccountIds, equityLinkedAccountIds, defaultAccountId) {
+        if (accountsResult is Result.Success) {
+            val accounts = (accountsResult as Result.Success).data
+            Result.Success(accounts.map { account ->
+                val sources = mutableListOf<String>()
+                if (mpesaLinkedAccountIds.contains(account.id)) sources.add("mpesa")
+                if (equityLinkedAccountIds.contains(account.id)) sources.add("equity")
+                account.copy(
+                    isDefault = account.id == defaultAccountId,
+                    linkedSources = sources
+                )
+            })
+        } else {
+            accountsResult
+        }
+    }
+
+    val accountId = (enrichedSelectedAccount as? Result.Success)?.data?.id
+    val importState = importStateMap[accountId]
+    val importProgress = importProgressMap[accountId] ?: 0f
 
     var isManualSyncInProgress by remember { mutableStateOf(false) }
 
@@ -120,25 +158,27 @@ fun HomeScreen(
     LaunchedEffect(smsSyncSignal) {
         if (smsSyncSignal != null) {
             transactionsViewModel.importTransactions(smsSyncSignal.accountId)
+            onGlobalRefresh() // Clear the signal in MainViewModel
         }
     }
 
     val logger = remember { KMPLogger() }
 
     LaunchedEffect(importState) {
+        if (importState == null) return@LaunchedEffect
+        
         logger.info("HomeScreen", "importState changed: $importState")
         if (importState is Result.Success) {
-            logger.info("HomeScreen", "Sync success detected in UI")
+            logger.info("HomeScreen", "Sync success detected in UI for account: $accountId")
             onGlobalRefresh()
             delay(1500)
-            transactionsViewModel.resetImportState()
+            transactionsViewModel.resetImportState(accountId)
             isManualSyncInProgress = false
         } else if (importState is Result.Error) {
-            val error = (importState as Result.Error).exception
+            val error = importState.exception
             val message = error.message ?: ""
             logger.error("HomeScreen", "Sync error detected in UI: $message", error)
             if (message.contains("permission", ignoreCase = true) || message.contains("access", ignoreCase = true)) {
-                logger.info("HomeScreen", "Triggering permission rationale from UI")
                 onSmsPermissionRequired(isManualSyncInProgress)
             }
             isManualSyncInProgress = false
@@ -152,8 +192,8 @@ fun HomeScreen(
     // We use rememberSaveable to ensure it persists across navigation
     var lastProcessedRefreshTrigger by rememberSaveable { mutableIntStateOf(refreshTrigger) }
 
-    LaunchedEffect(refreshTrigger, selectedAccountResult) {
-        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+    LaunchedEffect(refreshTrigger, enrichedSelectedAccount) {
+        val accountId = (enrichedSelectedAccount as? Result.Success)?.data?.id
         if (accountId != null && refreshTrigger > lastProcessedRefreshTrigger) {
             accountsViewModel.reloadAccounts(showLoading = false)
             transactionsViewModel.loadRecentTransactions(accountId, force = true)
@@ -171,14 +211,17 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(selectedAccountResult) {
-        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-        accountId?.let { id ->
-            transactionsViewModel.loadRecentTransactions(id)
-            statsViewModel.loadOverview(id)
-            statsViewModel.loadCategoryComparisons(id)
-            // Trigger auto-sync when account changes
-            transactionsViewModel.autoSyncTransactions(id)
+    LaunchedEffect(enrichedSelectedAccount) {
+        val account = (enrichedSelectedAccount as? Result.Success)?.data
+        account?.let { acc ->
+            transactionsViewModel.loadRecentTransactions(acc.id)
+            statsViewModel.loadOverview(acc.id)
+            statsViewModel.loadCategoryComparisons(acc.id)
+            
+            // Trigger auto-sync only if the account has linked sources
+            if (acc.linkedSources.contains("mpesa") || acc.linkedSources.contains("equity")) {
+                transactionsViewModel.autoSyncTransactions(acc.id)
+            }
         }
     }
 
@@ -220,8 +263,8 @@ fun HomeScreen(
         ) {
             item {
                 CurrentBalanceCardWrapper(
-                    accountsResult = accountsResult,
-                    selectedAccountResult = selectedAccountResult,
+                    accountsResult = enrichedAccountsResult,
+                    selectedAccountResult = enrichedSelectedAccount,
                     defaultAccountId = defaultAccountId,
                     isBalanceHidden = isBalanceHidden,
                     isMpesaAutoSyncEnabled = isMpesaListenerEnabled,
@@ -236,7 +279,7 @@ fun HomeScreen(
                     onToggleBalanceVisibility = { settingsViewModel.setBalanceHidden(it) },
                     onManualSync = { 
                         isManualSyncInProgress = true
-                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                        val accountId = (enrichedSelectedAccount as? Result.Success)?.data?.id
                         transactionsViewModel.importTransactions(accountId) 
                     },
                     onSyncErrorClick = { message -> 
@@ -251,10 +294,10 @@ fun HomeScreen(
 
             item {
                 IncomeExpenseCards(
-                    accountResult = selectedAccountResult,
+                    accountResult = enrichedSelectedAccount,
                     animatedVisibilityScope = animatedVisibilityScope,
                     onCardClick = { isIncome ->
-                        val accountId = (selectedAccountResult as? Result.Success)?.data?.id
+                        val accountId = (enrichedSelectedAccount as? Result.Success)?.data?.id
                         accountId?.let { onCardClick(it, isIncome) }
                     }
                 )
@@ -264,7 +307,7 @@ fun HomeScreen(
             item {
                 CategoryComparisonCard(
                     categoryComparisonResult = categoryComparisonResult,
-                    accountId = (selectedAccountResult as? Result.Success)?.data?.id,
+                    accountId = (enrichedSelectedAccount as? Result.Success)?.data?.id,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -272,7 +315,7 @@ fun HomeScreen(
                 TransactionsListCard(
                     transactionsResult = transactionsResult,
                     animatedVisibilityScope = animatedVisibilityScope,
-                    accountId = (selectedAccountResult as? Result.Success)?.data?.id,
+                    accountId = (enrichedSelectedAccount as? Result.Success)?.data?.id,
                     onViewAllClick = {
                         val accountId = (selectedAccountResult as? Result.Success)?.data?.id
                         accountId?.let { onCardClick(it, null) }
@@ -282,7 +325,7 @@ fun HomeScreen(
                     },
                     onRetry = {
                         val accountId = (selectedAccountResult as? Result.Success)?.data?.id
-                        transactionsViewModel.loadRecentTransactions(accountId, force = true)
+                        accountId?.let { transactionsViewModel.loadRecentTransactions(it, force = true) }
                     }
                 )
             }

@@ -29,9 +29,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Instant
 
 @OptIn(FlowPreview::class)
 class TransactionViewModel(
@@ -61,39 +61,121 @@ class TransactionViewModel(
     private val _validationError = MutableStateFlow<String?>(null)
     val validationError: StateFlow<String?> = _validationError
 
-    private val _importState = MutableStateFlow<Result<Unit>?>(null)
-    val importState: StateFlow<Result<Unit>?> = _importState
+    private val _importState = MutableStateFlow<Map<String?, Result<Unit>>>(emptyMap())
+    val importState: StateFlow<Map<String?, Result<Unit>>> = _importState.asStateFlow()
 
-    private val _importProgress = MutableStateFlow(0f)
-    val importProgress: StateFlow<Float> = _importProgress.asStateFlow()
+    private val _importProgress = MutableStateFlow<Map<String?, Float>>(emptyMap())
+    val importProgress: StateFlow<Map<String?, Float>> = _importProgress.asStateFlow()
 
     private val logger = KMPLogger()
 
     private var lastLoadedRecentAccountId: String? = null
     private var recentTransactionsJob: Job? = null
     private var importJob: Job? = null
-    private var lastAutoSyncTime: Instant? = null
+    private val lastAutoSyncTimes = mutableMapOf<String?, Instant>()
+    
+    private var lastPagingParams: TransactionPagingParams? = null
+    private var cachedPagingFlow: Flow<PagingData<Transaction>>? = null
 
     init {
-        logger.error("TransactionViewModel", "INSTANCE CREATED: ${this.hashCode()}")
         viewModelScope.launch {
             localCategoryDataSource.categories.collect {
                 _categories.value = it
             }
         }
-
         refreshCategories()
     }
 
-    fun onAmountChange(newAmount: String, selectionStart: Int? = null, selectionEnd: Int? = null) {
-        _formState.update {
-            it.copy(
-                amount = newAmount,
-                amountSelectionStart = selectionStart ?: newAmount.length,
-                amountSelectionEnd = selectionEnd ?: newAmount.length
-            )
+    fun importTransactions(accountId: String? = null, isPortfolioSeed: Boolean = false) {
+        if (_importState.value[accountId] is Result.Loading) return
+        
+        // Safety check: Don't trigger loading UI for accounts that aren't linked to SMS
+        // We allow null (global sync) or accounts with linked sources
+        // Special case: Portfolio seeding always allowed
+        if (!isPortfolioSeed && accountId != null) {
+            val account = (repo as? com.fintrack.shared.feature.transaction.data.TransactionRepositoryImpl)?.let {
+               // We don't have easy access to the account here without another repo call or passing it in
+            }
         }
-        _validationError.value = null
+
+        lastAutoSyncTimes[accountId] = Clock.System.now()
+        importJob?.cancel()
+        importJob = viewModelScope.launch {
+            // We'll let the importer decide if it should actually show loading
+            // If it returns immediately, the UI flicker will be minimal, but better to avoid it entirely
+            _importState.update { it + (accountId to Result.Loading) }
+            _importProgress.update { it + (accountId to 0f) }
+            try {
+                transactionImporter.importHistory(accountId, isPortfolioSeed) { progress ->
+                    _importProgress.update { it + (accountId to progress) }
+                }
+                _importState.update { it + (accountId to Result.Success(Unit)) }
+            } catch (e: Exception) {
+                if (e !is CancellationException) {
+                    _importState.update { it + (accountId to Result.Error(e)) }
+                }
+            }
+        }
+    }
+
+    fun autoSyncTransactions(accountId: String? = null) {
+        val now = Clock.System.now()
+        val lastSync = lastAutoSyncTimes[accountId]
+        if (lastSync == null || (now - lastSync) >= 2.minutes) {
+            importTransactions(accountId)
+        }
+    }
+
+    fun resetImportState(accountId: String? = null) {
+        _importState.update { it - accountId }
+        _importProgress.update { it - accountId }
+    }
+
+    fun cancelImport() {
+        importJob?.cancel()
+        _importState.update { currentMap ->
+            currentMap.filterValues { it !is Result.Loading }
+        }
+    }
+
+    fun refreshCategories() {
+        viewModelScope.launch { syncCategoriesUseCase() }
+    }
+
+    fun loadRecentTransactions(accountId: String, limit: Int = 10, force: Boolean = false) {
+        if (!force && accountId == lastLoadedRecentAccountId && _recentTransactions.value is Result.Success) return
+        lastLoadedRecentAccountId = accountId
+        recentTransactionsJob?.cancel()
+        recentTransactionsJob = viewModelScope.launch {
+            _recentTransactions.value = Result.Loading
+            val result = repo.getTransactions(limit = limit, sortBy = "dateTime", order = "desc", accountId = accountId)
+            _recentTransactions.value = when (result) {
+                is Result.Success -> Result.Success(result.data.first)
+                is Result.Error -> Result.Error(result.exception)
+                is Result.Loading -> Result.Loading
+            }
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getTransactionsPagingData(
+        accountId: String?,
+        isIncome: Boolean? = null,
+        categoryId: String? = null,
+        startDate: String? = null,
+        endDate: String? = null,
+        hasTransactionCost: Boolean? = null
+    ): Flow<PagingData<Transaction>> {
+        val newParams = TransactionPagingParams(accountId, isIncome, categoryId, startDate, endDate, hasTransactionCost)
+        if (newParams == lastPagingParams && cachedPagingFlow != null) return cachedPagingFlow!!
+        lastPagingParams = newParams
+        val flow = repo.getTransactionsPagingFlow(accountId, isIncome, categoryId, startDate, endDate, hasTransactionCost).cachedIn(viewModelScope)
+        cachedPagingFlow = flow
+        return flow
+    }
+
+    fun onAmountChange(newAmount: String, selectionStart: Int? = null, selectionEnd: Int? = null) {
+        _formState.update { it.copy(amount = newAmount, amountSelectionStart = selectionStart ?: newAmount.length, amountSelectionEnd = selectionEnd ?: newAmount.length) }
     }
 
     fun onAmountSelectionChange(start: Int, end: Int) {
@@ -105,12 +187,9 @@ class TransactionViewModel(
         val amount = current.amount
         val start = current.amountSelectionStart
         val end = current.amountSelectionEnd
-
         if (input == "." && amount.contains(".")) return
         if (amount.length >= 12 && start == end && start == amount.length) return
-
         val newAmount = amount.take(start) + input + amount.drop(end)
-
         val newSelection = start + input.length
         onAmountChange(newAmount, newSelection, newSelection)
     }
@@ -120,34 +199,14 @@ class TransactionViewModel(
         val amount = current.amount
         val start = current.amountSelectionStart
         val end = current.amountSelectionEnd
-
         if (start == 0 && end == 0) return
-
-        val newAmount: String
-        val newSelection: Int
-        if (start != end) {
-            newAmount = amount.take(start) + amount.drop(end)
-            newSelection = start
-        } else {
-            newAmount = amount.take(start - 1) + amount.drop(start)
-            newSelection = start - 1
-        }
+        val newAmount = if (start != end) amount.take(start) + amount.drop(end) else amount.take((start - 1).coerceAtLeast(0)) + amount.drop(start)
+        val newSelection = if (start != end) start else (start - 1).coerceAtLeast(0)
         onAmountChange(newAmount, newSelection, newSelection)
     }
 
-    fun onTransactionCostChange(
-        newCost: String,
-        selectionStart: Int? = null,
-        selectionEnd: Int? = null
-    ) {
-        _formState.update {
-            it.copy(
-                transactionCost = newCost,
-                costSelectionStart = selectionStart ?: newCost.length,
-                costSelectionEnd = selectionEnd ?: newCost.length
-            )
-        }
-        _validationError.value = null
+    fun onTransactionCostChange(newCost: String, selectionStart: Int? = null, selectionEnd: Int? = null) {
+        _formState.update { it.copy(transactionCost = newCost, costSelectionStart = selectionStart ?: newCost.length, costSelectionEnd = selectionEnd ?: newCost.length) }
     }
 
     fun onCostSelectionChange(start: Int, end: Int) {
@@ -159,12 +218,8 @@ class TransactionViewModel(
         val cost = current.transactionCost
         val start = current.costSelectionStart
         val end = current.costSelectionEnd
-
         if (input == "." && cost.contains(".")) return
-        if (cost.length >= 10 && start == end && start == cost.length) return
-
         val newCost = cost.take(start) + input + cost.drop(end)
-
         val newSelection = start + input.length
         onTransactionCostChange(newCost, newSelection, newSelection)
     }
@@ -174,355 +229,79 @@ class TransactionViewModel(
         val cost = current.transactionCost
         val start = current.costSelectionStart
         val end = current.costSelectionEnd
-
         if (start == 0 && end == 0) return
-
-        val newCost: String
-        val newSelection: Int
-        if (start != end) {
-            newCost = cost.take(start) + cost.drop(end)
-            newSelection = start
-        } else {
-            newCost = cost.take(start - 1) + cost.drop(start)
-            newSelection = start - 1
-        }
+        val newCost = if (start != end) cost.take(start) + cost.drop(end) else cost.take((start - 1).coerceAtLeast(0)) + cost.drop(start)
+        val newSelection = if (start != end) start else (start - 1).coerceAtLeast(0)
         onTransactionCostChange(newCost, newSelection, newSelection)
     }
 
-    fun onCategoryChange(newCategory: Category?) {
-        _formState.update { it.copy(selectedCategory = newCategory) }
-        _validationError.value = null
-    }
-
-    fun onAccountChange(newAccount: Account?) {
-        _formState.update { it.copy(selectedAccount = newAccount) }
-        _validationError.value = null
-    }
-
-    fun onDescriptionChange(newDescription: String) {
-        _formState.update { it.copy(description = newDescription) }
-        _validationError.value = null
-    }
-
-    fun onTypeChange(isIncome: Boolean) {
-        _formState.update { it.copy(isIncome = isIncome) }
-        _validationError.value = null
-    }
-
-    fun onDateTimeChange(dateTime: Instant) {
-        _formState.update { it.copy(dateTime = dateTime) }
-        _validationError.value = null
-    }
-
-    fun refreshCategories() {
-        viewModelScope.launch {
-            syncCategoriesUseCase()
-        }
-    }
-
-    fun validateTransaction(
-        amount: String,
-        transactionCost: String,
-        description: String,
-        category: Category?,
-        selectedAccount: Account?
-    ): Boolean {
-        val result = validateTransactionUseCase(
-            amount,
-            transactionCost,
-            description,
-            category,
-            selectedAccount
-        )
-
-        when (result) {
-            is ValidationResult.Success -> {
-                _validationError.value = null
-                return true
-            }
-
-            is ValidationResult.Error -> {
-                _validationError.value = result.message
-                return false
-            }
-        }
-    }
+    fun onTypeChange(isIncome: Boolean) { _formState.update { it.copy(isIncome = isIncome) } }
+    fun onAccountChange(account: Account?) { _formState.update { it.copy(selectedAccount = account) } }
+    fun onCategoryChange(category: Category?) { _formState.update { it.copy(selectedCategory = category) } }
+    fun onDescriptionChange(description: String) { _formState.update { it.copy(description = description) } }
+    fun onDateTimeChange(dateTime: Instant) { _formState.update { it.copy(dateTime = dateTime) } }
 
     fun addTransaction() {
         val state = _formState.value
-        // Validate first
-        if (!validateTransaction(
-                state.amount,
-                state.transactionCost,
-                state.description,
-                state.selectedCategory,
-                state.selectedAccount
-            )
-        ) {
-            return
-        }
-
-        val transaction = createTransactionUseCase(
-            amount = state.amount,
-            transactionCost = state.transactionCost,
-            isIncome = state.isIncome,
-            category = state.selectedCategory,
-            description = state.description,
-            selectedAccount = state.selectedAccount,
-            dateTime = state.dateTime
-        ) ?: return
-
-        // Save transaction
+        val validation = validateTransactionUseCase(state.amount, state.transactionCost, state.description, state.selectedCategory, state.selectedAccount)
+        if (validation is ValidationResult.Error) { _validationError.value = validation.message; return }
         viewModelScope.launch {
-            _saveState.value = SaveState.Idle
             _saveState.value = SaveState.Loading
-
-            try {
-                val result = repo.addTransaction(transaction)
-                _saveState.value = when (result) {
-                    is Result.Success -> {
-                        SaveState.Success(result.data)
-                    }
-
-                    is Result.Error -> SaveState.Error(result.exception)
-                    is Result.Loading -> SaveState.Loading
-                }
-            } catch (e: Exception) {
-                _saveState.value = SaveState.Error(e)
+            val transaction = createTransactionUseCase(state.amount, state.transactionCost, state.isIncome, state.selectedCategory, state.description, state.selectedAccount, state.dateTime) ?: return@launch
+            val result = repo.addTransaction(transaction)
+            _saveState.value = when (result) {
+                is Result.Success -> SaveState.Success(result.data)
+                is Result.Error -> SaveState.Error(result.exception)
+                is Result.Loading -> SaveState.Loading
             }
         }
     }
 
     fun updateTransaction(id: String) {
         val state = _formState.value
-        // Validate first
-        if (!validateTransaction(
-                state.amount,
-                state.transactionCost,
-                state.description,
-                state.selectedCategory,
-                state.selectedAccount
-            )
-        ) {
-            return
-        }
-
-        val transaction = createTransactionUseCase(
-            amount = state.amount,
-            transactionCost = state.transactionCost,
-            isIncome = state.isIncome,
-            category = state.selectedCategory,
-            description = state.description,
-            selectedAccount = state.selectedAccount,
-            dateTime = state.dateTime
-        )?.copy(id = id) ?: return
-
+        val validation = validateTransactionUseCase(state.amount, state.transactionCost, state.description, state.selectedCategory, state.selectedAccount)
+        if (validation is ValidationResult.Error) { _validationError.value = validation.message; return }
         viewModelScope.launch {
-            _saveState.value = SaveState.Idle
             _saveState.value = SaveState.Loading
-
-            try {
-                val result = repo.updateTransaction(id, transaction)
-                _saveState.value = when (result) {
-                    is Result.Success -> {
-                        SaveState.Success(result.data)
-                    }
-
-                    is Result.Error -> SaveState.Error(result.exception)
-                    is Result.Loading -> SaveState.Loading
-                }
-            } catch (e: Exception) {
-                _saveState.value = SaveState.Error(e)
+            val transaction = createTransactionUseCase(state.amount, state.transactionCost, state.isIncome, state.selectedCategory, state.description, state.selectedAccount, state.dateTime)?.copy(id = id) ?: return@launch
+            val result = repo.updateTransaction(id, transaction)
+            _saveState.value = when (result) {
+                is Result.Success -> SaveState.Success(result.data)
+                is Result.Error -> SaveState.Error(result.exception)
+                is Result.Loading -> SaveState.Loading
             }
         }
-    }
-
-    private var loadedTransactionId: String? = null
-
-    fun loadTransactionById(id: String, accounts: List<Account>) {
-        if (loadedTransactionId == id) return
-
-        viewModelScope.launch {
-            val result = repo.getTransaction(id)
-
-            if (result is Result.Success) {
-                val transaction = result.data
-                loadedTransactionId = transaction.id
-                val category = Category.fromId(
-                    transaction.categoryId,
-                    name = transaction.category,
-                    isExpense = !transaction.isIncome
-                )
-
-                _formState.value = TransactionFormState(
-                    amount = transaction.amount.formatToTwoPrecision(),
-                    transactionCost = transaction.transactionCost.formatToTwoPrecision(),
-                    isIncome = transaction.isIncome,
-                    selectedCategory = category,
-                    selectedAccount = accounts.find { it.id == transaction.accountId },
-                    description = transaction.description ?: "",
-                    dateTime = transaction.dateTime
-                )
-            }
-        }
-    }
-
-    fun resetSelectedTransaction() {
-        loadedTransactionId = null
-        _formState.value = TransactionFormState()
-    }
-
-    fun loadRecentTransactions(accountId: String?, force: Boolean = false) {
-        if (accountId == null) {
-            _recentTransactions.value = Result.Error(Exception("No account selected"))
-            return
-        }
-
-        val current = _recentTransactions.value
-        if (!force && current is Result.Success && lastLoadedRecentAccountId == accountId) {
-            return
-        }
-
-        recentTransactionsJob?.cancel()
-        recentTransactionsJob = viewModelScope.launch {
-            // Only show loading if we don't have data or if the account changed
-            if (current !is Result.Success || lastLoadedRecentAccountId != accountId) {
-                _recentTransactions.value = Result.Loading
-            }
-
-            lastLoadedRecentAccountId = accountId
-            val result = repo.getTransactions(
-                limit = 6,
-                sortBy = "date",
-                order = "DESC",
-                accountId = accountId,
-                isIncome = null
-            )
-            _recentTransactions.value = when (result) {
-                is Result.Success -> Result.Success(result.data.first)
-                is Result.Error -> Result.Error(result.exception)
-                is Result.Loading -> Result.Loading
-            }
-        }
-    }
-
-    private var lastPagingParams: TransactionPagingParams? = null
-    private var cachedPagingFlow: Flow<PagingData<Transaction>>? = null
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun getTransactionsPagingData(
-        accountId: String?,
-        isIncome: Boolean? = null,
-        categoryId: String? = null,
-        startDate: String? = null,
-        endDate: String? = null,
-        hasTransactionCost: Boolean? = null
-    ): Flow<PagingData<Transaction>> {
-        val newParams = TransactionPagingParams(
-            accountId = accountId,
-            isIncome = isIncome,
-            categoryId = categoryId,
-            startDate = startDate,
-            endDate = endDate,
-            hasTransactionCost = hasTransactionCost
-        )
-
-        if (newParams == lastPagingParams && cachedPagingFlow != null) {
-            return cachedPagingFlow!!
-        }
-
-        lastPagingParams = newParams
-        val flow = repo.getTransactionsPagingFlow(
-            accountId = accountId,
-            isIncome = isIncome,
-            categoryId = categoryId,
-            startDate = startDate,
-            endDate = endDate,
-            hasTransactionCost = hasTransactionCost
-        )
-            .cachedIn(viewModelScope)
-
-        cachedPagingFlow = flow
-        return flow
-    }
-
-    fun resetSaveState() {
-        _saveState.value = SaveState.Idle
     }
 
     fun deleteTransaction(id: String) {
         viewModelScope.launch {
             _deleteResult.value = Result.Loading
-            val result = repo.deleteTransaction(id)
-            _deleteResult.value = result
+            _deleteResult.value = repo.deleteTransaction(id)
         }
     }
 
-    fun importTransactions(accountId: String? = null, isPortfolioSeed: Boolean = false) {
-        logger.info(
-            "SYNC_FLOW",
-            "importTransactions triggered for account: $accountId, isPortfolioSeed: $isPortfolioSeed. Current state: ${_importState.value}"
-        )
-        if (_importState.value is Result.Loading) {
-            logger.info("SYNC_FLOW", "Already importing, skipping.")
-            return
-        }
-
-        // Update cooldown timer on any sync start
-        lastAutoSyncTime = Clock.System.now()
-
-        importJob?.cancel()
-        importJob = viewModelScope.launch {
-            _importState.value = Result.Loading
-            _importProgress.value = 0f
-            logger.info("SYNC_FLOW", "Starting transaction import job (isPortfolioSeed=$isPortfolioSeed)")
-            try {
-                transactionImporter.importHistory(accountId, isPortfolioSeed) { progress ->
-                    _importProgress.value = progress
-                }
-                logger.info("SYNC_FLOW", "Transaction import completed successfully")
-                _importState.value = Result.Success(Unit)
-            } catch (e: Exception) {
-                if (e !is CancellationException) {
-                    logger.error("SYNC_FLOW", "Transaction import failed", e)
-                    _importState.value = Result.Error(e)
-                } else {
-                    logger.info("SYNC_FLOW", "Transaction import job cancelled")
-                }
+    fun loadTransactionById(id: String, accounts: List<Account>) {
+        viewModelScope.launch {
+            val result = repo.getTransaction(id)
+            if (result is Result.Success) {
+                val t = result.data
+                _formState.value = TransactionFormState(
+                    amount = t.amount.formatToTwoPrecision(),
+                    description = t.description ?: "",
+                    isIncome = t.isIncome,
+                    selectedCategory = Category.fromId(t.categoryId, t.category, t.isIncome),
+                    selectedAccount = accounts.find { it.id == t.accountId },
+                    dateTime = t.dateTime,
+                    transactionCost = t.transactionCost.formatToTwoPrecision()
+                )
             }
         }
     }
 
-    fun cancelImport() {
-        logger.info("SYNC_FLOW", "cancelImport called. Cancelling import job.")
-        importJob?.cancel()
-        resetImportState()
-    }
-
-    fun autoSyncTransactions(accountId: String? = null) {
-        val now = Clock.System.now()
-        val lastSync = lastAutoSyncTime
-
-        if (lastSync == null || (now - lastSync) >= 2.minutes) {
-            logger.info("SYNC_FLOW", "Auto-sync triggered. Last sync: $lastSync, Now: $now")
-            lastAutoSyncTime = now
-            importTransactions(accountId)
-        } else {
-            logger.info("SYNC_FLOW", "Auto-sync skipped. Cooldown active. Last sync: $lastSync")
-        }
-    }
-
-    fun resetImportState() {
-        _importState.value = null
-    }
-
-    fun resetDeleteResult() {
-        _deleteResult.value = null
-    }
-
-    fun clearValidationError() {
-        _validationError.value = null
-    }
+    fun resetSelectedTransaction() { _formState.value = TransactionFormState(); _saveState.value = SaveState.Idle }
+    fun resetDeleteResult() { _deleteResult.value = null }
+    fun resetSaveState() { _saveState.value = SaveState.Idle }
+    fun clearValidationError() { _validationError.value = null }
 }
 
 private data class TransactionPagingParams(

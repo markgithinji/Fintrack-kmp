@@ -121,6 +121,10 @@ class MainViewModel(
         )
     }
 
+    fun consumeSmsSyncSignal() {
+        _smsSyncTrigger.value = null
+    }
+
     fun setSmsRationaleHidden(hidden: Boolean) {
         viewModelScope.launch {
             settingsDataSource.setSmsRationaleHidden(hidden)

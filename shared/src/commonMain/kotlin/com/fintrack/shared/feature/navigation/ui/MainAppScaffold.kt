@@ -82,8 +82,11 @@ fun MainAppScaffold(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val visibleEntries by navController.visibleEntries.collectAsStateWithLifecycle()
     val currentDestination = navBackStackEntry?.destination
-    val importState by transactionsViewModel.importState.collectAsStateWithLifecycle()
+    val importStateMap by transactionsViewModel.importState.collectAsStateWithLifecycle()
     val smsSyncSignal by mainViewModel.smsSyncTrigger.collectAsStateWithLifecycle()
+
+    val currentAccountId = smsSyncSignal?.accountId
+    val currentImportState = importStateMap[currentAccountId]
     val isSmsRationaleHidden by mainViewModel.isSmsRationaleHidden.collectAsStateWithLifecycle()
     val toastMessage by mainViewModel.toastMessage.collectAsStateWithLifecycle()
 
@@ -92,11 +95,11 @@ fun MainAppScaffold(
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
     var showSmsRationale by remember { mutableStateOf(false) }
 
-    LaunchedEffect(importState) {
-        if (importState is Result.Success) {
-            transactionsViewModel.resetImportState()
-        } else if (importState is Result.Error) {
-            val exception = (importState as Result.Error).exception
+    LaunchedEffect(currentImportState) {
+        if (currentImportState is Result.Success) {
+            transactionsViewModel.resetImportState(currentAccountId)
+        } else if (currentImportState is Result.Error) {
+            val exception = (currentImportState as Result.Error).exception
             val message = exception.message ?: "Sync failed"
             
             // If it's a permission error, we let HomeScreen trigger the rationale callback

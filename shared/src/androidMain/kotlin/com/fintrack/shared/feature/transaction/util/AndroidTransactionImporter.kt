@@ -35,24 +35,20 @@ actual fun createTransactionImporter(
             
             val accountsResult = accountRepository.getAccounts()
             val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
-            logger.info("SYNC_FLOW", "Fetched ${accounts.size} accounts for identification")
             
             val mpesaImporter = MpesaImporter(context, transactionRepository, accountRepository, categoryRepository, settingsDataSource)
             val equityImporter = EquityImporter(context, transactionRepository, accountRepository, categoryRepository, settingsDataSource)
 
             if (targetAccountId != null) {
                 val targetAccount = accounts.find { it.id == targetAccountId }
-                logger.info("SYNC_FLOW", "Target account found in list: ${targetAccount?.name} (Type: ${targetAccount?.type}, Sources: ${targetAccount?.linkedSources})")
-                
                 val hasMpesa = targetAccount?.linkedSources?.contains("mpesa") == true
                 val hasEquity = targetAccount?.linkedSources?.contains("equity") == true
-
-                logger.info("SYNC_FLOW", "Identification result - hasMpesa: $hasMpesa, hasEquity: $hasEquity")
+                
+                logger.info("SYNC_FLOW", "Sync check for account $targetAccountId: Mpesa=$hasMpesa, Equity=$hasEquity")
 
                 when {
                     isPortfolioSeed -> {
-                        logger.info("SYNC_FLOW", "Portfolio Seeding: Force seeding dummy data to account: $targetAccountId")
-                        // Default to Mpesa-style seeding for demo purposes
+                        logger.info("SYNC_FLOW", "Portfolio Seeding for account: $targetAccountId")
                         mpesaImporter.importHistory(targetAccountId, isPortfolioSeed, onProgress)
                     }
                     hasMpesa && hasEquity -> {
@@ -61,55 +57,59 @@ actual fun createTransactionImporter(
                         equityImporter.importHistory(targetAccountId, isPortfolioSeed) { onProgress(0.5f + (it * 0.5f)) }
                     }
                     hasMpesa -> {
-                        logger.info("SYNC_FLOW", "Importing specific Mpesa account: $targetAccountId")
+                        logger.info("SYNC_FLOW", "Importing Mpesa for account: $targetAccountId")
                         mpesaImporter.importHistory(targetAccountId, isPortfolioSeed, onProgress)
                     }
                     hasEquity -> {
-                        logger.info("SYNC_FLOW", "Importing specific Equity account: $targetAccountId")
+                        logger.info("SYNC_FLOW", "Importing Equity for account: $targetAccountId")
                         equityImporter.importHistory(targetAccountId, isPortfolioSeed, onProgress)
                     }
                     else -> {
-                        val msg = "Account $targetAccountId is not configured for automatic SMS sync."
-                        logger.warning("SYNC_FLOW", msg)
-                        throw Exception(msg)
+                        logger.warning("SYNC_FLOW", "Skipping sync: Account $targetAccountId is not linked to any SMS sources.")
+                        onProgress(1.0f)
                     }
                 }
                 return
             }
 
-            val mpesaAccount = accounts.find { it.linkedSources.contains("mpesa") }
-            val equityAccount = accounts.find { it.linkedSources.contains("equity") }
+            // Global sync: Sync ALL accounts that have linked sources
+            val mpesaAccounts = accounts.filter { it.linkedSources.contains("mpesa") }
+            val equityAccounts = accounts.filter { it.linkedSources.contains("equity") }
 
-            logger.info("SYNC_FLOW", "Found accounts for global sync (Local Settings) - Mpesa: ${mpesaAccount?.id}, Equity: ${equityAccount?.id}")
+            logger.info("SYNC_FLOW", "Global sync found ${mpesaAccounts.size} Mpesa and ${equityAccounts.size} Equity accounts")
 
-            when {
-                mpesaAccount != null && equityAccount != null -> {
-                    logger.info("SYNC_FLOW", "Importing both Mpesa and Equity")
-                    mpesaImporter.importHistory(null, isPortfolioSeed) { progress ->
-                        onProgress(progress * 0.5f)
-                    }
-                    equityImporter.importHistory(null, isPortfolioSeed) { progress ->
-                        onProgress(0.5f + (progress * 0.5f))
-                    }
-                }
-                mpesaAccount != null -> {
-                    logger.info("SYNC_FLOW", "Importing Mpesa only")
-                    mpesaImporter.importHistory(null, isPortfolioSeed, onProgress)
-                }
-                equityAccount != null -> {
-                    logger.info("SYNC_FLOW", "Importing Equity only")
-                    equityImporter.importHistory(null, isPortfolioSeed, onProgress)
-                }
-                isPortfolioSeed -> {
-                    logger.info("SYNC_FLOW", "Portfolio Seeding (Global): No linked accounts found, seeding to first available account")
-                    val fallbackAccount = accounts.find { it.name.lowercase().contains("mpesa") } ?: accounts.firstOrNull()
-                    mpesaImporter.importHistory(fallbackAccount?.id, isPortfolioSeed, onProgress)
-                }
-                else -> {
-                    logger.warning("SYNC_FLOW", "No suitable accounts found for import")
+            if (mpesaAccounts.isEmpty() && equityAccounts.isEmpty()) {
+                if (isPortfolioSeed) {
+                    val fallback = accounts.firstOrNull()
+                    logger.info("SYNC_FLOW", "Seeding dummy data to fallback account: ${fallback?.id}")
+                    mpesaImporter.importHistory(fallback?.id, true, onProgress)
+                } else {
+                    logger.info("SYNC_FLOW", "No linked accounts found for global sync.")
                     onProgress(1.0f)
                 }
+                return
             }
+
+            // Perform sync for each account
+            val totalSteps = mpesaAccounts.size + equityAccounts.size
+            var currentStep = 0
+
+            mpesaAccounts.forEach { account ->
+                logger.info("SYNC_FLOW", "Global Sync: Processing Mpesa for account ${account.id}")
+                mpesaImporter.importHistory(account.id, isPortfolioSeed) { 
+                    onProgress((currentStep + it) / totalSteps)
+                }
+                currentStep++
+            }
+
+            equityAccounts.forEach { account ->
+                logger.info("SYNC_FLOW", "Global Sync: Processing Equity for account ${account.id}")
+                equityImporter.importHistory(account.id, isPortfolioSeed) {
+                    onProgress((currentStep + it) / totalSteps)
+                }
+                currentStep++
+            }
+
             logger.info("SYNC_FLOW", "AndroidTransactionImporter: importHistory finished")
         }
     }

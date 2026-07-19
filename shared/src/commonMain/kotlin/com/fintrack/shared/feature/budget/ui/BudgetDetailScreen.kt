@@ -617,7 +617,7 @@ fun AccountChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val accountIcon = AccountIcon.fromAccountName(account.name)
+    val accountIcon = AccountIcon.fromAccountType(account.type, account.name)
 
     val scale by animateFloatAsState(
         targetValue = if (isSelected) 1.02f else 1.0f,

@@ -120,7 +120,10 @@ fun MainNavigation(
                 selectedAccountId = accountId,
                 refreshTrigger = refreshTrigger,
                 smsSyncSignal = smsSyncSignal,
-                onGlobalRefresh = onGlobalRefresh,
+                onGlobalRefresh = {
+                    mainViewModel.triggerGlobalRefresh()
+                    mainViewModel.consumeSmsSyncSignal()
+                },
                 onAccountSelected = { mainViewModel.onAccountSelected(it) },
                 onSmsPermissionRequired = onSmsPermissionRequired,
                 onShowToast = { message, isError -> mainViewModel.showToast(message, isError) },

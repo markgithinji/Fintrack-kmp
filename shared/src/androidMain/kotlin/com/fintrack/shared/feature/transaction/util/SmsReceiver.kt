@@ -94,9 +94,14 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                     val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
                     
                     val accountId = if (isMpesa) {
-                        accounts.find { it.linkedSources.contains("mpesa") }?.id ?: "mpesa"
+                        accounts.find { it.linkedSources.contains("mpesa") }?.id
                     } else {
-                        accounts.find { it.linkedSources.contains("equity") }?.id ?: "equity"
+                        accounts.find { it.linkedSources.contains("equity") }?.id
+                    }
+
+                    if (accountId == null) {
+                        logger.debug("SmsReceiver", "No account found linked to ${if (isMpesa) "mpesa" else "equity"}. Skipping.")
+                        return@launch
                     }
                     
                     var transaction: com.fintrack.shared.feature.transaction.domain.model.Transaction? = if (isMpesa) {
