@@ -87,7 +87,11 @@ class TransactionViewModel(
     }
 
     fun importTransactions(accountId: String? = null, isPortfolioSeed: Boolean = false) {
-        if (_importState.value[accountId] is Result.Loading) return
+        logger.info("SYNC_DEBUG", "ViewModel: importTransactions called for account: $accountId, isSeed: $isPortfolioSeed")
+        if (_importState.value[accountId] is Result.Loading) {
+            logger.info("SYNC_DEBUG", "ViewModel: Already syncing this account, ignoring request.")
+            return
+        }
         
         // Stop any existing sync and clean up loading states to avoid stale indicators
         cancelImport()
@@ -100,10 +104,14 @@ class TransactionViewModel(
                 transactionImporter.importHistory(accountId, isPortfolioSeed) { progress ->
                     _importProgress.update { it + (accountId to progress) }
                 }
+                logger.info("SYNC_DEBUG", "ViewModel: importHistory finished normally for $accountId. Setting SUCCESS.")
                 _importState.update { it + (accountId to Result.Success(Unit)) }
             } catch (e: Exception) {
                 if (e !is CancellationException) {
+                    logger.error("SYNC_DEBUG", "ViewModel: importHistory THREW ERROR for $accountId: ${e.message}")
                     _importState.update { it + (accountId to Result.Error(e)) }
+                } else {
+                    logger.info("SYNC_DEBUG", "ViewModel: importHistory was CANCELLED for $accountId")
                 }
             }
         }

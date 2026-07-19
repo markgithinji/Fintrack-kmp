@@ -74,9 +74,11 @@ class MpesaImporter(
         onProgress: (Float) -> Unit
     ) {
         val permissionStatus = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS)
+        logger.info("SYNC_DEBUG", "MpesaImporter: Permission check for READ_SMS: ${if (permissionStatus == PackageManager.PERMISSION_GRANTED) "GRANTED" else "DENIED"}")
+        
         if (permissionStatus != PackageManager.PERMISSION_GRANTED) {
-            logger.error("SYNC_FLOW", "SMS permission NOT granted.")
             if (!isPortfolioSeed) {
+                logger.error("SYNC_DEBUG", "MpesaImporter: Permission denied, throwing exception.")
                 throw Exception("Permission denied: READ_SMS is required for M-Pesa sync")
             }
         }
@@ -140,7 +142,11 @@ class MpesaImporter(
             val chunks = transactions.chunked(250)
             chunks.forEachIndexed { index, chunk ->
                 coroutineContext.ensureActive()
-                transactionRepository.importMpesaTransactions(chunk)
+                val result = transactionRepository.importMpesaTransactions(chunk)
+                if (result is Result.Error) {
+                    logger.error("SYNC_FLOW", "MpesaImporter: Failed to import chunk $index: ${result.exception.message}")
+                    throw result.exception
+                }
                 onProgress(0.3f + ((index + 1).toFloat() / chunks.size) * 0.6f)
             }
         }
@@ -150,7 +156,11 @@ class MpesaImporter(
             val account = accountResult.data
             val isPureMpesaAccount = account.linkedSources.contains("mpesa") && account.linkedSources.size == 1
             val newBalance = if (isPortfolioSeed) BigDecimal.fromInt(72450) else if (isPureMpesaAccount) latestBalance ?: account.balance else account.balance
-            accountRepository.addOrUpdateAccount(account.copy(balance = newBalance, lastSyncedAt = Clock.System.now()))
+            val updateResult = accountRepository.addOrUpdateAccount(account.copy(balance = newBalance, lastSyncedAt = Clock.System.now()))
+            if (updateResult is Result.Error) {
+                logger.error("SYNC_FLOW", "MpesaImporter: Failed to update account balance: ${updateResult.exception.message}")
+                throw updateResult.exception
+            }
         }
         onProgress(1.0f)
     }

@@ -31,9 +31,14 @@ actual fun createTransactionImporter(
             isPortfolioSeed: Boolean,
             onProgress: (Float) -> Unit
         ) {
-            logger.info("SYNC_FLOW", "AndroidTransactionImporter: importHistory started. Target: $targetAccountId, PortfolioSeed: $isPortfolioSeed")
+            logger.info("SYNC_DEBUG", "AndroidTransactionImporter: importHistory started. Target: $targetAccountId, PortfolioSeed: $isPortfolioSeed")
             
             val accountsResult = accountRepository.getAccounts()
+            if (accountsResult is Result.Error && !isPortfolioSeed) {
+                logger.error("SYNC_DEBUG", "Importer: Failed to load accounts from server. Cannot verify linkage.")
+                throw accountsResult.exception
+            }
+
             val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
             
             val mpesaImporter = MpesaImporter(context, transactionRepository, accountRepository, categoryRepository, settingsDataSource)
@@ -44,39 +49,39 @@ actual fun createTransactionImporter(
                 val hasMpesa = targetAccount?.linkedSources?.contains("mpesa") == true
                 val hasEquity = targetAccount?.linkedSources?.contains("equity") == true
                 
-                logger.info("SYNC_FLOW", "Sync check for account $targetAccountId: Mpesa=$hasMpesa, Equity=$hasEquity")
+                logger.info("SYNC_DEBUG", "Importer: Processing target account $targetAccountId. hasMpesa: $hasMpesa, hasEquity: $hasEquity")
 
                 when {
                     isPortfolioSeed -> {
-                        logger.info("SYNC_FLOW", "Portfolio Seeding for account: $targetAccountId")
+                        logger.info("SYNC_DEBUG", "Importer: Branch -> Portfolio Seeding")
                         mpesaImporter.importHistory(targetAccountId, isPortfolioSeed, onProgress)
                     }
                     hasMpesa && hasEquity -> {
-                        logger.info("SYNC_FLOW", "Importing both Mpesa and Equity for account: $targetAccountId")
+                        logger.info("SYNC_DEBUG", "Importer: Branch -> Both Mpesa & Equity")
                         mpesaImporter.importHistory(targetAccountId, isPortfolioSeed) { onProgress(it * 0.5f) }
                         equityImporter.importHistory(targetAccountId, isPortfolioSeed) { onProgress(0.5f + (it * 0.5f)) }
                     }
                     hasMpesa -> {
-                        logger.info("SYNC_FLOW", "Importing Mpesa for account: $targetAccountId")
+                        logger.info("SYNC_DEBUG", "Importer: Branch -> Mpesa only")
                         mpesaImporter.importHistory(targetAccountId, isPortfolioSeed, onProgress)
                     }
                     hasEquity -> {
-                        logger.info("SYNC_FLOW", "Importing Equity for account: $targetAccountId")
+                        logger.info("SYNC_DEBUG", "Importer: Branch -> Equity only")
                         equityImporter.importHistory(targetAccountId, isPortfolioSeed, onProgress)
                     }
                     else -> {
-                        logger.warning("SYNC_FLOW", "Skipping sync: Account $targetAccountId is not linked to any SMS sources.")
+                        logger.warning("SYNC_DEBUG", "Importer: Branch -> SKIPPING. Account not linked to active sources.")
                         onProgress(1.0f)
                     }
                 }
                 return
             }
 
-            // Global sync: Sync ALL accounts that have linked sources
+            // Global sync
             val mpesaAccounts = accounts.filter { it.linkedSources.contains("mpesa") }
             val equityAccounts = accounts.filter { it.linkedSources.contains("equity") }
 
-            logger.info("SYNC_FLOW", "Global sync found ${mpesaAccounts.size} Mpesa and ${equityAccounts.size} Equity accounts")
+            logger.info("SYNC_DEBUG", "Importer: Global sync start. Mpesa count: ${mpesaAccounts.size}, Equity count: ${equityAccounts.size}")
 
             if (mpesaAccounts.isEmpty() && equityAccounts.isEmpty()) {
                 if (isPortfolioSeed) {

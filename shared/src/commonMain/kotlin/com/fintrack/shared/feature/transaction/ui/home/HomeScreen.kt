@@ -213,6 +213,7 @@ fun HomeScreen(
 
     LaunchedEffect(enrichedSelectedAccount) {
         val account = (enrichedSelectedAccount as? Result.Success)?.data
+        logger.info("SYNC_DEBUG", "HomeScreen: LaunchedEffect triggered. Account: ${account?.name}, LinkedSources: ${account?.linkedSources}")
         account?.let { acc ->
             transactionsViewModel.loadRecentTransactions(acc.id)
             statsViewModel.loadOverview(acc.id)
@@ -220,7 +221,10 @@ fun HomeScreen(
             
             // Trigger auto-sync only if the account has linked sources
             if (acc.linkedSources.contains("mpesa") || acc.linkedSources.contains("equity")) {
+                logger.info("SYNC_DEBUG", "HomeScreen: Triggering auto-sync for ${acc.id}")
                 transactionsViewModel.autoSyncTransactions(acc.id)
+            } else {
+                logger.info("SYNC_DEBUG", "HomeScreen: Skipping auto-sync - no linked sources found for this account.")
             }
         }
     }

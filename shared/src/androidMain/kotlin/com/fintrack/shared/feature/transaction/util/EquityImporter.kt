@@ -139,7 +139,11 @@ class EquityImporter(
             val chunks = transactions.chunked(250)
             chunks.forEachIndexed { index, chunk ->
                 coroutineContext.ensureActive()
-                transactionRepository.importEquityTransactions(chunk)
+                val result = transactionRepository.importEquityTransactions(chunk)
+                if (result is Result.Error) {
+                    logger.error("SYNC_FLOW", "EquityImporter: Failed to import chunk $index: ${result.exception.message}")
+                    throw result.exception
+                }
                 onProgress(0.3f + ((index + 1).toFloat() / chunks.size) * 0.6f)
             }
         }
@@ -148,7 +152,11 @@ class EquityImporter(
         if (accountResult is Result.Success) {
             val account = accountResult.data
             val newBalance = if (isPortfolioSeed) BigDecimal.fromInt(145800) else account.balance
-            accountRepository.addOrUpdateAccount(account.copy(balance = newBalance, lastSyncedAt = Clock.System.now()))
+            val updateResult = accountRepository.addOrUpdateAccount(account.copy(balance = newBalance, lastSyncedAt = Clock.System.now()))
+            if (updateResult is Result.Error) {
+                logger.error("SYNC_FLOW", "EquityImporter: Failed to update account balance: ${updateResult.exception.message}")
+                throw updateResult.exception
+            }
         }
         onProgress(1.0f)
     }
