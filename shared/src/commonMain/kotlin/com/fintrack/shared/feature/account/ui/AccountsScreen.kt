@@ -109,6 +109,10 @@ fun AccountsScreen(
     val isOperating =
         (deleteResult is Result.Loading) || (saveResult is Result.Loading) || (clearDataResult is Result.Loading)
 
+    LaunchedEffect(Unit) {
+        accountsViewModel.reloadAccounts(showLoading = true)
+    }
+
     LaunchedEffect(refreshTrigger) {
         if (refreshTrigger > 0) {
             accountsViewModel.reloadAccounts(showLoading = false)

@@ -98,6 +98,12 @@ fun AddTransactionScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        if (accountsResult !is Result.Success || (accountsResult as Result.Success).data.isEmpty()) {
+            accountsViewModel.reloadAccounts()
+        }
+    }
+
     LaunchedEffect(deleteResult) {
         if (deleteResult is Result.Success) {
             onGlobalRefresh()

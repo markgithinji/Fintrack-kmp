@@ -124,6 +124,12 @@ fun BudgetDetailScreen(
         showNumpad = false
     }
 
+    LaunchedEffect(Unit) {
+        if (accountsResult !is Result.Success || (accountsResult as Result.Success).data.isEmpty()) {
+            accountsViewModel.reloadAccounts()
+        }
+    }
+
     LaunchedEffect(budgetId, selectedBudgetResult, accountsResult, allCategories) {
         if (accountsResult is Result.Success) {
             val accountsData = (accountsResult as Result.Success<List<Account>>).data

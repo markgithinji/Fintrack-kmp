@@ -211,7 +211,7 @@ fun HomeScreen(
     }
 
     LaunchedEffect(Unit) {
-        if (accountsResult is Result.Error || (accountsResult is Result.Success && (accountsResult as Result.Success).data.isEmpty())) {
+        if (accountsResult !is Result.Success || (accountsResult as Result.Success).data.isEmpty()) {
             accountsViewModel.reloadAccounts()
         }
     }

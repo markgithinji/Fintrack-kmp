@@ -33,10 +33,6 @@ class AccountsViewModel(
     private val _clearDataResult = MutableStateFlow<Result<Unit>?>(null)
     val clearDataResult: StateFlow<Result<Unit>?> = _clearDataResult.asStateFlow()
 
-    init {
-        reloadAccounts(showLoading = true)
-    }
-
     // Reload all accounts from the server
     fun reloadAccounts(showLoading: Boolean = true) {
         viewModelScope.launch {
