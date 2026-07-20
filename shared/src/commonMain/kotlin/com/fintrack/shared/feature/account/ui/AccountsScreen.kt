@@ -564,7 +564,6 @@ fun AccountItem(
                 overflow = TextOverflow.Ellipsis
             )
 
-            // Fixed space for sync message to prevent layout shifts
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = account.lastSyncedAt?.let { "Synced ${it.toRelativeString()}" } ?: "",
@@ -639,7 +638,6 @@ fun AccountDialog(
         }
     }
 
-    // Stay in loading state if save was successful to avoid flicker before dismissal
     val isEffectivelyLoading = isLoading || saveResult is Result.Success
 
     val hasChanges = accountName != account.name ||

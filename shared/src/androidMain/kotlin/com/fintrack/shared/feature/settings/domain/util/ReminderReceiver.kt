@@ -81,20 +81,26 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
         val showDecimals = settingsDataSource.showDecimals.first()
 
         if (dailyEnabled) {
-            val yesterdaySpending = getSpendingForYesterday()
-            notificationService.showSummaryNotification(
-                title = "Daily Spending Summary",
-                content = "You spent Ksh ${yesterdaySpending.formatToAmount(showDecimals = showDecimals)} yesterday."
-            )
+            val yesterdayResult = getSpendingForYesterday()
+            if (yesterdayResult is Result.Success) {
+                val yesterdaySpending = yesterdayResult.data
+                notificationService.showSummaryNotification(
+                    title = "Daily Spending Summary",
+                    content = "You spent Ksh ${yesterdaySpending.formatToAmount(showDecimals = showDecimals)} yesterday."
+                )
+            }
         }
 
         // Only show weekly on Sundays
         if (weeklyEnabled && java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.SUNDAY) {
-            val weeklySpending = getSpendingForLastWeek()
-            notificationService.showSummaryNotification(
-                title = "Weekly Spending Summary",
-                content = "You spent Ksh ${weeklySpending.formatToAmount(showDecimals = showDecimals)} this past week."
-            )
+            val weeklyResult = getSpendingForLastWeek()
+            if (weeklyResult is Result.Success) {
+                val weeklySpending = weeklyResult.data
+                notificationService.showSummaryNotification(
+                    title = "Weekly Spending Summary",
+                    content = "You spent Ksh ${weeklySpending.formatToAmount(showDecimals = showDecimals)} this past week."
+                )
+            }
         }
 
         // Re-schedule
@@ -103,7 +109,7 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
         }
     }
 
-    private suspend fun getSpendingForYesterday(): BigDecimal {
+    private suspend fun getSpendingForYesterday(): Result<BigDecimal> {
         val timeZone = TimeZone.currentSystemDefault()
         val today = Clock.System.now().toLocalDateTime(timeZone).date
         val yesterday = today.minus(1, DateTimeUnit.DAY).toString()
@@ -117,12 +123,14 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
             isIncome = false
         )
         
-        return if (result is Result.Success) {
-            result.data.first.fold(BigDecimal.ZERO) { acc, transaction -> acc + transaction.amount }
-        } else BigDecimal.ZERO
+        return when (result) {
+            is Result.Success -> Result.Success(result.data.first.fold(BigDecimal.ZERO) { acc, transaction -> acc + transaction.amount })
+            is Result.Error -> Result.Error(result.exception)
+            is Result.Loading -> Result.Loading
+        }
     }
 
-    private suspend fun getSpendingForLastWeek(): BigDecimal {
+    private suspend fun getSpendingForLastWeek(): Result<BigDecimal> {
         val timeZone = TimeZone.currentSystemDefault()
         val today = Clock.System.now().toLocalDateTime(timeZone).date
         val lastWeekStart = today.minus(7, DateTimeUnit.DAY).toString()
@@ -137,8 +145,10 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
             isIncome = false
         )
         
-        return if (result is Result.Success) {
-            result.data.first.fold(BigDecimal.ZERO) { acc, transaction -> acc + transaction.amount }
-        } else BigDecimal.ZERO
+        return when (result) {
+            is Result.Success -> Result.Success(result.data.first.fold(BigDecimal.ZERO) { acc, transaction -> acc + transaction.amount })
+            is Result.Error -> Result.Error(result.exception)
+            is Result.Loading -> Result.Loading
+        }
     }
 }
