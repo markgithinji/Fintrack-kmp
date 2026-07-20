@@ -61,7 +61,8 @@ val PinkExpense = Color(0xFFE27C94)  // pinkish-red for expense
 val backgroundGray = Color(0xFFEFEFEF)
 val YellowWarning = Color(0xFFFFD600)  // Bright Yellow
 val PurpleBudget = Color(0xFF8B5CF6)   // Purple for budgets/categories
-val AuthGold = Color(0xFFFFB300)      // Balanced Gold for Auth links (better contrast than bright yellow)
+val AuthGold = Color(0xFFFFB300)      // Balanced Gold for buttons/success (original yellow-gold)
+val AuthLinkText = Color(0xFFC59000)   // Darker gold specifically for text links to avoid being "washed out"
 
 // Chart segments
 val SegmentColor1 = Color(0xFFE63946) // Strong red
