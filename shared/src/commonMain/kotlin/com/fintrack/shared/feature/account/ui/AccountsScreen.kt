@@ -451,7 +451,7 @@ fun AddAccountItem(
             width = 1.dp,
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
         ),
-        modifier = Modifier.fillMaxWidth().height(110.dp)
+        modifier = Modifier.fillMaxWidth().height(115.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(10.dp),
@@ -501,7 +501,7 @@ fun AccountItem(
             width = 1.dp,
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
         ),
-        modifier = Modifier.fillMaxWidth().height(110.dp)
+        modifier = Modifier.fillMaxWidth().height(115.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(10.dp),
@@ -559,7 +559,9 @@ fun AccountItem(
                 text = (account.balance ?: BigDecimal.ZERO).toCurrencyString(),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
 
             // Fixed space for sync message to prevent layout shifts

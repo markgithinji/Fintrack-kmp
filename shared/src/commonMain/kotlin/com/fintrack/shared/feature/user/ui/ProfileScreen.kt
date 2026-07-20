@@ -83,7 +83,7 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize(),
             contentPadding = PaddingValues(
-                top = topPadding + 24.dp,
+                top = topPadding + 16.dp,
                 bottom = paddingValues.calculateBottomPadding() + 16.dp
             )
         ) {
@@ -102,13 +102,13 @@ fun ProfileScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 20.dp, horizontal = 16.dp),
+                            .padding(vertical = 16.dp, horizontal = 16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Box(contentAlignment = Alignment.BottomEnd) {
                             Surface(
                                 modifier = Modifier
-                                    .size(90.dp)
+                                    .size(80.dp)
                                     .padding(4.dp),
                                 shape = CircleShape,
                                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
@@ -121,7 +121,7 @@ fun ProfileScreen(
                                     Icon(
                                         imageVector = Icons.Default.Person,
                                         contentDescription = null,
-                                        modifier = Modifier.size(48.dp),
+                                        modifier = Modifier.size(42.dp),
                                         tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
@@ -148,12 +148,12 @@ fun ProfileScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(64.dp), // Increased and strictly fixed to prevent layout shifts
+                                .height(56.dp), // Increased and strictly fixed to prevent layout shifts
                             contentAlignment = Alignment.Center
                         ) {
                             AnimatedContent(
@@ -250,7 +250,7 @@ fun ProfileScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         // Insights Row
                         Row(
