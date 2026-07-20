@@ -50,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -77,7 +78,8 @@ import org.koin.compose.viewmodel.koinViewModel
 fun MainAppScaffold(
     mainViewModel: MainViewModel,
     transactionsViewModel: TransactionViewModel = koinViewModel(),
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    onUpdateToastPadding: (Dp) -> Unit = {}
 ) {
     val navController = LocalNavController.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -89,7 +91,6 @@ fun MainAppScaffold(
     val currentAccountId = smsSyncSignal?.accountId
     val currentImportState = importStateMap[currentAccountId]
     val isSmsRationaleHidden by mainViewModel.isSmsRationaleHidden.collectAsStateWithLifecycle()
-    val toastMessage by mainViewModel.toastMessage.collectAsStateWithLifecycle()
 
     val logger = remember { KMPLogger() }
 
@@ -122,6 +123,10 @@ fun MainAppScaffold(
     // Logic for animating the bars away immediately upon navigation
     val showBottomBarNow = remember(currentDestination) {
         currentDestination?.shouldShowBottomBar() ?: true
+    }
+
+    LaunchedEffect(showBottomBarNow) {
+        onUpdateToastPadding(if (showBottomBarNow) 100.dp else 24.dp)
     }
 
     // Keep the composable in the hierarchy during transitions to stabilize content area
@@ -353,17 +358,7 @@ fun MainAppScaffold(
             }
         }
 
-        toastMessage?.let { (message, isError) ->
-            MaterialToast(
-                message = message,
-                isError = isError,
-                onDismiss = { mainViewModel.clearToast() },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .windowInsetsPadding(WindowInsets.navigationBars)
-                    .padding(bottom = if (showBottomBarNow) 100.dp else 24.dp)
-            )
-        }
+        // Global Toast is now handled in MainScreen
 
         // Place FAB over everything
         AnimatedVisibility(

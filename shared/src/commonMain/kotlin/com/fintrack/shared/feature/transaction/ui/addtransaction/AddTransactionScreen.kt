@@ -44,11 +44,13 @@ import com.fintrack.shared.feature.navigation.ui.LocalTimeFormat
 import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
 import com.fintrack.shared.feature.core.ui.util.ThousandsSeparatorOffsetMapping
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
+import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import kotlinx.coroutines.delay
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
@@ -57,6 +59,7 @@ fun AddTransactionScreen(
     transactionId: String? = null,
     transactionsViewModel: TransactionViewModel = koinViewModel(),
     accountsViewModel: AccountsViewModel = koinViewModel(),
+    mainViewModel: MainViewModel = koinInject(),
     onGlobalRefresh: () -> Unit,
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
@@ -131,6 +134,22 @@ fun AddTransactionScreen(
             onGlobalRefresh()
             delay(1200)
             onBack()
+            transactionsViewModel.resetSaveState()
+        }
+    }
+
+    LaunchedEffect(validationError) {
+        validationError?.let {
+            mainViewModel.showToast(it, isError = true)
+            transactionsViewModel.clearValidationError()
+        }
+    }
+
+    LaunchedEffect(saveState) {
+        if (saveState is SaveState.Error) {
+            val error = (saveState as SaveState.Error).exception
+            val message = (error as? ApiException)?.getUserFriendlyMessage() ?: error.message ?: "Failed to save transaction"
+            mainViewModel.showToast(message, isError = true)
             transactionsViewModel.resetSaveState()
         }
     }
@@ -343,30 +362,6 @@ fun AddTransactionScreen(
                     showTimePicker = false
                 },
                 onDismiss = { showTimePicker = false }
-            )
-        }
-
-        if (validationError != null) {
-            MaterialToast(
-                message = validationError!!,
-                isError = true,
-                onDismiss = { transactionsViewModel.clearValidationError() },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = paddingValues.calculateBottomPadding() + 80.dp)
-            )
-        }
-
-        if (saveState is SaveState.Error) {
-            val error = (saveState as SaveState.Error).exception
-            val message = (error as? ApiException)?.getUserFriendlyMessage() ?: error.message ?: "Failed to save transaction"
-            MaterialToast(
-                message = message,
-                isError = true,
-                onDismiss = { transactionsViewModel.resetSaveState() },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = paddingValues.calculateBottomPadding() + 80.dp)
             )
         }
     }

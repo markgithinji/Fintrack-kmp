@@ -5,6 +5,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -24,6 +26,11 @@ val LocalShowDecimals = compositionLocalOf { true }
 val LocalTimeFormat = compositionLocalOf { TimeFormat.TWENTY_FOUR_HOUR }
 val LocalAppTheme = compositionLocalOf { AppTheme.SYSTEM }
 val LocalUser = compositionLocalOf<User?> { null }
+
+/**
+ * Provides the extra bottom padding for toasts to avoid overlapping with FABs or bottom bars.
+ */
+val LocalToastBottomPadding = compositionLocalOf { 0.dp }
 
 val LocalBiometricAuthenticator = staticCompositionLocalOf<BiometricAuthenticator> {
     error("No BiometricAuthenticator provided")
@@ -60,6 +67,7 @@ fun BigDecimal.toCurrencyString(): String {
 @Composable
 fun AppStateProvider(
     viewModel: MainViewModel = koinInject(),
+    toastBottomPadding: Dp = 0.dp,
     content: @Composable () -> Unit
 ) {
     val navController = rememberNavController()
@@ -78,6 +86,7 @@ fun AppStateProvider(
         LocalTimeFormat provides timeFormat,
         LocalAppTheme provides theme,
         LocalUser provides userProfile,
+        LocalToastBottomPadding provides toastBottomPadding,
         LocalBiometricAuthenticator provides biometricAuthenticator,
         LocalNavController provides navController
     ) {

@@ -12,13 +12,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -118,9 +121,6 @@ fun RegisterScreen(
     LaunchedEffect(registerFormState.passwordError) { registerFormState.passwordError?.let { mostRecentValidationError = it } }
     LaunchedEffect(registerFormState.confirmPasswordError) { registerFormState.confirmPasswordError?.let { mostRecentValidationError = it } }
 
-    // Toast message state
-    var toastMessage by remember { mutableStateOf<String?>(null) }
-
     var passwordVisible by remember { mutableStateOf(value = false) }
     var confirmPasswordVisible by remember { mutableStateOf(value = false) }
 
@@ -145,13 +145,10 @@ fun RegisterScreen(
 
             is AuthState.Error -> {
                 val exception = state.exception
-                toastMessage = (exception as? ApiException)?.getUserFriendlyMessage()
-                    ?: exception.message ?: "Registration failed. Please try again."
+                viewModel.showToast((exception as? ApiException)?.getUserFriendlyMessage() ?: exception.message ?: "Registration failed. Please try again.", true)
             }
 
-            else -> {
-                toastMessage = null
-            }
+            else -> Unit
         }
     }
 
@@ -474,17 +471,6 @@ fun RegisterScreen(
                     modifier = Modifier.clickable { onLogin() }
                 )
             }
-        }
-
-        toastMessage?.let { message ->
-            MaterialToast(
-                message = message,
-                isError = true,
-                onDismiss = { toastMessage = null },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 32.dp)
-            )
         }
     }
 }

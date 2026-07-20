@@ -71,9 +71,10 @@ import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.category.ui.util.toIcon
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
-import com.fintrack.shared.feature.core.ui.MaterialToast
+import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.ui.theme.PinkExpense
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,11 +84,11 @@ fun CategoryManagementScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
     onNavigateBack: () -> Unit,
     viewModel: CategoryManagementViewModel = koinViewModel(),
+    mainViewModel: MainViewModel = koinInject()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
     var categoryToDelete by remember { mutableStateOf<Category?>(null) }
-    var toastMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(refreshTrigger) {
         if (refreshTrigger > 0) {
@@ -97,7 +98,7 @@ fun CategoryManagementScreen(
 
     LaunchedEffect(state.error) {
         if (state.error != null && state.categories.isNotEmpty()) {
-            toastMessage = state.error
+            mainViewModel.showToast(state.error!!, isError = true)
             viewModel.clearError()
         }
     }
@@ -185,17 +186,6 @@ fun CategoryManagementScreen(
                 .padding(end = 16.dp, bottom = paddingValues.calculateBottomPadding() + 16.dp)
         ) {
             Icon(Icons.Default.Add, contentDescription = "Add Category")
-        }
-
-        toastMessage?.let { message ->
-            MaterialToast(
-                message = message,
-                isError = true,
-                onDismiss = { toastMessage = null },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = paddingValues.calculateBottomPadding() + 32.dp)
-            )
         }
     }
 

@@ -30,14 +30,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.core.data.model.ApiException
 import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.domain.SaveState
-import com.fintrack.shared.feature.core.ui.MaterialToast
+import com.fintrack.shared.feature.navigation.ui.MainViewModel
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
     onNavigateBack: () -> Unit,
-    viewModel: ProfileViewModel = koinViewModel()
+    viewModel: ProfileViewModel = koinViewModel(),
+    mainViewModel: MainViewModel = koinInject()
 ) {
     val formState by viewModel.formState.collectAsStateWithLifecycle()
     val editState by viewModel.editState.collectAsStateWithLifecycle()
@@ -45,6 +47,11 @@ fun EditProfileScreen(
     LaunchedEffect(editState) {
         if (editState is SaveState.Success) {
             onNavigateBack()
+            viewModel.resetEditState()
+        } else if (editState is SaveState.Error) {
+            val error = (editState as SaveState.Error).exception
+            val message = (error as? ApiException)?.getUserFriendlyMessage() ?: error.message ?: "An error occurred"
+            mainViewModel.showToast(message, isError = true)
             viewModel.resetEditState()
         }
     }
@@ -107,19 +114,6 @@ fun EditProfileScreen(
                     }
                     Text("Save Changes")
                 }
-            }
-
-            if (editState is SaveState.Error) {
-                val error = (editState as SaveState.Error).exception
-                val message = (error as? ApiException)?.getUserFriendlyMessage() ?: error.message ?: "An error occurred"
-                MaterialToast(
-                    message = message,
-                    isError = true,
-                    onDismiss = { viewModel.resetEditState() },
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 16.dp)
-                )
             }
         }
     }

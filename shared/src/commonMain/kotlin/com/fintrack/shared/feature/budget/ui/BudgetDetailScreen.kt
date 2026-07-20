@@ -82,12 +82,14 @@ import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
 import androidx.compose.ui.platform.LocalFocusManager
 import com.fintrack.shared.feature.transaction.ui.home.components.AccountIcon
+import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import kotlinx.coroutines.delay
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 
@@ -98,6 +100,7 @@ fun BudgetDetailScreen(
     onGlobalRefresh: () -> Unit,
     viewModel: BudgetViewModel = koinViewModel(),
     accountsViewModel: AccountsViewModel = koinViewModel(),
+    mainViewModel: MainViewModel = koinInject(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onSave: () -> Unit,
@@ -168,6 +171,23 @@ fun BudgetDetailScreen(
         label = "SaveButtonPadding"
     ) { state ->
         if (state == EnterExitState.Visible) 0.dp else bottomBarHeight
+    }
+
+    LaunchedEffect(validationError) {
+        validationError?.let {
+            mainViewModel.showToast(it, isError = true)
+            viewModel.clearValidationError()
+        }
+    }
+
+    LaunchedEffect(saveState) {
+        if (saveState is SaveState.Error) {
+            val message = (saveState as SaveState.Error).exception.let {
+                (it as? ApiException)?.getUserFriendlyMessage() ?: it.message ?: "Failed to save budget"
+            }
+            mainViewModel.showToast(message, isError = true)
+            viewModel.resetSaveState()
+        }
     }
 
     Box(
@@ -352,31 +372,6 @@ fun BudgetDetailScreen(
                     viewModel.handleAmountBackspace()
                 },
                 onDoneClick = { showNumpad = false }
-            )
-        }
-
-        if (saveState is SaveState.Error) {
-            val message = (saveState as SaveState.Error).exception.let {
-                (it as? ApiException)?.getUserFriendlyMessage() ?: it.message ?: "Failed to save budget"
-            }
-            MaterialToast(
-                message = message,
-                isError = true,
-                onDismiss = { viewModel.resetSaveState() },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = paddingValues.calculateBottomPadding() + 32.dp)
-            )
-        }
-
-        if (validationError != null) {
-            MaterialToast(
-                message = validationError!!,
-                isError = true,
-                onDismiss = { viewModel.clearValidationError() },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = paddingValues.calculateBottomPadding() + 32.dp)
             )
         }
     }

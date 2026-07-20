@@ -76,12 +76,14 @@ import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.toRelativeString
 import com.fintrack.shared.feature.navigation.ui.LocalBiometricAuthenticator
+import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.transaction.ui.home.components.AccountIcon
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,6 +94,7 @@ fun AccountsScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
     accountsViewModel: AccountsViewModel = koinViewModel(),
     settingsViewModel: SettingsViewModel = koinViewModel(),
+    mainViewModel: MainViewModel = koinInject()
 ) {
     val accountsState by accountsViewModel.accounts.collectAsStateWithLifecycle()
     val deleteResult by accountsViewModel.deleteResult.collectAsStateWithLifecycle()
@@ -103,7 +106,6 @@ fun AccountsScreen(
 
     var showAccountDialog by remember { mutableStateOf<Account?>(null) }
     var isEditing by remember { mutableStateOf(false) }
-    var toastMessage by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
 
     val isOperating =
         (deleteResult is Result.Loading) || (saveResult is Result.Loading) || (clearDataResult is Result.Loading)
@@ -121,7 +123,7 @@ fun AccountsScreen(
     LaunchedEffect(saveResult) {
         val result = saveResult
         if (result is Result.Success) {
-            toastMessage = (if (isEditing) "Account updated" else "Account added") to false
+            mainViewModel.showToast(if (isEditing) "Account updated" else "Account added", false)
             
             val accountId = result.data.id
             
@@ -220,17 +222,6 @@ fun AccountsScreen(
                     )
                 }
             }
-        }
-
-        toastMessage?.let { (message, isError) ->
-            MaterialToast(
-                message = message,
-                isError = isError,
-                onDismiss = { toastMessage = null },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = paddingValues.calculateBottomPadding() + 32.dp)
-            )
         }
     }
 

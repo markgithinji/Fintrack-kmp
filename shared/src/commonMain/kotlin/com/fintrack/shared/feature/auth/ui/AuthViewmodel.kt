@@ -52,6 +52,17 @@ class AuthViewModel(
     private val _loginFormState = MutableStateFlow(LoginFormState())
     val loginFormState: StateFlow<LoginFormState> = _loginFormState
 
+    private val _toastMessage = MutableStateFlow<Pair<String, Boolean>?>(null)
+    val toastMessage: StateFlow<Pair<String, Boolean>?> = _toastMessage.asStateFlow()
+
+    fun showToast(message: String, isError: Boolean = false) {
+        _toastMessage.value = message to isError
+    }
+
+    fun clearToast() {
+        _toastMessage.value = null
+    }
+
     init {
         checkAuthenticationStatus()
         observeTokenChanges()
