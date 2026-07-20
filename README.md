@@ -23,13 +23,16 @@ Shared business logic powers the engine, while **Compose Multiplatform** and **S
 
 ### 📡 Smart SMS Detection & Parsing (Android)
 *   **Zero-Effort Tracking**: Real-time **M-Pesa** and **Equity Bank** transaction tracking via SMS.
-*   **Intelligent Extraction**: High-precision Regex engine extracts amounts, **Transaction Fees**, **Merchant Names**, and **Real-time Balances**.
-*   **Auto-Categorization**: Machine-logic automatically maps SMS data to accurate categories.
+*   **Intelligent Graph Extraction**: High-precision Regex engine handles complex financial events like **Reversals**, **Loan Approvals**, **Agent Withdrawals**, and **Merchant Till Payments** natively.
+*   **Intra-Account Awareness**: Smart logic to detect and skip transfers between your own linked accounts (e.g., Equity to M-Pesa) to prevent double-counting your net worth.
+*   **Real-time Balance Reconciliation**: Automatically extracts balance data from SMS headers to ensure the app's local state matches your bank/M-Pesa state perfectly.
 *   **Immediate Sync**: Provides **immediate UI notifications** upon receipt and uses **Expedited WorkManager** for guaranteed background synchronization.
 
 ### 📊 Advanced Financial Analytics & Summaries
+*   **Predictive Financial Health**: Forecasting logic that predicts budget depletion and identifies spending volatility using backend-driven machine logic.
+*   **Essential Spend Ratio**: Automatically calculates your financial health based on the **50/30/20 rule**, identifying "Essential" (Needs) vs. "Lifestyle" (Wants) spending.
 *   **Historical Look-back**: Automatically discovers and displays your last active month's trends if the current month is empty. Includes dual-level comparisons (Monthly vs. Weekly) with context-aware wording.
-*   **Financial Highlights**: Key insights showing top expenses, savings rate, and financial health metrics.
+*   **Financial Highlights**: Key insights showing top expenses, savings rate, and category correlations (e.g., "When you spend more on Dining Out, your Grocery spending drops").
 *   **Interactive Charts**: Beautiful visualizations for spending patterns, income trends, and budget compliance.
 *   **Total Amount Logic**: Professional-grade math that handles **Transaction Fees** natively to ensure your net balance is always accurate.
 
@@ -39,6 +42,7 @@ Shared business logic powers the engine, while **Compose Multiplatform** and **S
 *   **Daily & Weekly Briefs**: Stay informed with scheduled push notifications summarizing your previous day's or week's total spending.
 
 ### 🛡️ Enterprise-Grade Security
+*   **Step-up Biometric Authentication**: Identity verification required for sensitive operations (deleting accounts, clearing history) to ensure maximum data integrity.
 *   **Biometric Vault**: Protect your data with **Fingerprint, FaceID, or TouchID** lock, ensuring privacy even if your device is unlocked.
 *   **Military-Grade Encryption**: Sensitive tokens are encrypted using **Google Tink (AES-256 GCM)** and stored securely in **Jetpack DataStore**.
 *   **Hardware-Backed Storage**: Master keys are managed by the **Android Keystore** and **iOS Keychain**.
@@ -50,6 +54,7 @@ Shared business logic powers the engine, while **Compose Multiplatform** and **S
 
 - **Multi-Account Management**: Track balances across checking, savings, credit cards, and cash in a single unified view.
 - **Income & Expense Tracking**: Monitor cash flow with daily, weekly, and monthly period views.
+- **Cloud-Synced Categorization**: Real-time synchronization of merchant keywords and category rules from the backend for high-accuracy transaction mapping.
 - **Category-based Analytics**: Visual breakdown of spending by categories (food, transportation, entertainment, etc.).
 - **Transaction History**: Comprehensive ledger with search, filter, and export capabilities.
 - **Flexible Data Export**: Export your transaction history in multiple formats (**CSV, PDF, or JSON**) with support for **custom date ranges**. Choose your preferred format in settings for a personalized export experience.
