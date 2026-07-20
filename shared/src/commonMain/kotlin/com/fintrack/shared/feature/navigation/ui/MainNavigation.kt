@@ -150,6 +150,7 @@ fun MainNavigation(
 
             AddTransactionScreen(
                 transactionId = transactionId,
+                onShowToast = { message, isError -> mainViewModel.showToast(message, isError) },
                 onGlobalRefresh = onGlobalRefresh,
                 paddingValues = paddingValues,
                 animatedVisibilityScope = this,
@@ -214,7 +215,8 @@ fun MainNavigation(
 
         composable<Screen.EditProfile> { 
             EditProfileScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onShowToast = { message, isError -> mainViewModel.showToast(message, isError) }
             )
         }
 
@@ -222,6 +224,7 @@ fun MainNavigation(
             AccountsScreen(
                 refreshTrigger = refreshTrigger,
                 onGlobalRefresh = onGlobalRefresh,
+                onShowToast = { message, isError -> mainViewModel.showToast(message, isError) },
                 paddingValues = paddingValues
             )
         }
@@ -229,6 +232,7 @@ fun MainNavigation(
         composable<Screen.Categories> { 
             CategoryManagementScreen(
                 refreshTrigger = refreshTrigger,
+                onShowToast = { message, isError -> mainViewModel.showToast(message, isError) },
                 paddingValues = paddingValues,
                 onNavigateBack = { navController.popBackStack() }
             )
@@ -250,6 +254,7 @@ fun MainNavigation(
             BudgetDetailScreen(
                 budgetId = budgetId,
                 onGlobalRefresh = onGlobalRefresh,
+                onShowToast = { message, isError -> mainViewModel.showToast(message, isError) },
                 paddingValues = paddingValues,
                 animatedVisibilityScope = this,
                 onSave = { navController.popBackStack() },

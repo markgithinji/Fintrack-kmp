@@ -82,15 +82,13 @@ import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
 import androidx.compose.ui.platform.LocalFocusManager
 import com.fintrack.shared.feature.transaction.ui.home.components.AccountIcon
-import com.fintrack.shared.feature.navigation.ui.MainViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import kotlinx.coroutines.delay
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
-import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -98,9 +96,9 @@ import kotlin.time.Clock
 fun BudgetDetailScreen(
     budgetId: String?,
     onGlobalRefresh: () -> Unit,
+    onShowToast: (String, Boolean) -> Unit,
     viewModel: BudgetViewModel = koinViewModel(),
     accountsViewModel: AccountsViewModel = koinViewModel(),
-    mainViewModel: MainViewModel = koinInject(),
     paddingValues: PaddingValues = PaddingValues(0.dp),
     animatedVisibilityScope: AnimatedVisibilityScope,
     onSave: () -> Unit,
@@ -175,17 +173,19 @@ fun BudgetDetailScreen(
 
     LaunchedEffect(validationError) {
         validationError?.let {
-            mainViewModel.showToast(it, isError = true)
+            onShowToast(it, true)
             viewModel.clearValidationError()
         }
     }
 
     LaunchedEffect(saveState) {
-        if (saveState is SaveState.Error) {
+        if (saveState is SaveState.Success) {
+            onSave()
+        } else if (saveState is SaveState.Error) {
             val message = (saveState as SaveState.Error).exception.let {
                 (it as? ApiException)?.getUserFriendlyMessage() ?: it.message ?: "Failed to save budget"
             }
-            mainViewModel.showToast(message, isError = true)
+            onShowToast(message, true)
             viewModel.resetSaveState()
         }
     }

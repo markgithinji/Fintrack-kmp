@@ -71,20 +71,18 @@ import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.category.ui.util.toIcon
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
-import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.ui.theme.PinkExpense
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryManagementScreen(
     refreshTrigger: Int,
+    onShowToast: (String, Boolean) -> Unit,
     paddingValues: PaddingValues = PaddingValues(0.dp),
     onNavigateBack: () -> Unit,
-    viewModel: CategoryManagementViewModel = koinViewModel(),
-    mainViewModel: MainViewModel = koinInject()
+    viewModel: CategoryManagementViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
@@ -98,7 +96,7 @@ fun CategoryManagementScreen(
 
     LaunchedEffect(state.error) {
         if (state.error != null && state.categories.isNotEmpty()) {
-            mainViewModel.showToast(state.error!!, isError = true)
+            onShowToast(state.error!!, true)
             viewModel.clearError()
         }
     }

@@ -76,7 +76,6 @@ import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.toRelativeString
 import com.fintrack.shared.feature.navigation.ui.LocalBiometricAuthenticator
-import com.fintrack.shared.feature.navigation.ui.MainViewModel
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
@@ -91,10 +90,10 @@ import org.koin.compose.viewmodel.koinViewModel
 fun AccountsScreen(
     refreshTrigger: Int,
     onGlobalRefresh: () -> Unit,
+    onShowToast: (String, Boolean) -> Unit,
     paddingValues: PaddingValues = PaddingValues(0.dp),
     accountsViewModel: AccountsViewModel = koinViewModel(),
-    settingsViewModel: SettingsViewModel = koinViewModel(),
-    mainViewModel: MainViewModel = koinInject()
+    settingsViewModel: SettingsViewModel = koinViewModel()
 ) {
     val accountsState by accountsViewModel.accounts.collectAsStateWithLifecycle()
     val deleteResult by accountsViewModel.deleteResult.collectAsStateWithLifecycle()
@@ -123,7 +122,7 @@ fun AccountsScreen(
     LaunchedEffect(saveResult) {
         val result = saveResult
         if (result is Result.Success) {
-            mainViewModel.showToast(if (isEditing) "Account updated" else "Account added", false)
+            onShowToast(if (isEditing) "Account updated" else "Account added", false)
             
             val accountId = result.data.id
             
