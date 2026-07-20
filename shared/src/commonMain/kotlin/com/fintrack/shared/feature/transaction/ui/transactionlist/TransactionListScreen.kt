@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.*
+import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsHeaderDate
 import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
@@ -49,6 +50,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun TransactionListScreen(
     accountId: String,
+    refreshTrigger: Int = 0,
     isIncome: Boolean? = null,
     categoryId: String? = null,
     categoryName: String? = null,
@@ -64,6 +66,7 @@ fun TransactionListScreen(
     val transactionCounts by statisticsViewModel.transactionCounts.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     val sharedTransitionScope = LocalSharedTransitionScope.current
+    val logger = remember { KMPLogger() }
 
     val sharedBoundsKey = remember(accountId, isIncome, categoryId, categoryName, hasTransactionCost) {
         when {
@@ -88,7 +91,11 @@ fun TransactionListScreen(
         )
     }.collectAsLazyPagingItems()
 
-    LaunchedEffect(accountId, isIncome, categoryId, startDate, endDate, hasTransactionCost) {
+    SideEffect {
+        logger.debug("TX_LIST_DEBUG", "refreshState: ${transactions.loadState.refresh}, itemCount: ${transactions.itemCount}, countsState: $transactionCounts")
+    }
+
+    LaunchedEffect(accountId, isIncome, categoryId, startDate, endDate, hasTransactionCost, refreshTrigger) {
         statisticsViewModel.loadTransactionCounts(
             accountId = accountId,
             isIncome = isIncome,
@@ -97,6 +104,11 @@ fun TransactionListScreen(
             end = endDate,
             hasCost = hasTransactionCost
         )
+        
+        // Also refresh paging data if this is a manual refresh trigger
+        if (refreshTrigger > 0) {
+            transactions.refresh()
+        }
     }
 
     val bottomPadding = paddingValues.calculateBottomPadding()
@@ -120,6 +132,19 @@ fun TransactionListScreen(
 
     var includeFees by remember { mutableStateOf(true) }
     val throttledOnEditTransaction = rememberThrottleClick(onClick = onEditTransaction)
+    
+    val onRetry = {
+        statisticsViewModel.loadTransactionCounts(
+            accountId = accountId,
+            isIncome = isIncome,
+            categoryId = categoryId,
+            start = startDate,
+            end = endDate,
+            hasCost = hasTransactionCost,
+            force = true
+        )
+        transactions.retry()
+    }
 
     TransactionListContent(
         transactionCounts = transactionCounts,
@@ -135,6 +160,7 @@ fun TransactionListScreen(
         animatedVisibilityScope = animatedVisibilityScope,
         sharedTransitionScope = sharedTransitionScope,
         onTransactionClick = throttledOnEditTransaction,
+        onRetry = onRetry,
         modifier = (if (sharedTransitionScope != null) {
             with(sharedTransitionScope) {
                 Modifier.sharedBounds(
@@ -164,6 +190,7 @@ private fun TransactionListContent(
     animatedVisibilityScope: AnimatedVisibilityScope,
     sharedTransitionScope: SharedTransitionScope?,
     onTransactionClick: (String) -> Unit = {},
+    onRetry: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -207,7 +234,7 @@ private fun TransactionListContent(
             item {
                 TransactionListErrorState(
                     error = refreshState.error,
-                    onRetry = { transactions.retry() }
+                    onRetry = onRetry
                 )
             }
         } else if (transactions.itemCount == 0 && refreshState is LoadState.NotLoading) {
@@ -261,7 +288,7 @@ private fun TransactionListContent(
                 item {
                     TransactionListErrorState(
                         error = appendState.error,
-                        onRetry = { transactions.retry() }
+                        onRetry = onRetry
                     )
                 }
             }

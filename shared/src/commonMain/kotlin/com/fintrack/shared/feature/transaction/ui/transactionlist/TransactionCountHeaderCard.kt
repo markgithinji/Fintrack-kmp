@@ -123,7 +123,7 @@ private fun TransactionCountErrorState() {
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = "Failed to load counts",
+            text = "Failed to load summary",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.error
         )

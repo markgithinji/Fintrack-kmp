@@ -152,13 +152,23 @@ class TransactionViewModel(
         lastLoadedRecentAccountId = accountId
         recentTransactionsJob?.cancel()
         recentTransactionsJob = viewModelScope.launch {
+            logger.debug("TX_VM", "Loading recent transactions for account: $accountId")
             _recentTransactions.value = Result.Loading
             val result = repo.getTransactions(limit = limit, sortBy = "dateTime", order = "desc", accountId = accountId)
+            logger.debug("TX_VM", "Recent transactions result: ${summarizeResult(result)}")
             _recentTransactions.value = when (result) {
                 is Result.Success -> Result.Success(result.data.first)
                 is Result.Error -> Result.Error(result.exception)
                 is Result.Loading -> Result.Loading
             }
+        }
+    }
+
+    private fun summarizeResult(result: Result<Pair<List<Transaction>, String?>>): String {
+        return when (result) {
+            is Result.Success -> "Success(count=${result.data.first.size})"
+            is Result.Error -> "Error(${result.exception.message})"
+            is Result.Loading -> "Loading"
         }
     }
 

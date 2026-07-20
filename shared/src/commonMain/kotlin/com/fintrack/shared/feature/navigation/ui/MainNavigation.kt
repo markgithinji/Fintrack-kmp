@@ -269,6 +269,7 @@ fun MainNavigation(
 
             TransactionListScreen(
                 accountId = accountId, 
+                refreshTrigger = refreshTrigger,
                 isIncome = isIncome,
                 categoryId = categoryId,
                 categoryName = categoryName,
