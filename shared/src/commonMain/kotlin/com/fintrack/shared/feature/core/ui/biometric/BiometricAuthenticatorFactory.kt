@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.settings.domain.util
+package com.fintrack.shared.feature.core.ui.biometric
 
 import androidx.compose.runtime.Composable
 
@@ -10,4 +10,3 @@ interface BiometricAuthenticatorProvider {
 expect fun rememberBiometricAuthenticator(): BiometricAuthenticator
 
 expect fun createBiometricAuthenticator(): BiometricAuthenticator
-

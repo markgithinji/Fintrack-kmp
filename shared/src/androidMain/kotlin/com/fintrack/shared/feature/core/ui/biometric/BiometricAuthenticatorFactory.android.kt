@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.settings.domain.util
+package com.fintrack.shared.feature.core.ui.biometric
 
 import android.content.ContextWrapper
 import androidx.compose.runtime.Composable

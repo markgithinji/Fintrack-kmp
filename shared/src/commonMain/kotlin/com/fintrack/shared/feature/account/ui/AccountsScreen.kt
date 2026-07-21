@@ -76,7 +76,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.toRelativeString
 import com.fintrack.shared.feature.navigation.ui.LocalBiometricAuthenticator
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
-import com.fintrack.shared.feature.settings.domain.util.BiometricResult
+import com.fintrack.shared.feature.core.ui.biometric.BiometricResult
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.transaction.ui.home.components.AccountIcon
 import com.ionspin.kotlin.bignum.decimal.BigDecimal

@@ -14,8 +14,8 @@ import com.fintrack.shared.feature.core.util.formatToCurrency
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
-import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
-import com.fintrack.shared.feature.settings.domain.util.rememberBiometricAuthenticator
+import com.fintrack.shared.feature.core.ui.biometric.BiometricAuthenticator
+import com.fintrack.shared.feature.core.ui.biometric.rememberBiometricAuthenticator
 import com.fintrack.shared.feature.user.domain.model.User
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import org.koin.compose.koinInject

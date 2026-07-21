@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.settings.domain.util
+package com.fintrack.shared.feature.core.ui.biometric
 
 import platform.LocalAuthentication.LAContext
 import platform.LocalAuthentication.LAPolicyDeviceOwnerAuthentication

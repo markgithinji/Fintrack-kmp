@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.settings.domain.util
+package com.fintrack.shared.feature.core.ui.biometric
 
 interface BiometricAuthenticator {
     suspend fun authenticate(

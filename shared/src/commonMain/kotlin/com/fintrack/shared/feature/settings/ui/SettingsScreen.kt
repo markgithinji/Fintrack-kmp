@@ -126,8 +126,8 @@ import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.settings.domain.model.ExportFormat
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
 import com.fintrack.shared.feature.navigation.ui.LocalBiometricAuthenticator
-import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
-import com.fintrack.shared.feature.settings.domain.util.BiometricResult
+import com.fintrack.shared.feature.core.ui.biometric.BiometricAuthenticator
+import com.fintrack.shared.feature.core.ui.biometric.BiometricResult
 import com.fintrack.shared.feature.settings.domain.util.format
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
