@@ -31,18 +31,16 @@ class AndroidNotificationService(
     private val settingsDataSource: SettingsDataSource
 ) : NotificationService {
 
-    private val channelId = "transaction_reminders"
-
     init {
         createNotificationChannel()
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Transaction Reminders"
-            val descriptionText = "Reminders to log your transactions"
+            val name = NotificationConstants.CHANNEL_NAME
+            val descriptionText = NotificationConstants.CHANNEL_DESCRIPTION
             val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(channelId, name, importance).apply {
+            val channel = NotificationChannel(NotificationConstants.CHANNEL_ID, name, importance).apply {
                 description = descriptionText
             }
             val notificationManager: NotificationManager =
@@ -61,7 +59,7 @@ class AndroidNotificationService(
             return
         }
 
-        val builder = NotificationCompat.Builder(context, channelId)
+        val builder = NotificationCompat.Builder(context, NotificationConstants.CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle("Fintrack Reminder")
             .setContentText("Don't forget to log your transactions today!")
@@ -70,7 +68,7 @@ class AndroidNotificationService(
 
         try {
             with(NotificationManagerCompat.from(context)) {
-                notify(1, builder.build())
+                notify(NotificationConstants.ID_REMINDER_NOTIFICATION, builder.build())
             }
         } catch (_: SecurityException) {
         }
@@ -88,8 +86,8 @@ class AndroidNotificationService(
 
         val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra("transactionId", transaction.id)
-            putExtra("action", "edit_transaction")
+            putExtra(NotificationConstants.EXTRA_TRANSACTION_ID, transaction.id)
+            putExtra(NotificationConstants.EXTRA_ACTION, NotificationConstants.ACTION_EDIT_TRANSACTION)
         }
 
         val pendingIntent = PendingIntent.getActivity(
@@ -111,7 +109,7 @@ class AndroidNotificationService(
         val iconRes =
             if (transaction.isIncome) R.drawable.ic_notification_income else R.drawable.ic_notification_expense
 
-        val builder = NotificationCompat.Builder(context, channelId)
+        val builder = NotificationCompat.Builder(context, NotificationConstants.CHANNEL_ID)
             .setSmallIcon(iconRes)
             .setContentTitle(title)
             .setContentText(contentText)
@@ -146,7 +144,7 @@ class AndroidNotificationService(
         val title = "Budget Alert: $budgetName"
         val contentText = "You've reached $threshold% of your budget limit."
 
-        val builder = NotificationCompat.Builder(context, channelId)
+        val builder = NotificationCompat.Builder(context, NotificationConstants.CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_alert)
             .setContentTitle(title)
             .setContentText(contentText)
@@ -176,7 +174,7 @@ class AndroidNotificationService(
         val title = "Upcoming Bill: $billName"
         val contentText = "Your bill of $amountStr is due soon."
 
-        val builder = NotificationCompat.Builder(context, channelId)
+        val builder = NotificationCompat.Builder(context, NotificationConstants.CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(title)
             .setContentText(contentText)
@@ -202,7 +200,7 @@ class AndroidNotificationService(
             set(Calendar.YEAR, reminderDate.year)
             set(Calendar.MONTH, reminderDate.month.ordinal)
             set(Calendar.DAY_OF_MONTH, reminderDate.day)
-            set(Calendar.HOUR_OF_DAY, 9) // 9 AM
+            set(Calendar.HOUR_OF_DAY, NotificationConstants.DEFAULT_BILL_REMINDER_HOUR)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
@@ -212,9 +210,9 @@ class AndroidNotificationService(
 
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, ReminderReceiver::class.java).apply {
-            action = "com.fintrack.shared.ACTION_SHOW_BILL_REMINDER"
-            putExtra("billName", billName)
-            putExtra("amount", amount.toString())
+            action = NotificationConstants.ACTION_SHOW_BILL_REMINDER
+            putExtra(NotificationConstants.EXTRA_BILL_NAME, billName)
+            putExtra(NotificationConstants.EXTRA_AMOUNT, amount.toString())
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
@@ -255,7 +253,7 @@ class AndroidNotificationService(
             return
         }
 
-        val builder = NotificationCompat.Builder(context, channelId)
+        val builder = NotificationCompat.Builder(context, NotificationConstants.CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(title)
             .setContentText(content)
@@ -273,12 +271,12 @@ class AndroidNotificationService(
     override fun scheduleSummaryNotification(time: LocalTime) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, ReminderReceiver::class.java).apply {
-            action = "com.fintrack.shared.ACTION_SHOW_SUMMARY"
+            action = NotificationConstants.ACTION_SHOW_SUMMARY
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
             context,
-            2,
+            NotificationConstants.ID_SUMMARY_PENDING_INTENT,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -318,11 +316,11 @@ class AndroidNotificationService(
     override fun cancelSummaryNotification() {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, ReminderReceiver::class.java).apply {
-            action = "com.fintrack.shared.ACTION_SHOW_SUMMARY"
+            action = NotificationConstants.ACTION_SHOW_SUMMARY
         }
         val pendingIntent = PendingIntent.getBroadcast(
             context,
-            2,
+            NotificationConstants.ID_SUMMARY_PENDING_INTENT,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -330,16 +328,16 @@ class AndroidNotificationService(
     }
 
     override fun scheduleDailyReminder(time: LocalTime?) {
-        val reminderTime = time ?: LocalTime(20, 0)
+        val reminderTime = time ?: LocalTime(NotificationConstants.DEFAULT_DAILY_REMINDER_HOUR, NotificationConstants.DEFAULT_DAILY_REMINDER_MINUTE)
 
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, ReminderReceiver::class.java).apply {
-            action = "com.fintrack.shared.ACTION_SHOW_REMINDER"
+            action = NotificationConstants.ACTION_SHOW_REMINDER
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
             context,
-            0,
+            NotificationConstants.ID_DAILY_REMINDER_PENDING_INTENT,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -383,11 +381,11 @@ class AndroidNotificationService(
     override fun cancelDailyReminder() {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, ReminderReceiver::class.java).apply {
-            action = "com.fintrack.shared.ACTION_SHOW_REMINDER"
+            action = NotificationConstants.ACTION_SHOW_REMINDER
         }
         val pendingIntent = PendingIntent.getBroadcast(
             context,
-            0,
+            NotificationConstants.ID_DAILY_REMINDER_PENDING_INTENT,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

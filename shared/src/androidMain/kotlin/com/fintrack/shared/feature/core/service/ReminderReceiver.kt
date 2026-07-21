@@ -33,7 +33,7 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
         CoroutineScope(Dispatchers.Default).launch {
             try {
                 when (action) {
-                    "com.fintrack.shared.ACTION_SHOW_REMINDER" -> {
+                    NotificationConstants.ACTION_SHOW_REMINDER -> {
                         val isEnabled = settingsDataSource.isReminderEnabled.first()
                         if (isEnabled) {
                             notificationService.showReminderNotification()
@@ -41,13 +41,13 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
                             notificationService.scheduleDailyReminder(time)
                         }
                     }
-                    "com.fintrack.shared.ACTION_SHOW_BILL_REMINDER" -> {
-                        val billName = intent.getStringExtra("billName") ?: "Bill"
-                        val amountStr = intent.getStringExtra("amount") ?: "0"
+                    NotificationConstants.ACTION_SHOW_BILL_REMINDER -> {
+                        val billName = intent.getStringExtra(NotificationConstants.EXTRA_BILL_NAME) ?: "Bill"
+                        val amountStr = intent.getStringExtra(NotificationConstants.EXTRA_AMOUNT) ?: "0"
                         val amount = try { BigDecimal.parseString(amountStr) } catch(_: Exception) { BigDecimal.ZERO }
                         notificationService.showBillReminderNotification(billName, amount)
                     }
-                    "com.fintrack.shared.ACTION_SHOW_SUMMARY" -> {
+                    NotificationConstants.ACTION_SHOW_SUMMARY -> {
                         handleSummaryNotification()
                     }
                     Intent.ACTION_BOOT_COMPLETED,
