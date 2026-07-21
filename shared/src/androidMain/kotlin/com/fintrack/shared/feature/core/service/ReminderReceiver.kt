@@ -4,27 +4,24 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
-import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
+import com.fintrack.shared.feature.transaction.domain.usecase.GetSpendingSummaryUseCase
+import com.fintrack.shared.feature.transaction.domain.usecase.SummaryPeriod
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatToAmount
 import com.fintrack.shared.feature.core.domain.service.NotificationService
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.minus
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import java.util.Calendar
 
 class ReminderReceiver : BroadcastReceiver(), KoinComponent {
     private val notificationService: NotificationService by inject()
     private val settingsDataSource: SettingsDataSource by inject()
-    private val transactionRepository: TransactionRepository by inject()
+    private val getSpendingSummaryUseCase: GetSpendingSummaryUseCase by inject()
 
     override fun onReceive(context: Context?, intent: Intent?) {
         val action = intent?.action
@@ -51,8 +48,8 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
                         handleSummaryNotification()
                     }
                     Intent.ACTION_BOOT_COMPLETED,
-                    "android.intent.action.QUICKBOOT_POWERON",
-                    "com.htc.intent.action.QUICKBOOT_POWERON" -> {
+                    NotificationConstants.ACTION_QUICKBOOT_POWERON,
+                    NotificationConstants.ACTION_HTC_QUICKBOOT_POWERON -> {
                         // Restore alarms after reboot
                         val dailyEnabled = settingsDataSource.isReminderEnabled.first()
                         if (dailyEnabled) {
@@ -79,7 +76,7 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
         val showDecimals = settingsDataSource.showDecimals.first()
 
         if (dailyEnabled) {
-            val yesterdayResult = getSpendingForYesterday()
+            val yesterdayResult = getSpendingSummaryUseCase(SummaryPeriod.YESTERDAY)
             if (yesterdayResult is Result.Success) {
                 val yesterdaySpending = yesterdayResult.data
                 notificationService.showSummaryNotification(
@@ -90,8 +87,8 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
         }
 
         // Only show weekly on Sundays
-        if (weeklyEnabled && java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.SUNDAY) {
-            val weeklyResult = getSpendingForLastWeek()
+        if (weeklyEnabled && Calendar.getInstance().get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+            val weeklyResult = getSpendingSummaryUseCase(SummaryPeriod.LAST_WEEK)
             if (weeklyResult is Result.Success) {
                 val weeklySpending = weeklyResult.data
                 notificationService.showSummaryNotification(
@@ -104,49 +101,6 @@ class ReminderReceiver : BroadcastReceiver(), KoinComponent {
         // Re-schedule
         if (dailyEnabled || weeklyEnabled) {
             notificationService.scheduleSummaryNotification(time)
-        }
-    }
-
-    private suspend fun getSpendingForYesterday(): Result<BigDecimal> {
-        val timeZone = TimeZone.currentSystemDefault()
-        val today = Clock.System.now().toLocalDateTime(timeZone).date
-        val yesterday = today.minus(1, DateTimeUnit.DAY).toString()
-        
-        val result = transactionRepository.getTransactions(
-            limit = 100,
-            sortBy = "date",
-            order = "DESC",
-            startDate = yesterday,
-            endDate = yesterday,
-            isIncome = false
-        )
-        
-        return when (result) {
-            is Result.Success -> Result.Success(result.data.first.fold(BigDecimal.ZERO) { acc, transaction -> acc + transaction.amount })
-            is Result.Error -> Result.Error(result.exception)
-            is Result.Loading -> Result.Loading
-        }
-    }
-
-    private suspend fun getSpendingForLastWeek(): Result<BigDecimal> {
-        val timeZone = TimeZone.currentSystemDefault()
-        val today = Clock.System.now().toLocalDateTime(timeZone).date
-        val lastWeekStart = today.minus(7, DateTimeUnit.DAY).toString()
-        val yesterday = today.minus(1, DateTimeUnit.DAY).toString()
-        
-        val result = transactionRepository.getTransactions(
-            limit = 500,
-            sortBy = "date",
-            order = "DESC",
-            startDate = lastWeekStart,
-            endDate = yesterday,
-            isIncome = false
-        )
-        
-        return when (result) {
-            is Result.Success -> Result.Success(result.data.first.fold(BigDecimal.ZERO) { acc, transaction -> acc + transaction.amount })
-            is Result.Error -> Result.Error(result.exception)
-            is Result.Loading -> Result.Loading
         }
     }
 }

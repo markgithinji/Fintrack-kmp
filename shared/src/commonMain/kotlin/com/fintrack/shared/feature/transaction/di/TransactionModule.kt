@@ -5,6 +5,7 @@ import com.fintrack.shared.feature.transaction.data.TransactionRepositoryImpl
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.usecase.CreateTransactionUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ExportTransactionsUseCase
+import com.fintrack.shared.feature.transaction.domain.usecase.GetSpendingSummaryUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.SyncRecurringBillsUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ValidateTransactionUseCase
 import com.fintrack.shared.feature.transaction.domain.util.createTransactionImporter
@@ -22,6 +23,7 @@ val transactionModule = module {
     singleOf(::CreateTransactionUseCase)
     singleOf(::ExportTransactionsUseCase)
     singleOf(::SyncRecurringBillsUseCase)
+    singleOf(::GetSpendingSummaryUseCase)
 
     single {
         createTransactionImporter(
