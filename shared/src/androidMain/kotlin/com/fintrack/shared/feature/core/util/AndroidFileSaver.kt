@@ -10,6 +10,10 @@ fun initFileSaver(context: Context) {
     appContext = context.applicationContext
 }
 
+actual fun createFileSaver(): FileSaver {
+    return AndroidFileSaver(appContext ?: throw IllegalStateException("FileSaver not initialized. Call initFileSaver(context)"))
+}
+
 class AndroidFileSaver(private val context: Context) : FileSaver {
     override suspend fun saveFile(fileName: String, content: String): String? {
         return try {
@@ -56,8 +60,4 @@ class AndroidFileSaver(private val context: Context) : FileSaver {
             }
         }
     }
-}
-
-actual fun createFileSaver(): FileSaver {
-    return AndroidFileSaver(appContext ?: throw IllegalStateException("FileSaver not initialized. Call initFileSaver(context)"))
 }

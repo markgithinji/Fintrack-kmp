@@ -13,15 +13,15 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.fintrack.shared.R
+import com.fintrack.shared.feature.core.util.formatToAmount
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
-import com.fintrack.shared.feature.core.util.formatToAmount
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.LocalTime
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.minus
 import java.util.Calendar
 
@@ -52,7 +52,10 @@ class AndroidNotificationService(
 
     override fun showReminderNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
         ) {
             return
         }
@@ -74,7 +77,10 @@ class AndroidNotificationService(
 
     override fun showTransactionNotification(transaction: Transaction) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
         ) {
             return
         }
@@ -95,20 +101,24 @@ class AndroidNotificationService(
         val showDecimals = runBlocking { settingsDataSource.showDecimals.first() }
         val amountStr = "Ksh ${transaction.amount.formatToAmount(showDecimals = showDecimals)}"
         val emoji = if (transaction.isIncome) "💰" else "💸"
-        val merchant = transaction.description?.split("(Ref:")?.get(0)?.trim() ?: transaction.category
-        
+        val merchant =
+            transaction.description?.split("(Ref:")?.get(0)?.trim() ?: transaction.category
+
         val title = "New Transaction Detected"
         val contentText = "$emoji $amountStr at $merchant"
-        
-        val iconRes = if (transaction.isIncome) R.drawable.ic_notification_income else R.drawable.ic_notification_expense
+
+        val iconRes =
+            if (transaction.isIncome) R.drawable.ic_notification_income else R.drawable.ic_notification_expense
 
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(iconRes)
             .setContentTitle(title)
             .setContentText(contentText)
-            .setStyle(NotificationCompat.BigTextStyle()
-                .setBigContentTitle(title)
-                .bigText("$emoji $amountStr detected from M-Pesa.\n\nMerchant: $merchant\nCategory: ${transaction.category}"))
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .setBigContentTitle(title)
+                    .bigText("$emoji $amountStr detected from M-Pesa.\n\nMerchant: $merchant\nCategory: ${transaction.category}")
+            )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .addAction(0, "View Details", pendingIntent)
@@ -124,14 +134,17 @@ class AndroidNotificationService(
 
     override fun showBudgetAlertNotification(budgetName: String, threshold: Int) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
         ) {
             return
         }
 
         val title = "Budget Alert: $budgetName"
         val contentText = "You've reached $threshold% of your budget limit."
-        
+
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_alert)
             .setContentTitle(title)
@@ -149,7 +162,10 @@ class AndroidNotificationService(
 
     override fun showBillReminderNotification(billName: String, amount: BigDecimal) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
         ) {
             return
         }
@@ -158,7 +174,7 @@ class AndroidNotificationService(
         val amountStr = "Ksh ${amount.formatToAmount(showDecimals = showDecimals)}"
         val title = "Upcoming Bill: $billName"
         val contentText = "Your bill of $amountStr is due soon."
-        
+
         val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(title)
@@ -174,12 +190,17 @@ class AndroidNotificationService(
         }
     }
 
-    override fun scheduleBillReminder(billName: String, amount: BigDecimal, dueDate: LocalDate, daysBefore: Int) {
+    override fun scheduleBillReminder(
+        billName: String,
+        amount: BigDecimal,
+        dueDate: LocalDate,
+        daysBefore: Int
+    ) {
         val reminderDate = dueDate.minus(daysBefore, DateTimeUnit.DAY)
         val calendar = Calendar.getInstance().apply {
             set(Calendar.YEAR, reminderDate.year)
             set(Calendar.MONTH, reminderDate.month.ordinal)
-            set(Calendar.DAY_OF_MONTH, reminderDate.dayOfMonth)
+            set(Calendar.DAY_OF_MONTH, reminderDate.day)
             set(Calendar.HOUR_OF_DAY, 9) // 9 AM
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
@@ -194,7 +215,7 @@ class AndroidNotificationService(
             putExtra("billName", billName)
             putExtra("amount", amount.toString())
         }
-        
+
         val pendingIntent = PendingIntent.getBroadcast(
             context,
             billName.hashCode(),
@@ -208,13 +229,15 @@ class AndroidNotificationService(
                     val info = AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent)
                     alarmManager.setAlarmClock(info, pendingIntent)
                 } else {
-                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+                    alarmManager.setAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.timeInMillis,
+                        pendingIntent
+                    )
                 }
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            } else {
                 val info = AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent)
                 alarmManager.setAlarmClock(info, pendingIntent)
-            } else {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
             }
         } catch (_: SecurityException) {
             alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
@@ -223,7 +246,10 @@ class AndroidNotificationService(
 
     override fun showSummaryNotification(title: String, content: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
         ) {
             return
         }
@@ -248,7 +274,7 @@ class AndroidNotificationService(
         val intent = Intent(context, ReminderReceiver::class.java).apply {
             action = "com.fintrack.shared.ACTION_SHOW_SUMMARY"
         }
-        
+
         val pendingIntent = PendingIntent.getBroadcast(
             context,
             2,
@@ -261,7 +287,7 @@ class AndroidNotificationService(
             set(Calendar.MINUTE, time.minute)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
-            
+
             if (before(Calendar.getInstance())) {
                 add(Calendar.DATE, 1)
             }
@@ -273,13 +299,15 @@ class AndroidNotificationService(
                     val info = AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent)
                     alarmManager.setAlarmClock(info, pendingIntent)
                 } else {
-                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+                    alarmManager.setAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.timeInMillis,
+                        pendingIntent
+                    )
                 }
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            } else {
                 val info = AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent)
                 alarmManager.setAlarmClock(info, pendingIntent)
-            } else {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
             }
         } catch (_: SecurityException) {
             alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
@@ -307,7 +335,7 @@ class AndroidNotificationService(
         val intent = Intent(context, ReminderReceiver::class.java).apply {
             action = "com.fintrack.shared.ACTION_SHOW_REMINDER"
         }
-        
+
         val pendingIntent = PendingIntent.getBroadcast(
             context,
             0,
@@ -320,7 +348,7 @@ class AndroidNotificationService(
             set(Calendar.MINUTE, reminderTime.minute)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
-            
+
             if (before(Calendar.getInstance())) {
                 add(Calendar.DATE, 1)
             }
@@ -338,30 +366,16 @@ class AndroidNotificationService(
                         pendingIntent
                     )
                 }
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            } else {
                 val info = AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent)
                 alarmManager.setAlarmClock(info, pendingIntent)
-            } else {
-                alarmManager.set(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.timeInMillis,
-                    pendingIntent
-                )
             }
         } catch (_: SecurityException) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.timeInMillis,
-                    pendingIntent
-                )
-            } else {
-                alarmManager.set(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.timeInMillis,
-                    pendingIntent
-                )
-            }
+            alarmManager.setAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                calendar.timeInMillis,
+                pendingIntent
+            )
         }
     }
 
@@ -380,16 +394,15 @@ class AndroidNotificationService(
     }
 
     override fun requestPermission(callback: (Boolean) -> Unit) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // This normally needs to be called from an Activity.
-            // For now we just return the current status or assume the UI handles the actual request
-            val granted = ContextCompat.checkSelfPermission(
+        val areEnabled = NotificationManagerCompat.from(context).areNotificationsEnabled()
+        val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
-            callback(granted)
         } else {
-            callback(true)
+            true
         }
+        callback(areEnabled && hasPermission)
     }
 }
