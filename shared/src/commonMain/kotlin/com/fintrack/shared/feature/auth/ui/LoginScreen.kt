@@ -59,41 +59,42 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.fintrack.shared.ui.theme.AuthGold
-import com.fintrack.shared.ui.theme.AuthLinkText
 import com.fintrack.shared.feature.auth.domain.model.AuthState
+import com.fintrack.shared.feature.auth.domain.model.LoginFormState
+import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
+import com.fintrack.shared.feature.auth.ui.common.SocialLoginButton
 import com.fintrack.shared.feature.core.data.model.ApiException
 import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.ui.MaterialToast
-import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
-import com.fintrack.shared.feature.auth.ui.common.SocialLoginButton
+import com.fintrack.shared.ui.theme.AuthGold
+import com.fintrack.shared.ui.theme.AuthLinkText
 import fintrack.shared.generated.resources.Res
 import fintrack.shared.generated.resources.apple_signIn_icon
 import fintrack.shared.generated.resources.fintrack_app_icon
 import fintrack.shared.generated.resources.google_signIn_icon
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
-import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun LoginScreen(
-    authViewModel: AuthViewModel = koinViewModel(),
+    loginState: AuthState<*>,
+    formState: LoginFormState,
+    toastMessage: Pair<String, Boolean>?,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onValidateEmail: () -> Unit,
+    onValidatePassword: () -> Unit,
+    onLoginClick: () -> Unit,
+    onShowToast: (String, Boolean) -> Unit,
+    onClearToast: () -> Unit,
     onLoginSuccess: () -> Unit,
     onSignUp: () -> Unit = {},
     onForgotPassword: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    val loginState by authViewModel.loginState.collectAsStateWithLifecycle()
-    val loginFormState by authViewModel.loginFormState.collectAsStateWithLifecycle()
-    val toastMessage by authViewModel.toastMessage.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val emailFocusRequester = remember { FocusRequester() }
-
-    // Validation state
-    var emailTouched by remember { mutableStateOf(false) }
-    var passwordTouched by remember { mutableStateOf(false) }
 
     // Inline error visibility
     var passwordVisible by remember { mutableStateOf(value = false) }
@@ -111,22 +112,24 @@ fun LoginScreen(
     }
 
     LaunchedEffect(loginState) {
-        when (val state = loginState) {
+        when (loginState) {
             is AuthState.Success -> {
-                delay(1500) // Delay to let "Success" animation show on button
                 onLoginSuccess()
             }
 
             is AuthState.Error -> {
-                val exception = state.exception
-                authViewModel.showToast((exception as? ApiException)?.getUserFriendlyMessage() ?: exception.message ?: "Login failed. Please try again.", true)
+                val exception = loginState.exception
+                onShowToast(
+                    (exception as? ApiException)?.getUserFriendlyMessage() ?: exception.message
+                    ?: "Login failed. Please try again.", true
+                )
             }
 
             else -> Unit
         }
     }
 
-    val validationErrorMessage = loginFormState.activeError
+    val validationErrorMessage = formState.activeError
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -183,20 +186,17 @@ fun LoginScreen(
 
             // 2. Input Fields
             FinanceTextField(
-                value = loginFormState.email,
-                onValueChange = { 
-                    authViewModel.updateLoginEmail(it)
-                },
+                value = formState.email,
+                onValueChange = onEmailChange,
                 label = "Email Address",
                 leadingIcon = Icons.Default.Email,
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next,
                 colorScheme = colorScheme,
-                isError = loginFormState.emailError != null,
+                isError = formState.emailError != null,
                 errorMessage = null, // Consolidated in the error box
                 onFocusChanged = { isFocused ->
-                    if (isFocused) emailTouched = true
-                    if (!isFocused && emailTouched) authViewModel.validateLoginEmail()
+                    if (!isFocused) onValidateEmail()
                 },
                 contentType = ContentType.EmailAddress,
                 modifier = Modifier.focusRequester(emailFocusRequester)
@@ -205,8 +205,8 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             FinanceTextField(
-                value = loginFormState.password,
-                onValueChange = { authViewModel.updateLoginPassword(it) },
+                value = formState.password,
+                onValueChange = onPasswordChange,
                 label = "Password",
                 leadingIcon = Icons.Default.Lock,
                 keyboardType = KeyboardType.Password,
@@ -214,23 +214,17 @@ fun LoginScreen(
                 keyboardActions = KeyboardActions(
                     onDone = {
                         focusManager.clearFocus()
-                        if (loginFormState.isFormValid) {
-                            authViewModel.login()
-                        } else {
-                            authViewModel.validateLoginEmail()
-                            authViewModel.validateLoginPassword()
-                        }
+                        onLoginClick()
                     }
                 ),
                 isPassword = true,
                 passwordVisible = passwordVisible,
                 onPasswordToggle = { passwordVisible = !passwordVisible },
                 colorScheme = colorScheme,
-                isError = loginFormState.passwordError != null,
+                isError = formState.passwordError != null,
                 errorMessage = null, // Consolidated in the error box
                 onFocusChanged = { isFocused ->
-                    if (isFocused) passwordTouched = true
-                    if (!isFocused && passwordTouched) authViewModel.validateLoginPassword()
+                    if (!isFocused) onValidatePassword()
                 },
                 contentType = ContentType.Password
             )
@@ -287,29 +281,28 @@ fun LoginScreen(
             Button(
                 onClick = {
                     focusManager.clearFocus()
-                    if (!loginFormState.isFormValid) {
-                        authViewModel.validateLoginEmail()
-                        authViewModel.validateLoginPassword()
-                    } else {
-                        authViewModel.login()
-                    }
+                    onLoginClick()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = if (loginFormState.isFormValid) 2.dp else 0.dp,
+                    defaultElevation = if (formState.isFormValid) 2.dp else 0.dp,
                     pressedElevation = 8.dp,
                     disabledElevation = 0.dp,
                 ),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colorScheme.primary,
                     contentColor = colorScheme.onPrimary,
-                    disabledContainerColor = if (isSuccess) AuthGold else colorScheme.primary.copy(alpha = 0.5f),
-                    disabledContentColor = if (isSuccess) colorScheme.onSecondary else colorScheme.onPrimary.copy(alpha = 0.7f),
+                    disabledContainerColor = if (isSuccess) AuthGold else colorScheme.primary.copy(
+                        alpha = 0.5f
+                    ),
+                    disabledContentColor = if (isSuccess) colorScheme.onSecondary else colorScheme.onPrimary.copy(
+                        alpha = 0.7f
+                    ),
                 ),
-                enabled = loginFormState.isFormValid && !isLoggingIn && !isSuccess,
+                enabled = !isLoggingIn && !isSuccess,
             ) {
                 when (loginState) {
                     is AuthState.Loading -> {
@@ -434,7 +427,7 @@ fun LoginScreen(
                 MaterialToast(
                     message = message,
                     isError = isError,
-                    onDismiss = { authViewModel.clearToast() }
+                    onDismiss = onClearToast
                 )
             }
         }

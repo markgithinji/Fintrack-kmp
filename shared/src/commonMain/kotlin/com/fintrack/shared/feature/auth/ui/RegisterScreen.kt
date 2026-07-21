@@ -46,9 +46,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
@@ -60,44 +60,46 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.fintrack.shared.ui.theme.AuthGold
-import com.fintrack.shared.ui.theme.AuthLinkText
 import com.fintrack.shared.feature.auth.domain.model.AuthState
+import com.fintrack.shared.feature.auth.domain.model.RegisterFormState
+import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
+import com.fintrack.shared.feature.auth.ui.common.SocialLoginButton
 import com.fintrack.shared.feature.core.data.model.ApiException
 import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.ui.MaterialToast
-import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
-import com.fintrack.shared.feature.auth.ui.common.SocialLoginButton
+import com.fintrack.shared.ui.theme.AuthGold
+import com.fintrack.shared.ui.theme.AuthLinkText
 import fintrack.shared.generated.resources.Res
 import fintrack.shared.generated.resources.apple_signIn_icon
 import fintrack.shared.generated.resources.fintrack_app_icon
 import fintrack.shared.generated.resources.google_signIn_icon
-import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
-import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun RegisterScreen(
-    authViewModel: AuthViewModel = koinViewModel(),
+    registerState: AuthState<*>,
+    formState: RegisterFormState,
+    toastMessage: Pair<String, Boolean>?,
+    onNameChange: (String) -> Unit,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onConfirmPasswordChange: (String) -> Unit,
+    onValidateName: () -> Unit,
+    onValidateEmail: () -> Unit,
+    onValidatePassword: () -> Unit,
+    onValidateConfirmPassword: () -> Unit,
+    onRegisterClick: () -> Unit,
+    onShowToast: (String, Boolean) -> Unit,
+    onClearToast: () -> Unit,
     onRegisterSuccess: () -> Unit,
     onLogin: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    val registerState by authViewModel.registerState.collectAsStateWithLifecycle()
-    val registerFormState by authViewModel.registerFormState.collectAsStateWithLifecycle()
-    val toastMessage by authViewModel.toastMessage.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val nameFocusRequester = remember { FocusRequester() }
 
-    // Track which fields have been interacted with to avoid showing errors on initial load
-    var nameTouched by remember { mutableStateOf(false) }
-    var emailTouched by remember { mutableStateOf(false) }
-    var passwordTouched by remember { mutableStateOf(false) }
-    var confirmPasswordTouched by remember { mutableStateOf(false) }
-
-    val validationErrorMessage = registerFormState.activeError
+    val validationErrorMessage = formState.activeError
 
     var passwordVisible by remember { mutableStateOf(value = false) }
     var confirmPasswordVisible by remember { mutableStateOf(value = false) }
@@ -107,13 +109,15 @@ fun RegisterScreen(
     LaunchedEffect(registerState) {
         when (val state = registerState) {
             is AuthState.Success -> {
-                delay(1500) // Delay to let "Success" animation show on button
                 onRegisterSuccess()
             }
 
             is AuthState.Error -> {
                 val exception = state.exception
-                authViewModel.showToast((exception as? ApiException)?.getUserFriendlyMessage() ?: exception.message ?: "Registration failed. Please try again.", true)
+                onShowToast(
+                    (exception as? ApiException)?.getUserFriendlyMessage() ?: exception.message
+                    ?: "Registration failed. Please try again.", true
+                )
             }
 
             else -> Unit
@@ -175,18 +179,17 @@ fun RegisterScreen(
 
             // 2. Input Fields
             FinanceTextField(
-                value = registerFormState.name,
-                onValueChange = { authViewModel.updateName(it) },
+                value = formState.name,
+                onValueChange = onNameChange,
                 label = "Full Name",
                 leadingIcon = Icons.Default.Person,
                 keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Next,
                 colorScheme = colorScheme,
-                isError = registerFormState.nameError != null,
+                isError = formState.nameError != null,
                 errorMessage = null, // Shown consolidated below
                 onFocusChanged = { isFocused ->
-                    if (isFocused) nameTouched = true
-                    if (!isFocused && nameTouched) authViewModel.validateName()
+                    if (!isFocused) onValidateName()
                 },
                 contentType = ContentType.PersonFullName,
                 modifier = Modifier.focusRequester(nameFocusRequester)
@@ -195,18 +198,17 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             FinanceTextField(
-                value = registerFormState.email,
-                onValueChange = { authViewModel.updateEmail(it) },
+                value = formState.email,
+                onValueChange = onEmailChange,
                 label = "Email Address",
                 leadingIcon = Icons.Default.Email,
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next,
                 colorScheme = colorScheme,
-                isError = registerFormState.emailError != null,
+                isError = formState.emailError != null,
                 errorMessage = null, // Shown consolidated below
                 onFocusChanged = { isFocused ->
-                    if (isFocused) emailTouched = true
-                    if (!isFocused && emailTouched) authViewModel.validateEmail()
+                    if (!isFocused) onValidateEmail()
                 },
                 contentType = ContentType.EmailAddress
             )
@@ -214,8 +216,8 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             FinanceTextField(
-                value = registerFormState.password,
-                onValueChange = { authViewModel.updatePassword(it) },
+                value = formState.password,
+                onValueChange = onPasswordChange,
                 label = "Password",
                 leadingIcon = Icons.Default.Lock,
                 keyboardType = KeyboardType.Password,
@@ -224,11 +226,10 @@ fun RegisterScreen(
                 passwordVisible = passwordVisible,
                 onPasswordToggle = { passwordVisible = !passwordVisible },
                 colorScheme = colorScheme,
-                isError = registerFormState.passwordError != null,
+                isError = formState.passwordError != null,
                 errorMessage = null, // Shown consolidated below
                 onFocusChanged = { isFocused ->
-                    if (isFocused) passwordTouched = true
-                    if (!isFocused && passwordTouched) authViewModel.validatePassword()
+                    if (!isFocused) onValidatePassword()
                 },
                 contentType = ContentType.NewPassword
             )
@@ -236,8 +237,8 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             FinanceTextField(
-                value = registerFormState.confirmPassword,
-                onValueChange = { authViewModel.updateConfirmPassword(it) },
+                value = formState.confirmPassword,
+                onValueChange = onConfirmPasswordChange,
                 label = "Confirm Password",
                 leadingIcon = Icons.Default.Lock,
                 keyboardType = KeyboardType.Password,
@@ -245,25 +246,17 @@ fun RegisterScreen(
                 keyboardActions = KeyboardActions(
                     onDone = {
                         focusManager.clearFocus()
-                        if (registerFormState.isFormValid) {
-                            authViewModel.register()
-                        } else {
-                            authViewModel.validateName()
-                            authViewModel.validateEmail()
-                            authViewModel.validatePassword()
-                            authViewModel.validateConfirmPassword()
-                        }
+                        onRegisterClick()
                     }
                 ),
                 isPassword = true,
                 passwordVisible = confirmPasswordVisible,
                 onPasswordToggle = { confirmPasswordVisible = !confirmPasswordVisible },
                 colorScheme = colorScheme,
-                isError = registerFormState.confirmPasswordError != null,
+                isError = formState.confirmPasswordError != null,
                 errorMessage = null, // Shown consolidated below
                 onFocusChanged = { isFocused ->
-                    if (isFocused) confirmPasswordTouched = true
-                    if (!isFocused && confirmPasswordTouched) authViewModel.validateConfirmPassword()
+                    if (!isFocused) onValidateConfirmPassword()
                 },
                 contentType = ContentType.NewPassword
             )
@@ -304,30 +297,26 @@ fun RegisterScreen(
             Button(
                 onClick = {
                     focusManager.clearFocus()
-                    // If form is not valid, trigger all validations to show the errors
-                    if (!registerFormState.isFormValid) {
-                        authViewModel.validateName()
-                        authViewModel.validateEmail()
-                        authViewModel.validatePassword()
-                        authViewModel.validateConfirmPassword()
-                    } else {
-                        authViewModel.register()
-                    }
+                    onRegisterClick()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = if (registerFormState.isFormValid) 2.dp else 0.dp,
+                    defaultElevation = if (formState.isFormValid) 2.dp else 0.dp,
                     pressedElevation = 8.dp,
                     disabledElevation = 0.dp
                 ),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colorScheme.primary,
                     contentColor = colorScheme.onPrimary,
-                    disabledContainerColor = if (isSuccess) AuthGold else colorScheme.primary.copy(alpha = 0.5f),
-                    disabledContentColor = if (isSuccess) colorScheme.onSecondary else colorScheme.onPrimary.copy(alpha = 0.7f)
+                    disabledContainerColor = if (isSuccess) AuthGold else colorScheme.primary.copy(
+                        alpha = 0.5f
+                    ),
+                    disabledContentColor = if (isSuccess) colorScheme.onSecondary else colorScheme.onPrimary.copy(
+                        alpha = 0.7f
+                    )
                 ),
                 enabled = !isRegistering && !isSuccess
             ) {
@@ -454,7 +443,7 @@ fun RegisterScreen(
                 MaterialToast(
                     message = message,
                     isError = isError,
-                    onDismiss = { authViewModel.clearToast() }
+                    onDismiss = onClearToast
                 )
             }
         }

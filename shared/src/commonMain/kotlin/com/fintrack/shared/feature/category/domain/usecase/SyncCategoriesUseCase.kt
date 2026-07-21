@@ -5,14 +5,14 @@ import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.core.util.Result
 
 class SyncCategoriesUseCase(
-    private val repository: CategoryRepository,
+    private val categoryRepository: CategoryRepository,
     private val localDataSource: LocalCategoryDataSource
 ) {
     suspend operator fun invoke(): Result<Unit> {
-        val categoriesResult = repository.getCategories()
+        val categoriesResult = categoryRepository.getCategories()
         if (categoriesResult is Result.Error) return Result.Error(categoriesResult.exception)
         
-        val rulesResult = repository.getCategoryRules()
+        val rulesResult = categoryRepository.getCategoryRules()
         if (rulesResult is Result.Error) return Result.Error(rulesResult.exception)
 
         if (categoriesResult is Result.Success && rulesResult is Result.Success) {

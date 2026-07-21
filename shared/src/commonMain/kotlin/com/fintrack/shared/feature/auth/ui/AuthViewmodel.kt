@@ -85,8 +85,13 @@ class AuthViewModel(
                         _authStatus.value = AuthState.Success(false)
                     }
                 } else {
-                    val isGloballyAuthenticated = (currentStatus as? AuthState.Success)?.data ?: false
+                    val isGloballyAuthenticated =
+                        (currentStatus as? AuthState.Success)?.data ?: false
                     if (!isGloballyAuthenticated) {
+                        // If we are currently logging in or just succeeded, delay to let UI show success on the button
+                        if (_loginState.value !is AuthState.Idle || _registerState.value !is AuthState.Idle) {
+                            delay(1500)
+                        }
                         _authStatus.value = AuthState.Success(true)
                     }
                 }
@@ -197,7 +202,8 @@ class AuthViewModel(
         val nameError = (result.nameResult as? ValidationResult.Error)?.message
         _registerFormState.value = currentState.copy(
             nameError = nameError,
-            activeError = nameError ?: currentState.emailError ?: currentState.passwordError ?: currentState.confirmPasswordError
+            activeError = nameError ?: currentState.emailError ?: currentState.passwordError
+            ?: currentState.confirmPasswordError
         )
     }
 
@@ -227,7 +233,8 @@ class AuthViewModel(
         val emailError = (result.emailResult as? ValidationResult.Error)?.message
         _registerFormState.value = currentState.copy(
             emailError = emailError,
-            activeError = emailError ?: currentState.nameError ?: currentState.passwordError ?: currentState.confirmPasswordError
+            activeError = emailError ?: currentState.nameError ?: currentState.passwordError
+            ?: currentState.confirmPasswordError
         )
     }
 
@@ -260,7 +267,8 @@ class AuthViewModel(
         val passwordError = (result.passwordResult as? ValidationResult.Error)?.message
         _registerFormState.value = currentState.copy(
             passwordError = passwordError,
-            activeError = passwordError ?: currentState.nameError ?: currentState.emailError ?: currentState.confirmPasswordError
+            activeError = passwordError ?: currentState.nameError ?: currentState.emailError
+            ?: currentState.confirmPasswordError
         )
     }
 
@@ -291,7 +299,8 @@ class AuthViewModel(
             (result.confirmPasswordResult as? ValidationResult.Error)?.message
         _registerFormState.value = currentState.copy(
             confirmPasswordError = confirmPasswordError,
-            activeError = confirmPasswordError ?: currentState.nameError ?: currentState.emailError ?: currentState.passwordError
+            activeError = confirmPasswordError ?: currentState.nameError ?: currentState.emailError
+            ?: currentState.passwordError
         )
     }
 
@@ -307,8 +316,9 @@ class AuthViewModel(
             val nameError = (result.nameResult as? ValidationResult.Error)?.message
             val emailError = (result.emailResult as? ValidationResult.Error)?.message
             val passwordError = (result.passwordResult as? ValidationResult.Error)?.message
-            val confirmPasswordError = (result.confirmPasswordResult as? ValidationResult.Error)?.message
-            
+            val confirmPasswordError =
+                (result.confirmPasswordResult as? ValidationResult.Error)?.message
+
             _registerFormState.value = formState.copy(
                 nameError = nameError,
                 emailError = emailError,
