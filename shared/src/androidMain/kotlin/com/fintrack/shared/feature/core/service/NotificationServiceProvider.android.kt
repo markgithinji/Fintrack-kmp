@@ -1,6 +1,7 @@
-package com.fintrack.shared.feature.settings.domain.util
+package com.fintrack.shared.feature.core.service
 
 import android.content.Context
+import com.fintrack.shared.feature.core.domain.service.NotificationService
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 
 private lateinit var appContext: Context

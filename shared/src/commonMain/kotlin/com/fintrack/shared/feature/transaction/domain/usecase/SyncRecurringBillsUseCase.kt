@@ -2,7 +2,7 @@ package com.fintrack.shared.feature.transaction.domain.usecase
 
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
-import com.fintrack.shared.feature.settings.domain.util.NotificationService
+import com.fintrack.shared.feature.core.domain.service.NotificationService
 import com.fintrack.shared.feature.core.util.Result
 import kotlinx.coroutines.flow.first
 

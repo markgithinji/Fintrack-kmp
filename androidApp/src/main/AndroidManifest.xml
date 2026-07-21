@@ -34,7 +34,7 @@
         </activity>
 
         <receiver
-            android:name="com.fintrack.shared.feature.settings.domain.util.ReminderReceiver"
+            android:name="com.fintrack.shared.feature.core.service.ReminderReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="com.fintrack.shared.ACTION_SHOW_REMINDER" />

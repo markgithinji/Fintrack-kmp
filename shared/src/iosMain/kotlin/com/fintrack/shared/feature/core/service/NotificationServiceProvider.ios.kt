@@ -1,8 +1,10 @@
-package com.fintrack.shared.feature.settings.domain.util
+package com.fintrack.shared.feature.core.service
 
+import com.fintrack.shared.feature.core.domain.service.NotificationService
 import com.fintrack.shared.feature.core.util.formatToAmount
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalTime
@@ -76,7 +78,7 @@ class IOSNotificationService(
         }
     }
 
-    override fun showBillReminderNotification(billName: String, amount: Double) {
+    override fun showBillReminderNotification(billName: String, amount: BigDecimal) {
         val showDecimals = runBlocking { settingsDataSource.showDecimals.first() }
         val amountStr = amount.formatToAmount(showDecimals = showDecimals)
         
@@ -97,7 +99,7 @@ class IOSNotificationService(
         }
     }
 
-    override fun scheduleBillReminder(billName: String, amount: Double, dueDate: LocalDate, daysBefore: Int) {
+    override fun scheduleBillReminder(billName: String, amount: BigDecimal, dueDate: LocalDate, daysBefore: Int) {
         val reminderDate = dueDate.minus(daysBefore, DateTimeUnit.DAY)
         
         val content = UNMutableNotificationContent().apply {

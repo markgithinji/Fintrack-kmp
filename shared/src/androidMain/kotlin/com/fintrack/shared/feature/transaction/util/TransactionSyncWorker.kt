@@ -8,7 +8,7 @@ import androidx.work.WorkerParameters
 import androidx.work.Data
 import com.fintrack.shared.R
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.settings.domain.util.NotificationService
+import com.fintrack.shared.feature.core.domain.service.NotificationService
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import kotlinx.serialization.json.Json
