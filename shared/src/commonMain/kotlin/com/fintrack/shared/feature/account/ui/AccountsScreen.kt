@@ -17,11 +17,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -72,7 +72,6 @@ import com.fintrack.shared.feature.core.data.model.ApiException
 import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
-import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.toRelativeString
 import com.fintrack.shared.feature.navigation.ui.LocalBiometricAuthenticator
@@ -82,7 +81,6 @@ import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.transaction.ui.home.components.AccountIcon
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -127,21 +125,21 @@ fun AccountsScreen(
         val result = saveResult
         if (result is Result.Success) {
             onShowToast(if (isEditing) "Account updated" else "Account added", false)
-            
+
             val accountId = result.data.id
-            
+
             // Handle pending local settings for new accounts
             if (pendingDefaultAccountId == "NEW_ACCOUNT_PENDING") {
                 settingsViewModel.setDefaultAccountId(accountId)
                 pendingDefaultAccountId = null
             }
-            
+
             if (pendingMpesaLinked) {
                 val currentIds = settingsViewModel.mpesaLinkedAccountIds.value
                 settingsViewModel.setMpesaLinkedAccountIds(currentIds + accountId)
                 pendingMpesaLinked = false
             }
-            
+
             if (pendingEquityLinked) {
                 val currentIds = settingsViewModel.equityLinkedAccountIds.value
                 settingsViewModel.setEquityLinkedAccountIds(currentIds + accountId)
@@ -182,7 +180,12 @@ fun AccountsScreen(
                     val effectiveDefaultAccountId =
                         defaultAccountId ?: state.data.find { it.type == AccountType.MPESA }?.id
 
-                    val enrichedAccounts = remember(state.data, effectiveDefaultAccountId, mpesaLinkedAccountIds, equityLinkedAccountIds) {
+                    val enrichedAccounts = remember(
+                        state.data,
+                        effectiveDefaultAccountId,
+                        mpesaLinkedAccountIds,
+                        equityLinkedAccountIds
+                    ) {
                         state.data.map { account ->
                             val sources = mutableListOf<String>()
                             if (mpesaLinkedAccountIds.contains(account.id)) sources.add("mpesa")
@@ -232,9 +235,10 @@ fun AccountsScreen(
         val defaultAccountId by settingsViewModel.defaultAccountId.collectAsStateWithLifecycle()
         val mpesaLinkedAccountIds by settingsViewModel.mpesaLinkedAccountIds.collectAsStateWithLifecycle()
         val equityLinkedAccountIds by settingsViewModel.equityLinkedAccountIds.collectAsStateWithLifecycle()
-        
+
         val accounts = (accountsState as? Result.Success)?.data ?: emptyList()
-        val isOnlyAccount = accounts.size <= 1 || (accounts.size == 1 && accounts.first().id == account.id)
+        val isOnlyAccount =
+            accounts.size <= 1 || (accounts.size == 1 && accounts.first().id == account.id)
 
         // Enrich the dialog account with local settings
         val enrichedAccount = remember(account, mpesaLinkedAccountIds, equityLinkedAccountIds) {
@@ -296,14 +300,14 @@ fun AccountsScreen(
                 if (account.id.isNotEmpty()) {
                     // Update local settings for existing account
                     val accountId = account.id
-                    
+
                     // Default Account
                     if (isDefault) {
                         settingsViewModel.setDefaultAccountId(accountId)
                     } else if (accountId == defaultAccountId) {
                         settingsViewModel.setDefaultAccountId(null)
                     }
-                    
+
                     // Sync Links
                     val mpesaIds = settingsViewModel.mpesaLinkedAccountIds.value
                     if (sources.contains("mpesa")) {
@@ -311,7 +315,7 @@ fun AccountsScreen(
                     } else {
                         settingsViewModel.setMpesaLinkedAccountIds(mpesaIds - accountId)
                     }
-                    
+
                     val equityIds = settingsViewModel.equityLinkedAccountIds.value
                     if (sources.contains("equity")) {
                         settingsViewModel.setEquityLinkedAccountIds(equityIds + accountId)
@@ -326,12 +330,14 @@ fun AccountsScreen(
                 }
 
                 // Save to backend WITHOUT local preferences
-                accountsViewModel.saveAccount(account.copy(
-                    name = name, 
-                    type = type, 
-                    isDefault = false, // Backend doesn't need to know
-                    linkedSources = emptyList() // Backend doesn't need to know
-                ))
+                accountsViewModel.saveAccount(
+                    account.copy(
+                        name = name,
+                        type = type,
+                        isDefault = false, // Backend doesn't need to know
+                        linkedSources = emptyList() // Backend doesn't need to know
+                    )
+                )
             }
         )
     }
@@ -346,8 +352,10 @@ fun AccountList(
     onEditAccount: (Account) -> Unit,
     onAddAccount: () -> Unit
 ) {
-    val totalBalance = remember(accounts) { 
-        accounts.fold(BigDecimal.ZERO) { acc, account -> acc + (account.balance ?: BigDecimal.ZERO) } 
+    val totalBalance = remember(accounts) {
+        accounts.fold(BigDecimal.ZERO) { acc, account ->
+            acc + (account.balance ?: BigDecimal.ZERO)
+        }
     }
 
     LazyVerticalGrid(
@@ -598,7 +606,7 @@ fun AccountDialog(
     var accountName by remember(account.id) { mutableStateOf(account.name) }
     var type by remember(account.id) { mutableStateOf(accountType) }
     var linkedSources by remember(account.id) { mutableStateOf(account.linkedSources.toSet()) }
-    var isDefault by remember(account.id) { 
+    var isDefault by remember(account.id) {
         mutableStateOf(isDefaultSelection || isOnlyAccount)
     }
     var showClearDataConfirm by remember { mutableStateOf(false) }
@@ -619,10 +627,12 @@ fun AccountDialog(
                     if (!linkedSources.contains("mpesa")) linkedSources = linkedSources + "mpesa"
                     type = AccountType.MPESA
                 }
+
                 lowerName.contains("equity") -> {
                     if (!linkedSources.contains("equity")) linkedSources = linkedSources + "equity"
                     type = AccountType.BANK
                 }
+
                 lowerName.contains("cash") -> type = AccountType.CASH
                 lowerName.contains("wallet") -> type = AccountType.WALLET
                 lowerName.contains("savings") -> type = AccountType.SAVINGS
@@ -792,11 +802,12 @@ fun AccountDialog(
                             FilterChip(
                                 selected = type == accountType,
                                 onClick = { type = accountType },
-                                label = { 
+                                label = {
                                     Text(
-                                        text = accountType.name.lowercase().replaceFirstChar { it.uppercase() },
+                                        text = accountType.name.lowercase()
+                                            .replaceFirstChar { it.uppercase() },
                                         style = MaterialTheme.typography.labelMedium
-                                    ) 
+                                    )
                                 },
                                 leadingIcon = {
                                     Icon(
@@ -849,7 +860,8 @@ fun AccountDialog(
                                 icon = Icons.Default.Smartphone,
                                 checked = linkedSources.contains("mpesa"),
                                 onCheckedChange = { checked ->
-                                    linkedSources = if (checked) linkedSources + "mpesa" else linkedSources - "mpesa"
+                                    linkedSources =
+                                        if (checked) linkedSources + "mpesa" else linkedSources - "mpesa"
                                 },
                                 enabled = true,
                                 isBusy = isEffectivelyLoading
@@ -861,7 +873,8 @@ fun AccountDialog(
                                 icon = Icons.Default.AccountBalance,
                                 checked = linkedSources.contains("equity"),
                                 onCheckedChange = { checked ->
-                                    linkedSources = if (checked) linkedSources + "equity" else linkedSources - "equity"
+                                    linkedSources =
+                                        if (checked) linkedSources + "equity" else linkedSources - "equity"
                                 },
                                 enabled = true,
                                 isBusy = isEffectivelyLoading

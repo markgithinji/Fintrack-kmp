@@ -8,29 +8,19 @@ import com.fintrack.shared.feature.category.domain.usecase.AddCategoryUseCase
 import com.fintrack.shared.feature.category.domain.usecase.DeleteCategoryUseCase
 import com.fintrack.shared.feature.category.domain.usecase.SyncCategoriesUseCase
 import com.fintrack.shared.feature.category.ui.CategoryManagementViewModel
-import org.koin.core.module.dsl.viewModel
+import org.koin.core.module.dsl.bind
+import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val categoryModule = module {
-    single { CategoryApi(client = get()) }
-    single { LocalCategoryDataSource() }
-    single<CategoryRepository> { 
-        CategoryRepositoryImpl(
-            categoryApi = get(),
-            localDataSource = get()
-        ) 
-    }
+    singleOf(::CategoryApi)
+    singleOf(::LocalCategoryDataSource)
+    singleOf(::CategoryRepositoryImpl) { bind<CategoryRepository>() }
     
-    single { SyncCategoriesUseCase(repository = get(), localDataSource = get()) }
-    single { AddCategoryUseCase(categoryRepository = get(), localDataSource = get()) }
-    single { DeleteCategoryUseCase(repository = get(), localDataSource = get()) }
+    singleOf(::SyncCategoriesUseCase)
+    singleOf(::AddCategoryUseCase)
+    singleOf(::DeleteCategoryUseCase)
 
-    viewModel { 
-        CategoryManagementViewModel(
-            localCategoryDataSource = get(),
-            syncCategoriesUseCase = get(),
-            addCategoryUseCase = get(),
-            deleteCategoryUseCase = get()
-        ) 
-    }
+    viewModelOf(::CategoryManagementViewModel)
 }

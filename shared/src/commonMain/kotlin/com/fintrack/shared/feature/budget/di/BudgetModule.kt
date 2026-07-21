@@ -6,26 +6,15 @@ import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.budget.domain.usecase.BudgetValidationUseCase
 import com.fintrack.shared.feature.budget.domain.usecase.CheckBudgetThresholdsUseCase
 import com.fintrack.shared.feature.budget.ui.BudgetViewModel
-import org.koin.core.module.dsl.viewModel
+import org.koin.core.module.dsl.bind
+import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val budgetModule = module {
-    single { BudgetApi(client = get()) }
-    single<BudgetRepository> { BudgetRepositoryImpl(budgetApi = get()) }
-    single { BudgetValidationUseCase() }
-    single {
-        CheckBudgetThresholdsUseCase(
-            budgetRepository = get(),
-            settingsDataSource = get(),
-            notificationService = get()
-        )
-    }
-    viewModel { 
-        BudgetViewModel(
-            budgetRepository = get(), 
-            validationUseCase = get(), 
-            localCategoryDataSource = get(),
-            syncCategoriesUseCase = get()
-        ) 
-    }
+    singleOf(::BudgetApi)
+    singleOf(::BudgetRepositoryImpl) { bind<BudgetRepository>() }
+    singleOf(::BudgetValidationUseCase)
+    singleOf(::CheckBudgetThresholdsUseCase)
+    viewModelOf(::BudgetViewModel)
 }

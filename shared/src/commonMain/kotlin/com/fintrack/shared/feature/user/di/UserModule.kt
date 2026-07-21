@@ -6,20 +6,15 @@ import com.fintrack.shared.feature.user.data.UserRepositoryImpl
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
 import com.fintrack.shared.feature.user.domain.usecase.DeleteAccountUseCase
 import com.fintrack.shared.feature.user.domain.usecase.ProfileValidationUseCase
-import org.koin.core.module.dsl.viewModel
+import org.koin.core.module.dsl.bind
+import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val userModule = module {
-    single { UserApi(get()) }
-    single<UserRepository> { UserRepositoryImpl(get()) }
-    single { DeleteAccountUseCase(userRepository = get(), authRepository = get()) }
-    single { ProfileValidationUseCase() }
-
-    viewModel {
-        ProfileViewModel(
-            userRepository = get(),
-            validationUseCase = get(),
-            summaryRepository = get()
-        )
-    }
+    singleOf(::UserApi)
+    singleOf(::UserRepositoryImpl) { bind<UserRepository>() }
+    singleOf(::DeleteAccountUseCase)
+    singleOf(::ProfileValidationUseCase)
+    viewModelOf(::ProfileViewModel)
 }

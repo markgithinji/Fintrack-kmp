@@ -9,22 +9,19 @@ import com.fintrack.shared.feature.transaction.domain.usecase.SyncRecurringBills
 import com.fintrack.shared.feature.transaction.domain.usecase.ValidateTransactionUseCase
 import com.fintrack.shared.feature.transaction.domain.util.createTransactionImporter
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
+import org.koin.core.module.dsl.bind
+import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val transactionModule = module {
-    single { TransactionApi(client = get()) }
-    single<TransactionRepository> { TransactionRepositoryImpl(transactionApi = get()) }
+    singleOf(::TransactionApi)
+    singleOf(::TransactionRepositoryImpl) { bind<TransactionRepository>() }
 
-    single { ValidateTransactionUseCase() }
-    single { CreateTransactionUseCase() }
-    single { ExportTransactionsUseCase(transactionRepository = get(), fileSaver = get()) }
-    single {
-        SyncRecurringBillsUseCase(
-            transactionRepository = get(),
-            settingsDataSource = get(),
-            notificationService = get()
-        )
-    }
+    singleOf(::ValidateTransactionUseCase)
+    singleOf(::CreateTransactionUseCase)
+    singleOf(::ExportTransactionsUseCase)
+    singleOf(::SyncRecurringBillsUseCase)
 
     single {
         createTransactionImporter(
@@ -35,14 +32,5 @@ val transactionModule = module {
         )
     }
 
-    single {
-        TransactionViewModel(
-            repo = get(),
-            localCategoryDataSource = get(),
-            syncCategoriesUseCase = get(),
-            validateTransactionUseCase = get(),
-            createTransactionUseCase = get(),
-            transactionImporter = get()
-        )
-    }
+    viewModelOf(::TransactionViewModel)
 }
