@@ -33,7 +33,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,7 +45,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.util.Result
@@ -75,8 +73,6 @@ fun TransactionsListCard(
     modifier: Modifier = Modifier
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
-    val logger = remember { KMPLogger() }
-    val density = LocalDensity.current
 
     var lastTransactions by remember(accountId) { mutableStateOf<List<Transaction>?>(null) }
     if (transactionsResult is Result.Success) {
@@ -86,10 +82,6 @@ fun TransactionsListCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .onGloballyPositioned { coords ->
-                val heightDp = with(density) { coords.size.height.toDp() }
-                logger.debug("TransactionsListCard", "Total Card Height: $heightDp")
-            }
             .then(
                 if (sharedTransitionScope != null) {
                     with(sharedTransitionScope) {
@@ -111,26 +103,17 @@ fun TransactionsListCard(
                 onViewAllClick = onViewAllClick
             )
 
-            SideEffect {
-                logger.debug("TX_LIST_CARD_DEBUG", "transactionsResult: $transactionsResult")
-            }
-
             AnimatedContent(
                 targetState = transactionsResult,
                 transitionSpec = {
                     fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)) togetherWith
                             fadeOut(animationSpec = spring(stiffness = Spring.StiffnessLow))
                 },
-                modifier = Modifier.onGloballyPositioned { coords ->
-                    val heightDp = with(density) { coords.size.height.toDp() }
-                    logger.debug("TransactionsListCard", "Content Area Height: $heightDp (State: ${transactionsResult::class.simpleName})")
-                },
                 label = "TransactionsListContent"
             ) { result ->
                 when (result) {
                     is Result.Loading -> {
                         val currentData = lastTransactions
-                        logger.debug("TransactionsListCard", "State: Loading, Last transaction count: ${currentData?.size ?: 0}")
                         if (currentData != null) {
                             TransactionsListContent(
                                 transactions = currentData,
@@ -143,7 +126,6 @@ fun TransactionsListCard(
                     }
 
                     is Result.Error -> {
-                        logger.error("TransactionsListCard", "State: Error, Exception: ${result.exception.message}")
                         TransactionsErrorState(
                             error = result.exception,
                             onRetry = onRetry
@@ -152,7 +134,6 @@ fun TransactionsListCard(
 
                     is Result.Success -> {
                         val transactions = result.data
-                        logger.debug("TransactionsListCard", "State: Success, Transaction count: ${transactions.size}")
                         if (transactions.isEmpty()) {
                             TransactionsEmptyState()
                         } else {

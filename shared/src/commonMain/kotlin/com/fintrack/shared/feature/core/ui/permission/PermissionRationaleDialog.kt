@@ -17,8 +17,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-import com.fintrack.shared.feature.core.logger.KMPLogger
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PermissionRationaleDialog(
@@ -28,7 +26,6 @@ fun PermissionRationaleDialog(
     onConfirm: (Boolean) -> Unit,
     onDismiss: (Boolean) -> Unit
 ) {
-    val logger = remember { KMPLogger() }
     var dontShowAgain by remember { mutableStateOf(false) }
 
     BasicAlertDialog(
@@ -112,7 +109,6 @@ fun PermissionRationaleDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = { 
-                            logger.info("PERMISSION", "Rationale 'Continue' clicked. dontShowAgain: $dontShowAgain")
                             onConfirm(dontShowAgain) 
                         },
                         shape = RoundedCornerShape(12.dp),

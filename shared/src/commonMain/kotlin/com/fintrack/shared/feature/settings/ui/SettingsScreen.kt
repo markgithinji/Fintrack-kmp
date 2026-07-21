@@ -113,7 +113,6 @@ import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.category.ui.util.toColor
 import com.fintrack.shared.feature.category.ui.util.toIcon
 import com.fintrack.shared.feature.core.domain.SaveState
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
@@ -733,8 +732,6 @@ fun SettingsScreen(
         onDismissTrigger = { viewModel.dismissPermissionRequest() }
     )
 
-    val logger = remember { KMPLogger() }
-
     if (showSmsRationale != null) {
         val targetName = if (showSmsRationale == SmsPermissionTarget.MPESA) "M-Pesa" else "Equity Bank"
         PermissionRationaleDialog(
@@ -742,7 +739,6 @@ fun SettingsScreen(
             message = "FinTrack needs to read your SMS messages to automatically detect and log transactions from $targetName. Your financial data is processed privately on your device.",
             icon = if (showSmsRationale == SmsPermissionTarget.MPESA) Icons.Default.Sms else Icons.Default.AccountBalance,
             onConfirm = { dontShowAgain ->
-                logger.info("PERMISSION", "SettingsScreen: Rationale confirmed for $targetName. dontShowAgain=$dontShowAgain")
                 if (dontShowAgain) {
                     viewModel.setSmsRationaleHidden(true)
                 }
@@ -750,7 +746,6 @@ fun SettingsScreen(
                 showSmsRationale = null
             },
             onDismiss = { dontShowAgain ->
-                logger.info("PERMISSION", "SettingsScreen: Rationale dismissed for $targetName. dontShowAgain=$dontShowAgain")
                 if (dontShowAgain) {
                     viewModel.setSmsRationaleHidden(true)
                 }
@@ -763,7 +758,6 @@ fun SettingsScreen(
     SmsPermissionLauncher(
         trigger = showSmsPermissionRequest != null,
         onResult = { granted ->
-            logger.info("PERMISSION", "SettingsScreen: SmsPermissionLauncher result=$granted")
             val target = activeSmsTarget
             if (granted && target != null) {
                 when (target) {

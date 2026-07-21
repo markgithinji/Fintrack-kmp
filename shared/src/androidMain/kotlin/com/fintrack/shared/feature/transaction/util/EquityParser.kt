@@ -81,7 +81,6 @@ object EquityParser {
         val maskedAcc = """\d+[*.]+\d+"""
         if (message.contains(Regex("sent from $maskedAcc to $maskedAcc", RegexOption.IGNORE_CASE)) ||
             message.contains(Regex("received .* from $maskedAcc to .* $maskedAcc", RegexOption.IGNORE_CASE))) {
-            com.fintrack.shared.feature.core.logger.KMPLogger().info("EQUITY_PARSER", "Skipping intra-account move: ${message.take(60)}...")
             return null
         }
 
@@ -92,7 +91,6 @@ object EquityParser {
         fun wrap(transaction: Transaction?): Transaction? {
             if (transaction == null) return null
             if (transaction.amount <= BigDecimal.ZERO) {
-                com.fintrack.shared.feature.core.logger.KMPLogger().debug("PARSER_ERROR", "Parsed 0 amount from Equity! Ref: ${transaction.externalId}. Msg: ${message.take(100)}...")
                 return null
             }
             return transaction

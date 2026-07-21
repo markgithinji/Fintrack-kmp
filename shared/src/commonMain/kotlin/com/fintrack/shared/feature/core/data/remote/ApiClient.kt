@@ -2,8 +2,6 @@ package com.fintrack.shared.feature.core.data.remote
 
 import com.fintrack.shared.feature.auth.data.model.AuthResponseDto
 import com.fintrack.shared.feature.auth.domain.datasource.TokenDataSource
-import com.fintrack.shared.feature.core.logger.KMPLogger
-import com.fintrack.shared.feature.core.logger.LogTags
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
@@ -27,7 +25,6 @@ import kotlinx.serialization.json.Json
 
 class ApiClient(
     private val tokenDataSource: TokenDataSource,
-    private val logger: KMPLogger,
     private val baseUrl: String,
 ) {
     val httpClient: HttpClient by lazy {
@@ -39,15 +36,6 @@ class ApiClient(
                         explicitNulls = false
                     }
                 )
-            }
-
-            install(Logging) {
-                logger = object : Logger {
-                    override fun log(message: String) {
-                        // this@ApiClient.logger.debug(LogTags.NETWORK, message)
-                    }
-                }
-                level = LogLevel.INFO
             }
 
             install(HttpTimeout) {
@@ -74,12 +62,10 @@ class ApiClient(
                     refreshTokens {
                         val refreshToken = tokenDataSource.refreshToken.firstOrNull()
                         if (refreshToken == null) {
-                            logger.warning(LogTags.AUTH, "Refresh triggered but no refresh token found in storage")
                             return@refreshTokens null
                         }
 
                         try {
-                            logger.info(LogTags.AUTH, "Attempting to refresh token...")
                             // Note: Ktor's bearer auth automatically excludes the refresh request 
                             // from further auth interceptors to avoid infinite loops.
                             val response = client.post("auth/refresh") {
@@ -87,12 +73,9 @@ class ApiClient(
                                 setBody(mapOf("refreshToken" to refreshToken))
                             }.body<AuthResponseDto>()
 
-                            logger.info(LogTags.AUTH, "Token refreshed successfully")
                             tokenDataSource.saveTokens(response.accessToken, response.refreshToken)
                             BearerTokens(response.accessToken, response.refreshToken)
                         } catch (e: Exception) {
-                            logger.error(LogTags.AUTH, "Failed to refresh token: ${e.message}")
-                            
                             val isAuthError = when (e) {
                                 is ClientRequestException -> {
                                     val status = e.response.status.value
@@ -102,7 +85,6 @@ class ApiClient(
                             }
 
                             if (isAuthError) {
-                                logger.warning(LogTags.AUTH, "Refresh token invalid or expired (401/403). Clearing session.")
                                 tokenDataSource.clearTokens()
                             }
                             null

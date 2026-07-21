@@ -3,8 +3,6 @@ package com.fintrack.shared.feature.core.util
 import com.fintrack.shared.feature.core.data.model.ApiException
 import com.fintrack.shared.feature.core.data.model.AuthErrorType
 import com.fintrack.shared.feature.core.data.remote.model.ErrorResponse
-import com.fintrack.shared.feature.core.logger.KMPLogger
-import com.fintrack.shared.feature.core.logger.LogTags
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpRequestTimeoutException
@@ -13,29 +11,13 @@ import io.ktor.client.plugins.ServerResponseException
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
 
-private val logger = KMPLogger()
-
 suspend fun <T> safeApiCall(apiCall: suspend () -> T): Result<T> {
     return try {
         val result = apiCall()
-        logger.debug(LogTags.API, "API call successful. Result: ${summarizeResult(result)}")
         Result.Success(result)
     } catch (e: Exception) {
         val domainException = convertToDomainException(e)
-        logger.error(LogTags.API, "API call failed: ${domainException.details}", e)
         Result.Error(domainException)
-    }
-}
-
-private fun <T> summarizeResult(result: T): String {
-    return when (result) {
-        is List<*> -> "List(size=${result.size})"
-        is Pair<*, *> -> {
-            val first = result.first
-            if (first is List<*>) "Pair(List(size=${first.size}), ${result.second})"
-            else result.toString()
-        }
-        else -> result.toString()
     }
 }
 
@@ -48,20 +30,17 @@ private suspend fun convertToDomainException(e: Exception): ApiException {
         is ServerResponseException -> handleServerException(e)
 
         is SerializationException -> {
-            logger.error(LogTags.ERROR, "Serialization failure", e)
             ApiException.SerializationFailure("Failed to parse response: ${e.message}")
         }
 
         is HttpRequestTimeoutException -> {
             val cleanMessage = e.message.cleanKtorMessage()
-            logger.warning(LogTags.NETWORK, "Request timeout: $cleanMessage")
             ApiException.Network(cleanMessage.ifEmpty { "Request timeout" })
         }
 
         is CancellationException -> throw e
 
         is IllegalStateException -> {
-            logger.error(LogTags.ERROR, "Invalid app state", e)
             ApiException.InvalidState("Invalid app state: ${e.message}")
         }
 
@@ -73,10 +52,8 @@ private suspend fun convertToDomainException(e: Exception): ApiException {
                 className.contains("UnknownHostException")
             ) {
                 val cleanMessage = e.message.cleanKtorMessage()
-                logger.warning(LogTags.NETWORK, "Network connection failed ($className): $cleanMessage")
                 ApiException.Network(cleanMessage.ifEmpty { "Network connection failed" })
             } else {
-                logger.error(LogTags.ERROR, "Unknown exception type: $className", e)
                 handleUnknownException(e)
             }
         }
@@ -86,7 +63,6 @@ private suspend fun convertToDomainException(e: Exception): ApiException {
 private fun handleRedirectException(e: RedirectResponseException): ApiException {
     val statusCode = e.response.status.value
     val cleanMessage = e.message.cleanKtorMessage()
-    logger.warning(LogTags.ERROR, "Redirect response: $statusCode - $cleanMessage")
     return when (statusCode) {
         401 -> ApiException.Unauthorized("Authentication required")
         403 -> ApiException.Forbidden("Access denied")
@@ -104,17 +80,6 @@ private suspend fun handleClientException(e: ClientRequestException): ApiExcepti
 
     val message = errorResponse?.message ?: "Client error occurred"
     val errorCode = errorResponse?.errorCode
-
-    if (errorResponse == null) {
-        val rawBody = try {
-            e.response.body<String>()
-        } catch (ex: Exception) {
-            "unavailable"
-        }
-        logger.warning(LogTags.ERROR, "Client error $statusCode: Failed to parse ErrorResponse. Raw body: $rawBody")
-    } else {
-        logger.warning(LogTags.ERROR, "Client error: $statusCode - $message (Code: $errorCode)")
-    }
 
     return when (statusCode) {
         400 -> {
@@ -166,7 +131,6 @@ private fun mapToAuthException(message: String, errorCode: String): ApiException
 private fun handleServerException(e: ServerResponseException): ApiException {
     val statusCode = e.response.status.value
     val cleanMessage = e.message.cleanKtorMessage()
-    logger.error(LogTags.ERROR, "Server error: $statusCode - $cleanMessage")
 
     return when (statusCode) {
         500 -> ApiException.ServerError("Internal server error", statusCode)

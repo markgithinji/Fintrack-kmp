@@ -10,7 +10,6 @@ import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.category.domain.usecase.SyncCategoriesUseCase
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatToTwoPrecision
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
@@ -67,8 +66,6 @@ class TransactionViewModel(
     private val _importProgress = MutableStateFlow<Map<String?, Float>>(emptyMap())
     val importProgress: StateFlow<Map<String?, Float>> = _importProgress.asStateFlow()
 
-    private val logger = KMPLogger()
-
     private var lastLoadedRecentAccountId: String? = null
     private var recentTransactionsJob: Job? = null
     private var importJob: Job? = null
@@ -87,9 +84,7 @@ class TransactionViewModel(
     }
 
     fun importTransactions(accountId: String? = null, isPortfolioSeed: Boolean = false) {
-        logger.info("SYNC_DEBUG", "ViewModel: importTransactions called for account: $accountId, isSeed: $isPortfolioSeed")
         if (_importState.value[accountId] is Result.Loading) {
-            logger.info("SYNC_DEBUG", "ViewModel: Already syncing this account, ignoring request.")
             return
         }
         
@@ -104,14 +99,10 @@ class TransactionViewModel(
                 transactionImporter.importHistory(accountId, isPortfolioSeed) { progress ->
                     _importProgress.update { it + (accountId to progress) }
                 }
-                logger.info("SYNC_DEBUG", "ViewModel: importHistory finished normally for $accountId. Setting SUCCESS.")
                 _importState.update { it + (accountId to Result.Success(Unit)) }
             } catch (e: Exception) {
                 if (e !is CancellationException) {
-                    logger.error("SYNC_DEBUG", "ViewModel: importHistory THREW ERROR for $accountId: ${e.message}")
                     _importState.update { it + (accountId to Result.Error(e)) }
-                } else {
-                    logger.info("SYNC_DEBUG", "ViewModel: importHistory was CANCELLED for $accountId")
                 }
             }
         }
@@ -152,10 +143,8 @@ class TransactionViewModel(
         lastLoadedRecentAccountId = accountId
         recentTransactionsJob?.cancel()
         recentTransactionsJob = viewModelScope.launch {
-            logger.debug("TX_VM", "Loading recent transactions for account: $accountId")
             _recentTransactions.value = Result.Loading
             val result = repo.getTransactions(limit = limit, sortBy = "dateTime", order = "desc", accountId = accountId)
-            logger.debug("TX_VM", "Recent transactions result: ${summarizeResult(result)}")
             _recentTransactions.value = when (result) {
                 is Result.Success -> Result.Success(result.data.first)
                 is Result.Error -> Result.Error(result.exception)

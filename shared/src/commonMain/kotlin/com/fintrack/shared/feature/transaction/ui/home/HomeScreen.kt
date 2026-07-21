@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.feature.core.ui.util.rememberThrottleClick
 import com.fintrack.shared.feature.core.util.Result
@@ -167,14 +166,10 @@ fun HomeScreen(
         }
     }
 
-    val logger = remember { KMPLogger() }
-
     LaunchedEffect(importState) {
         if (importState == null) return@LaunchedEffect
         
-        logger.info("HomeScreen", "importState changed: $importState")
         if (importState is Result.Success) {
-            logger.info("HomeScreen", "Sync success detected in UI for account: $accountId")
             onGlobalRefresh()
             delay(1500)
             transactionsViewModel.resetImportState(accountId)
@@ -182,15 +177,11 @@ fun HomeScreen(
         } else if (importState is Result.Error) {
             val error = importState.exception
             val message = error.message ?: ""
-            logger.error("HomeScreen", "Sync error detected in UI: $message", error)
             if (message.contains("permission", ignoreCase = true) || message.contains("access", ignoreCase = true)) {
                 onSmsPermissionRequired(isManualSyncInProgress)
             }
             isManualSyncInProgress = false
         }
-    }
-    SideEffect {
-        logger.error("HomeScreen", "TransactionViewModel INSTANCE: ${transactionsViewModel.hashCode()}")
     }
 
     // Keep track of the last processed refresh trigger to avoid redundant refreshes on re-entry
@@ -218,7 +209,6 @@ fun HomeScreen(
 
     LaunchedEffect(enrichedSelectedAccount) {
         val account = (enrichedSelectedAccount as? Result.Success)?.data
-        logger.info("SYNC_DEBUG", "HomeScreen: LaunchedEffect triggered. Account: ${account?.name}, LinkedSources: ${account?.linkedSources}")
         account?.let { acc ->
             transactionsViewModel.loadRecentTransactions(acc.id)
             statsViewModel.loadOverview(acc.id)
@@ -226,10 +216,7 @@ fun HomeScreen(
             
             // Trigger auto-sync only if the account has linked sources
             if (acc.linkedSources.contains("mpesa") || acc.linkedSources.contains("equity")) {
-                logger.info("SYNC_DEBUG", "HomeScreen: Triggering auto-sync for ${acc.id}")
                 transactionsViewModel.autoSyncTransactions(acc.id)
-            } else {
-                logger.info("SYNC_DEBUG", "HomeScreen: Skipping auto-sync - no linked sources found for this account.")
             }
         }
     }

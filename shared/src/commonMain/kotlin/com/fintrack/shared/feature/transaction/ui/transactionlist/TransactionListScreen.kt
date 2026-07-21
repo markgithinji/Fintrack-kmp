@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.*
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.formatAsHeaderDate
 import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
@@ -66,7 +65,6 @@ fun TransactionListScreen(
     val transactionCounts by statisticsViewModel.transactionCounts.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     val sharedTransitionScope = LocalSharedTransitionScope.current
-    val logger = remember { KMPLogger() }
 
     val sharedBoundsKey = remember(accountId, isIncome, categoryId, categoryName, hasTransactionCost) {
         when {
@@ -90,10 +88,6 @@ fun TransactionListScreen(
             hasTransactionCost = hasTransactionCost
         )
     }.collectAsLazyPagingItems()
-
-    SideEffect {
-        logger.debug("TX_LIST_DEBUG", "refreshState: ${transactions.loadState.refresh}, itemCount: ${transactions.itemCount}, countsState: $transactionCounts")
-    }
 
     LaunchedEffect(accountId, isIncome, categoryId, startDate, endDate, hasTransactionCost, refreshTrigger) {
         statisticsViewModel.loadTransactionCounts(

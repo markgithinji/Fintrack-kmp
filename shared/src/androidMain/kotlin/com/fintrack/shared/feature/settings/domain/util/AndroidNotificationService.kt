@@ -9,7 +9,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -32,7 +31,6 @@ class AndroidNotificationService(
 ) : NotificationService {
 
     private val channelId = "transaction_reminders"
-    private val TAG = "NotificationService"
 
     init {
         createNotificationChannel()
@@ -53,11 +51,9 @@ class AndroidNotificationService(
     }
 
     override fun showReminderNotification() {
-        Log.d(TAG, "showReminderNotification called")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) {
-            Log.w(TAG, "Permission not granted for notifications")
             return
         }
 
@@ -72,9 +68,7 @@ class AndroidNotificationService(
             with(NotificationManagerCompat.from(context)) {
                 notify(1, builder.build())
             }
-            Log.i(TAG, "Notification displayed successfully")
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Failed to show notification: ${e.message}")
+        } catch (_: SecurityException) {
         }
     }
 
@@ -124,8 +118,7 @@ class AndroidNotificationService(
             with(NotificationManagerCompat.from(context)) {
                 notify(transaction.id.hashCode(), builder.build())
             }
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Failed to show transaction notification: ${e.message}")
+        } catch (_: SecurityException) {
         }
     }
 
@@ -150,8 +143,7 @@ class AndroidNotificationService(
             with(NotificationManagerCompat.from(context)) {
                 notify(budgetName.hashCode() + threshold, builder.build())
             }
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Failed to show budget alert notification: ${e.message}")
+        } catch (_: SecurityException) {
         }
     }
 
@@ -178,8 +170,7 @@ class AndroidNotificationService(
             with(NotificationManagerCompat.from(context)) {
                 notify(billName.hashCode(), builder.build())
             }
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Failed to show bill reminder notification: ${e.message}")
+        } catch (_: SecurityException) {
         }
     }
 
@@ -225,7 +216,7 @@ class AndroidNotificationService(
             } else {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
             }
-        } catch (e: SecurityException) {
+        } catch (_: SecurityException) {
             alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
         }
     }
@@ -248,8 +239,7 @@ class AndroidNotificationService(
             with(NotificationManagerCompat.from(context)) {
                 notify(title.hashCode(), builder.build())
             }
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Failed to show summary notification: ${e.message}")
+        } catch (_: SecurityException) {
         }
     }
 
@@ -291,7 +281,7 @@ class AndroidNotificationService(
             } else {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
             }
-        } catch (e: SecurityException) {
+        } catch (_: SecurityException) {
             alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
         }
     }
@@ -312,7 +302,6 @@ class AndroidNotificationService(
 
     override fun scheduleDailyReminder(time: LocalTime?) {
         val reminderTime = time ?: LocalTime(20, 0)
-        Log.d(TAG, "Scheduling reminder for ${reminderTime}")
 
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, ReminderReceiver::class.java).apply {
@@ -359,8 +348,7 @@ class AndroidNotificationService(
                     pendingIntent
                 )
             }
-        } catch (e: SecurityException) {
-            Log.e(TAG, "SecurityException while scheduling alarm: ${e.message}. Falling back to inexact alarm.")
+        } catch (_: SecurityException) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 alarmManager.setAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
@@ -375,11 +363,9 @@ class AndroidNotificationService(
                 )
             }
         }
-        Log.i(TAG, "Alarm set for ${calendar.time}")
     }
 
     override fun cancelDailyReminder() {
-        Log.d(TAG, "Cancelling daily reminder")
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, ReminderReceiver::class.java).apply {
             action = "com.fintrack.shared.ACTION_SHOW_REMINDER"
@@ -391,7 +377,6 @@ class AndroidNotificationService(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         alarmManager.cancel(pendingIntent)
-        Log.i(TAG, "Alarm cancelled")
     }
 
     override fun requestPermission(callback: (Boolean) -> Unit) {

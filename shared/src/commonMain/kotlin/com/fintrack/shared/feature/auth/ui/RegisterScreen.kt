@@ -127,20 +127,9 @@ fun RegisterScreen(
 
     val colorScheme = MaterialTheme.colorScheme
 
-//    // Automatically request focus on the name field when the screen opens
-//    LaunchedEffect(Unit) {
-//        delay(300)
-//        try {
-//            nameFocusRequester.requestFocus()
-//        } catch (e: Exception) {
-//            println("LOGIN_DEBUG: Failed to request focus in Register: ${e.message}")
-//        }
-//    }
-
     LaunchedEffect(registerState) {
         when (val state = registerState) {
             is AuthState.Success -> {
-                println("REGISTER_DEBUG: Registration successful, calling onRegisterSuccess")
                 onRegisterSuccess()
             }
 

@@ -5,7 +5,6 @@ import android.provider.Telephony
 import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
@@ -30,7 +29,6 @@ class EquityImporter(
     private val categoryRepository: CategoryRepository,
     private val settingsDataSource: SettingsDataSource
 ) : TransactionImporter {
-    private val logger = KMPLogger()
     private val portfolioSeeder = PortfolioSeeder()
 
     override suspend fun importHistory(
@@ -51,10 +49,8 @@ class EquityImporter(
         val accountId = targetAccountId ?: accounts.find { it.linkedSources.contains("equity") }?.id
 
         if (accountId == null) {
-            logger.warning("SYNC_FLOW", "EquityImporter: No destination account ID provided or found in linked sources.")
             if (isPortfolioSeed) {
                  val fallbackId = accounts.firstOrNull()?.id ?: "equity"
-                 logger.info("SYNC_FLOW", "Portfolio Seeding: Using fallback account ID: $fallbackId")
                  processImport(fallbackId, categories, rules, isPortfolioSeed, onProgress)
             } else {
                 throw Exception("No account is configured for Equity sync.")
@@ -74,7 +70,6 @@ class EquityImporter(
     ) {
         val permissionStatus = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS)
         if (permissionStatus != PackageManager.PERMISSION_GRANTED) {
-            logger.error("SYNC_FLOW", "SMS permission NOT granted.")
             if (!isPortfolioSeed) {
                 throw Exception("Permission denied: READ_SMS is required for Equity sync")
             }
@@ -141,7 +136,6 @@ class EquityImporter(
                 coroutineContext.ensureActive()
                 val result = transactionRepository.importEquityTransactions(chunk)
                 if (result is Result.Error) {
-                    logger.error("SYNC_FLOW", "EquityImporter: Failed to import chunk $index: ${result.exception.message}")
                     throw result.exception
                 }
                 onProgress(0.3f + ((index + 1).toFloat() / chunks.size) * 0.6f)
@@ -154,7 +148,6 @@ class EquityImporter(
             val newBalance = if (isPortfolioSeed) BigDecimal.fromInt(145800) else account.balance
             val updateResult = accountRepository.addOrUpdateAccount(account.copy(balance = newBalance, lastSyncedAt = Clock.System.now()))
             if (updateResult is Result.Error) {
-                logger.error("SYNC_FLOW", "EquityImporter: Failed to update account balance: ${updateResult.exception.message}")
                 throw updateResult.exception
             }
         }

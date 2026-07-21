@@ -4,7 +4,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.PagingSource
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.core.util.safeApiCall
 import com.fintrack.shared.feature.transaction.data.model.toCreateRequest
@@ -18,8 +17,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 class TransactionRepositoryImpl(
     private val transactionApi: TransactionApi,
 ) : TransactionRepository {
-
-    private val logger = KMPLogger()
 
     override suspend fun getTransactions(
         limit: Int,
@@ -68,32 +65,17 @@ class TransactionRepositoryImpl(
     }
 
     override suspend fun importMpesaTransactions(transactions: List<Transaction>): Result<Unit> {
-        logger.debug("SYNC_FLOW", "Repository: importMpesaTransactions called with ${transactions.size} transactions")
-        val result = safeApiCall {
+        return safeApiCall {
             val requests = transactions.map { it.toCreateRequest() }
             transactionApi.importMpesaTransactions(requests)
         }
-        if (result is Result.Success) {
-            logger.debug("SYNC_FLOW", "Repository: importMpesaTransactions success")
-        }
-        if (result is Result.Error) {
-            logger.error("SYNC_FLOW", "Repository: importMpesaTransactions failed", result.exception)
-        }
-        return result
     }
 
     override suspend fun importEquityTransactions(transactions: List<Transaction>): Result<Unit> {
-        logger.debug("SYNC_FLOW", "Repository: importEquityTransactions called with ${transactions.size} transactions")
-        val result = safeApiCall {
+        return safeApiCall {
             val requests = transactions.map { it.toCreateRequest() }
             transactionApi.importEquityTransactions(requests)
         }
-        if (result is Result.Success) {
-            logger.debug("SYNC_FLOW", "Repository: importEquityTransactions success")
-        } else if (result is Result.Error) {
-            logger.error("SYNC_FLOW", "Repository: importEquityTransactions failed", result.exception)
-        }
-        return result
     }
 
     override suspend fun getTransaction(id: String): Result<Transaction> =

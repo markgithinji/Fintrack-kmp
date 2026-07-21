@@ -5,7 +5,6 @@ import android.provider.Telephony
 import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
@@ -30,7 +29,6 @@ class MpesaImporter(
     private val categoryRepository: CategoryRepository,
     private val settingsDataSource: SettingsDataSource
 ) : TransactionImporter {
-    private val logger = KMPLogger()
     private val portfolioSeeder = PortfolioSeeder()
 
     override suspend fun importHistory(
@@ -52,10 +50,8 @@ class MpesaImporter(
         val accountId = targetAccountId ?: accounts.find { it.linkedSources.contains("mpesa") }?.id
 
         if (accountId == null) {
-            logger.warning("SYNC_FLOW", "MpesaImporter: No destination account ID provided or found in linked sources.")
             if (isPortfolioSeed) {
                  val fallbackId = accounts.firstOrNull()?.id ?: "mpesa"
-                 logger.info("SYNC_FLOW", "Portfolio Seeding: Using fallback account ID: $fallbackId")
                  processImport(fallbackId, categories, rules, isPortfolioSeed, onProgress)
             } else {
                 throw Exception("No account is configured for M-Pesa sync.")
@@ -74,11 +70,9 @@ class MpesaImporter(
         onProgress: (Float) -> Unit
     ) {
         val permissionStatus = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS)
-        logger.info("SYNC_DEBUG", "MpesaImporter: Permission check for READ_SMS: ${if (permissionStatus == PackageManager.PERMISSION_GRANTED) "GRANTED" else "DENIED"}")
         
         if (permissionStatus != PackageManager.PERMISSION_GRANTED) {
             if (!isPortfolioSeed) {
-                logger.error("SYNC_DEBUG", "MpesaImporter: Permission denied, throwing exception.")
                 throw Exception("Permission denied: READ_SMS is required for M-Pesa sync")
             }
         }
@@ -144,7 +138,6 @@ class MpesaImporter(
                 coroutineContext.ensureActive()
                 val result = transactionRepository.importMpesaTransactions(chunk)
                 if (result is Result.Error) {
-                    logger.error("SYNC_FLOW", "MpesaImporter: Failed to import chunk $index: ${result.exception.message}")
                     throw result.exception
                 }
                 onProgress(0.3f + ((index + 1).toFloat() / chunks.size) * 0.6f)
@@ -158,7 +151,6 @@ class MpesaImporter(
             val newBalance = if (isPortfolioSeed) BigDecimal.fromInt(72450) else if (isPureMpesaAccount) latestBalance ?: account.balance else account.balance
             val updateResult = accountRepository.addOrUpdateAccount(account.copy(balance = newBalance, lastSyncedAt = Clock.System.now()))
             if (updateResult is Result.Error) {
-                logger.error("SYNC_FLOW", "MpesaImporter: Failed to update account balance: ${updateResult.exception.message}")
                 throw updateResult.exception
             }
         }

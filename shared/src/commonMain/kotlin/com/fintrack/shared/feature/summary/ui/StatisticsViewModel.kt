@@ -14,7 +14,6 @@ import com.fintrack.shared.feature.summary.domain.model.TabType
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.domain.model.TransactionType
 import com.fintrack.shared.feature.summary.domain.repository.SummaryRepository
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -62,8 +61,6 @@ class StatisticsViewModel(
     private val _transactionCounts =
         MutableStateFlow<Result<TransactionCountSummary>>(Result.Loading)
     val transactionCounts: StateFlow<Result<TransactionCountSummary>> = _transactionCounts
-
-    private val logger = KMPLogger()
 
     val distribution: StateFlow<Result<DistributionSummary>> =
         combine(
@@ -475,7 +472,6 @@ class StatisticsViewModel(
 
         transactionCountsJob?.cancel()
         transactionCountsJob = viewModelScope.launch {
-            logger.debug("STATS_VM", "Loading transaction counts for account: $accountId")
             _transactionCounts.value = Result.Loading
             lastTransactionCountsAccountId = accountId
             lastTransactionCountsIsIncome = isIncome
@@ -484,7 +480,6 @@ class StatisticsViewModel(
             lastTransactionCountsEnd = end
             lastTransactionCountsHasCost = hasCost
             val result = summaryRepository.getTransactionCounts(accountId, isIncome, categoryId, start, end, hasCost)
-            logger.debug("STATS_VM", "Transaction counts result: $result")
             _transactionCounts.value = result
         }
     }

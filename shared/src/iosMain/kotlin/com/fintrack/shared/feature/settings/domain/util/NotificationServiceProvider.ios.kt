@@ -29,10 +29,8 @@ class IOSNotificationService(
             trigger = null
         )
 
-        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
-            if (error != null) {
-                println("Error showing immediate notification: ${error.localizedDescription}")
-            }
+        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { _ ->
+            // Handle error silently
         }
     }
 
@@ -55,10 +53,8 @@ class IOSNotificationService(
             trigger = null
         )
 
-        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
-            if (error != null) {
-                println("Error showing transaction notification: ${error.localizedDescription}")
-            }
+        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { _ ->
+            // Handle error silently
         }
     }
 
@@ -75,10 +71,8 @@ class IOSNotificationService(
             trigger = null
         )
 
-        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
-            if (error != null) {
-                println("Error showing budget alert notification: ${error.localizedDescription}")
-            }
+        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { _ ->
+            // Handle error silently
         }
     }
 
@@ -98,10 +92,8 @@ class IOSNotificationService(
             trigger = null
         )
 
-        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
-            if (error != null) {
-                println("Error showing bill reminder notification: ${error.localizedDescription}")
-            }
+        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { _ ->
+            // Handle error silently
         }
     }
 
@@ -133,10 +125,8 @@ class IOSNotificationService(
             trigger = trigger
         )
 
-        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
-            if (error != null) {
-                println("Error scheduling bill reminder: ${error.localizedDescription}")
-            }
+        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { _ ->
+            // Handle error silently
         }
     }
 
@@ -153,10 +143,8 @@ class IOSNotificationService(
             trigger = null
         )
 
-        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
-            if (error != null) {
-                println("Error showing summary notification: ${error.localizedDescription}")
-            }
+        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { _ ->
+            // Handle error silently
         }
     }
 
@@ -183,10 +171,8 @@ class IOSNotificationService(
             trigger = trigger
         )
 
-        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
-            if (error != null) {
-                println("Error scheduling summary notification: ${error.localizedDescription}")
-            }
+        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { _ ->
+            // Handle error silently
         }
     }
 
@@ -221,10 +207,8 @@ class IOSNotificationService(
             trigger = trigger
         )
 
-        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
-            if (error != null) {
-                println("Error scheduling daily reminder: ${error.localizedDescription}")
-            }
+        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { _ ->
+            // Handle error silently
         }
     }
 
@@ -238,11 +222,8 @@ class IOSNotificationService(
         val center = UNUserNotificationCenter.currentNotificationCenter()
         val options = UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge
         
-        center.requestAuthorizationWithOptions(options) { granted, error ->
+        center.requestAuthorizationWithOptions(options) { granted, _ ->
             callback(granted)
-            if (error != null) {
-                println("Error requesting notification permission: ${error.localizedDescription}")
-            }
         }
     }
 }

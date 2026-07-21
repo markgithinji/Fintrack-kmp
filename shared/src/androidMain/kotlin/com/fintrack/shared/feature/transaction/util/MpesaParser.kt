@@ -92,7 +92,6 @@ object MpesaParser {
         fun wrap(transaction: Transaction?): Transaction? {
             if (transaction == null) return null
             if (transaction.amount <= BigDecimal.ZERO) {
-                com.fintrack.shared.feature.core.logger.KMPLogger().debug("PARSER_ERROR", "Parsed 0 amount from M-Pesa! Ref: ${transaction.externalId}. Msg: ${message.take(100)}...")
                 return null
             }
             return transaction
@@ -210,8 +209,6 @@ object MpesaParser {
             val type = it.groupValues[6].lowercase()
             val isIncome = type == "credited"
             
-            com.fintrack.shared.feature.core.logger.KMPLogger().info("MPESA_PARSER", "Reversal detected! Ref: $code, Original: $originalCode, Amount: $amount, Type: $type")
-
             return wrap(createTransactionModel(code, amount, cost, balance, "Transfer", parseDateTime(date, time, smsTimestamp), "Reversal of $originalCode ($type)", accountId, isIncome))
         }
 

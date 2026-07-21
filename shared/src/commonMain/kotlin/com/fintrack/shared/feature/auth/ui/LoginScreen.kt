@@ -84,7 +84,6 @@ fun LoginScreen(
     onForgotPassword: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    println("LOGIN_DEBUG: LoginScreen recomposing. ViewModel: ${viewModel.hashCode()}")
     val loginState by viewModel.loginState.collectAsStateWithLifecycle()
     val loginFormState by viewModel.loginFormState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
@@ -106,15 +105,14 @@ fun LoginScreen(
         delay(300) // Small delay to ensure UI is ready
         try {
             emailFocusRequester.requestFocus()
-        } catch (e: Exception) {
-            println("LOGIN_DEBUG: Failed to request focus: ${e.message}")
+        } catch (_: Exception) {
+            // Ignore focus request failures
         }
     }
 
     LaunchedEffect(loginState) {
         when (val state = loginState) {
             is AuthState.Success -> {
-                println("LOGIN_DEBUG: [4] Login successful in UI, calling onLoginSuccess")
                 onLoginSuccess()
             }
 
@@ -204,7 +202,6 @@ fun LoginScreen(
             FinanceTextField(
                 value = loginFormState.email,
                 onValueChange = { 
-                    println("LOGIN_DEBUG: UI Email change to: '$it'")
                     viewModel.updateLoginEmail(it) 
                 },
                 label = "Email Address",
@@ -306,7 +303,6 @@ fun LoginScreen(
 
             Button(
                 onClick = {
-                    println("LOGIN_DEBUG: [0] Login button clicked for email: ${loginFormState.email}")
                     focusManager.clearFocus()
                     if (!loginFormState.isFormValid) {
                         viewModel.validateLoginEmail()

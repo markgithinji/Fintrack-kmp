@@ -12,7 +12,6 @@ val coreModule = module {
     single<HttpClient> {
         ApiClient(
             tokenDataSource = get(),
-            logger = get(),
             baseUrl = ApiConfig.BASE_URL
         ).httpClient
     }

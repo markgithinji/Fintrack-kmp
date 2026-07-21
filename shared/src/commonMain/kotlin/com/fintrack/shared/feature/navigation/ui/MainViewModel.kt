@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.account.domain.usecase.GetAccountsUseCase
 import com.fintrack.shared.feature.budget.domain.usecase.CheckBudgetThresholdsUseCase
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.transaction.domain.usecase.SyncRecurringBillsUseCase
@@ -136,7 +135,6 @@ class MainViewModel(
     fun triggerGlobalRefresh() {
         viewModelScope.launch {
             val newValue = _refreshTrigger.value + 1
-            KMPLogger().error("MainViewModel", "TRIGGER GLOBAL REFRESH: $newValue")
             _refreshTrigger.value = newValue
             // Maintenance tasks that react to data changes
             checkBudgets()

@@ -13,7 +13,6 @@ import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.category.domain.usecase.SyncCategoriesUseCase
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
@@ -51,8 +50,6 @@ class SettingsViewModel(
     private val budgetRepository: BudgetRepository,
     private val transactionImporter: TransactionImporter,
 ) : ViewModel() {
-
-    private val logger = KMPLogger()
 
     // State Flows
     private val _budgets = MutableStateFlow<Result<List<BudgetWithStatus>>>(Result.Loading)
@@ -192,7 +189,6 @@ class SettingsViewModel(
 
     fun setTheme(theme: AppTheme) {
         viewModelScope.launch {
-            logger.info("SettingsViewModel", "Setting theme: $theme")
             settingsDataSource.setTheme(theme)
         }
     }
@@ -205,14 +201,12 @@ class SettingsViewModel(
 
     fun setCurrency(currency: Currency) {
         viewModelScope.launch {
-            logger.info("SettingsViewModel", "Setting currency: $currency")
             settingsDataSource.setCurrency(currency)
         }
     }
 
     fun setBalanceHidden(hidden: Boolean) {
         viewModelScope.launch {
-            logger.info("SettingsViewModel", "Setting balance hidden: $hidden")
             settingsDataSource.setBalanceHidden(hidden)
         }
     }
@@ -245,14 +239,12 @@ class SettingsViewModel(
 
     fun setMpesaListenerEnabled(enabled: Boolean) {
         viewModelScope.launch {
-            logger.info("SettingsViewModel", "Setting M-Pesa listener enabled: $enabled")
             settingsDataSource.setMpesaListenerEnabled(enabled)
         }
     }
 
     fun setEquityListenerEnabled(enabled: Boolean) {
         viewModelScope.launch {
-            logger.info("SettingsViewModel", "Setting Equity listener enabled: $enabled")
             settingsDataSource.setEquityListenerEnabled(enabled)
         }
     }
@@ -322,7 +314,6 @@ class SettingsViewModel(
 
     fun setShowDecimals(show: Boolean) {
         viewModelScope.launch {
-            logger.info("SettingsViewModel", "Setting show decimals: $show")
             settingsDataSource.setShowDecimals(show)
         }
     }
@@ -480,14 +471,11 @@ class SettingsViewModel(
 
     fun updateTrackedCategories(categories: List<String>, onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
-            logger.error("SettingsViewModel", "UPDATING tracked categories: $categories")
             _isLoading.value = true
             val result = userRepository.updateTrackedCategories(categories)
             if (result is Result.Success) {
-                logger.error("SettingsViewModel", "Update tracked categories SUCCESS")
                 onSuccess()
             } else if (result is Result.Error) {
-                logger.error("SettingsViewModel", "Failed to update tracked categories: ${result.exception.message}")
                 _error.value = "Failed to update tracked categories: ${result.exception.message}"
             }
             _isLoading.value = false

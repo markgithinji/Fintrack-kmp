@@ -73,7 +73,6 @@ import androidx.compose.ui.window.DialogProperties
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.util.DateTimeUtils
@@ -334,11 +333,6 @@ private fun CurrentBalanceSuccessState(
     // Correctly determine if sync status should be shown based on account linkage
     val isLinkedAccount = isMpesaLinked || isEquityLinked
     
-    val logger = remember { KMPLogger() }
-    SideEffect {
-        logger.debug("CurrentBalanceCard", "Account: ${account.name}, isMpesaLinked: $isMpesaLinked, isLinkedAccount: $isLinkedAccount")
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()

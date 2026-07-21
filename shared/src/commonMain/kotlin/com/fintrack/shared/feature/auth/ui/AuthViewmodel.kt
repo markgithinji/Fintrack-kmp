@@ -11,8 +11,6 @@ import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
 import com.fintrack.shared.feature.auth.domain.usecase.LoginValidationUseCase
 import com.fintrack.shared.feature.auth.domain.usecase.RegisterValidationUseCase
 import com.fintrack.shared.feature.core.domain.ValidationResult
-import com.fintrack.shared.feature.core.logger.KMPLogger
-import com.fintrack.shared.feature.core.logger.LogTags
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
@@ -29,8 +27,7 @@ class AuthViewModel(
     private val tokenDataSource: TokenDataSource,
     private val registerValidationUseCase: RegisterValidationUseCase,
     private val loginValidationUseCase: LoginValidationUseCase,
-    private val settingsDataSource: SettingsDataSource,
-    private val logger: KMPLogger
+    private val settingsDataSource: SettingsDataSource
 ) : ViewModel() {
 
     private val _isAppLocked = MutableStateFlow(false)
@@ -291,11 +288,6 @@ class AuthViewModel(
                 }
 
                 is Result.Error -> {
-                    logger.error(
-                        LogTags.AUTH,
-                        "Registration failed for ${formState.email}: ${result.exception.message}",
-                        result.exception
-                    )
                     _registerState.value = AuthState.Error(result.exception)
                 }
 
@@ -328,10 +320,6 @@ class AuthViewModel(
 
                         _authStatus.value = AuthState.Success(true)
                     } else {
-                        logger.warning(
-                            LogTags.AUTH,
-                            "Token validation failed (invalid token). Clearing session."
-                        )
                         tokenDataSource.clearTokens()
                         _authStatus.value = AuthState.Success(false)
                     }
@@ -358,8 +346,8 @@ class AuthViewModel(
         viewModelScope.launch {
             try {
                 repository.logout()
-            } catch (e: Exception) {
-                logger.error(LogTags.AUTH, "Logout error", e)
+            } catch (_: Exception) {
+                // Silently logout
             } finally {
                 tokenDataSource.clearTokens()
                 userRepository.clearProfile()

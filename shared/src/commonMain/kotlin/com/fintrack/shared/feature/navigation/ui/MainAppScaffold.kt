@@ -54,7 +54,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -91,8 +90,6 @@ fun MainAppScaffold(
     val currentAccountId = smsSyncSignal?.accountId
     val currentImportState = importStateMap[currentAccountId]
     val isSmsRationaleHidden by mainViewModel.isSmsRationaleHidden.collectAsStateWithLifecycle()
-
-    val logger = remember { KMPLogger() }
 
     var showSmsPermissionRequest by remember { mutableStateOf(false) }
     var showSmsRationale by remember { mutableStateOf(false) }
@@ -330,24 +327,18 @@ fun MainAppScaffold(
                                 mainViewModel = mainViewModel,
                                 onLogout = onLogout,
                                 onSmsPermissionRequired = { force ->
-                                    logger.info("PERMISSION", "onSmsPermissionRequired: force=$force, isSmsRationaleHidden=$isSmsRationaleHidden")
                                     if (force) {
                                         // Manual sync: always request permission
                                         if (isSmsRationaleHidden) {
-                                            logger.info("PERMISSION", "Manual sync with hidden rationale: showing permission request")
                                             showSmsPermissionRequest = true
                                         } else {
-                                            logger.info("PERMISSION", "Manual sync with visible rationale: showing rationale dialog")
                                             showSmsRationale = true
                                         }
                                     } else {
                                         // Auto-sync: only show if the user hasn't opted out of the explanation
                                         // If rationale is hidden, we skip the request to avoid nagging on app open
                                         if (!isSmsRationaleHidden) {
-                                            logger.info("PERMISSION", "Auto-sync with visible rationale: showing rationale dialog")
                                             showSmsRationale = true
-                                        } else {
-                                            logger.info("PERMISSION", "Auto-sync with hidden rationale: skipping request to avoid nagging")
                                         }
                                     }
                                 }
@@ -386,7 +377,6 @@ fun MainAppScaffold(
             message = "FinTrack can automatically keep your transactions up to date by scanning SMS from M-Pesa and your bank. This keeps your dashboard accurate with zero manual effort.",
             icon = Icons.Default.Sms,
             onConfirm = { dontShowAgain ->
-                logger.info("PERMISSION", "MainAppScaffold: Rationale confirmed. dontShowAgain=$dontShowAgain")
                 if (dontShowAgain) {
                     mainViewModel.setSmsRationaleHidden(true)
                 }
@@ -394,7 +384,6 @@ fun MainAppScaffold(
                 showSmsPermissionRequest = true
             },
             onDismiss = { dontShowAgain ->
-                logger.info("PERMISSION", "MainAppScaffold: Rationale dismissed. dontShowAgain=$dontShowAgain")
                 if (dontShowAgain) {
                     mainViewModel.setSmsRationaleHidden(true)
                 }
@@ -406,7 +395,6 @@ fun MainAppScaffold(
     SmsPermissionLauncher(
         trigger = showSmsPermissionRequest,
         onResult = { granted ->
-            logger.info("PERMISSION", "MainAppScaffold: SmsPermissionLauncher result=$granted")
             if (granted) {
                 mainViewModel.triggerSmsSync()
             } else {
@@ -415,7 +403,6 @@ fun MainAppScaffold(
             showSmsPermissionRequest = false
         },
         onDismissTrigger = { 
-            logger.info("PERMISSION", "MainAppScaffold: SmsPermissionLauncher dismissed")
             showSmsPermissionRequest = false 
         }
     )

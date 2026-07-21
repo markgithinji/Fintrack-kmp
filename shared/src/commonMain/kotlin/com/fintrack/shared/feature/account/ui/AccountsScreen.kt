@@ -293,8 +293,6 @@ fun AccountsScreen(
             },
             onClearResults = { accountsViewModel.clearResults() },
             onConfirm = { name, type, sources, isDefault ->
-                println("ACCOUNTS_DEBUG: onConfirm clicked - Name: $name, Sources: $sources, isDefault: $isDefault")
-                
                 if (account.id.isNotEmpty()) {
                     // Update local settings for existing account
                     val accountId = account.id
@@ -647,8 +645,6 @@ fun AccountDialog(
             type != accountType ||
             isDefault != isDefaultSelection ||
             linkedSources != account.linkedSources.toSet()
-
-    println("ACCOUNTS_DEBUG: Dialog State - NameChanged: ${accountName != account.name}, TypeChanged: ${type != accountType}, DefaultChanged: ${isDefault != isDefaultSelection}, hasChanges: $hasChanges")
 
     val saveError = (saveResult as? Result.Error)?.let {
         (it.exception as? ApiException)?.getUserFriendlyMessage()

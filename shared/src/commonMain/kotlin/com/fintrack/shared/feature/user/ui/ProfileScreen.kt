@@ -27,7 +27,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.util.Result
@@ -47,15 +46,6 @@ fun ProfileScreen(
 ) {
     val metricsResult by viewModel.metricsState.collectAsStateWithLifecycle()
     var showLogoutConfirmation by remember { mutableStateOf(false) }
-    val logger = remember { KMPLogger() }
-
-    LaunchedEffect(metricsResult) {
-        when (metricsResult) {
-            is Result.Loading -> logger.info("PROFILE_SCREEN", "Profile header loading...")
-            is Result.Success -> logger.info("PROFILE_SCREEN", "Profile header loaded successfully.")
-            is Result.Error -> logger.error("PROFILE_SCREEN", "Profile header failed to load: ${(metricsResult as Result.Error).exception.message}")
-        }
-    }
 
     LaunchedEffect(Unit) {
         viewModel.refreshProfile()

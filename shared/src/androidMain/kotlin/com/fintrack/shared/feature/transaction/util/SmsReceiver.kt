@@ -11,7 +11,6 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.settings.domain.util.NotificationService
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
-import com.fintrack.shared.feature.core.logger.KMPLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -25,7 +24,6 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
     private val categoryRepository: CategoryRepository by inject()
     private val settingsDataSource: SettingsDataSource by inject()
     private val notificationService: NotificationService by inject()
-    private val logger = KMPLogger()
 
     companion object {
         // Cache to deduplicate real-time messages that arrive in pairs (e.g. Sent + Drawn)
@@ -59,8 +57,6 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
         val fullMessage = messages.joinToString("") { it.displayMessageBody }
         val sender = messages.firstOrNull()?.displayOriginatingAddress
 
-        logger.debug("SmsReceiver", "Received SMS from: $sender")
-
         val isMpesa = sender?.contains("MPESA", ignoreCase = true) == true || 
                      sender?.contains("M-PESA", ignoreCase = true) == true
         
@@ -80,16 +76,9 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                     }
 
                     if (!isEnabled) {
-                        logger.debug("SmsReceiver", "${if (isMpesa) "M-Pesa" else "Equity"} listener is disabled in settings")
                         return@launch
                     }
 
-                    if (isEquity) {
-                        logger.debug("EQUITY_DEBUG", "Processing Equity message: $fullMessage")
-                    } else {
-                        logger.debug("SmsReceiver", "Processing M-Pesa message: ${fullMessage.take(50)}...")
-                    }
-                    
                     val accountsResult = accountRepository.getAccounts()
                     val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
                     
@@ -100,7 +89,6 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                     }
 
                     if (accountId == null) {
-                        logger.debug("SmsReceiver", "No account found linked to ${if (isMpesa) "mpesa" else "equity"}. Skipping.")
                         return@launch
                     }
                     
@@ -113,7 +101,6 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                     if (transaction != null) {
                         // Fuzzy deduplication for real-time messages
                         if (isDuplicate(transaction.amount, transaction.dateTime.epochSeconds, sender)) {
-                            logger.debug("SmsReceiver", "Skipping real-time duplicate: ${transaction.amount} from $sender")
                             return@launch
                         }
 
@@ -141,11 +128,8 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                         // Show notification immediately so the user knows we caught it
                         notificationService.showTransactionNotification(transaction)
 
-                        logger.info("SmsReceiver", "Syncing ${if (isMpesa) "M-Pesa" else "Equity"} transaction directly: ${transaction.externalId}")
-                        
                         val result = transactionRepository.addTransaction(transaction)
                         if (result is Result.Success<*>) {
-                            logger.info("SmsReceiver", "Successfully synced transaction: ${transaction.externalId}")
                             
                             // Update account balance and last sync time if possible
                             val balance = if (isMpesa) MpesaParser.parseBalance(fullMessage) else EquityParser.parseBalance(fullMessage)
@@ -158,21 +142,16 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                                     
                                     val newBalance = if (isPureMpesaAccount) balance ?: account.balance else account.balance
                                     
-                                    logger.info("SmsReceiver", "Updating account state. Pure Mpesa: $isPureMpesaAccount, New Balance: $newBalance")
                                     accountRepository.addOrUpdateAccount(account.copy(
                                         balance = newBalance,
                                         lastSyncedAt = kotlin.time.Clock.System.now()
                                     ))
                                 }
                             }
-                        } else {
-                            logger.error("SmsReceiver", "Failed to sync transaction: ${(result as? Result.Error)?.exception?.message}")
                         }
                     } else {
-                        logger.warning("SmsReceiver", "Failed to parse ${if (isMpesa) "M-Pesa" else "Equity"} message: $fullMessage")
                     }
                 } catch (e: Exception) {
-                    logger.error("SmsReceiver", "Error processing SMS: ${e.message}")
                 } finally {
                     pendingResult.finish()
                 }
