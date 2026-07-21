@@ -125,6 +125,7 @@ import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.settings.domain.model.ExportFormat
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
+import com.fintrack.shared.feature.navigation.ui.LocalBiometricAuthenticator
 import com.fintrack.shared.feature.settings.domain.util.BiometricAuthenticator
 import com.fintrack.shared.feature.settings.domain.util.BiometricResult
 import com.fintrack.shared.feature.settings.domain.util.format
@@ -181,7 +182,7 @@ fun SettingsScreen(
     val seedState by viewModel.seedState.collectAsStateWithLifecycle()
     val seedProgress by viewModel.seedProgress.collectAsStateWithLifecycle()
 
-    val biometricAuthenticator: BiometricAuthenticator = koinInject()
+    val biometricAuthenticator = LocalBiometricAuthenticator.current
     val scope = rememberCoroutineScope()
     
     var showCurrencyDialog by remember { mutableStateOf(false) }

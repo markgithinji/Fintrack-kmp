@@ -5,11 +5,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.fragment.app.FragmentActivity
+import java.lang.ref.WeakReference
 
-private var currentActivity: FragmentActivity? = null
+private var currentActivityRef: WeakReference<FragmentActivity>? = null
 
 fun initBiometricAuthenticator(activity: FragmentActivity) {
-    currentActivity = activity
+    currentActivityRef = WeakReference(activity)
 }
 
 @Composable
@@ -24,5 +25,12 @@ actual fun rememberBiometricAuthenticator(): BiometricAuthenticator {
 }
 
 actual fun createBiometricAuthenticator(): BiometricAuthenticator {
-    return AndroidBiometricAuthenticator(currentActivity!!)
+    return object : BiometricAuthenticator {
+        override suspend fun authenticate(title: String, subtitle: String): BiometricResult {
+            val activity = currentActivityRef?.get() 
+                ?: return BiometricResult.Error("Biometric authentication failed: Activity context is missing.")
+            
+            return AndroidBiometricAuthenticator(activity).authenticate(title, subtitle)
+        }
+    }
 }

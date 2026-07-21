@@ -77,7 +77,6 @@ fun AppStateProvider(
     val timeFormat by viewModel.timeFormat.collectAsStateWithLifecycle()
     val theme by viewModel.theme.collectAsStateWithLifecycle()
     val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
-    val biometricAuthenticator = rememberBiometricAuthenticator()
 
     CompositionLocalProvider(
         LocalCurrency provides currency,
@@ -87,7 +86,6 @@ fun AppStateProvider(
         LocalAppTheme provides theme,
         LocalUser provides userProfile,
         LocalToastBottomPadding provides toastBottomPadding,
-        LocalBiometricAuthenticator provides biometricAuthenticator,
         LocalNavController provides navController
     ) {
         content()
