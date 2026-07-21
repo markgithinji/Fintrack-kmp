@@ -12,16 +12,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -78,13 +75,14 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun RegisterScreen(
-    viewModel: AuthViewModel = koinViewModel(),
+    authViewModel: AuthViewModel = koinViewModel(),
     onRegisterSuccess: () -> Unit,
     onLogin: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    val registerState by viewModel.registerState.collectAsStateWithLifecycle()
-    val registerFormState by viewModel.registerFormState.collectAsStateWithLifecycle()
+    val registerState by authViewModel.registerState.collectAsStateWithLifecycle()
+    val registerFormState by authViewModel.registerFormState.collectAsStateWithLifecycle()
+    val toastMessage by authViewModel.toastMessage.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val nameFocusRequester = remember { FocusRequester() }
@@ -135,7 +133,7 @@ fun RegisterScreen(
 
             is AuthState.Error -> {
                 val exception = state.exception
-                viewModel.showToast((exception as? ApiException)?.getUserFriendlyMessage() ?: exception.message ?: "Registration failed. Please try again.", true)
+                authViewModel.showToast((exception as? ApiException)?.getUserFriendlyMessage() ?: exception.message ?: "Registration failed. Please try again.", true)
             }
 
             else -> Unit
@@ -198,7 +196,7 @@ fun RegisterScreen(
             // 2. Input Fields
             FinanceTextField(
                 value = registerFormState.name,
-                onValueChange = { viewModel.updateName(it) },
+                onValueChange = { authViewModel.updateName(it) },
                 label = "Full Name",
                 leadingIcon = Icons.Default.Person,
                 keyboardType = KeyboardType.Text,
@@ -208,7 +206,7 @@ fun RegisterScreen(
                 errorMessage = null, // Shown consolidated below
                 onFocusChanged = { isFocused ->
                     if (isFocused) nameTouched = true
-                    if (!isFocused && nameTouched) viewModel.validateName()
+                    if (!isFocused && nameTouched) authViewModel.validateName()
                 },
                 contentType = ContentType.PersonFullName,
                 modifier = Modifier.focusRequester(nameFocusRequester)
@@ -218,7 +216,7 @@ fun RegisterScreen(
 
             FinanceTextField(
                 value = registerFormState.email,
-                onValueChange = { viewModel.updateEmail(it) },
+                onValueChange = { authViewModel.updateEmail(it) },
                 label = "Email Address",
                 leadingIcon = Icons.Default.Email,
                 keyboardType = KeyboardType.Email,
@@ -228,7 +226,7 @@ fun RegisterScreen(
                 errorMessage = null, // Shown consolidated below
                 onFocusChanged = { isFocused ->
                     if (isFocused) emailTouched = true
-                    if (!isFocused && emailTouched) viewModel.validateEmail()
+                    if (!isFocused && emailTouched) authViewModel.validateEmail()
                 },
                 contentType = ContentType.EmailAddress
             )
@@ -237,7 +235,7 @@ fun RegisterScreen(
 
             FinanceTextField(
                 value = registerFormState.password,
-                onValueChange = { viewModel.updatePassword(it) },
+                onValueChange = { authViewModel.updatePassword(it) },
                 label = "Password",
                 leadingIcon = Icons.Default.Lock,
                 keyboardType = KeyboardType.Password,
@@ -250,7 +248,7 @@ fun RegisterScreen(
                 errorMessage = null, // Shown consolidated below
                 onFocusChanged = { isFocused ->
                     if (isFocused) passwordTouched = true
-                    if (!isFocused && passwordTouched) viewModel.validatePassword()
+                    if (!isFocused && passwordTouched) authViewModel.validatePassword()
                 },
                 contentType = ContentType.NewPassword
             )
@@ -259,7 +257,7 @@ fun RegisterScreen(
 
             FinanceTextField(
                 value = registerFormState.confirmPassword,
-                onValueChange = { viewModel.updateConfirmPassword(it) },
+                onValueChange = { authViewModel.updateConfirmPassword(it) },
                 label = "Confirm Password",
                 leadingIcon = Icons.Default.Lock,
                 keyboardType = KeyboardType.Password,
@@ -268,12 +266,12 @@ fun RegisterScreen(
                     onDone = {
                         focusManager.clearFocus()
                         if (registerFormState.isFormValid) {
-                            viewModel.register()
+                            authViewModel.register()
                         } else {
-                            viewModel.validateName()
-                            viewModel.validateEmail()
-                            viewModel.validatePassword()
-                            viewModel.validateConfirmPassword()
+                            authViewModel.validateName()
+                            authViewModel.validateEmail()
+                            authViewModel.validatePassword()
+                            authViewModel.validateConfirmPassword()
                         }
                     }
                 ),
@@ -285,7 +283,7 @@ fun RegisterScreen(
                 errorMessage = null, // Shown consolidated below
                 onFocusChanged = { isFocused ->
                     if (isFocused) confirmPasswordTouched = true
-                    if (!isFocused && confirmPasswordTouched) viewModel.validateConfirmPassword()
+                    if (!isFocused && confirmPasswordTouched) authViewModel.validateConfirmPassword()
                 },
                 contentType = ContentType.NewPassword
             )
@@ -328,12 +326,12 @@ fun RegisterScreen(
                     focusManager.clearFocus()
                     // If form is not valid, trigger all validations to show the errors
                     if (!registerFormState.isFormValid) {
-                        viewModel.validateName()
-                        viewModel.validateEmail()
-                        viewModel.validatePassword()
-                        viewModel.validateConfirmPassword()
+                        authViewModel.validateName()
+                        authViewModel.validateEmail()
+                        authViewModel.validatePassword()
+                        authViewModel.validateConfirmPassword()
                     } else {
-                        viewModel.register()
+                        authViewModel.register()
                     }
                 },
                 modifier = Modifier
@@ -459,6 +457,22 @@ fun RegisterScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.clickable { onLogin() }
+                )
+            }
+        }
+
+        // Screen-local Toast
+        toastMessage?.let { (message, isError) ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 32.dp),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                MaterialToast(
+                    message = message,
+                    isError = isError,
+                    onDismiss = { authViewModel.clearToast() }
                 )
             }
         }

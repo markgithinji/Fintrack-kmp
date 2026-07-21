@@ -12,16 +12,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -78,14 +75,15 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun LoginScreen(
-    viewModel: AuthViewModel = koinViewModel(),
+    authViewModel: AuthViewModel = koinViewModel(),
     onLoginSuccess: () -> Unit,
     onSignUp: () -> Unit = {},
     onForgotPassword: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    val loginState by viewModel.loginState.collectAsStateWithLifecycle()
-    val loginFormState by viewModel.loginFormState.collectAsStateWithLifecycle()
+    val loginState by authViewModel.loginState.collectAsStateWithLifecycle()
+    val loginFormState by authViewModel.loginFormState.collectAsStateWithLifecycle()
+    val toastMessage by authViewModel.toastMessage.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
     val emailFocusRequester = remember { FocusRequester() }
@@ -118,7 +116,7 @@ fun LoginScreen(
 
             is AuthState.Error -> {
                 val exception = state.exception
-                viewModel.showToast((exception as? ApiException)?.getUserFriendlyMessage() ?: exception.message ?: "Login failed. Please try again.", true)
+                authViewModel.showToast((exception as? ApiException)?.getUserFriendlyMessage() ?: exception.message ?: "Login failed. Please try again.", true)
             }
 
             else -> Unit
@@ -202,7 +200,7 @@ fun LoginScreen(
             FinanceTextField(
                 value = loginFormState.email,
                 onValueChange = { 
-                    viewModel.updateLoginEmail(it) 
+                    authViewModel.updateLoginEmail(it)
                 },
                 label = "Email Address",
                 leadingIcon = Icons.Default.Email,
@@ -213,7 +211,7 @@ fun LoginScreen(
                 errorMessage = null, // Consolidated in the error box
                 onFocusChanged = { isFocused ->
                     if (isFocused) emailTouched = true
-                    if (!isFocused && emailTouched) viewModel.validateLoginEmail()
+                    if (!isFocused && emailTouched) authViewModel.validateLoginEmail()
                 },
                 contentType = ContentType.EmailAddress,
                 modifier = Modifier.focusRequester(emailFocusRequester)
@@ -223,7 +221,7 @@ fun LoginScreen(
 
             FinanceTextField(
                 value = loginFormState.password,
-                onValueChange = { viewModel.updateLoginPassword(it) },
+                onValueChange = { authViewModel.updateLoginPassword(it) },
                 label = "Password",
                 leadingIcon = Icons.Default.Lock,
                 keyboardType = KeyboardType.Password,
@@ -232,10 +230,10 @@ fun LoginScreen(
                     onDone = {
                         focusManager.clearFocus()
                         if (loginFormState.isFormValid) {
-                            viewModel.login()
+                            authViewModel.login()
                         } else {
-                            viewModel.validateLoginEmail()
-                            viewModel.validateLoginPassword()
+                            authViewModel.validateLoginEmail()
+                            authViewModel.validateLoginPassword()
                         }
                     }
                 ),
@@ -247,7 +245,7 @@ fun LoginScreen(
                 errorMessage = null, // Consolidated in the error box
                 onFocusChanged = { isFocused ->
                     if (isFocused) passwordTouched = true
-                    if (!isFocused && passwordTouched) viewModel.validateLoginPassword()
+                    if (!isFocused && passwordTouched) authViewModel.validateLoginPassword()
                 },
                 contentType = ContentType.Password
             )
@@ -305,10 +303,10 @@ fun LoginScreen(
                 onClick = {
                     focusManager.clearFocus()
                     if (!loginFormState.isFormValid) {
-                        viewModel.validateLoginEmail()
-                        viewModel.validateLoginPassword()
+                        authViewModel.validateLoginEmail()
+                        authViewModel.validateLoginPassword()
                     } else {
-                        viewModel.login()
+                        authViewModel.login()
                     }
                 },
                 modifier = Modifier
@@ -434,6 +432,22 @@ fun LoginScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.clickable { onSignUp() },
+                )
+            }
+        }
+
+        // Screen-local Toast
+        toastMessage?.let { (message, isError) ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 32.dp),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                MaterialToast(
+                    message = message,
+                    isError = isError,
+                    onDismiss = { authViewModel.clearToast() }
                 )
             }
         }

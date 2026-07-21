@@ -183,9 +183,7 @@ fun MainScreen(
                                             LaunchedEffect(Unit) {
                                                 toastPadding = 24.dp
                                             }
-                                            AuthNavigation(
-                                                authViewModel = authViewModel
-                                            )
+                                            AuthNavigation()
                                         }
                                     }
                                 }

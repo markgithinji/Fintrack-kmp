@@ -13,16 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import com.fintrack.shared.feature.auth.ui.LoginScreen
 import com.fintrack.shared.feature.auth.ui.RegisterScreen
 import com.fintrack.shared.feature.navigation.model.Screen
 import com.fintrack.shared.feature.navigation.ui.LocalNavController
-import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AuthNavigation(
-    authViewModel: AuthViewModel = koinViewModel(),
     paddingValues: PaddingValues = PaddingValues()
 ) {
     val navController = rememberNavController()
@@ -36,7 +33,6 @@ fun AuthNavigation(
     ) {
         composable<Screen.Login> {
             LoginScreen(
-                viewModel = authViewModel,
                 onLoginSuccess = {
                     // Handled globally via authStatus update in ViewModel
                 },
@@ -54,7 +50,6 @@ fun AuthNavigation(
 
         composable<Screen.Register> {
             RegisterScreen(
-                viewModel = authViewModel,
                 onRegisterSuccess = {
                     // Handled globally via authStatus update in ViewModel
                 },
