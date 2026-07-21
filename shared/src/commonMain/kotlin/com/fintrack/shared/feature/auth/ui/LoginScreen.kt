@@ -12,13 +12,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -89,7 +92,6 @@ fun LoginScreen(
     val emailFocusRequester = remember { FocusRequester() }
 
     // Validation state
-    var mostRecentValidationError by remember { mutableStateOf<String?>(null) }
     var emailTouched by remember { mutableStateOf(false) }
     var passwordTouched by remember { mutableStateOf(false) }
 
@@ -111,6 +113,7 @@ fun LoginScreen(
     LaunchedEffect(loginState) {
         when (val state = loginState) {
             is AuthState.Success -> {
+                delay(1500) // Delay to let "Success" animation show on button
                 onLoginSuccess()
             }
 
@@ -123,25 +126,7 @@ fun LoginScreen(
         }
     }
 
-    // Consolidate validation errors for single display
-    val validationErrorMessage = remember(loginFormState, mostRecentValidationError) {
-        val allErrors = listOfNotNull(
-            loginFormState.emailError,
-            loginFormState.passwordError
-        )
-        
-        if (allErrors.isEmpty()) {
-            null
-        } else if (allErrors.contains(mostRecentValidationError)) {
-            mostRecentValidationError
-        } else {
-            allErrors.firstOrNull()
-        }
-    }
-
-    // Update most recent error when form state errors change
-    LaunchedEffect(loginFormState.emailError) { loginFormState.emailError?.let { mostRecentValidationError = it } }
-    LaunchedEffect(loginFormState.passwordError) { loginFormState.passwordError?.let { mostRecentValidationError = it } }
+    val validationErrorMessage = loginFormState.activeError
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -441,7 +426,9 @@ fun LoginScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = 32.dp),
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+                    .imePadding()
+                    .padding(bottom = 24.dp),
                 contentAlignment = Alignment.BottomCenter
             ) {
                 MaterialToast(

@@ -9,6 +9,7 @@ data class RegisterFormState(
     val emailError: String? = null,
     val passwordError: String? = null,
     val confirmPasswordError: String? = null,
+    val activeError: String? = null,
     val passwordStrength: String = "None",
     val isFormValid: Boolean = false
 )

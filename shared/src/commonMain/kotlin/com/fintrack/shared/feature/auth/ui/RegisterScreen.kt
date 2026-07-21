@@ -12,13 +12,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -70,6 +73,7 @@ import fintrack.shared.generated.resources.Res
 import fintrack.shared.generated.resources.apple_signIn_icon
 import fintrack.shared.generated.resources.fintrack_app_icon
 import fintrack.shared.generated.resources.google_signIn_icon
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -87,38 +91,13 @@ fun RegisterScreen(
     val focusManager = LocalFocusManager.current
     val nameFocusRequester = remember { FocusRequester() }
 
-    // Validation state
-    var mostRecentValidationError by remember { mutableStateOf<String?>(null) }
-    
     // Track which fields have been interacted with to avoid showing errors on initial load
     var nameTouched by remember { mutableStateOf(false) }
     var emailTouched by remember { mutableStateOf(false) }
     var passwordTouched by remember { mutableStateOf(false) }
     var confirmPasswordTouched by remember { mutableStateOf(false) }
 
-    // Consolidate validation errors for single display
-    val validationErrorMessage = remember(registerFormState, mostRecentValidationError) {
-        val allErrors = listOfNotNull(
-            registerFormState.nameError,
-            registerFormState.emailError,
-            registerFormState.passwordError,
-            registerFormState.confirmPasswordError
-        )
-        
-        if (allErrors.isEmpty()) {
-            null
-        } else if (allErrors.contains(mostRecentValidationError)) {
-            mostRecentValidationError
-        } else {
-            allErrors.firstOrNull()
-        }
-    }
-
-    // Update most recent error when form state errors change
-    LaunchedEffect(registerFormState.nameError) { registerFormState.nameError?.let { mostRecentValidationError = it } }
-    LaunchedEffect(registerFormState.emailError) { registerFormState.emailError?.let { mostRecentValidationError = it } }
-    LaunchedEffect(registerFormState.passwordError) { registerFormState.passwordError?.let { mostRecentValidationError = it } }
-    LaunchedEffect(registerFormState.confirmPasswordError) { registerFormState.confirmPasswordError?.let { mostRecentValidationError = it } }
+    val validationErrorMessage = registerFormState.activeError
 
     var passwordVisible by remember { mutableStateOf(value = false) }
     var confirmPasswordVisible by remember { mutableStateOf(value = false) }
@@ -128,6 +107,7 @@ fun RegisterScreen(
     LaunchedEffect(registerState) {
         when (val state = registerState) {
             is AuthState.Success -> {
+                delay(1500) // Delay to let "Success" animation show on button
                 onRegisterSuccess()
             }
 
@@ -466,7 +446,9 @@ fun RegisterScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = 32.dp),
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+                    .imePadding()
+                    .padding(bottom = 24.dp),
                 contentAlignment = Alignment.BottomCenter
             ) {
                 MaterialToast(
