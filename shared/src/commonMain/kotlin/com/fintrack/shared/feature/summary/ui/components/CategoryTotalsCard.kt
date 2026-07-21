@@ -269,6 +269,7 @@ fun CategoryTotalsCardWithTabs(
                                             name = it.category,
                                             categoryId = it.categoryId,
                                             amount = it.total,
+                                            percentage = it.percentage,
                                             count = it.transactionCount,
                                             avgCount = it.averageTransactionCount,
                                             trend = it.momentumTrend,
@@ -563,7 +564,8 @@ fun CategoryList(
             val amount = model.amount
             val percent = if (totalAmount > BigDecimal.ZERO) {
                 try {
-                    (amount.divide(totalAmount) * BigDecimal.fromInt(100)).toDouble().toInt()
+                    // Calculate using double precision to avoid BigDecimal division truncation (which returns 0 if amount < totalAmount)
+                    (amount.toDouble() / totalAmount.toDouble() * 100).toInt()
                 } catch (e: Exception) {
                     0
                 }
@@ -993,6 +995,7 @@ data class CategoryDisplayModel(
     val name: String,
     val categoryId: String,
     val amount: BigDecimal,
+    val percentage: BigDecimal? = null,
     val count: Int,
     val avgCount: BigDecimal? = null,
     val trend: String? = null,

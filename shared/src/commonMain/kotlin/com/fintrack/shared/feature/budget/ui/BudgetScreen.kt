@@ -194,7 +194,7 @@ private fun BudgetSummaryHeader(budgets: List<BudgetWithStatus>) {
     val totalSpent = budgets.fold(BigDecimal.ZERO) { acc, b -> acc + b.status.spent }
     val progress = if (totalLimit > BigDecimal.ZERO) {
         try {
-            (totalSpent.divide(totalLimit)).toDouble().toFloat().coerceIn(0f, 1f)
+            (totalSpent.toDouble() / totalLimit.toDouble()).toFloat().coerceIn(0f, 1f)
         } catch (_: Exception) {
             0f
         }
@@ -400,7 +400,7 @@ fun BudgetItem(
     val status = budgetWithStatus.status
     val progress = if (budget.limit > BigDecimal.ZERO) {
         try {
-            (status.spent.divide(budget.limit)).toDouble().toFloat().coerceAtMost(1f)
+            (status.spent.toDouble() / budget.limit.toDouble()).toFloat().coerceAtMost(1f)
         } catch (_: Exception) {
             0f
         }

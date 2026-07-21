@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.toDouble
 import com.fintrack.shared.feature.core.util.toInt
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.summary.domain.model.Correlation
@@ -243,7 +244,7 @@ private fun SuccessContent(
             val projected = highlights.projectedTotal ?: BigDecimal.ZERO
             val progressPercent = if (projected > BigDecimal.ZERO) {
                 try {
-                    (currentYearTotal.divide(projected) * BigDecimal.fromInt(100)).toInt()
+                    ((currentYearTotal.toDouble() / projected.toDouble()) * 100).toInt()
                 } catch (_: Exception) {
                     0
                 }
