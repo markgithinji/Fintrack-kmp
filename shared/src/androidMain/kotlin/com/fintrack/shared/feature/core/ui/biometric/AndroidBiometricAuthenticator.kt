@@ -52,11 +52,6 @@ class AndroidBiometricAuthenticator(
                             continuation.resume(BiometricResult.Success)
                         }
                     }
-
-                    override fun onAuthenticationFailed() {
-                        super.onAuthenticationFailed()
-                        // This is called when fingerprint is recognized but not valid
-                    }
                 }
             )
 

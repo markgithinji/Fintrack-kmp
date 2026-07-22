@@ -2,7 +2,6 @@ package com.fintrack.shared.feature.transaction.service
 
 import android.content.Context
 import android.provider.Telephony
-import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.core.util.Result
@@ -18,7 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.coroutineContext
+import kotlinx.coroutines.currentCoroutineContext
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -52,7 +51,7 @@ class EquityImporter(
         if (accountId == null) {
             if (isPortfolioSeed) {
                  val fallbackId = accounts.firstOrNull()?.id ?: "equity"
-                 processImport(fallbackId, categories, rules, isPortfolioSeed, onProgress)
+                 processImport(fallbackId, categories, rules, true, onProgress)
             } else {
                 throw Exception("No account is configured for Equity sync.")
             }
@@ -91,37 +90,35 @@ class EquityImporter(
         val transactions = mutableListOf<Transaction>()
         var latestBalance: BigDecimal? = null
 
-        if (cursor != null) {
-            cursor.use {
-                val bodyIndex = it.getColumnIndex(Telephony.Sms.Inbox.BODY)
-                val dateIndex = it.getColumnIndex(Telephony.Sms.Inbox.DATE)
-                var loggedCount = 0
-                val totalMessages = it.count
+        cursor?.use { smsCursor ->
+            val bodyIndex = smsCursor.getColumnIndex(Telephony.Sms.Inbox.BODY)
+            val dateIndex = smsCursor.getColumnIndex(Telephony.Sms.Inbox.DATE)
+            var loggedCount = 0
+            val totalMessages = smsCursor.count
 
-                while (it.moveToNext()) {
-                    coroutineContext.job.ensureActive()
-                    val body = it.getString(bodyIndex)
-                    val timestamp = it.getLong(dateIndex)
-                    val smsInstant = Instant.fromEpochMilliseconds(timestamp)
+            while (smsCursor.moveToNext()) {
+                currentCoroutineContext().job.ensureActive()
+                val body = smsCursor.getString(bodyIndex)
+                val timestamp = smsCursor.getLong(dateIndex)
+                val smsInstant = Instant.fromEpochMilliseconds(timestamp)
 
-                    if (latestBalance == null) {
-                        latestBalance = EquityParser.parseBalance(body)
-                    }
-
-                    val parsed = EquityParser.parse(body, accountId, smsInstant, rules)
-                    if (parsed != null) {
-                        val categoryName = parsed.category
-                        val isExpense = !parsed.isIncome
-                        val finalCategoryId = categories.find { it.name.equals(categoryName, ignoreCase = true) && it.isExpense == isExpense }?.id
-                            ?: categories.find { it.name.contains("Other", ignoreCase = true) && it.isExpense == isExpense }?.id
-                            ?: "pending"
-
-                        transactions.add(parsed.copy(categoryId = finalCategoryId))
-                    }
-                    
-                    loggedCount++
-                    if (loggedCount % 100 == 0) onProgress(0.05f + (loggedCount.toFloat() / totalMessages) * 0.25f)
+                if (latestBalance == null) {
+                    latestBalance = EquityParser.parseBalance(body)
                 }
+
+                val parsed = EquityParser.parse(body, accountId, smsInstant, rules)
+                if (parsed != null) {
+                    val categoryName = parsed.category
+                    val isExpense = !parsed.isIncome
+                    val finalCategoryId = categories.find { cat -> cat.name.equals(categoryName, ignoreCase = true) && cat.isExpense == isExpense }?.id
+                        ?: categories.find { cat -> cat.name.contains("Other", ignoreCase = true) && cat.isExpense == isExpense }?.id
+                        ?: "pending"
+
+                    transactions.add(parsed.copy(categoryId = finalCategoryId))
+                }
+
+                loggedCount++
+                if (loggedCount % 100 == 0) onProgress(0.05f + (loggedCount.toFloat() / totalMessages) * 0.25f)
             }
         }
 
@@ -134,12 +131,10 @@ class EquityImporter(
             onProgress(0.3f)
             val chunks = transactions.chunked(250)
             chunks.forEachIndexed { index, chunk ->
-                coroutineContext.job.ensureActive()
+                currentCoroutineContext().job.ensureActive()
                 val result = transactionRepository.importEquityTransactions(chunk)
-                if (result is Result.Error) {
-                    throw result.exception
-                }
-                onProgress(0.3f + ((index + 1).toFloat() / chunks.size) * 0.6f)
+                if (result is Result.Error) throw result.exception
+                onProgress(0.3f + (((index + 1).toFloat() / chunks.size) * 0.6f))
             }
         }
 

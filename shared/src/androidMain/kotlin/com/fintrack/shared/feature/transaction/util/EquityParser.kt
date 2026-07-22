@@ -60,7 +60,7 @@ object EquityParser {
         SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.ENGLISH),
         SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.ENGLISH),
         SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.ENGLISH),
-        SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.ENGLISH)
+        SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.ENGLISH),
     )
 
     fun parse(
@@ -102,7 +102,7 @@ object EquityParser {
             val merchant = it.groupValues[2].trim()
             val dateTime = parseDateTime(it.groupValues[3], smsTimestamp)
             val code = it.groupValues[5]
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(merchant, isIncome = false, rules = rules), dateTime, "Card payment at $merchant", accountId, false))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(merchant, isIncome = false, rules = rules), dateTime, "Card payment at $merchant", accountId, isIncome = false))
         }
 
         // 2. Sent Money (Expense or Income)
@@ -203,7 +203,7 @@ object EquityParser {
     private fun parseAmount(value: String?): BigDecimal {
         return try {
             value?.replace(",", "")?.let { BigDecimal.parseString(it) } ?: BigDecimal.ZERO
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             BigDecimal.ZERO
         }
     }
@@ -277,7 +277,7 @@ object EquityParser {
         }
         
         // Alternative pattern: "Your account balance for 123***456 is KES 1,234.56"
-        val altBalanceRegex = """(?:balance\s+for\s+[\d*.]+\s+is\s+)(?:KES|KSH|Ksh)\.?\s*([\d,]+\.\d{1,2})""".toRegex(RegexOption.IGNORE_CASE)
+        val altBalanceRegex = """balance\s+for\s+[\d*.]+\s+is\s+(?:KES|KSH|Ksh)\.?\s*([\d,]+\.\d{1,2})""".toRegex(RegexOption.IGNORE_CASE)
         altBalanceRegex.find(message)?.let {
             return parseAmount(it.groupValues[1])
         }

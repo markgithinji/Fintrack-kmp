@@ -1,6 +1,5 @@
 package com.fintrack.shared.feature.transaction.domain.util
 
-import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
@@ -8,7 +7,6 @@ import java.io.ByteArrayOutputStream
 
 actual fun generatePdfBytes(transactions: List<Transaction>): ByteArray {
     val pdfDocument = PdfDocument()
-    val paint = Paint()
     val titlePaint = Paint().apply {
         textSize = 18f
         isFakeBoldText = true

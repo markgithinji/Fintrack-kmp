@@ -17,11 +17,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.coroutineContext
 
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.currentCoroutineContext
 
 class MpesaImporter(
     private val context: Context,
@@ -52,7 +52,7 @@ class MpesaImporter(
         if (accountId == null) {
             if (isPortfolioSeed) {
                  val fallbackId = accounts.firstOrNull()?.id ?: "mpesa"
-                 processImport(fallbackId, categories, rules, isPortfolioSeed, onProgress)
+                 processImport(fallbackId, categories, rules, true, onProgress)
             } else {
                 throw Exception("No account is configured for M-Pesa sync.")
             }
@@ -92,37 +92,35 @@ class MpesaImporter(
         val transactions = mutableListOf<Transaction>()
         var latestBalance: BigDecimal? = null
 
-        if (cursor != null) {
-            cursor.use {
-                val bodyIndex = it.getColumnIndex(Telephony.Sms.Inbox.BODY)
-                val dateIndex = it.getColumnIndex(Telephony.Sms.Inbox.DATE)
-                var loggedCount = 0
-                val totalMessages = it.count
+        cursor?.use { smsCursor ->
+            val bodyIndex = smsCursor.getColumnIndex(Telephony.Sms.Inbox.BODY)
+            val dateIndex = smsCursor.getColumnIndex(Telephony.Sms.Inbox.DATE)
+            var loggedCount = 0
+            val totalMessages = smsCursor.count
 
-                while (it.moveToNext()) {
-                    coroutineContext.job.ensureActive()
-                    val body = it.getString(bodyIndex)
-                    val timestamp = it.getLong(dateIndex)
-                    val smsInstant = Instant.fromEpochMilliseconds(timestamp)
+            while (smsCursor.moveToNext()) {
+                currentCoroutineContext().job.ensureActive()
+                val body = smsCursor.getString(bodyIndex)
+                val timestamp = smsCursor.getLong(dateIndex)
+                val smsInstant = Instant.fromEpochMilliseconds(timestamp)
 
-                    if (latestBalance == null) {
-                        latestBalance = MpesaParser.parseBalance(body)
-                    }
-
-                    val parsed = MpesaParser.parse(body, accountId, smsInstant, rules)
-                    if (parsed != null) {
-                        val categoryName = parsed.category
-                        val isExpense = !parsed.isIncome
-                        val finalCategoryId = categories.find { it.name.equals(categoryName, ignoreCase = true) && it.isExpense == isExpense }?.id
-                            ?: categories.find { it.name.contains("Other", ignoreCase = true) && it.isExpense == isExpense }?.id
-                            ?: "pending"
-
-                        transactions.add(parsed.copy(categoryId = finalCategoryId))
-                    }
-                    
-                    loggedCount++
-                    if (loggedCount % 500 == 0) onProgress(0.05f + (loggedCount.toFloat() / totalMessages) * 0.25f)
+                if (latestBalance == null) {
+                    latestBalance = MpesaParser.parseBalance(body)
                 }
+
+                val parsed = MpesaParser.parse(body, accountId, smsInstant, rules)
+                if (parsed != null) {
+                    val categoryName = parsed.category
+                    val isExpense = !parsed.isIncome
+                    val finalCategoryId = categories.find { cat -> cat.name.equals(categoryName, ignoreCase = true) && cat.isExpense == isExpense }?.id
+                        ?: categories.find { cat -> cat.name.contains("Other", ignoreCase = true) && cat.isExpense == isExpense }?.id
+                        ?: "pending"
+
+                    transactions.add(parsed.copy(categoryId = finalCategoryId))
+                }
+
+                loggedCount++
+                if (loggedCount % 500 == 0) onProgress(0.05f + (loggedCount.toFloat() / totalMessages) * 0.25f)
             }
         }
 
@@ -135,7 +133,7 @@ class MpesaImporter(
             onProgress(0.3f)
             val chunks = transactions.chunked(250)
             chunks.forEachIndexed { index, chunk ->
-                coroutineContext.job.ensureActive()
+                currentCoroutineContext().job.ensureActive()
                 val result = transactionRepository.importMpesaTransactions(chunk)
                 if (result is Result.Error) {
                     throw result.exception

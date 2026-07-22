@@ -1,19 +1,36 @@
 package com.fintrack.shared.feature.core.ui
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,7 +76,10 @@ actual fun ConfirmationDialog(
                 AnimatedContent(
                     targetState = Triple(isSuccess, errorMessage != null, title),
                     transitionSpec = {
-                        (fadeIn(animationSpec = tween(60)) + scaleIn(initialScale = 0.95f, animationSpec = tween(60)))
+                        (fadeIn(animationSpec = tween(60)) + scaleIn(
+                            initialScale = 0.95f,
+                            animationSpec = tween(60)
+                        ))
                             .togetherWith(fadeOut(animationSpec = tween(40)))
                     },
                     label = "dialogContent"
@@ -75,7 +95,10 @@ actual fun ConfirmationDialog(
                                     color = when {
                                         success -> Color(0xFF4CAF50).copy(alpha = 0.2f)
                                         error -> MaterialTheme.colorScheme.errorContainer
-                                        isDestructive -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f)
+                                        isDestructive -> MaterialTheme.colorScheme.errorContainer.copy(
+                                            alpha = 0.8f
+                                        )
+
                                         else -> MaterialTheme.colorScheme.primaryContainer
                                     },
                                     shape = CircleShape
