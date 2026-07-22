@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.util
+package com.fintrack.shared.feature.transaction.service
 
 import android.content.Context
 import android.provider.Telephony
@@ -7,14 +7,16 @@ import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
-import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
+import com.fintrack.shared.feature.transaction.domain.service.TransactionImporter
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import com.fintrack.shared.feature.transaction.util.EquityParser
+import com.fintrack.shared.feature.transaction.util.PortfolioSeeder
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.time.Clock
 import kotlin.time.Instant
-import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.coroutineContext
 
@@ -26,8 +28,7 @@ class EquityImporter(
     private val context: Context,
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository,
-    private val categoryRepository: CategoryRepository,
-    private val settingsDataSource: SettingsDataSource
+    private val categoryRepository: CategoryRepository
 ) : TransactionImporter {
     private val portfolioSeeder = PortfolioSeeder()
 
@@ -98,7 +99,7 @@ class EquityImporter(
                 val totalMessages = it.count
 
                 while (it.moveToNext()) {
-                    coroutineContext.ensureActive()
+                    coroutineContext.job.ensureActive()
                     val body = it.getString(bodyIndex)
                     val timestamp = it.getLong(dateIndex)
                     val smsInstant = Instant.fromEpochMilliseconds(timestamp)
@@ -133,7 +134,7 @@ class EquityImporter(
             onProgress(0.3f)
             val chunks = transactions.chunked(250)
             chunks.forEachIndexed { index, chunk ->
-                coroutineContext.ensureActive()
+                coroutineContext.job.ensureActive()
                 val result = transactionRepository.importEquityTransactions(chunk)
                 if (result is Result.Error) {
                     throw result.exception

@@ -284,7 +284,6 @@ object MpesaParser {
         accountId: String,
         isIncome: Boolean
     ): Transaction {
-        // Resolve fixed UUID from name to ensure backend compatibility
         val resolvedCategory = Category.fromName(category, !isIncome)
         
         return Transaction(

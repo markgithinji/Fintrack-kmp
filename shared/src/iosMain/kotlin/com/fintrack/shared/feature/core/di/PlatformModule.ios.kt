@@ -8,8 +8,8 @@ import com.fintrack.shared.feature.core.util.FileSaver
 import com.fintrack.shared.feature.core.util.IosFileSaver
 import com.fintrack.shared.feature.settings.data.local.IOSSettingsDataSource
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
-import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
-import com.fintrack.shared.feature.transaction.domain.util.IosTransactionImporter
+import com.fintrack.shared.feature.transaction.domain.service.TransactionImporter
+import com.fintrack.shared.feature.transaction.service.IosTransactionImporter
 import org.koin.dsl.bind
 import org.koin.dsl.module
 

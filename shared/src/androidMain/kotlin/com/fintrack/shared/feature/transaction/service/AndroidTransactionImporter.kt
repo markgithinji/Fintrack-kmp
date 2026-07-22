@@ -1,19 +1,17 @@
-package com.fintrack.shared.feature.transaction.util
+package com.fintrack.shared.feature.transaction.service
 
 import android.content.Context
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
-import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
+import com.fintrack.shared.feature.transaction.domain.service.TransactionImporter
 
 class AndroidTransactionImporter(
     private val context: Context,
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository,
-    private val categoryRepository: CategoryRepository,
-    private val settingsDataSource: SettingsDataSource
+    private val categoryRepository: CategoryRepository
 ) : TransactionImporter {
     override suspend fun importHistory(
         targetAccountId: String?,
@@ -27,8 +25,8 @@ class AndroidTransactionImporter(
 
         val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
         
-        val mpesaImporter = MpesaImporter(context, transactionRepository, accountRepository, categoryRepository, settingsDataSource)
-        val equityImporter = EquityImporter(context, transactionRepository, accountRepository, categoryRepository, settingsDataSource)
+        val mpesaImporter = MpesaImporter(context, transactionRepository, accountRepository, categoryRepository)
+        val equityImporter = EquityImporter(context, transactionRepository, accountRepository, categoryRepository)
 
         if (targetAccountId != null) {
             val targetAccount = accounts.find { it.id == targetAccountId }

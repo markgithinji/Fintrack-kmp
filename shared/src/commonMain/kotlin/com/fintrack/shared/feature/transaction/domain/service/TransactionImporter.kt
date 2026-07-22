@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.domain.util
+package com.fintrack.shared.feature.transaction.domain.service
 
 interface TransactionImporter {
     suspend fun importHistory(
