@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -174,7 +175,7 @@ fun TransactionItem(
                 if (transaction.transactionCost > BigDecimal.ZERO && includeFees) {
                     Text(
                         text = "Incl. ${transaction.transactionCost.toCurrencyString()} fee",
-                        style = androidx.compose.ui.text.TextStyle(
+                        style = TextStyle(
                             fontSize = 10.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         )
@@ -184,7 +185,7 @@ fun TransactionItem(
                 if (transaction.balance != null) {
                     Text(
                         text = "Bal: ${transaction.balance.toCurrencyString()}",
-                        style = androidx.compose.ui.text.TextStyle(
+                        style = TextStyle(
                             fontSize = 10.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                             fontWeight = FontWeight.Medium

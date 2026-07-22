@@ -2,19 +2,17 @@ package com.fintrack.shared.feature.settings.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -88,14 +86,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -106,6 +102,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
@@ -116,25 +113,20 @@ import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.ui.ConfirmationDialog
 import com.fintrack.shared.feature.core.ui.FintrackDatePickerDialog
 import com.fintrack.shared.feature.core.ui.FintrackTimePickerDialog
-import com.fintrack.shared.feature.core.ui.MaterialToast
+import com.fintrack.shared.feature.core.ui.biometric.BiometricResult
 import com.fintrack.shared.feature.core.ui.permission.NotificationPermissionLauncher
-import com.fintrack.shared.feature.core.ui.permission.SmsPermissionLauncher
 import com.fintrack.shared.feature.core.ui.permission.PermissionRationaleDialog
+import com.fintrack.shared.feature.core.ui.permission.SmsPermissionLauncher
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.navigation.ui.LocalBiometricAuthenticator
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.settings.domain.model.ExportFormat
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
-import com.fintrack.shared.feature.navigation.ui.LocalBiometricAuthenticator
-import com.fintrack.shared.feature.core.ui.biometric.BiometricAuthenticator
-import com.fintrack.shared.feature.core.ui.biometric.BiometricResult
 import com.fintrack.shared.feature.settings.domain.util.format
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.animateDpAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -184,7 +176,7 @@ fun SettingsScreen(
 
     val biometricAuthenticator = LocalBiometricAuthenticator.current
     val scope = rememberCoroutineScope()
-    
+
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showTimeFormatDialog by remember { mutableStateOf(false) }
@@ -255,7 +247,7 @@ fun SettingsScreen(
                     SettingsSection(title = "General") {
                         SettingsItem(
                             title = "Theme",
-                            subtitle = when(currentTheme) {
+                            subtitle = when (currentTheme) {
                                 AppTheme.LIGHT -> "Light"
                                 AppTheme.DARK -> "Dark"
                                 AppTheme.SYSTEM -> "System Default"
@@ -298,7 +290,9 @@ fun SettingsScreen(
 
                         SettingsItem(
                             title = "Tracked Categories",
-                            subtitle = if (trackedCategoryNames.isEmpty()) "Automatic (Top Spending & Income)" else trackedCategoryNames.joinToString(", "),
+                            subtitle = if (trackedCategoryNames.isEmpty()) "Automatic (Top Spending & Income)" else trackedCategoryNames.joinToString(
+                                ", "
+                            ),
                             description = "Visible in 'Category Comparison' on Home dashboard.",
                             icon = Icons.Default.Category,
                             onClick = { showTrackedCategoriesDialog = true }
@@ -315,7 +309,7 @@ fun SettingsScreen(
                             subtitle = "Hide balances and amounts",
                             icon = Icons.Default.VisibilityOff,
                             checked = isBalanceHidden,
-                            onCheckedChange = { 
+                            onCheckedChange = {
                                 viewModel.setBalanceHidden(it)
                                 onGlobalRefresh()
                             }
@@ -332,7 +326,7 @@ fun SettingsScreen(
                             subtitle = if (showDecimals) "Show cents (e.g., 0.00)" else "Clean whole numbers only",
                             icon = Icons.Default.Pin,
                             checked = showDecimals,
-                            onCheckedChange = { 
+                            onCheckedChange = {
                                 viewModel.setShowDecimals(it)
                                 onGlobalRefresh()
                             }
@@ -389,7 +383,7 @@ fun SettingsScreen(
                             subtitle = "Reminder to log your transactions for the day",
                             icon = Icons.Default.Notifications,
                             checked = isReminderEnabled,
-                            onCheckedChange = { 
+                            onCheckedChange = {
                                 viewModel.setReminderEnabled(it)
                                 onGlobalRefresh()
                             }
@@ -426,7 +420,7 @@ fun SettingsScreen(
                             subtitle = "Notify when spending reaches 50%, 80%, or 100% of limit",
                             icon = Icons.AutoMirrored.Filled.TrendingUp,
                             checked = budgetAlertsEnabled,
-                            onCheckedChange = { 
+                            onCheckedChange = {
                                 viewModel.setBudgetAlertsEnabled(it)
                                 onGlobalRefresh()
                             }
@@ -443,10 +437,11 @@ fun SettingsScreen(
                                     thickness = 0.5.dp,
                                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                                 )
-                                
-                                val budgets = (budgetsResult as? Result.Success)?.data ?: emptyList()
+
+                                val budgets =
+                                    (budgetsResult as? Result.Success)?.data ?: emptyList()
                                 val selectedBudget = budgets.find { it.budget.id == alertBudgetId }
-                                
+
                                 SettingsItem(
                                     title = "Monitored Budget",
                                     subtitle = selectedBudget?.budget?.name ?: "Select a budget",
@@ -462,7 +457,8 @@ fun SettingsScreen(
 
                                 SettingsItem(
                                     title = "Active Thresholds",
-                                    subtitle = if (budgetAlertThresholds.isEmpty()) "None" else budgetAlertThresholds.sorted().joinToString("% ") { it.toString() } + "%",
+                                    subtitle = if (budgetAlertThresholds.isEmpty()) "None" else budgetAlertThresholds.sorted()
+                                        .joinToString("% ") { it.toString() } + "%",
                                     icon = Icons.Default.NotificationsActive,
                                     onClick = { showThresholdDialog = true }
                                 )
@@ -480,7 +476,7 @@ fun SettingsScreen(
                             subtitle = "Get notified before recurring payments are due",
                             icon = Icons.AutoMirrored.Filled.ReceiptLong,
                             checked = isBillReminderEnabled,
-                            onCheckedChange = { 
+                            onCheckedChange = {
                                 viewModel.setBillReminderEnabled(it)
                                 onGlobalRefresh()
                             }
@@ -497,7 +493,7 @@ fun SettingsScreen(
                                     thickness = 0.5.dp,
                                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                                 )
-                                
+
                                 SettingsItem(
                                     title = "Advance Notice",
                                     subtitle = "$billReminderDaysBefore days before due date",
@@ -626,9 +622,10 @@ fun SettingsScreen(
                             is SaveState.Error -> "Failed to seed data"
                             else -> "Populate charts with 6 months of sample data"
                         }
-                        
-                        val iconColor = if (seedState is SaveState.Success) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
-                        
+
+                        val iconColor =
+                            if (seedState is SaveState.Success) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
+
                         SettingsItem(
                             title = "Seed Dummy Data",
                             subtitle = seedSubtitle,
@@ -638,7 +635,7 @@ fun SettingsScreen(
                             onClick = { showSeedConfirmation = true }
                         )
                     }
-                    
+
                     SettingsSection(title = "About") {
                         SettingsItem(
                             title = "Version",
@@ -646,13 +643,13 @@ fun SettingsScreen(
                             icon = Icons.Default.Info,
                             onClick = { }
                         )
-                        
+
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             thickness = 0.5.dp,
                             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                         )
-                        
+
                         SettingsItem(
                             title = "Help & Support",
                             subtitle = "FAQ and contact us",
@@ -660,7 +657,7 @@ fun SettingsScreen(
                             onClick = { }
                         )
                     }
-                    
+
                     Spacer(modifier = Modifier.height(32.dp))
                 }
             }
@@ -734,7 +731,8 @@ fun SettingsScreen(
     )
 
     if (showSmsRationale != null) {
-        val targetName = if (showSmsRationale == SmsPermissionTarget.MPESA) "M-Pesa" else "Equity Bank"
+        val targetName =
+            if (showSmsRationale == SmsPermissionTarget.MPESA) "M-Pesa" else "Equity Bank"
         PermissionRationaleDialog(
             title = "Enable $targetName Tracking",
             message = "FinTrack needs to read your SMS messages to automatically detect and log transactions from $targetName. Your financial data is processed privately on your device.",
@@ -766,7 +764,10 @@ fun SettingsScreen(
                     SmsPermissionTarget.EQUITY -> viewModel.setEquityListenerEnabled(true)
                 }
             } else if (!granted && target != null) {
-                onShowToast("Permission denied. Enable SMS permissions in Phone Settings for automatic tracking.", true)
+                onShowToast(
+                    "Permission denied. Enable SMS permissions in Phone Settings for automatic tracking.",
+                    true
+                )
             }
             activeSmsTarget = null
             showSmsPermissionRequest = null
@@ -823,6 +824,7 @@ fun SettingsScreen(
                         is BiometricResult.Success, BiometricResult.NotAvailable -> {
                             viewModel.deleteAccount()
                         }
+
                         is BiometricResult.Error -> {
                             viewModel.setError(authResult.message)
                         }
@@ -954,7 +956,7 @@ fun ChangePasswordDialog(
 
     BasicAlertDialog(
         onDismissRequest = onDismiss,
-        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier
             .padding(28.dp)
             .widthIn(max = 400.dp)
@@ -1078,7 +1080,7 @@ fun ExportFormatSelectionDialog(
 
     BasicAlertDialog(
         onDismissRequest = onDismiss,
-        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier
             .padding(28.dp)
             .widthIn(max = 420.dp)
@@ -1151,13 +1153,13 @@ fun ExportFormatSelectionDialog(
                 ) {
                     ExportFormat.entries.forEach { format ->
                         val isSelected = format == currentFormat
-                        
+
                         Surface(
                             onClick = { onFormatSelected(format) },
                             shape = RoundedCornerShape(16.dp),
-                            color = if (isSelected) 
-                                MaterialTheme.colorScheme.primaryContainer 
-                            else 
+                            color = if (isSelected)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
                                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -1188,7 +1190,7 @@ fun ExportFormatSelectionDialog(
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
@@ -1303,7 +1305,7 @@ fun TimeFormatSelectionDialog(
 ) {
     BasicAlertDialog(
         onDismissRequest = onDismiss,
-        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier
             .padding(28.dp)
             .widthIn(max = 400.dp)
@@ -1333,13 +1335,13 @@ fun TimeFormatSelectionDialog(
                     TimeFormat.entries.forEach { format ->
                         val isSelected = format == currentFormat
                         val label = if (format == TimeFormat.TWELVE_HOUR) "12-hour" else "24-hour"
-                        
+
                         Surface(
                             onClick = { onFormatSelected(format) },
                             shape = RoundedCornerShape(16.dp),
-                            color = if (isSelected) 
-                                MaterialTheme.colorScheme.primaryContainer 
-                            else 
+                            color = if (isSelected)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
                                 Color.Transparent,
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -1370,7 +1372,7 @@ fun TimeFormatSelectionDialog(
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 TextButton(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.End)
@@ -1391,7 +1393,7 @@ fun ThemeSelectionDialog(
 ) {
     BasicAlertDialog(
         onDismissRequest = onDismiss,
-        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier
             .padding(28.dp)
             .widthIn(max = 400.dp)
@@ -1420,13 +1422,13 @@ fun ThemeSelectionDialog(
                 ) {
                     items(AppTheme.entries) { theme ->
                         val isSelected = theme == currentTheme
-                        
+
                         Surface(
                             onClick = { onThemeSelected(theme) },
                             shape = RoundedCornerShape(16.dp),
-                            color = if (isSelected) 
-                                MaterialTheme.colorScheme.primaryContainer 
-                            else 
+                            color = if (isSelected)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
                                 Color.Transparent,
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -1437,7 +1439,7 @@ fun ThemeSelectionDialog(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    val (themeLabel, themeIcon) = when(theme) {
+                                    val (themeLabel, themeIcon) = when (theme) {
                                         AppTheme.LIGHT -> "Light" to Icons.Default.Palette
                                         AppTheme.DARK -> "Dark" to Icons.Default.Palette
                                         AppTheme.SYSTEM -> "System Default" to Icons.Default.Palette
@@ -1465,9 +1467,9 @@ fun ThemeSelectionDialog(
                                                 MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
-                                    
+
                                     Spacer(modifier = Modifier.width(16.dp))
-                                    
+
                                     Text(
                                         text = themeLabel,
                                         style = MaterialTheme.typography.bodyLarge,
@@ -1490,7 +1492,7 @@ fun ThemeSelectionDialog(
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 TextButton(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.End)
@@ -1511,7 +1513,7 @@ fun CurrencySelectionDialog(
 ) {
     BasicAlertDialog(
         onDismissRequest = onDismiss,
-        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier
             .padding(28.dp)
             .widthIn(max = 400.dp)
@@ -1540,13 +1542,13 @@ fun CurrencySelectionDialog(
                 ) {
                     items(Currency.entries) { currency ->
                         val isSelected = currency == currentCurrency
-                        
+
                         Surface(
                             onClick = { onCurrencySelected(currency) },
                             shape = RoundedCornerShape(16.dp),
-                            color = if (isSelected) 
-                                MaterialTheme.colorScheme.primaryContainer 
-                            else 
+                            color = if (isSelected)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
                                 Color.Transparent,
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -1578,9 +1580,9 @@ fun CurrencySelectionDialog(
                                                 MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
-                                    
+
                                     Spacer(modifier = Modifier.width(16.dp))
-                                    
+
                                     Column {
                                         Text(
                                             text = currency.name,
@@ -1610,7 +1612,7 @@ fun CurrencySelectionDialog(
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 TextButton(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.End)
@@ -1634,7 +1636,7 @@ fun TrackedCategoriesSelectionDialog(
 
     BasicAlertDialog(
         onDismissRequest = onDismiss,
-        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier
             .padding(28.dp)
             .widthIn(max = 420.dp)
@@ -1702,7 +1704,10 @@ fun TrackedCategoriesSelectionDialog(
                             .padding(bottom = 12.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
+                        border = BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+                        )
                     ) {
                         Icon(Icons.Default.Refresh, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
@@ -1719,7 +1724,7 @@ fun TrackedCategoriesSelectionDialog(
                             val isSelected by remember(category.id) {
                                 derivedStateOf { currentSelection.contains(category.id) }
                             }
-                            
+
                             val onToggle = remember(category.id) {
                                 {
                                     if (currentSelection.contains(category.id)) {
@@ -1855,7 +1860,12 @@ private fun CategorySelectionItem(
                 targetState = isSelected,
                 transitionSpec = {
                     (fadeIn(tween(40)) + scaleIn(initialScale = 0.95f, animationSpec = tween(40)))
-                        .togetherWith(fadeOut(tween(40)) + scaleOut(targetScale = 0.95f, animationSpec = tween(40)))
+                        .togetherWith(
+                            fadeOut(tween(40)) + scaleOut(
+                                targetScale = 0.95f,
+                                animationSpec = tween(40)
+                            )
+                        )
                 },
                 label = "selectionIcon"
             ) { selected ->
@@ -1887,7 +1897,7 @@ fun BudgetSelectionDialog(
 ) {
     BasicAlertDialog(
         onDismissRequest = onDismiss,
-        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier
             .padding(28.dp)
             .widthIn(max = 400.dp)
@@ -1922,13 +1932,13 @@ fun BudgetSelectionDialog(
                     ) {
                         items(budgets) { item ->
                             val isSelected = item.budget.id == selectedBudgetId
-                            
+
                             Surface(
                                 onClick = { onBudgetSelected(item.budget.id) },
                                 shape = RoundedCornerShape(16.dp),
-                                color = if (isSelected) 
-                                    MaterialTheme.colorScheme.primaryContainer 
-                                else 
+                                color = if (isSelected)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
                                     Color.Transparent,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
@@ -1969,7 +1979,7 @@ fun BudgetSelectionDialog(
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
@@ -1997,7 +2007,7 @@ fun BudgetThresholdDialog(
 
     BasicAlertDialog(
         onDismissRequest = onDismiss,
-        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier
             .padding(28.dp)
             .widthIn(max = 400.dp)
@@ -2026,7 +2036,7 @@ fun BudgetThresholdDialog(
                 ) {
                     thresholds.forEach { threshold ->
                         val isSelected = selectedThresholds.contains(threshold)
-                        
+
                         Surface(
                             onClick = {
                                 if (isSelected) {
@@ -2036,9 +2046,9 @@ fun BudgetThresholdDialog(
                                 }
                             },
                             shape = RoundedCornerShape(16.dp),
-                            color = if (isSelected) 
-                                MaterialTheme.colorScheme.primaryContainer 
-                            else 
+                            color = if (isSelected)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
                                 Color.Transparent,
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -2071,7 +2081,7 @@ fun BudgetThresholdDialog(
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 TextButton(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.End)
@@ -2091,10 +2101,10 @@ fun BillReminderDaysDialog(
     onDismiss: () -> Unit
 ) {
     val options = listOf(1, 2, 3, 5, 7, 14)
-    
+
     BasicAlertDialog(
         onDismissRequest = onDismiss,
-        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier
             .padding(28.dp)
             .widthIn(max = 400.dp)
@@ -2129,13 +2139,13 @@ fun BillReminderDaysDialog(
                             14 -> "2 weeks before"
                             else -> "$days days before"
                         }
-                        
+
                         Surface(
                             onClick = { onDaysSelected(days) },
                             shape = RoundedCornerShape(16.dp),
-                            color = if (isSelected) 
-                                MaterialTheme.colorScheme.primaryContainer 
-                            else 
+                            color = if (isSelected)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
                                 Color.Transparent,
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -2166,7 +2176,7 @@ fun BillReminderDaysDialog(
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 TextButton(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.End)
@@ -2253,9 +2263,9 @@ fun SettingsItem(
                     modifier = Modifier.size(20.dp)
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -2283,7 +2293,7 @@ fun SettingsItem(
                     )
                 }
             }
-            
+
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
@@ -2326,9 +2336,9 @@ fun SettingsToggleItem(
                     modifier = Modifier.size(20.dp)
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -2347,7 +2357,7 @@ fun SettingsToggleItem(
                     lineHeight = 14.sp
                 )
             }
-            
+
             Switch(
                 checked = checked,
                 onCheckedChange = { onCheckedChange(it) },

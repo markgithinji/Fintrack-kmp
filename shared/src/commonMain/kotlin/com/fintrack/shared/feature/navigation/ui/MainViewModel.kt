@@ -146,7 +146,6 @@ class MainViewModel(
         try {
             checkBudgetThresholdsUseCase()
         } catch (_: Exception) {
-            // Log error
         }
     }
 
@@ -154,7 +153,6 @@ class MainViewModel(
         try {
             syncRecurringBillsUseCase()
         } catch (_: Exception) {
-            // Log error
         }
     }
 }

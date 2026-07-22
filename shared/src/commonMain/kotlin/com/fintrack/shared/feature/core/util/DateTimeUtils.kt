@@ -1,10 +1,5 @@
 package com.fintrack.shared.feature.core.util
 
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Instant
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -12,6 +7,11 @@ import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
 
 object DateTimeUtils {
     /**
@@ -19,7 +19,7 @@ object DateTimeUtils {
      */
     fun toRelativeDateTimeString(instant: Instant?): String {
         if (instant == null) return "Never synced"
-        
+
         val now = Clock.System.now()
         val duration = now - instant
 
@@ -30,10 +30,11 @@ object DateTimeUtils {
             duration < 2.days -> "Yesterday"
             else -> {
                 val dateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-                "${dateTime.dayOfMonth}/${dateTime.monthNumber}/${dateTime.year}"
+                "${dateTime.day}/${dateTime.month.number}/${dateTime.year}"
             }
         }
     }
+
     /**
      * Calculates the start and end dates for a given ISO week code (e.g., "2024-W25").
      * Uses the ISO 8601 standard where Week 1 is the week with the first Thursday of the year.
@@ -43,17 +44,17 @@ object DateTimeUtils {
         return try {
             val parts = code.split("-W")
             if (parts.size != 2) return null
-            
+
             val year = parts[0].toIntOrNull() ?: return null
             val week = parts[1].toIntOrNull() ?: return null
 
             // ISO 8601 rule: Find Jan 4th of the year (always in Week 1)
             val jan4 = LocalDate(year, 1, 4)
             val dayOfWeek = jan4.dayOfWeek.isoDayNumber // Mon=1, Sun=7
-            
+
             // Find the Monday of that week
             val mondayOfWeek1 = jan4.plus(DatePeriod(days = -(dayOfWeek - 1)))
-            
+
             val weekStart = mondayOfWeek1.plus(DatePeriod(days = (week - 1) * 7))
             val weekEnd = weekStart.plus(DatePeriod(days = 6))
 
@@ -70,7 +71,7 @@ object DateTimeUtils {
         return try {
             val parts = code.split("-")
             if (parts.size != 2) return null
-            
+
             val year = parts[0].toIntOrNull() ?: return null
             val month = parts[1].toIntOrNull() ?: return null
             val start = LocalDate(year, month, 1)
@@ -105,43 +106,5 @@ object DateTimeUtils {
         } catch (_: Exception) {
             code
         }
-    }
-
-    /**
-     * Gets the ISO 8601 week code for the current date (e.g., "2024-W25").
-     */
-    fun getCurrentWeekCode(): String {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-        return getIsoWeekCode(now)
-    }
-
-    /**
-     * Gets the month code for the current date (e.g., "2024-06").
-     */
-    fun getCurrentMonthCode(): String {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-        val monthStr = now.month.number.toString().padStart(2, '0')
-        return "${now.year}-$monthStr"
-    }
-
-    /**
-     * Calculates the ISO 8601 week code for a specific date.
-     */
-    fun getIsoWeekCode(date: LocalDate): String {
-        // Simple ISO week calculation:
-        // Find the Thursday of the week containing the date
-        val dayOfWeek = date.dayOfWeek.isoDayNumber
-        val thursday = date.plus(DatePeriod(days = 4 - dayOfWeek))
-        
-        // Week 1 is the week with the first Thursday
-        val year = thursday.year
-        val jan4 = LocalDate(year, 1, 4)
-        val jan4DayOfWeek = jan4.dayOfWeek.isoDayNumber
-        val firstMonday = jan4.plus(DatePeriod(days = -(jan4DayOfWeek - 1)))
-        
-        val daysDiff = thursday.toEpochDays() - firstMonday.toEpochDays()
-        val weekNumber = (daysDiff / 7) + 1
-        
-        return "$year-W${weekNumber.toString().padStart(2, '0')}"
     }
 }

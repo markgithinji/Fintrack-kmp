@@ -75,7 +75,7 @@ class TransactionSyncWorker(
         private const val NOTIFICATION_ID = 999
 
         fun enqueue(context: Context, transaction: Transaction) {
-            val data = androidx.work.Data.Builder()
+            val data = Data.Builder()
                 .putString(KEY_TRANSACTION_JSON, Json.encodeToString(transaction))
                 .build()
             

@@ -1,7 +1,5 @@
 package com.fintrack.shared.feature.navigation.ui
 
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,15 +9,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.auth.ui.AuthViewModel
 import com.fintrack.shared.feature.auth.ui.LoginScreen
 import com.fintrack.shared.feature.auth.ui.RegisterScreen
 import com.fintrack.shared.feature.navigation.model.Screen
-import com.fintrack.shared.feature.navigation.ui.LocalNavController
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable

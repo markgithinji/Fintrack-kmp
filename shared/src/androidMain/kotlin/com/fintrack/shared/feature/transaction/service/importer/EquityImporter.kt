@@ -3,6 +3,8 @@ package com.fintrack.shared.feature.transaction.service.importer
 import android.content.Context
 import android.provider.Telephony
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
+import com.fintrack.shared.feature.category.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.CategoryRule
 import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
@@ -63,8 +65,8 @@ class EquityImporter(
 
     private suspend fun processImport(
         accountId: String,
-        categories: List<com.fintrack.shared.feature.category.domain.model.Category>,
-        rules: List<com.fintrack.shared.feature.category.domain.model.CategoryRule>,
+        categories: List<Category>,
+        rules: List<CategoryRule>,
         isPortfolioSeed: Boolean,
         onProgress: (Float) -> Unit
     ) {

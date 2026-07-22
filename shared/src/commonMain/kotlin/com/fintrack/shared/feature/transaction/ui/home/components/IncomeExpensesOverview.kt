@@ -1,6 +1,7 @@
 package com.fintrack.shared.feature.transaction.ui.home.components
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -491,7 +492,7 @@ fun BarChart(
                     }
 
                     // Popup Overlay
-                    androidx.compose.animation.AnimatedVisibility(
+                    AnimatedVisibility(
                         visible = selectedAmount != null,
                         enter = fadeIn() + scaleIn(),
                         exit = fadeOut() + scaleOut(),

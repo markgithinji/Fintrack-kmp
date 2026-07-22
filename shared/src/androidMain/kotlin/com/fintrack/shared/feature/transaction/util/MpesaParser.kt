@@ -6,6 +6,7 @@ import com.fintrack.shared.feature.category.domain.model.fromId
 import com.fintrack.shared.feature.category.domain.model.fromName
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import kotlin.math.abs
 import kotlin.time.Clock
 import kotlin.time.Instant
 import java.text.SimpleDateFormat
@@ -356,7 +357,7 @@ object MpesaParser {
                 
                 // Use arrival time seconds/millis if within the same minute as the text
                 if (smsTimestamp != null) {
-                    val diff = kotlin.math.abs(parsedInstant.toEpochMilliseconds() - smsTimestamp.toEpochMilliseconds())
+                    val diff = abs(parsedInstant.toEpochMilliseconds() - smsTimestamp.toEpochMilliseconds())
                     if (diff < 60000) smsTimestamp else parsedInstant
                 } else {
                     parsedInstant

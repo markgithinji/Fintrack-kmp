@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
@@ -54,21 +53,19 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.fintrack.shared.feature.auth.ui.AuthViewModel
-import com.fintrack.shared.feature.core.ui.MaterialToast
-import com.fintrack.shared.feature.core.ui.permission.SmsPermissionLauncher
+import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
 import com.fintrack.shared.feature.core.ui.permission.PermissionRationaleDialog
+import com.fintrack.shared.feature.core.ui.permission.SmsPermissionLauncher
+import com.fintrack.shared.feature.core.ui.util.navigateThrottled
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.model.AppBarState
 import com.fintrack.shared.feature.navigation.model.Screen
 import com.fintrack.shared.feature.navigation.ui.components.AddTransactionFAB
 import com.fintrack.shared.feature.navigation.ui.components.AppTopBar
-import com.fintrack.shared.feature.core.ui.util.navigateThrottled
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -98,7 +95,7 @@ fun MainAppScaffold(
         if (currentImportState is Result.Success) {
             transactionsViewModel.resetImportState(currentAccountId)
         } else if (currentImportState is Result.Error) {
-            val exception = (currentImportState as Result.Error).exception
+            val exception = currentImportState.exception
             val message = exception.message ?: "Sync failed"
             
             // If it's a permission error, we let HomeScreen trigger the rationale callback
@@ -112,7 +109,7 @@ fun MainAppScaffold(
         currentDestination?.getAppBarState(navBackStackEntry, navController) ?: AppBarState(title = "Home")
     }
 
-    // Show bars only if any of the visible entries requires them (avoids layout jumps during transitions)
+    // Show bars only if any of the visible entries requires them
     val showTopBar = remember(visibleEntries) {
         visibleEntries.any { entry -> !entry.destination.isAuthScreen() }
     }
@@ -348,8 +345,6 @@ fun MainAppScaffold(
                 }
             }
         }
-
-        // Global Toast is now handled in MainScreen
 
         // Place FAB over everything
         AnimatedVisibility(

@@ -27,7 +27,7 @@ fun LocalDate.formatAsShortDate(): String {
         Month.NOVEMBER -> "Nov"
         Month.DECEMBER -> "Dec"
     }
-    return "$month ${this.dayOfMonth}"
+    return "$month $day"
 }
 
 fun LocalDate.formatAsShortDateWithYear(): String {
@@ -45,7 +45,7 @@ fun LocalDate.formatAsShortDateWithYear(): String {
         Month.NOVEMBER -> "Nov"
         Month.DECEMBER -> "Dec"
     }
-    return "$month ${this.dayOfMonth}, ${this.year}"
+    return "$month $day, ${this.year}"
 }
 
 fun LocalDate.formatAsHeaderDate(): String {
@@ -64,5 +64,5 @@ fun LocalDate.formatAsHeaderDate(): String {
         Month.NOVEMBER -> "November"
         Month.DECEMBER -> "December"
     }
-    return "$dayName, $monthName ${this.dayOfMonth}, ${this.year}"
+    return "$dayName, $monthName $day, ${this.year}"
 }

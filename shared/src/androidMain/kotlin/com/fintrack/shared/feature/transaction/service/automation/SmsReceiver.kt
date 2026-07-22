@@ -9,8 +9,10 @@ import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.core.domain.service.NotificationService
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
+import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.util.EquityParser
 import com.fintrack.shared.feature.transaction.util.MpesaParser
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -27,10 +29,10 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
 
     companion object {
         // Cache to deduplicate real-time messages that arrive in pairs (e.g. Sent + Drawn)
-        private val recentTransactions = mutableListOf<Triple<com.ionspin.kotlin.bignum.decimal.BigDecimal, Long, String>>()
+        private val recentTransactions = mutableListOf<Triple<BigDecimal, Long, String>>()
 
         @Synchronized
-        private fun isDuplicate(amount: com.ionspin.kotlin.bignum.decimal.BigDecimal, timestamp: Long, sender: String?): Boolean {
+        private fun isDuplicate(amount: BigDecimal, timestamp: Long, sender: String?): Boolean {
             val now = System.currentTimeMillis() / 1000
             // Keep only last 5 minutes of signatures
             recentTransactions.removeAll { it.second < (now - 300) }
@@ -87,7 +89,7 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
 
                     if (accountId == null) return@launch
                     
-                    var transaction: com.fintrack.shared.feature.transaction.domain.model.Transaction? = if (isMpesa) {
+                    var transaction: Transaction? = if (isMpesa) {
                         MpesaParser.parse(fullMessage, accountId)
                     } else {
                         EquityParser.parse(fullMessage, accountId)

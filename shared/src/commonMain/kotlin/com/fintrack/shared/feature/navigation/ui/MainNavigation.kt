@@ -1,13 +1,21 @@
 package com.fintrack.shared.feature.navigation.ui
 
-import androidx.compose.animation.*
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,6 +24,7 @@ import com.fintrack.shared.feature.account.ui.AccountsScreen
 import com.fintrack.shared.feature.budget.ui.BudgetDetailScreen
 import com.fintrack.shared.feature.budget.ui.BudgetScreen
 import com.fintrack.shared.feature.category.ui.CategoryManagementScreen
+import com.fintrack.shared.feature.core.ui.util.navigateThrottled
 import com.fintrack.shared.feature.navigation.model.Screen
 import com.fintrack.shared.feature.settings.ui.SettingsScreen
 import com.fintrack.shared.feature.summary.ui.StatisticsScreen
@@ -24,12 +33,6 @@ import com.fintrack.shared.feature.transaction.ui.home.HomeScreen
 import com.fintrack.shared.feature.transaction.ui.transactionlist.TransactionListScreen
 import com.fintrack.shared.feature.user.ui.EditProfileScreen
 import com.fintrack.shared.feature.user.ui.ProfileScreen
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.fintrack.shared.feature.navigation.ui.isMorphScreen
-import com.fintrack.shared.feature.navigation.ui.isProfileDetailScreen
-import com.fintrack.shared.feature.navigation.ui.isMainScreen
-import com.fintrack.shared.feature.core.ui.util.navigateThrottled
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalSharedTransitionApi::class)
