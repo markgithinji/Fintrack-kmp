@@ -1,375 +1,266 @@
 package com.fintrack.shared.feature.settings.data.local
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.SharedPreferencesMigration
+import androidx.datastore.preferences.core.*
+import androidx.datastore.preferences.preferencesDataStore
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
 import com.fintrack.shared.feature.settings.domain.model.Currency
 import com.fintrack.shared.feature.settings.domain.model.ExportFormat
 import com.fintrack.shared.feature.settings.domain.model.TimeFormat
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
-import androidx.core.content.edit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.*
 import kotlinx.datetime.LocalTime
 
+private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "fintrack_settings",
+    produceMigrations = { context ->
+        listOf(SharedPreferencesMigration(context, "fintrack_settings"))
+    }
+)
+
 class AndroidSettingsDataSource(
-    private val context: Context
+    private val context: Context,
 ) : SettingsDataSource {
 
-    private val prefs = context.getSharedPreferences("fintrack_settings", Context.MODE_PRIVATE)
-    private val _themeFlow = MutableStateFlow(AppTheme.SYSTEM)
-    private val _timeFormatFlow = MutableStateFlow(TimeFormat.TWENTY_FOUR_HOUR)
-    private val _currencyFlow = MutableStateFlow(Currency.KES)
-    private val _biometricFlow = MutableStateFlow(false)
-    private val _balanceHiddenFlow = MutableStateFlow(false)
-    private val _reminderFlow = MutableStateFlow(false)
-    private val _reminderTimeFlow = MutableStateFlow(LocalTime(20, 0))
-    private val _mpesaSimSlotFlow = MutableStateFlow<Int?>(null)
-    private val _mpesaLinkedAccountIdsFlow = MutableStateFlow<Set<String>>(emptySet())
-    private val _equityLinkedAccountIdsFlow = MutableStateFlow<Set<String>>(emptySet())
-    private val _mpesaListenerFlow = MutableStateFlow(false)
-    private val _equityListenerFlow = MutableStateFlow(false)
-    private val _budgetAlertsEnabledFlow = MutableStateFlow(false)
-    private val _budgetAlertThresholdsFlow = MutableStateFlow(setOf(50, 80, 100))
-    private val _alertBudgetIdFlow = MutableStateFlow<String?>(null)
-    private val _billReminderEnabledFlow = MutableStateFlow(false)
-    private val _billReminderDaysBeforeFlow = MutableStateFlow(2)
-    private val _dailySummaryEnabledFlow = MutableStateFlow(false)
-    private val _weeklySummaryEnabledFlow = MutableStateFlow(false)
-    private val _summaryNotificationTimeFlow = MutableStateFlow(LocalTime(8, 0))
-    private val _showDecimalsFlow = MutableStateFlow(true)
-    private val _defaultAccountIdFlow = MutableStateFlow<String?>(null)
-    private val _exportFormatFlow = MutableStateFlow(ExportFormat.CSV)
-    private val _smsRationaleHiddenFlow = MutableStateFlow(false)
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
-    init {
-        val themeName = prefs.getString("app_theme", AppTheme.SYSTEM.name)
-        _themeFlow.update { AppTheme.fromName(themeName) }
-
-        val timeFormatName = prefs.getString("time_format", TimeFormat.TWENTY_FOUR_HOUR.name)
-        _timeFormatFlow.update { TimeFormat.fromName(timeFormatName) }
-
-        val currencyCode = prefs.getString("currency_code", Currency.KES.code)
-        _currencyFlow.update { Currency.fromCode(currencyCode) }
-        
-        val biometricEnabled = prefs.getBoolean("biometric_enabled", false)
-        _biometricFlow.update { biometricEnabled }
-
-        val balanceHidden = prefs.getBoolean("balance_hidden", false)
-        _balanceHiddenFlow.update { balanceHidden }
-
-        val reminderEnabled = prefs.getBoolean("reminder_enabled", false)
-        _reminderFlow.update { reminderEnabled }
-
-        val reminderTimeStr = prefs.getString("reminder_time", "20:00") ?: "20:00"
-        _reminderTimeFlow.update { LocalTime.parse(reminderTimeStr) }
-
-        val mpesaSimSlot = if (prefs.contains("mpesa_sim_slot")) prefs.getInt("mpesa_sim_slot", -1) else -1
-        _mpesaSimSlotFlow.update { if (mpesaSimSlot == -1) null else mpesaSimSlot }
-
-        val mpesaLinkedAccountIds = prefs.getStringSet("mpesa_linked_account_ids", emptySet()) ?: emptySet()
-        _mpesaLinkedAccountIdsFlow.update { mpesaLinkedAccountIds }
-
-        val equityLinkedAccountIds = prefs.getStringSet("equity_linked_account_ids", emptySet()) ?: emptySet()
-        _equityLinkedAccountIdsFlow.update { equityLinkedAccountIds }
-
-        val mpesaListenerEnabled = prefs.getBoolean("mpesa_listener_enabled", false)
-        _mpesaListenerFlow.update { mpesaListenerEnabled }
-
-        val equityListenerEnabled = prefs.getBoolean("equity_listener_enabled", false)
-        _equityListenerFlow.update { equityListenerEnabled }
-
-        val budgetAlertsEnabled = prefs.getBoolean("budget_alerts_enabled", false)
-        _budgetAlertsEnabledFlow.update { budgetAlertsEnabled }
-
-        val thresholds = prefs.getStringSet("budget_alert_thresholds", setOf("50", "80", "100"))
-        _budgetAlertThresholdsFlow.update { thresholds?.mapNotNull { it.toIntOrNull() }?.toSet() ?: setOf(50, 80, 100) }
-
-        val alertBudgetId = prefs.getString("alert_budget_id", null)
-        _alertBudgetIdFlow.update { alertBudgetId }
-
-        val billReminderEnabled = prefs.getBoolean("bill_reminder_enabled", false)
-        _billReminderEnabledFlow.update { billReminderEnabled }
-
-        val billReminderDaysBefore = prefs.getInt("bill_reminder_days_before", 2)
-        _billReminderDaysBeforeFlow.update { billReminderDaysBefore }
-
-        val dailySummaryEnabled = prefs.getBoolean("daily_summary_enabled", false)
-        _dailySummaryEnabledFlow.update { dailySummaryEnabled }
-
-        val weeklySummaryEnabled = prefs.getBoolean("weekly_summary_enabled", false)
-        _weeklySummaryEnabledFlow.update { weeklySummaryEnabled }
-
-        val summaryTimeStr = prefs.getString("summary_notification_time", "08:00") ?: "08:00"
-        _summaryNotificationTimeFlow.update { LocalTime.parse(summaryTimeStr) }
-
-        val showDecimals = prefs.getBoolean("show_decimals", true)
-        _showDecimalsFlow.update { showDecimals }
-
-        val defaultAccountId = prefs.getString("default_account_id", null)
-        _defaultAccountIdFlow.update { defaultAccountId }
-
-        val exportFormatName = prefs.getString("export_format", ExportFormat.CSV.name) ?: ExportFormat.CSV.name
-        _exportFormatFlow.update { try { ExportFormat.valueOf(exportFormatName) } catch (e: Exception) { ExportFormat.CSV } }
-
-        val smsRationaleHidden = prefs.getBoolean("sms_rationale_hidden", false)
-        _smsRationaleHiddenFlow.update { smsRationaleHidden }
-    }
-
-    override val theme: StateFlow<AppTheme> = _themeFlow.asStateFlow()
+    override val theme: StateFlow<AppTheme> = context.settingsDataStore.data
+        .map { prefs -> AppTheme.fromName(prefs[Keys.APP_THEME] ?: AppTheme.SYSTEM.name) }
+        .stateIn(scope, SharingStarted.Eagerly, AppTheme.SYSTEM)
 
     override suspend fun setTheme(theme: AppTheme) {
-        prefs.edit {
-            putString("app_theme", theme.name)
-        }
-        _themeFlow.value = theme
+        context.settingsDataStore.edit { it[Keys.APP_THEME] = theme.name }
     }
 
-    override val timeFormat: StateFlow<TimeFormat> = _timeFormatFlow.asStateFlow()
+    override val timeFormat: StateFlow<TimeFormat> = context.settingsDataStore.data
+        .map { prefs -> TimeFormat.fromName(prefs[Keys.TIME_FORMAT] ?: TimeFormat.TWENTY_FOUR_HOUR.name) }
+        .stateIn(scope, SharingStarted.Eagerly, TimeFormat.TWENTY_FOUR_HOUR)
 
     override suspend fun setTimeFormat(format: TimeFormat) {
-        prefs.edit {
-            putString("time_format", format.name)
-        }
-        _timeFormatFlow.value = format
+        context.settingsDataStore.edit { it[Keys.TIME_FORMAT] = format.name }
     }
 
-    override val currency: StateFlow<Currency> = _currencyFlow.asStateFlow()
+    override val currency: StateFlow<Currency> = context.settingsDataStore.data
+        .map { prefs -> Currency.fromCode(prefs[Keys.CURRENCY_CODE] ?: Currency.KES.code) }
+        .stateIn(scope, SharingStarted.Eagerly, Currency.KES)
 
     override suspend fun setCurrency(currency: Currency) {
-        prefs.edit {
-            putString("currency_code", currency.code)
-        }
-        _currencyFlow.value = currency
+        context.settingsDataStore.edit { it[Keys.CURRENCY_CODE] = currency.code }
     }
 
-    override val isBiometricEnabled: StateFlow<Boolean> = _biometricFlow.asStateFlow()
+    override val isBiometricEnabled: StateFlow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.BIOMETRIC_ENABLED] ?: false }
+        .stateIn(scope, SharingStarted.Eagerly, false)
 
     override suspend fun setBiometricEnabled(enabled: Boolean) {
-        prefs.edit {
-            putBoolean("biometric_enabled", enabled)
-        }
-        _biometricFlow.value = enabled
+        context.settingsDataStore.edit { it[Keys.BIOMETRIC_ENABLED] = enabled }
     }
 
-    override val isBalanceHidden: StateFlow<Boolean> = _balanceHiddenFlow.asStateFlow()
+    override val isBalanceHidden: StateFlow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.BALANCE_HIDDEN] ?: false }
+        .stateIn(scope, SharingStarted.Eagerly, false)
 
     override suspend fun setBalanceHidden(hidden: Boolean) {
-        prefs.edit {
-            putBoolean("balance_hidden", hidden)
-        }
-        _balanceHiddenFlow.value = hidden
+        context.settingsDataStore.edit { it[Keys.BALANCE_HIDDEN] = hidden }
     }
 
-    override val isReminderEnabled: StateFlow<Boolean> = _reminderFlow.asStateFlow()
+    override val isReminderEnabled: StateFlow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.REMINDER_ENABLED] ?: false }
+        .stateIn(scope, SharingStarted.Eagerly, false)
 
     override suspend fun setReminderEnabled(enabled: Boolean) {
-        prefs.edit {
-            putBoolean("reminder_enabled", enabled)
-        }
-        _reminderFlow.value = enabled
+        context.settingsDataStore.edit { it[Keys.REMINDER_ENABLED] = enabled }
     }
 
-    override val reminderTime: StateFlow<LocalTime> = _reminderTimeFlow.asStateFlow()
+    override val reminderTime: StateFlow<LocalTime> = context.settingsDataStore.data
+        .map { prefs -> LocalTime.parse(prefs[Keys.REMINDER_TIME] ?: "20:00") }
+        .stateIn(scope, SharingStarted.Eagerly, LocalTime(20, 0))
 
     override suspend fun setReminderTime(time: LocalTime) {
-        prefs.edit {
-            putString("reminder_time", time.toString())
-        }
-        _reminderTimeFlow.value = time
+        context.settingsDataStore.edit { it[Keys.REMINDER_TIME] = time.toString() }
     }
 
-    override val mpesaSimSlot: StateFlow<Int?> = _mpesaSimSlotFlow.asStateFlow()
+    override val mpesaSimSlot: StateFlow<Int?> = context.settingsDataStore.data
+        .map { it[Keys.MPESA_SIM_SLOT] }
+        .stateIn(scope, SharingStarted.Eagerly, null)
 
     override suspend fun setMpesaSimSlot(slot: Int?) {
-        prefs.edit {
-            if (slot == null) {
-                remove("mpesa_sim_slot")
-            } else {
-                putInt("mpesa_sim_slot", slot)
-            }
+        context.settingsDataStore.edit {
+            if (slot == null) it.remove(Keys.MPESA_SIM_SLOT)
+            else it[Keys.MPESA_SIM_SLOT] = slot
         }
-        _mpesaSimSlotFlow.value = slot
     }
 
-    override val mpesaLinkedAccountIds: StateFlow<Set<String>> = _mpesaLinkedAccountIdsFlow.asStateFlow()
+    override val mpesaLinkedAccountIds: StateFlow<Set<String>> = context.settingsDataStore.data
+        .map { it[Keys.MPESA_LINKED_ACCOUNT_IDS] ?: emptySet() }
+        .stateIn(scope, SharingStarted.Eagerly, emptySet())
 
     override suspend fun setMpesaLinkedAccountIds(ids: Set<String>) {
-        prefs.edit {
-            putStringSet("mpesa_linked_account_ids", ids)
-        }
-        _mpesaLinkedAccountIdsFlow.value = ids
+        context.settingsDataStore.edit { it[Keys.MPESA_LINKED_ACCOUNT_IDS] = ids }
     }
 
-    override val equityLinkedAccountIds: StateFlow<Set<String>> = _equityLinkedAccountIdsFlow.asStateFlow()
+    override val equityLinkedAccountIds: StateFlow<Set<String>> = context.settingsDataStore.data
+        .map { it[Keys.EQUITY_LINKED_ACCOUNT_IDS] ?: emptySet() }
+        .stateIn(scope, SharingStarted.Eagerly, emptySet())
 
     override suspend fun setEquityLinkedAccountIds(ids: Set<String>) {
-        prefs.edit {
-            putStringSet("equity_linked_account_ids", ids)
-        }
-        _equityLinkedAccountIdsFlow.value = ids
+        context.settingsDataStore.edit { it[Keys.EQUITY_LINKED_ACCOUNT_IDS] = ids }
     }
 
-    override val isMpesaListenerEnabled: StateFlow<Boolean> = _mpesaListenerFlow.asStateFlow()
+    override val isMpesaListenerEnabled: StateFlow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.MPESA_LISTENER_ENABLED] ?: false }
+        .stateIn(scope, SharingStarted.Eagerly, false)
 
     override suspend fun setMpesaListenerEnabled(enabled: Boolean) {
-        prefs.edit {
-            putBoolean("mpesa_listener_enabled", enabled)
-        }
-        _mpesaListenerFlow.value = enabled
+        context.settingsDataStore.edit { it[Keys.MPESA_LISTENER_ENABLED] = enabled }
     }
 
-    override val isEquityListenerEnabled: StateFlow<Boolean> = _equityListenerFlow.asStateFlow()
+    override val isEquityListenerEnabled: StateFlow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.EQUITY_LISTENER_ENABLED] ?: false }
+        .stateIn(scope, SharingStarted.Eagerly, false)
 
     override suspend fun setEquityListenerEnabled(enabled: Boolean) {
-        prefs.edit {
-            putBoolean("equity_listener_enabled", enabled)
-        }
-        _equityListenerFlow.value = enabled
+        context.settingsDataStore.edit { it[Keys.EQUITY_LISTENER_ENABLED] = enabled }
     }
 
-    override val budgetAlertsEnabled: StateFlow<Boolean> = _budgetAlertsEnabledFlow.asStateFlow()
+    override val budgetAlertsEnabled: StateFlow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.BUDGET_ALERTS_ENABLED] ?: false }
+        .stateIn(scope, SharingStarted.Eagerly, false)
 
     override suspend fun setBudgetAlertsEnabled(enabled: Boolean) {
-        prefs.edit {
-            putBoolean("budget_alerts_enabled", enabled)
-        }
-        _budgetAlertsEnabledFlow.value = enabled
+        context.settingsDataStore.edit { it[Keys.BUDGET_ALERTS_ENABLED] = enabled }
     }
 
-    override val budgetAlertThresholds: StateFlow<Set<Int>> = _budgetAlertThresholdsFlow.asStateFlow()
+    override val budgetAlertThresholds: StateFlow<Set<Int>> = context.settingsDataStore.data
+        .map { prefs -> prefs[Keys.BUDGET_ALERT_THRESHOLDS]?.mapNotNull { it.toIntOrNull() }?.toSet() ?: setOf(50, 80, 100) }
+        .stateIn(scope, SharingStarted.Eagerly, setOf(50, 80, 100))
 
     override suspend fun setBudgetAlertThresholds(thresholds: Set<Int>) {
-        prefs.edit {
-            putStringSet("budget_alert_thresholds", thresholds.map { it.toString() }.toSet())
-        }
-        _budgetAlertThresholdsFlow.value = thresholds
+        context.settingsDataStore.edit { it[Keys.BUDGET_ALERT_THRESHOLDS] = thresholds.map { it.toString() }.toSet() }
     }
 
-    override val alertBudgetId: StateFlow<String?> = _alertBudgetIdFlow.asStateFlow()
+    override val alertBudgetId: StateFlow<String?> = context.settingsDataStore.data
+        .map { it[Keys.ALERT_BUDGET_ID] }
+        .stateIn(scope, SharingStarted.Eagerly, null)
 
     override suspend fun setAlertBudgetId(budgetId: String?) {
-        prefs.edit {
-            if (budgetId == null) {
-                remove("alert_budget_id")
-            } else {
-                putString("alert_budget_id", budgetId)
-            }
+        context.settingsDataStore.edit {
+            if (budgetId == null) it.remove(Keys.ALERT_BUDGET_ID)
+            else it[Keys.ALERT_BUDGET_ID] = budgetId
         }
-        _alertBudgetIdFlow.value = budgetId
     }
 
-    override val isBillReminderEnabled: StateFlow<Boolean> = _billReminderEnabledFlow.asStateFlow()
+    override val isBillReminderEnabled: StateFlow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.BILL_REMINDER_ENABLED] ?: false }
+        .stateIn(scope, SharingStarted.Eagerly, false)
 
     override suspend fun setBillReminderEnabled(enabled: Boolean) {
-        prefs.edit {
-            putBoolean("bill_reminder_enabled", enabled)
-        }
-        _billReminderEnabledFlow.value = enabled
+        context.settingsDataStore.edit { it[Keys.BILL_REMINDER_ENABLED] = enabled }
     }
 
-    override val billReminderDaysBefore: StateFlow<Int> = _billReminderDaysBeforeFlow.asStateFlow()
+    override val billReminderDaysBefore: StateFlow<Int> = context.settingsDataStore.data
+        .map { it[Keys.BILL_REMINDER_DAYS_BEFORE] ?: 2 }
+        .stateIn(scope, SharingStarted.Eagerly, 2)
 
     override suspend fun setBillReminderDaysBefore(days: Int) {
-        prefs.edit {
-            putInt("bill_reminder_days_before", days)
-        }
-        _billReminderDaysBeforeFlow.value = days
+        context.settingsDataStore.edit { it[Keys.BILL_REMINDER_DAYS_BEFORE] = days }
     }
 
-    override val isDailySummaryEnabled: StateFlow<Boolean> = _dailySummaryEnabledFlow.asStateFlow()
+    override val isDailySummaryEnabled: StateFlow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.DAILY_SUMMARY_ENABLED] ?: false }
+        .stateIn(scope, SharingStarted.Eagerly, false)
 
     override suspend fun setDailySummaryEnabled(enabled: Boolean) {
-        prefs.edit {
-            putBoolean("daily_summary_enabled", enabled)
-        }
-        _dailySummaryEnabledFlow.value = enabled
+        context.settingsDataStore.edit { it[Keys.DAILY_SUMMARY_ENABLED] = enabled }
     }
 
-    override val isWeeklySummaryEnabled: StateFlow<Boolean> = _weeklySummaryEnabledFlow.asStateFlow()
+    override val isWeeklySummaryEnabled: StateFlow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.WEEKLY_SUMMARY_ENABLED] ?: false }
+        .stateIn(scope, SharingStarted.Eagerly, false)
 
     override suspend fun setWeeklySummaryEnabled(enabled: Boolean) {
-        prefs.edit {
-            putBoolean("weekly_summary_enabled", enabled)
-        }
-        _weeklySummaryEnabledFlow.value = enabled
+        context.settingsDataStore.edit { it[Keys.WEEKLY_SUMMARY_ENABLED] = enabled }
     }
 
-    override val summaryNotificationTime: StateFlow<LocalTime> = _summaryNotificationTimeFlow.asStateFlow()
+    override val summaryNotificationTime: StateFlow<LocalTime> = context.settingsDataStore.data
+        .map { prefs -> LocalTime.parse(prefs[Keys.SUMMARY_NOTIFICATION_TIME] ?: "08:00") }
+        .stateIn(scope, SharingStarted.Eagerly, LocalTime(8, 0))
 
     override suspend fun setSummaryNotificationTime(time: LocalTime) {
-        prefs.edit {
-            putString("summary_notification_time", time.toString())
-        }
-        _summaryNotificationTimeFlow.value = time
+        context.settingsDataStore.edit { it[Keys.SUMMARY_NOTIFICATION_TIME] = time.toString() }
     }
 
-    override val showDecimals: StateFlow<Boolean> = _showDecimalsFlow.asStateFlow()
+    override val showDecimals: StateFlow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.SHOW_DECIMALS] ?: true }
+        .stateIn(scope, SharingStarted.Eagerly, initialValue = true)
 
     override suspend fun setShowDecimals(show: Boolean) {
-        prefs.edit {
-            putBoolean("show_decimals", show)
-        }
-        _showDecimalsFlow.value = show
+        context.settingsDataStore.edit { it[Keys.SHOW_DECIMALS] = show }
     }
 
-    override val defaultAccountId: StateFlow<String?> = _defaultAccountIdFlow.asStateFlow()
+    override val defaultAccountId: StateFlow<String?> = context.settingsDataStore.data
+        .map { it[Keys.DEFAULT_ACCOUNT_ID] }
+        .stateIn(scope, SharingStarted.Eagerly, null)
 
     override suspend fun setDefaultAccountId(id: String?) {
-        prefs.edit {
-            if (id == null) {
-                remove("default_account_id")
-            } else {
-                putString("default_account_id", id)
-            }
+        context.settingsDataStore.edit {
+            if (id == null) it.remove(Keys.DEFAULT_ACCOUNT_ID)
+            else it[Keys.DEFAULT_ACCOUNT_ID] = id
         }
-        _defaultAccountIdFlow.value = id
     }
 
-    override val exportFormat: StateFlow<ExportFormat> = _exportFormatFlow.asStateFlow()
+    override val exportFormat: StateFlow<ExportFormat> = context.settingsDataStore.data
+        .map { prefs ->
+            val name = prefs[Keys.EXPORT_FORMAT] ?: ExportFormat.CSV.name
+            try { ExportFormat.valueOf(name) } catch (_: Exception) { ExportFormat.CSV }
+        }
+        .stateIn(scope, SharingStarted.Eagerly, ExportFormat.CSV)
 
     override suspend fun setExportFormat(format: ExportFormat) {
-        prefs.edit {
-            putString("export_format", format.name)
-        }
-        _exportFormatFlow.value = format
+        context.settingsDataStore.edit { it[Keys.EXPORT_FORMAT] = format.name }
     }
 
-    override val isSmsRationaleHidden: StateFlow<Boolean> = _smsRationaleHiddenFlow.asStateFlow()
+    override val isSmsRationaleHidden: StateFlow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.SMS_RATIONALE_HIDDEN] ?: false }
+        .stateIn(scope, SharingStarted.Eagerly, false)
 
     override suspend fun setSmsRationaleHidden(hidden: Boolean) {
-        prefs.edit {
-            putBoolean("sms_rationale_hidden", hidden)
-        }
-        _smsRationaleHiddenFlow.value = hidden
+        context.settingsDataStore.edit { it[Keys.SMS_RATIONALE_HIDDEN] = hidden }
     }
 
     override suspend fun clear() {
-        prefs.edit { clear() }
-        _themeFlow.value = AppTheme.SYSTEM
-        _timeFormatFlow.value = TimeFormat.TWENTY_FOUR_HOUR
-        _currencyFlow.value = Currency.KES
-        _biometricFlow.value = false
-        _balanceHiddenFlow.value = false
-        _reminderFlow.value = false
-        _reminderTimeFlow.value = LocalTime(20, 0)
-        _mpesaSimSlotFlow.value = null
-        _mpesaLinkedAccountIdsFlow.value = emptySet()
-        _equityLinkedAccountIdsFlow.value = emptySet()
-        _mpesaListenerFlow.value = false
-        _equityListenerFlow.value = false
-        _budgetAlertsEnabledFlow.value = false
-        _budgetAlertThresholdsFlow.value = setOf(50, 80, 100)
-        _alertBudgetIdFlow.value = null
-        _billReminderEnabledFlow.value = false
-        _billReminderDaysBeforeFlow.value = 2
-        _dailySummaryEnabledFlow.value = false
-        _weeklySummaryEnabledFlow.value = false
-        _summaryNotificationTimeFlow.value = LocalTime(8, 0)
-        _showDecimalsFlow.value = true
-        _defaultAccountIdFlow.value = null
-        _exportFormatFlow.value = ExportFormat.CSV
-        _smsRationaleHiddenFlow.value = false
+        context.settingsDataStore.edit { it.clear() }
+    }
+
+    private object Keys {
+        val APP_THEME = stringPreferencesKey("app_theme")
+        val TIME_FORMAT = stringPreferencesKey("time_format")
+        val CURRENCY_CODE = stringPreferencesKey("currency_code")
+        val BIOMETRIC_ENABLED = booleanPreferencesKey("biometric_enabled")
+        val BALANCE_HIDDEN = booleanPreferencesKey("balance_hidden")
+        val REMINDER_ENABLED = booleanPreferencesKey("reminder_enabled")
+        val REMINDER_TIME = stringPreferencesKey("reminder_time")
+        val MPESA_SIM_SLOT = intPreferencesKey("mpesa_sim_slot")
+        val MPESA_LINKED_ACCOUNT_IDS = stringSetPreferencesKey("mpesa_linked_account_ids")
+        val EQUITY_LINKED_ACCOUNT_IDS = stringSetPreferencesKey("equity_linked_account_ids")
+        val MPESA_LISTENER_ENABLED = booleanPreferencesKey("mpesa_listener_enabled")
+        val EQUITY_LISTENER_ENABLED = booleanPreferencesKey("equity_listener_enabled")
+        val BUDGET_ALERTS_ENABLED = booleanPreferencesKey("budget_alerts_enabled")
+        val BUDGET_ALERT_THRESHOLDS = stringSetPreferencesKey("budget_alert_thresholds")
+        val ALERT_BUDGET_ID = stringPreferencesKey("alert_budget_id")
+        val BILL_REMINDER_ENABLED = booleanPreferencesKey("bill_reminder_enabled")
+        val BILL_REMINDER_DAYS_BEFORE = intPreferencesKey("bill_reminder_days_before")
+        val DAILY_SUMMARY_ENABLED = booleanPreferencesKey("daily_summary_enabled")
+        val WEEKLY_SUMMARY_ENABLED = booleanPreferencesKey("weekly_summary_enabled")
+        val SUMMARY_NOTIFICATION_TIME = stringPreferencesKey("summary_notification_time")
+        val SHOW_DECIMALS = booleanPreferencesKey("show_decimals")
+        val DEFAULT_ACCOUNT_ID = stringPreferencesKey("default_account_id")
+        val EXPORT_FORMAT = stringPreferencesKey("export_format")
+        val SMS_RATIONALE_HIDDEN = booleanPreferencesKey("sms_rationale_hidden")
     }
 }
