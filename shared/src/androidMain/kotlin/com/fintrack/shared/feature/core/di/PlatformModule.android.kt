@@ -9,7 +9,7 @@ import com.fintrack.shared.feature.core.util.FileSaver
 import com.fintrack.shared.feature.settings.data.local.AndroidSettingsDataSource
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.transaction.domain.service.TransactionImporter
-import com.fintrack.shared.feature.transaction.service.AndroidTransactionImporter
+import com.fintrack.shared.feature.transaction.service.importer.AndroidTransactionImporter
 import org.koin.dsl.bind
 import org.koin.dsl.module
 

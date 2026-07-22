@@ -1,4 +1,4 @@
-package com.fintrack.shared.feature.transaction.service
+package com.fintrack.shared.feature.transaction.service.importer
 
 import android.content.Context
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
@@ -35,7 +35,7 @@ class AndroidTransactionImporter(
             
             when {
                 isPortfolioSeed -> {
-                    mpesaImporter.importHistory(targetAccountId, isPortfolioSeed, onProgress)
+                    mpesaImporter.importHistory(targetAccountId, true, onProgress)
                 }
                 hasMpesa && hasEquity -> {
                     mpesaImporter.importHistory(targetAccountId, isPortfolioSeed) { onProgress(it * 0.5f) }

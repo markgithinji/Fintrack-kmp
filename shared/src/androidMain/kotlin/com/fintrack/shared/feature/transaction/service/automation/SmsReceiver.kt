@@ -1,25 +1,25 @@
-package com.fintrack.shared.feature.transaction.util
+package com.fintrack.shared.feature.transaction.service.automation
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
-import com.fintrack.shared.feature.account.domain.model.AccountType
 import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
+import com.fintrack.shared.feature.core.domain.service.NotificationService
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
-import com.fintrack.shared.feature.core.domain.service.NotificationService
-import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
+import com.fintrack.shared.feature.transaction.util.EquityParser
+import com.fintrack.shared.feature.transaction.util.MpesaParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import kotlin.math.abs
 
 class SmsReceiver : BroadcastReceiver(), KoinComponent {
-    private val transactionRepository: TransactionRepository by inject()
     private val accountRepository: AccountRepository by inject()
     private val categoryRepository: CategoryRepository by inject()
     private val settingsDataSource: SettingsDataSource by inject()
@@ -33,12 +33,12 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
         private fun isDuplicate(amount: com.ionspin.kotlin.bignum.decimal.BigDecimal, timestamp: Long, sender: String?): Boolean {
             val now = System.currentTimeMillis() / 1000
             // Keep only last 5 minutes of signatures
-            recentTransactions.removeAll { it.second < now - 300 }
+            recentTransactions.removeAll { it.second < (now - 300) }
             
             val senderPrefix = sender?.take(5) ?: ""
             // Check for similar amount and sender within 2 minutes
             val exists = recentTransactions.any { (a, t, s) ->
-                a == amount && Math.abs(t - timestamp) < 120 && s == senderPrefix
+                a == amount && abs(t - timestamp) < 120 && s == senderPrefix
             }
             
             if (!exists) {
@@ -65,7 +65,6 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                       sender?.equals("EQUITY", ignoreCase = true) == true
 
         if (isMpesa || isEquity) {
-            /* PAUSED FOR NOW
             val pendingResult = goAsync()
             CoroutineScope(Dispatchers.IO).launch {
                 try {
@@ -75,9 +74,7 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                         settingsDataSource.isEquityListenerEnabled.first()
                     }
 
-                    if (!isEnabled) {
-                        return@launch
-                    }
+                    if (!isEnabled) return@launch
 
                     val accountsResult = accountRepository.getAccounts()
                     val accounts = (accountsResult as? Result.Success)?.data ?: emptyList()
@@ -88,9 +85,7 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                         accounts.find { it.linkedSources.contains("equity") }?.id
                     }
 
-                    if (accountId == null) {
-                        return@launch
-                    }
+                    if (accountId == null) return@launch
                     
                     var transaction: com.fintrack.shared.feature.transaction.domain.model.Transaction? = if (isMpesa) {
                         MpesaParser.parse(fullMessage, accountId)
@@ -128,35 +123,15 @@ class SmsReceiver : BroadcastReceiver(), KoinComponent {
                         // Show notification immediately so the user knows we caught it
                         notificationService.showTransactionNotification(transaction)
 
-                        val result = transactionRepository.addTransaction(transaction)
-                        if (result is Result.Success<*>) {
-                            
-                            // Update account balance and last sync time if possible
-                            val balance = if (isMpesa) MpesaParser.parseBalance(fullMessage) else EquityParser.parseBalance(fullMessage)
-                            accountRepository.getAccountById(accountId).let { accResult ->
-                                if (accResult is Result.Success) {
-                                    val account = accResult.data
-                                    val isPureMpesaAccount = account.type == AccountType.MPESA && 
-                                                           !account.linkedSources.contains("equity") &&
-                                                           account.name.lowercase() == "mpesa"
-                                    
-                                    val newBalance = if (isPureMpesaAccount) balance ?: account.balance else account.balance
-                                    
-                                    accountRepository.addOrUpdateAccount(account.copy(
-                                        balance = newBalance,
-                                        lastSyncedAt = kotlin.time.Clock.System.now()
-                                    ))
-                                }
-                            }
-                        }
-                    } else {
+                        // Enqueue reliable background sync via WorkManager
+                        TransactionSyncWorker.enqueue(context, transaction)
                     }
                 } catch (e: Exception) {
+                    e.printStackTrace()
                 } finally {
                     pendingResult.finish()
                 }
             }
-            */
         }
     }
 }

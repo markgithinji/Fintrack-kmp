@@ -87,6 +87,8 @@ object EquityParser {
         if (message.contains("failed due to insufficient funds", ignoreCase = true)) return null
         if (message.contains("is due in", ignoreCase = true)) return null
 
+        val balance = parseBalance(message)
+
         // Helper to validate and create model
         fun wrap(transaction: Transaction?): Transaction? {
             if (transaction == null) return null
@@ -102,7 +104,7 @@ object EquityParser {
             val merchant = it.groupValues[2].trim()
             val dateTime = parseDateTime(it.groupValues[3], smsTimestamp)
             val code = it.groupValues[5]
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(merchant, isIncome = false, rules = rules), dateTime, "Card payment at $merchant", accountId, isIncome = false))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, balance, inferCategory(merchant, isIncome = false, rules = rules), dateTime, "Card payment at $merchant", accountId, isIncome = false))
         }
 
         // 2. Sent Money (Expense or Income)
@@ -116,7 +118,7 @@ object EquityParser {
             val isIncome = message.contains("to your account", ignoreCase = true)
             
             val description = if (isIncome) "Received Transfer" else "Sent to $recipient"
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, if (isIncome) "Other Income" else "Transfer", dateTime, description, accountId, isIncome))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, balance, if (isIncome) "Other Income" else "Transfer", dateTime, description, accountId, isIncome))
         }
 
         // 3. Drawn / Withdrawal (Expense)
@@ -125,7 +127,7 @@ object EquityParser {
             val code = it.groupValues[5]
             val dateStr = "${it.groupValues[6]} ${it.groupValues[7]}"
             val dateTime = parseDateTime(dateStr, smsTimestamp)
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, "Transfer", dateTime, "Withdrawal / Drawn", accountId, false))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, balance, "Transfer", dateTime, "Withdrawal / Drawn", accountId, false))
         }
 
         // 4. Bill Payment
@@ -135,14 +137,14 @@ object EquityParser {
             val code = it.groupValues[5]
             val dateStr = "${it.groupValues[6]} ${it.groupValues[7]}"
             val dateTime = parseDateTime(dateStr, smsTimestamp)
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(merchant, isIncome = false, rules = rules), dateTime, "Bill payment to $merchant", accountId, false))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, balance, inferCategory(merchant, isIncome = false, rules = rules), dateTime, "Bill payment to $merchant", accountId, false))
         }
 
         // 5. Loan Approved
         loanApprovedRegex.find(message)?.let {
             val amount = parseAmount(it.groupValues[2])
             val code = it.groupValues[3]
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, "Loans", smsTimestamp ?: Clock.System.now(), "Loan Approved", accountId, true))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, balance, "Loans", smsTimestamp ?: Clock.System.now(), "Loan Approved", accountId, true))
         }
 
         // 6. Deposited
@@ -156,7 +158,7 @@ object EquityParser {
             val isMySelf = recipient.contains("MARK", ignoreCase = true) || recipient.contains("NGOTHI", ignoreCase = true)
             val description = if (isMySelf) "Cash Deposit" else "Paid to $recipient"
             
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, if (isMySelf) "Other Income" else inferCategory(recipient, isIncome = false, rules = rules), dateTime, description, accountId, isMySelf))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, balance, if (isMySelf) "Other Income" else inferCategory(recipient, isIncome = false, rules = rules), dateTime, description, accountId, isMySelf))
         }
 
         // 6b. Received to Equity Account
@@ -166,7 +168,7 @@ object EquityParser {
             val code = it.groupValues[5]
             val dateStr = "${it.groupValues[6]} ${it.groupValues[7]}"
             val dateTime = parseDateTime(dateStr, smsTimestamp)
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, "Other Income", dateTime, "Received from $sender", accountId, true))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, balance, "Other Income", dateTime, "Received from $sender", accountId, true))
         }
 
         // 7. Generic Equity Transfer (including credited to phone number)
@@ -184,7 +186,7 @@ object EquityParser {
                 "Bank Transaction"
             }
             
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, "Transfer", dateTime, description, accountId, isIncome))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, balance, "Transfer", dateTime, description, accountId, isIncome))
         }
 
         // 8. Successfully Sent
@@ -194,7 +196,7 @@ object EquityParser {
             val code = it.groupValues[3]
             val dateStr = "${it.groupValues[4]} ${it.groupValues[5]}"
             val dateTime = parseDateTime(dateStr, smsTimestamp)
-            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, null, inferCategory(recipient, isIncome = false, rules = rules), dateTime, "Sent to $recipient", accountId, false))
+            return wrap(createTransactionModel(code, amount, BigDecimal.ZERO, balance, inferCategory(recipient, isIncome = false, rules = rules), dateTime, "Sent to $recipient", accountId, false))
         }
 
         return null
