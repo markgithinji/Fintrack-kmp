@@ -12,7 +12,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
 import com.fintrack.shared.feature.navigation.ui.MainScreen
-import com.fintrack.shared.feature.core.ui.biometric.initBiometricAuthenticator
 
 
 class MainActivity : FragmentActivity() {
@@ -20,7 +19,6 @@ class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
-        initBiometricAuthenticator(this)
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         

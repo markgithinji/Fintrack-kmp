@@ -7,7 +7,3 @@ import androidx.compose.runtime.remember
 actual fun rememberBiometricAuthenticator(): BiometricAuthenticator {
     return remember { IOSBiometricAuthenticator() }
 }
-
-actual fun createBiometricAuthenticator(): BiometricAuthenticator {
-    return IOSBiometricAuthenticator()
-}
