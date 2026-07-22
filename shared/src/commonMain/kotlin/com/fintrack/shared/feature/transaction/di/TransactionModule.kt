@@ -8,7 +8,6 @@ import com.fintrack.shared.feature.transaction.domain.usecase.ExportTransactions
 import com.fintrack.shared.feature.transaction.domain.usecase.GetSpendingSummaryUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.SyncRecurringBillsUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ValidateTransactionUseCase
-import com.fintrack.shared.feature.transaction.domain.util.createTransactionImporter
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.singleOf
@@ -24,15 +23,6 @@ val transactionModule = module {
     singleOf(::ExportTransactionsUseCase)
     singleOf(::SyncRecurringBillsUseCase)
     singleOf(::GetSpendingSummaryUseCase)
-
-    single {
-        createTransactionImporter(
-            transactionRepository = get(),
-            accountRepository = get(),
-            categoryRepository = get(),
-            settingsDataSource = get()
-        )
-    }
 
     viewModelOf(::TransactionViewModel)
 }

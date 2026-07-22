@@ -1,22 +1,13 @@
 package com.fintrack.android
 
 import android.app.Application
-import com.fintrack.shared.feature.auth.data.local.initTokenDataStore
-import com.fintrack.shared.feature.settings.data.local.initSettingsDataStore
-import com.fintrack.shared.feature.core.service.initNotificationService
-import com.fintrack.shared.feature.core.util.initFileSaver
-import com.fintrack.shared.feature.transaction.domain.util.initTransactionImporter
 import com.fintrack.shared.feature.core.data.remote.Environment
 import com.fintrack.shared.feature.core.di.Koin
+import org.koin.android.ext.koin.androidContext
 
 class FintrackApp : Application() {
     override fun onCreate() {
         super.onCreate()
-        initTokenDataStore(this)
-        initSettingsDataStore(this)
-        initNotificationService(this)
-        initFileSaver(this)
-        initTransactionImporter(this)
 
         val environment = if (BuildConfig.DEBUG) {
             Environment.DEVELOPMENT
@@ -26,7 +17,10 @@ class FintrackApp : Application() {
 
         Koin.init(
             environment = environment,
-            enableNetworkLogs = BuildConfig.DEBUG
+            enableNetworkLogs = BuildConfig.DEBUG,
+            appDeclaration = {
+                androidContext(this@FintrackApp)
+            }
         )
     }
 }

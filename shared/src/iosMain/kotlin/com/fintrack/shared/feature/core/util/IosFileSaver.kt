@@ -42,5 +42,3 @@ class IosFileSaver : FileSaver {
         }
     }
 }
-
-actual fun createFileSaver(): FileSaver = IosFileSaver()

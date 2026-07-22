@@ -4,16 +4,6 @@ import android.content.Context
 import android.os.Environment
 import java.io.File
 
-private var appContext: Context? = null
-
-fun initFileSaver(context: Context) {
-    appContext = context.applicationContext
-}
-
-actual fun createFileSaver(): FileSaver {
-    return AndroidFileSaver(appContext ?: throw IllegalStateException("FileSaver not initialized. Call initFileSaver(context)"))
-}
-
 class AndroidFileSaver(private val context: Context) : FileSaver {
     override suspend fun saveFile(fileName: String, content: String): String? {
         return try {

@@ -15,18 +15,21 @@ import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
 
 object Koin {
-    private var _koin: KoinApplication? = null
+    private var _koinApplication: KoinApplication? = null
+    
     val koin: KoinApplication
-        get() = _koin ?: throw IllegalStateException("Koin not initialized")
+        get() = _koinApplication ?: throw IllegalStateException("Koin not initialized")
 
     fun init(
         environment: Environment = Environment.STAGING,
-        enableNetworkLogs: Boolean = false
+        enableNetworkLogs: Boolean = false,
+        appDeclaration: KoinApplication.() -> Unit = {}
     ) {
         ApiConfig.initialize(environment)
 
-        _koin = startKoin {
-
+        _koinApplication = startKoin {
+            appDeclaration()
+            
             properties(
                 mapOf(
                     "baseUrl" to ApiConfig.BASE_URL,
@@ -34,8 +37,8 @@ object Koin {
                 )
             )
 
-            // Modules
             modules(
+                platformModule,
                 coreModule,
                 authModule,
                 accountModule,
@@ -50,7 +53,6 @@ object Koin {
         }
     }
 
-    // Helper functions to get dependencies
     inline fun <reified T> get(): T = koin.koin.get()
     inline fun <reified T> inject(): Lazy<T> = koin.koin.inject()
 }
