@@ -157,21 +157,6 @@ class SettingsViewModel(
         initialValue = emptyList()
     )
 
-    init {
-        viewModelScope.launch {
-            syncCategoriesUseCase()
-        }
-        viewModelScope.launch {
-            val result = accountRepository.getAccounts()
-            if (result is Result.Success) {
-                _accounts.value = result.data
-            }
-        }
-        viewModelScope.launch {
-            loadBudgets()
-        }
-    }
-
     fun reloadBudgets(force: Boolean = true, showLoading: Boolean = true) {
         val currentBudgets = _budgets.value
         if (!force && currentBudgets is Result.Success && currentBudgets.data.isNotEmpty()) return
@@ -184,8 +169,19 @@ class SettingsViewModel(
         }
     }
 
-    private fun loadBudgets() {
-        reloadBudgets(force = false, showLoading = true)
+    fun syncCategories() {
+        viewModelScope.launch {
+            syncCategoriesUseCase()
+        }
+    }
+
+    fun loadAccounts() {
+        viewModelScope.launch {
+            val result = accountRepository.getAccounts()
+            if (result is Result.Success) {
+                _accounts.value = result.data
+            }
+        }
     }
 
     fun setTheme(theme: AppTheme) {

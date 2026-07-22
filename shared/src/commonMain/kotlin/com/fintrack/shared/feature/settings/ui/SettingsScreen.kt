@@ -195,6 +195,12 @@ fun SettingsScreen(
 
     var activeSmsTarget by remember { mutableStateOf<SmsPermissionTarget?>(null) }
 
+    LaunchedEffect(Unit) {
+        viewModel.syncCategories()
+        viewModel.loadAccounts()
+        viewModel.reloadBudgets(force = false)
+    }
+
     LaunchedEffect(refreshTrigger) {
         if (refreshTrigger > 0) {
             viewModel.reloadBudgets(force = true, showLoading = false)
