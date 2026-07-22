@@ -2,6 +2,7 @@ package com.fintrack.shared.feature.category.data
 
 import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.category.domain.model.CategoryRule
+import com.fintrack.shared.feature.category.domain.model.allCategories
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

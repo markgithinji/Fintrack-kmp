@@ -43,6 +43,7 @@ import kotlin.math.atan2
 import kotlin.math.sqrt
 
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.fintrack.shared.feature.category.domain.model.fromName
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 
 @Composable

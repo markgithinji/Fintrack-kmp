@@ -4,6 +4,7 @@ import com.fintrack.shared.feature.budget.domain.model.Budget
 import com.fintrack.shared.feature.budget.domain.model.BudgetStatus
 import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.category.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.fromId
 
 fun BudgetDto.toDomain(): Budget =
     Budget(

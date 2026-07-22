@@ -7,6 +7,8 @@ import androidx.paging.cachedIn
 import com.fintrack.shared.feature.account.domain.model.Account
 import com.fintrack.shared.feature.category.data.LocalCategoryDataSource
 import com.fintrack.shared.feature.category.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.allCategories
+import com.fintrack.shared.feature.category.domain.model.fromId
 import com.fintrack.shared.feature.category.domain.usecase.SyncCategoriesUseCase
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult
@@ -15,9 +17,9 @@ import com.fintrack.shared.feature.core.util.formatToTwoPrecision
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.model.TransactionFormState
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
+import com.fintrack.shared.feature.transaction.domain.service.TransactionImporter
 import com.fintrack.shared.feature.transaction.domain.usecase.CreateTransactionUseCase
 import com.fintrack.shared.feature.transaction.domain.usecase.ValidateTransactionUseCase
-import com.fintrack.shared.feature.transaction.domain.util.TransactionImporter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -293,7 +295,7 @@ class TransactionViewModel(
                     amount = t.amount.formatToTwoPrecision(),
                     description = t.description ?: "",
                     isIncome = t.isIncome,
-                    selectedCategory = Category.fromId(t.categoryId, t.category, t.isIncome),
+                    selectedCategory = Category.fromId(t.categoryId, t.category, isExpense = !t.isIncome),
                     selectedAccount = accounts.find { it.id == t.accountId },
                     dateTime = t.dateTime,
                     transactionCost = t.transactionCost.formatToTwoPrecision()

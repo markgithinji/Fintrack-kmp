@@ -2,6 +2,8 @@ package com.fintrack.shared.feature.transaction.util
 
 import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.category.domain.model.CategoryRule
+import com.fintrack.shared.feature.category.domain.model.fromId
+import com.fintrack.shared.feature.category.domain.model.fromName
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.time.Clock

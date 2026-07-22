@@ -10,6 +10,7 @@ import com.fintrack.shared.feature.budget.domain.model.BudgetWithStatus
 import com.fintrack.shared.feature.budget.domain.repository.BudgetRepository
 import com.fintrack.shared.feature.category.data.LocalCategoryDataSource
 import com.fintrack.shared.feature.category.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.TransactionCost
 import com.fintrack.shared.feature.category.domain.usecase.SyncCategoriesUseCase
 import com.fintrack.shared.feature.core.domain.SaveState
 import com.fintrack.shared.feature.core.domain.ValidationResult

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.category.data.LocalCategoryDataSource
 import com.fintrack.shared.feature.category.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.allCategories
 import com.fintrack.shared.feature.category.domain.usecase.AddCategoryUseCase
 import com.fintrack.shared.feature.category.domain.usecase.DeleteCategoryUseCase
 import com.fintrack.shared.feature.category.domain.usecase.SyncCategoriesUseCase

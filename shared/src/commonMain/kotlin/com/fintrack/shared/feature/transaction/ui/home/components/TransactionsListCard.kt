@@ -53,6 +53,7 @@ import com.fintrack.shared.feature.navigation.ui.LocalTimeFormat
 import com.fintrack.shared.feature.navigation.ui.toCurrencyString
 import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
 import com.fintrack.shared.feature.category.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.fromId
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.category.ui.util.toColor
 import com.fintrack.shared.feature.category.ui.util.toIcon

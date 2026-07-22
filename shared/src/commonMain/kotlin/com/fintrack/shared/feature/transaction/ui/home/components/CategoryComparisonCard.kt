@@ -47,6 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.fintrack.shared.feature.category.domain.model.Category
+import com.fintrack.shared.feature.category.domain.model.fromName
 import com.fintrack.shared.feature.category.ui.util.toColor
 import com.fintrack.shared.feature.category.ui.util.toIcon
 import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
