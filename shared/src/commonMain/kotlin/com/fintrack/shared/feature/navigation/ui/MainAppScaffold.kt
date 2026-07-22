@@ -77,6 +77,7 @@ fun MainAppScaffold(
     onLogout: () -> Unit = {},
     onUpdateToastPadding: (Dp) -> Unit = {}
 ) {
+    val navBarsPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val navController = LocalNavController.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val visibleEntries by navController.visibleEntries.collectAsStateWithLifecycle()
@@ -119,8 +120,8 @@ fun MainAppScaffold(
         currentDestination?.shouldShowBottomBar() ?: true
     }
 
-    LaunchedEffect(showBottomBarNow) {
-        onUpdateToastPadding(if (showBottomBarNow) 100.dp else 24.dp)
+    LaunchedEffect(showBottomBarNow, navBarsPadding) {
+        onUpdateToastPadding(if (showBottomBarNow) 80.dp + navBarsPadding + 16.dp else 24.dp)
     }
 
     // Keep the composable in the hierarchy during transitions to stabilize content area
@@ -163,7 +164,10 @@ fun MainAppScaffold(
             },
             bottomBar = {
                 if (suiteType == NavigationSuiteType.NavigationBar && keepBottomBarInHierarchy) {
-                    Box(modifier = Modifier.height(80.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())) {
+                    val bottomBarHeight = 80.dp + navBarsPadding
+                    Box(
+                        modifier = Modifier.height(bottomBarHeight)
+                    ) {
                         AnimatedVisibility(
                             visible = showBottomBarNow,
                             enter = slideInVertically(
@@ -361,7 +365,7 @@ fun MainAppScaffold(
         ) {
             AddTransactionFAB(
                 onClick = { navController.navigateThrottled(Screen.AddTransaction()) },
-                modifier = Modifier.padding(bottom = 92.dp)
+                modifier = Modifier.padding(bottom = 40.dp + navBarsPadding)
             )
         }
     }
