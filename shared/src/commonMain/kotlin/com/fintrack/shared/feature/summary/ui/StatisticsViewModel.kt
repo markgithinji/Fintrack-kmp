@@ -4,7 +4,6 @@ import Period
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.summary.domain.model.CategoryComparison
 import com.fintrack.shared.feature.summary.domain.model.CategoryComparisonSummary
 import com.fintrack.shared.feature.summary.domain.model.DistributionSummary
 import com.fintrack.shared.feature.summary.domain.model.Highlights

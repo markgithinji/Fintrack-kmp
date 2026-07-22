@@ -99,6 +99,7 @@ fun AddTransactionScreen(
     }
 
     LaunchedEffect(Unit) {
+        transactionsViewModel.refreshCategories()
         if (accountsResult !is Result.Success || (accountsResult as Result.Success).data.isEmpty()) {
             accountsViewModel.reloadAccounts()
         }

@@ -9,11 +9,6 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 
-enum class SummaryPeriod {
-    YESTERDAY,
-    LAST_WEEK
-}
-
 class GetSpendingSummaryUseCase(
     private val transactionRepository: TransactionRepository
 ) {
@@ -50,4 +45,9 @@ class GetSpendingSummaryUseCase(
             is Result.Loading -> Result.Loading
         }
     }
+}
+
+enum class SummaryPeriod {
+    YESTERDAY,
+    LAST_WEEK
 }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -143,7 +144,7 @@ fun ProfileScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(56.dp), // Increased and strictly fixed to prevent layout shifts
+                                .height(56.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             AnimatedContent(
@@ -165,7 +166,6 @@ fun ProfileScreen(
                                                 horizontalAlignment = Alignment.CenterHorizontally,
                                                 verticalArrangement = Arrangement.spacedBy(6.dp)
                                             ) {
-                                                // Using onSurfaceVariant for better contrast on the light grey card
                                                 AnimatedShimmerBox(
                                                     modifier = Modifier
                                                         .width(140.dp)
@@ -283,7 +283,7 @@ fun ProfileScreen(
                             ProfileMetricItem(
                                 label = "Needs",
                                 value = if (essentialRatio != null) "${essentialRatio.intValue(false)}%" else "--",
-                                icon = Icons.Default.ReceiptLong,
+                                icon = Icons.AutoMirrored.Filled.ReceiptLong,
                                 isLoading = isLoading,
                                 modifier = Modifier.weight(1f)
                             )
@@ -346,7 +346,7 @@ private fun ProfileMetricItem(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.height(60.dp), // Fixed height for metric item to prevent jumps
+        modifier = modifier.height(60.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

@@ -26,8 +26,10 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
@@ -44,8 +46,12 @@ class TransactionViewModel(
     private val transactionImporter: TransactionImporter
 ) : ViewModel() {
 
-    private val _categories = MutableStateFlow(Category.allCategories)
-    val categories: StateFlow<List<Category>> = _categories.asStateFlow()
+    val categories: StateFlow<List<Category>> = localCategoryDataSource.categories
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = Category.allCategories
+        )
 
     private val _formState = MutableStateFlow(TransactionFormState())
     val formState: StateFlow<TransactionFormState> = _formState.asStateFlow()
@@ -75,15 +81,6 @@ class TransactionViewModel(
     
     private var lastPagingParams: TransactionPagingParams? = null
     private var cachedPagingFlow: Flow<PagingData<Transaction>>? = null
-
-    init {
-        viewModelScope.launch {
-            localCategoryDataSource.categories.collect {
-                _categories.value = it
-            }
-        }
-        refreshCategories()
-    }
 
     fun importTransactions(accountId: String? = null, isPortfolioSeed: Boolean = false) {
         if (_importState.value[accountId] is Result.Loading) {
@@ -140,7 +137,7 @@ class TransactionViewModel(
         viewModelScope.launch { syncCategoriesUseCase() }
     }
 
-    fun loadRecentTransactions(accountId: String, limit: Int = 7, force: Boolean = false) {
+    fun loadRecentTransactions(accountId: String, limit: Int = 6, force: Boolean = false) {
         if (!force && accountId == lastLoadedRecentAccountId && _recentTransactions.value is Result.Success) return
         lastLoadedRecentAccountId = accountId
         recentTransactionsJob?.cancel()
@@ -152,14 +149,6 @@ class TransactionViewModel(
                 is Result.Error -> Result.Error(result.exception)
                 is Result.Loading -> Result.Loading
             }
-        }
-    }
-
-    private fun summarizeResult(result: Result<Pair<List<Transaction>, String?>>): String {
-        return when (result) {
-            is Result.Success -> "Success(count=${result.data.first.size})"
-            is Result.Error -> "Error(${result.exception.message})"
-            is Result.Loading -> "Loading"
         }
     }
 

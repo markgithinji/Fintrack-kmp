@@ -2,7 +2,6 @@ package com.fintrack.shared.feature.transaction.ui.transactionlist
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope.OverlayClip
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,24 +27,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fintrack.shared.ui.theme.GreenIncome
-import com.fintrack.shared.ui.theme.PinkExpense
-import com.fintrack.shared.feature.core.util.formatAsShortDateWithYear
-import com.fintrack.shared.feature.settings.domain.util.format
-import com.fintrack.shared.feature.navigation.ui.LocalTimeFormat
-import com.fintrack.shared.feature.navigation.ui.toCurrencyString
-import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
 import com.fintrack.shared.feature.category.domain.model.Category
 import com.fintrack.shared.feature.category.domain.model.fromId
-import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.category.ui.util.toColor
 import com.fintrack.shared.feature.category.ui.util.toIcon
+import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
+import com.fintrack.shared.feature.navigation.ui.LocalTimeFormat
+import com.fintrack.shared.feature.navigation.ui.toCurrencyString
+import com.fintrack.shared.feature.settings.domain.util.format
+import com.fintrack.shared.feature.transaction.domain.model.Transaction
+import com.fintrack.shared.ui.theme.GreenIncome
+import com.fintrack.shared.ui.theme.PinkExpense
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -146,7 +142,7 @@ fun TransactionItem(
 
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = detailText ?: "",
+                        text = detailText,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,

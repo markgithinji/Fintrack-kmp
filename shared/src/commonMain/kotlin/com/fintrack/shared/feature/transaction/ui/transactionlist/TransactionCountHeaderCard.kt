@@ -44,7 +44,6 @@ import com.fintrack.shared.ui.theme.GreenIncome
 import com.fintrack.shared.ui.theme.PinkExpense
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 
-
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun TransactionCountHeaderCard(

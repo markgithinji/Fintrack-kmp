@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,26 +22,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.*
-import com.fintrack.shared.feature.core.util.Result
-import com.fintrack.shared.feature.core.util.formatAsHeaderDate
 import com.fintrack.shared.feature.core.ui.LocalSharedTransitionScope
 import com.fintrack.shared.feature.core.ui.util.rememberThrottleClick
+import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.util.formatAsHeaderDate
 import com.fintrack.shared.feature.summary.domain.model.TransactionCountSummary
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
 import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -66,30 +61,44 @@ fun TransactionListScreen(
     val listState = rememberLazyListState()
     val sharedTransitionScope = LocalSharedTransitionScope.current
 
-    val sharedBoundsKey = remember(accountId, isIncome, categoryId, categoryName, hasTransactionCost) {
-        when {
-            hasTransactionCost == true -> "header_card_Transaction Fees"
-            categoryName?.contains(",") == true -> "header_card_Others"
-            categoryName != null -> "header_card_$categoryName"
-            categoryId != null -> "header_card_$categoryId"
-            isIncome == true -> "income_card"
-            isIncome == false -> "expense_card"
-            else -> "all_transactions_card"
+    val sharedBoundsKey =
+        remember(accountId, isIncome, categoryId, categoryName, hasTransactionCost) {
+            when {
+                hasTransactionCost == true -> "header_card_Transaction Fees"
+                categoryName?.contains(",") == true -> "header_card_Others"
+                categoryName != null -> "header_card_$categoryName"
+                categoryId != null -> "header_card_$categoryId"
+                isIncome == true -> "income_card"
+                isIncome == false -> "expense_card"
+                else -> "all_transactions_card"
+            }
         }
+
+    val transactions =
+        remember(accountId, isIncome, categoryId, startDate, endDate, hasTransactionCost) {
+            transactionsViewModel.getTransactionsPagingData(
+                accountId = accountId,
+                isIncome = isIncome,
+                categoryId = categoryId,
+                startDate = startDate,
+                endDate = endDate,
+                hasTransactionCost = hasTransactionCost
+            )
+        }.collectAsLazyPagingItems()
+
+    LaunchedEffect(Unit) {
+        transactionsViewModel.refreshCategories()
     }
 
-    val transactions = remember(accountId, isIncome, categoryId, startDate, endDate, hasTransactionCost) {
-        transactionsViewModel.getTransactionsPagingData(
-            accountId = accountId,
-            isIncome = isIncome,
-            categoryId = categoryId,
-            startDate = startDate,
-            endDate = endDate,
-            hasTransactionCost = hasTransactionCost
-        )
-    }.collectAsLazyPagingItems()
-
-    LaunchedEffect(accountId, isIncome, categoryId, startDate, endDate, hasTransactionCost, refreshTrigger) {
+    LaunchedEffect(
+        accountId,
+        isIncome,
+        categoryId,
+        startDate,
+        endDate,
+        hasTransactionCost,
+        refreshTrigger
+    ) {
         statisticsViewModel.loadTransactionCounts(
             accountId = accountId,
             isIncome = isIncome,
@@ -98,7 +107,7 @@ fun TransactionListScreen(
             end = endDate,
             hasCost = hasTransactionCost
         )
-        
+
         // Also refresh paging data if this is a manual refresh trigger
         if (refreshTrigger > 0) {
             transactions.refresh()
@@ -112,21 +121,22 @@ fun TransactionListScreen(
             lastBottomPadding = bottomPadding
         }
     }
-    
+
     val transition = animatedVisibilityScope.transition
     val isTransitionRunning = transition.isRunning
-    val isExiting = transition.targetState == androidx.compose.animation.EnterExitState.PostExit || 
-                   transition.targetState == androidx.compose.animation.EnterExitState.PreEnter
+    val isExiting = transition.targetState == androidx.compose.animation.EnterExitState.PostExit ||
+            transition.targetState == androidx.compose.animation.EnterExitState.PreEnter
 
-    val stableBottomPadding = if (isTransitionRunning || isExiting || (bottomPadding == 0.dp && lastBottomPadding > 0.dp)) {
-        lastBottomPadding
-    } else {
-        bottomPadding
-    }
+    val stableBottomPadding =
+        if (isTransitionRunning || isExiting || (bottomPadding == 0.dp && lastBottomPadding > 0.dp)) {
+            lastBottomPadding
+        } else {
+            bottomPadding
+        }
 
     var includeFees by remember { mutableStateOf(true) }
     val throttledOnEditTransaction = rememberThrottleClick(onClick = onEditTransaction)
-    
+
     val onRetry = {
         statisticsViewModel.loadTransactionCounts(
             accountId = accountId,
@@ -217,7 +227,7 @@ private fun TransactionListContent(
         item { Spacer(modifier = Modifier.height(4.dp)) }
 
         val refreshState = transactions.loadState.refresh
-        
+
         if (refreshState is LoadState.Loading && transactions.itemCount == 0) {
             items(5) { index ->
                 TransactionLoadingItem(
@@ -244,15 +254,19 @@ private fun TransactionListContent(
                 }
             ) { index ->
                 val transaction = transactions[index] as? Transaction
-                
+
                 if (transaction != null) {
                     val timeZone = TimeZone.currentSystemDefault()
                     val transactionDate = transaction.dateTime.toLocalDateTime(timeZone).date
-                    
+
                     // Show date header if it's the first item or the date has changed
-                    val prevTransaction = if (index > 0) transactions[index - 1] as? Transaction else null
-                    val showHeader = index == 0 || (prevTransaction != null && prevTransaction.dateTime.toLocalDateTime(timeZone).date != transactionDate)
-                    
+                    val prevTransaction =
+                        if (index > 0) transactions[index - 1] as? Transaction else null
+                    val showHeader =
+                        index == 0 || (prevTransaction != null && prevTransaction.dateTime.toLocalDateTime(
+                            timeZone
+                        ).date != transactionDate)
+
                     if (showHeader) {
                         DateHeader(
                             dateString = transactionDate.formatAsHeaderDate(),

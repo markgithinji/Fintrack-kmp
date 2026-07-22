@@ -12,7 +12,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 
-
 @Composable
 fun LowerRightWavesBackground(modifier: Modifier = Modifier) {
     val primaryColor = MaterialTheme.colorScheme.primary

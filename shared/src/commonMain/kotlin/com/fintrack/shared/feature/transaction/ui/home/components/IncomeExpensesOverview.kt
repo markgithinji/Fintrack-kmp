@@ -492,7 +492,7 @@ fun BarChart(
                     }
 
                     // Popup Overlay
-                    AnimatedVisibility(
+                    androidx.compose.animation.AnimatedVisibility(
                         visible = selectedAmount != null,
                         enter = fadeIn() + scaleIn(),
                         exit = fadeOut() + scaleOut(),
