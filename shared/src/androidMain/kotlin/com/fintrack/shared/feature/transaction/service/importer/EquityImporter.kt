@@ -70,63 +70,65 @@ class EquityImporter(
         isPortfolioSeed: Boolean,
         onProgress: (Float) -> Unit
     ) {
-        val permissionStatus = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS)
-        if (permissionStatus != PackageManager.PERMISSION_GRANTED) {
-            if (!isPortfolioSeed) {
-                throw Exception("Permission denied: READ_SMS is required for Equity sync")
-            }
-        }
-
-        val cursor = try {
-            context.contentResolver.query(
-                Telephony.Sms.Inbox.CONTENT_URI,
-                arrayOf(Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS, Telephony.Sms.Inbox.DATE),
-                "${Telephony.Sms.Inbox.ADDRESS} IN (?, ?, ?, ?)",
-                arrayOf("EquitBank", "EquityBank", "EQUITYBANK", "EQUITY"),
-                "${Telephony.Sms.Inbox.DATE} DESC"
-            )
-        } catch (e: SecurityException) {
-            if (isPortfolioSeed) null else throw Exception("Permission denied: READ_SMS is required for Equity sync", e)
-        }
-
         val transactions = mutableListOf<Transaction>()
         var latestBalance: BigDecimal? = null
 
-        if (cursor != null) {
-            cursor.use { smsCursor ->
-                val bodyIndex = smsCursor.getColumnIndex(Telephony.Sms.Inbox.BODY)
-                val dateIndex = smsCursor.getColumnIndex(Telephony.Sms.Inbox.DATE)
-                var loggedCount = 0
-                val totalMessages = smsCursor.count
+        if (!isPortfolioSeed) {
+            val permissionStatus = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS)
+            if (permissionStatus != PackageManager.PERMISSION_GRANTED) {
+                throw Exception("Permission denied: READ_SMS is required for Equity sync")
+            }
 
-                while (smsCursor.moveToNext()) {
-                    currentCoroutineContext().job.ensureActive()
-                    val body = smsCursor.getString(bodyIndex)
-                    val timestamp = smsCursor.getLong(dateIndex)
-                    val smsInstant = Instant.fromEpochMilliseconds(timestamp)
+            val cursor = try {
+                context.contentResolver.query(
+                    Telephony.Sms.Inbox.CONTENT_URI,
+                    arrayOf(Telephony.Sms.Inbox.BODY, Telephony.Sms.Inbox.ADDRESS, Telephony.Sms.Inbox.DATE),
+                    "${Telephony.Sms.Inbox.ADDRESS} IN (?, ?, ?, ?)",
+                    arrayOf("EquitBank", "EquityBank", "EQUITYBANK", "EQUITY"),
+                    "${Telephony.Sms.Inbox.DATE} DESC"
+                )
+            } catch (e: SecurityException) {
+                throw Exception("Permission denied: READ_SMS is required for Equity sync", e)
+            }
 
-                    if (latestBalance == null) {
-                        latestBalance = EquityParser.parseBalance(body)
+            if (cursor != null) {
+                cursor.use { smsCursor ->
+                    val bodyIndex = smsCursor.getColumnIndex(Telephony.Sms.Inbox.BODY)
+                    val dateIndex = smsCursor.getColumnIndex(Telephony.Sms.Inbox.DATE)
+                    var loggedCount = 0
+                    val totalMessages = smsCursor.count
+
+                    while (smsCursor.moveToNext()) {
+                        currentCoroutineContext().job.ensureActive()
+                        val body = smsCursor.getString(bodyIndex)
+                        val timestamp = smsCursor.getLong(dateIndex)
+                        val smsInstant = Instant.fromEpochMilliseconds(timestamp)
+
+                        if (latestBalance == null) {
+                            latestBalance = EquityParser.parseBalance(body)
+                        }
+
+                        val parsed = EquityParser.parse(body, accountId, smsInstant, rules)
+                        if (parsed != null) {
+                            val categoryName = parsed.category
+                            val isExpense = !parsed.isIncome
+                            val finalCategoryId = categories.find { cat ->
+                                cat.name.equals(categoryName, ignoreCase = true) && cat.isExpense == isExpense
+                            }?.id
+                                ?: categories.find { cat ->
+                                    cat.name.contains("Other", ignoreCase = true) && cat.isExpense == isExpense
+                                }?.id
+                                ?: "pending"
+
+                            transactions.add(parsed.copy(categoryId = finalCategoryId))
+                        }
+
+                        loggedCount++
+                        if (loggedCount % 100 == 0) onProgress(0.05f + (loggedCount.toFloat() / totalMessages) * 0.25f)
                     }
-
-                    val parsed = EquityParser.parse(body, accountId, smsInstant, rules)
-                    if (parsed != null) {
-                        val categoryName = parsed.category
-                        val isExpense = !parsed.isIncome
-                        val finalCategoryId = categories.find { cat -> cat.name.equals(categoryName, ignoreCase = true) && cat.isExpense == isExpense }?.id
-                            ?: categories.find { cat -> cat.name.contains("Other", ignoreCase = true) && cat.isExpense == isExpense }?.id
-                            ?: "pending"
-
-                        transactions.add(parsed.copy(categoryId = finalCategoryId))
-                    }
-                    
-                    loggedCount++
-                    if (loggedCount % 100 == 0) onProgress(0.05f + (loggedCount.toFloat() / totalMessages) * 0.25f)
                 }
             }
-        }
-
-        if (isPortfolioSeed) {
+        } else {
             val dummyTransactions = portfolioSeeder.generateDummyTransactions(accountId, categories)
             transactions.addAll(dummyTransactions)
         }
