@@ -84,6 +84,12 @@ fun AddTransactionScreen(
         showNumpad = false
     }
 
+    LaunchedEffect(showNumpad) {
+        if (showNumpad) {
+            focusManager.clearFocus()
+        }
+    }
+
     LaunchedEffect(transactionId, accountsResult) {
         transactionsViewModel.resetDeleteResult()
         if (transactionId != null) {

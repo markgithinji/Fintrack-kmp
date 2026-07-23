@@ -124,6 +124,12 @@ fun BudgetDetailScreen(
         showNumpad = false
     }
 
+    LaunchedEffect(showNumpad) {
+        if (showNumpad) {
+            focusManager.clearFocus()
+        }
+    }
+
     LaunchedEffect(Unit) {
         if (accountsResult !is Result.Success || (accountsResult as Result.Success).data.isEmpty()) {
             accountsViewModel.reloadAccounts()
