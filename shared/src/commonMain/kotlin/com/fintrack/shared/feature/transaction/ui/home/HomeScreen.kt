@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -39,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fintrack.shared.feature.account.ui.AccountsViewModel
+import com.fintrack.shared.feature.core.ui.CommonErrorState
 import com.fintrack.shared.feature.core.ui.util.rememberThrottleClick
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.ui.SmsSyncSignal
@@ -140,10 +140,14 @@ fun HomeScreen(
         selectedAccountId?.let { accountsViewModel.selectAccount(it) }
     }
 
-    if (selectedAccountId == null && (accountsResult !is Result.Success || (accountsResult as Result.Success).data.isEmpty())) {
+    if (selectedAccountId == null && (accountsResult is Result.Success && (accountsResult as Result.Success).data.isEmpty() || accountsResult is Result.Error)) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            if (accountsResult is Result.Loading) {
-                CircularProgressIndicator()
+            if (accountsResult is Result.Error) {
+                CommonErrorState(
+                    title = "Failed to load accounts",
+                    error = (accountsResult as Result.Error).exception,
+                    onRetry = { accountsViewModel.reloadAccounts() }
+                )
             } else {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
