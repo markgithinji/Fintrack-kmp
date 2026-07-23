@@ -21,7 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fintrack.shared.feature.category.domain.model.Category
-import com.fintrack.shared.feature.category.domain.model.incomeCategories
 import com.fintrack.shared.feature.category.ui.util.toColor
 import com.fintrack.shared.feature.category.ui.util.toIcon
 
@@ -60,6 +59,7 @@ fun FinanceCategorySelection(
                             icon = Icons.Default.SelectAll,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             selected = allSelected,
+                            isIncome = !isExpense,
                             onClick = {
                                 val newSelection = if (allSelected) {
                                     emptySet()
@@ -74,16 +74,17 @@ fun FinanceCategorySelection(
 
                 items(filteredCategories.size) { index ->
                     val cat = filteredCategories[index]
-                    val selected = selectedCategories.contains(cat)
+                    val selected = selectedCategories.any { it.id == cat.id }
                     FinanceCategoryChip(
                         text = cat.name,
                         icon = cat.toIcon(),
                         color = cat.toColor(),
                         selected = selected,
+                        isIncome = !cat.isExpense,
                         onClick = {
                             if (multiSelect) {
                                 val newSelection = if (selected) {
-                                    selectedCategories - cat
+                                    selectedCategories.filter { it.id != cat.id }.toSet()
                                 } else {
                                     selectedCategories + cat
                                 }
@@ -105,6 +106,7 @@ fun FinanceCategoryChip(
     icon: ImageVector,
     color: Color,
     selected: Boolean,
+    isIncome: Boolean,
     onClick: () -> Unit
 ) {
     val animatedBgColor by animateColorAsState(
@@ -112,8 +114,7 @@ fun FinanceCategoryChip(
         animationSpec = tween(300)
     )
     
-    val isIncomeCategory = Category.incomeCategories.any { it.name == text }
-    val selectedContentColor = if (isIncomeCategory) MaterialTheme.colorScheme.onTertiary else Color.White
+    val selectedContentColor = if (isIncome) MaterialTheme.colorScheme.onTertiary else Color.White
     
     val animatedContentColor by animateColorAsState(
         targetValue = if (selected) selectedContentColor else color,

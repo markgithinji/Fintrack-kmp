@@ -280,11 +280,17 @@ class TransactionViewModel(
             val result = repo.getTransaction(id)
             if (result is Result.Success) {
                 val t = result.data
+                val currentCategories = categories.value
                 _formState.value = TransactionFormState(
                     amount = t.amount.formatToTwoPrecision(),
                     description = t.description ?: "",
                     isIncome = t.isIncome,
-                    selectedCategory = Category.fromId(t.categoryId, t.category, isExpense = !t.isIncome),
+                    selectedCategory = Category.fromId(
+                        t.categoryId,
+                        t.category,
+                        isExpense = !t.isIncome,
+                        knownCategories = currentCategories
+                    ),
                     selectedAccount = accounts.find { it.id == t.accountId },
                     dateTime = t.dateTime,
                     transactionCost = t.transactionCost.formatToTwoPrecision()
