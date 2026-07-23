@@ -66,6 +66,7 @@ import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
 import com.fintrack.shared.feature.auth.ui.common.SocialLoginButton
 import com.fintrack.shared.feature.core.data.model.ApiException
 import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
+import com.fintrack.shared.feature.core.domain.ValidationTrigger
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.ui.theme.AuthGold
 import com.fintrack.shared.ui.theme.AuthLinkText
@@ -84,10 +85,10 @@ fun RegisterScreen(
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onConfirmPasswordChange: (String) -> Unit,
-    onValidateName: (String) -> Unit,
-    onValidateEmail: (String) -> Unit,
-    onValidatePassword: (String) -> Unit,
-    onValidateConfirmPassword: (String) -> Unit,
+    onValidateName: (ValidationTrigger) -> Unit,
+    onValidateEmail: (ValidationTrigger) -> Unit,
+    onValidatePassword: (ValidationTrigger) -> Unit,
+    onValidateConfirmPassword: (ValidationTrigger) -> Unit,
     onRegisterClick: () -> Unit,
     onShowToast: (String, Boolean) -> Unit,
     onClearToast: () -> Unit,
@@ -189,7 +190,7 @@ fun RegisterScreen(
                 isError = formState.nameError != null,
                 errorMessage = null, // Shown consolidated below
                 onFocusChanged = { isFocused ->
-                    if (!isFocused) onValidateName("FocusLoss")
+                    if (!isFocused) onValidateName(ValidationTrigger.FocusLoss)
                 },
                 contentType = ContentType.PersonFullName,
                 modifier = Modifier.focusRequester(nameFocusRequester)
@@ -208,7 +209,7 @@ fun RegisterScreen(
                 isError = formState.emailError != null,
                 errorMessage = null, // Shown consolidated below
                 onFocusChanged = { isFocused ->
-                    if (!isFocused) onValidateEmail("FocusLoss")
+                    if (!isFocused) onValidateEmail(ValidationTrigger.FocusLoss)
                 },
                 contentType = ContentType.EmailAddress
             )
@@ -229,7 +230,7 @@ fun RegisterScreen(
                 isError = formState.passwordError != null,
                 errorMessage = null, // Shown consolidated below
                 onFocusChanged = { isFocused ->
-                    if (!isFocused) onValidatePassword("FocusLoss")
+                    if (!isFocused) onValidatePassword(ValidationTrigger.FocusLoss)
                 },
                 contentType = ContentType.NewPassword
             )
@@ -256,7 +257,7 @@ fun RegisterScreen(
                 isError = formState.confirmPasswordError != null,
                 errorMessage = null, // Shown consolidated below
                 onFocusChanged = { isFocused ->
-                    if (!isFocused) onValidateConfirmPassword("FocusLoss")
+                    if (!isFocused) onValidateConfirmPassword(ValidationTrigger.FocusLoss)
                 },
                 contentType = ContentType.NewPassword
             )

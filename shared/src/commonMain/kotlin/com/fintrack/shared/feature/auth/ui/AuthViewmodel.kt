@@ -11,6 +11,7 @@ import com.fintrack.shared.feature.auth.domain.repository.AuthRepository
 import com.fintrack.shared.feature.auth.domain.usecase.LoginValidationUseCase
 import com.fintrack.shared.feature.auth.domain.usecase.RegisterValidationUseCase
 import com.fintrack.shared.feature.core.domain.ValidationResult
+import com.fintrack.shared.feature.core.domain.ValidationTrigger
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
@@ -111,14 +112,14 @@ class AuthViewModel(
         _loginFormState.value = newState
     }
 
-    fun validateLoginEmail(trigger: String = "unknown") {
+    fun validateLoginEmail(trigger: ValidationTrigger = ValidationTrigger.Manual) {
         val currentState = _loginFormState.value
 
         val result = loginValidationUseCase(currentState.email, currentState.password)
         val emailError = (result.emailResult as? ValidationResult.Error)?.message
 
         // Mark as dirty on FocusLoss (leaving the field)
-        val isDirty = currentState.isEmailDirty || trigger == "FocusLoss"
+        val isDirty = currentState.isEmailDirty || trigger == ValidationTrigger.FocusLoss
         val showError = isDirty && emailError != null
 
         val newState = currentState.copy(
@@ -142,13 +143,13 @@ class AuthViewModel(
         _loginFormState.value = newState
     }
 
-    fun validateLoginPassword(trigger: String = "unknown") {
+    fun validateLoginPassword(trigger: ValidationTrigger = ValidationTrigger.Manual) {
         val currentState = _loginFormState.value
 
         val result = loginValidationUseCase(currentState.email, currentState.password)
         val passwordError = (result.passwordResult as? ValidationResult.Error)?.message
 
-        val isDirty = currentState.isPasswordDirty || trigger == "FocusLoss"
+        val isDirty = currentState.isPasswordDirty || trigger == ValidationTrigger.FocusLoss
         val showError = isDirty && passwordError != null
 
         val newState = currentState.copy(
@@ -219,7 +220,7 @@ class AuthViewModel(
         _registerFormState.value = newState
     }
 
-    fun validateName(trigger: String = "unknown") {
+    fun validateName(trigger: ValidationTrigger = ValidationTrigger.Manual) {
         val currentState = _registerFormState.value
 
         val result = registerValidationUseCase(
@@ -230,7 +231,7 @@ class AuthViewModel(
         )
         val nameError = (result.nameResult as? ValidationResult.Error)?.message
 
-        val isDirty = currentState.isNameDirty || trigger == "FocusLoss"
+        val isDirty = currentState.isNameDirty || trigger == ValidationTrigger.FocusLoss
         val showError = isDirty && nameError != null
 
         val newState = currentState.copy(
@@ -260,7 +261,7 @@ class AuthViewModel(
         _registerFormState.value = newState
     }
 
-    fun validateEmail(trigger: String = "unknown") {
+    fun validateEmail(trigger: ValidationTrigger = ValidationTrigger.Manual) {
         val currentState = _registerFormState.value
 
         val result = registerValidationUseCase(
@@ -271,7 +272,7 @@ class AuthViewModel(
         )
         val emailError = (result.emailResult as? ValidationResult.Error)?.message
 
-        val isDirty = currentState.isEmailDirty || trigger == "FocusLoss"
+        val isDirty = currentState.isEmailDirty || trigger == ValidationTrigger.FocusLoss
         val showError = isDirty && emailError != null
 
         val newState = currentState.copy(
@@ -303,7 +304,7 @@ class AuthViewModel(
         _registerFormState.value = newState
     }
 
-    fun validatePassword(trigger: String = "unknown") {
+    fun validatePassword(trigger: ValidationTrigger = ValidationTrigger.Manual) {
         val currentState = _registerFormState.value
 
         val result = registerValidationUseCase(
@@ -314,7 +315,7 @@ class AuthViewModel(
         )
         val passwordError = (result.passwordResult as? ValidationResult.Error)?.message
 
-        val isDirty = currentState.isPasswordDirty || trigger == "FocusLoss"
+        val isDirty = currentState.isPasswordDirty || trigger == ValidationTrigger.FocusLoss
         val showError = isDirty && passwordError != null
 
         val newState = currentState.copy(
@@ -344,7 +345,7 @@ class AuthViewModel(
         _registerFormState.value = newState
     }
 
-    fun validateConfirmPassword(trigger: String = "unknown") {
+    fun validateConfirmPassword(trigger: ValidationTrigger = ValidationTrigger.Manual) {
         val currentState = _registerFormState.value
 
         val result = registerValidationUseCase(
@@ -356,7 +357,7 @@ class AuthViewModel(
         val confirmPasswordError =
             (result.confirmPasswordResult as? ValidationResult.Error)?.message
 
-        val isDirty = currentState.isConfirmPasswordDirty || trigger == "FocusLoss"
+        val isDirty = currentState.isConfirmPasswordDirty || trigger == ValidationTrigger.FocusLoss
         val showError = isDirty && confirmPasswordError != null
 
         val newState = currentState.copy(

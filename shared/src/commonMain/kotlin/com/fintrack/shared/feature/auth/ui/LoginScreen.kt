@@ -65,6 +65,7 @@ import com.fintrack.shared.feature.auth.ui.common.FinanceTextField
 import com.fintrack.shared.feature.auth.ui.common.SocialLoginButton
 import com.fintrack.shared.feature.core.data.model.ApiException
 import com.fintrack.shared.feature.core.data.model.getUserFriendlyMessage
+import com.fintrack.shared.feature.core.domain.ValidationTrigger
 import com.fintrack.shared.feature.core.ui.MaterialToast
 import com.fintrack.shared.ui.theme.AuthGold
 import com.fintrack.shared.ui.theme.AuthLinkText
@@ -82,8 +83,8 @@ fun LoginScreen(
     toastMessage: Pair<String, Boolean>?,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
-    onValidateEmail: (String) -> Unit,
-    onValidatePassword: (String) -> Unit,
+    onValidateEmail: (ValidationTrigger) -> Unit,
+    onValidatePassword: (ValidationTrigger) -> Unit,
     onLoginClick: () -> Unit,
     onShowToast: (String, Boolean) -> Unit,
     onClearToast: () -> Unit,
@@ -196,7 +197,7 @@ fun LoginScreen(
                 isError = formState.emailError != null,
                 errorMessage = null, // Consolidated in the error box
                 onFocusChanged = { isFocused ->
-                    if (!isFocused) onValidateEmail("FocusLoss")
+                    if (!isFocused) onValidateEmail(ValidationTrigger.FocusLoss)
                 },
                 contentType = ContentType.EmailAddress,
                 modifier = Modifier.focusRequester(emailFocusRequester)
@@ -224,7 +225,7 @@ fun LoginScreen(
                 isError = formState.passwordError != null,
                 errorMessage = null, // Consolidated in the error box
                 onFocusChanged = { isFocused ->
-                    if (!isFocused) onValidatePassword("FocusLoss")
+                    if (!isFocused) onValidatePassword(ValidationTrigger.FocusLoss)
                 },
                 contentType = ContentType.Password
             )
