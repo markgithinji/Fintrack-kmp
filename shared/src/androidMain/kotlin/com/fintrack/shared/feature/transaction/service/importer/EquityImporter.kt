@@ -140,15 +140,24 @@ class EquityImporter(
                 if (result is Result.Error) throw result.exception
                 onProgress(0.3f + (((index + 1).toFloat() / chunks.size) * 0.6f))
             }
-        }
 
-        val accountResult = accountRepository.getAccountById(accountId)
-        if (accountResult is Result.Success) {
-            val account = accountResult.data
-            val newBalance = if (isPortfolioSeed) BigDecimal.fromInt(145800) else account.balance
-            val updateResult = accountRepository.addOrUpdateAccount(account.copy(balance = newBalance, lastSyncedAt = Clock.System.now()))
-            if (updateResult is Result.Error) {
-                throw updateResult.exception
+            val accountResult = accountRepository.getAccountById(accountId)
+            if (accountResult is Result.Success) {
+                val account = accountResult.data
+                val isPureEquityAccount = account.linkedSources.contains("equity") && account.linkedSources.size == 1
+                val newBalance = if (isPortfolioSeed) BigDecimal.fromInt(145800) else if (isPureEquityAccount) latestBalance ?: account.balance else account.balance
+                val updateResult = accountRepository.addOrUpdateAccount(account.copy(balance = newBalance, lastSyncedAt = Clock.System.now()))
+                if (updateResult is Result.Error) {
+                    throw updateResult.exception
+                }
+            }
+        } else if (isPortfolioSeed) {
+            // Handle seeding even if no SMS were found
+            val accountResult = accountRepository.getAccountById(accountId)
+            if (accountResult is Result.Success) {
+                val account = accountResult.data
+                val updateResult = accountRepository.addOrUpdateAccount(account.copy(balance = BigDecimal.fromInt(145800), lastSyncedAt = Clock.System.now()))
+                if (updateResult is Result.Error) throw updateResult.exception
             }
         }
         onProgress(1.0f)

@@ -360,8 +360,11 @@ private fun CurrentBalanceSuccessState(
                             fontWeight = FontWeight.Bold
                         )
                         if (isLinkedAccount) {
+                            val syncText = account.lastSyncedAt?.let { 
+                                "Synced ${DateTimeUtils.toRelativeDateTimeString(it)}" 
+                            } ?: "Never synced"
                             Text(
-                                text = "Synced ${DateTimeUtils.toRelativeDateTimeString(account.lastSyncedAt)}",
+                                text = syncText,
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                             )

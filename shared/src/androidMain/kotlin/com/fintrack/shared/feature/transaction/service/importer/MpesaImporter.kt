@@ -142,16 +142,23 @@ class MpesaImporter(
                 }
                 onProgress(0.3f + ((index + 1).toFloat() / chunks.size) * 0.6f)
             }
-        }
 
-        val accountResult = accountRepository.getAccountById(accountId)
-        if (accountResult is Result.Success) {
-            val account = accountResult.data
-            val isPureMpesaAccount = account.linkedSources.contains("mpesa") && account.linkedSources.size == 1
-            val newBalance = if (isPortfolioSeed) BigDecimal.fromInt(72450) else if (isPureMpesaAccount) latestBalance ?: account.balance else account.balance
-            val updateResult = accountRepository.addOrUpdateAccount(account.copy(balance = newBalance, lastSyncedAt = Clock.System.now()))
-            if (updateResult is Result.Error) {
-                throw updateResult.exception
+            val accountResult = accountRepository.getAccountById(accountId)
+            if (accountResult is Result.Success) {
+                val account = accountResult.data
+                val isPureMpesaAccount = account.linkedSources.contains("mpesa") && account.linkedSources.size == 1
+                val newBalance = if (isPortfolioSeed) BigDecimal.fromInt(72450) else if (isPureMpesaAccount) latestBalance ?: account.balance else account.balance
+                val updateResult = accountRepository.addOrUpdateAccount(account.copy(balance = newBalance, lastSyncedAt = Clock.System.now()))
+                if (updateResult is Result.Error) {
+                    throw updateResult.exception
+                }
+            }
+        } else if (isPortfolioSeed) {
+            val accountResult = accountRepository.getAccountById(accountId)
+            if (accountResult is Result.Success) {
+                val account = accountResult.data
+                val updateResult = accountRepository.addOrUpdateAccount(account.copy(balance = BigDecimal.fromInt(72450), lastSyncedAt = Clock.System.now()))
+                if (updateResult is Result.Error) throw updateResult.exception
             }
         }
         onProgress(1.0f)
