@@ -142,24 +142,29 @@ class MpesaImporter(
                 }
                 onProgress(0.3f + ((index + 1).toFloat() / chunks.size) * 0.6f)
             }
+        }
 
-            val accountResult = accountRepository.getAccountById(accountId)
-            if (accountResult is Result.Success) {
-                val account = accountResult.data
-                val isPureMpesaAccount = account.linkedSources.contains("mpesa") && account.linkedSources.size == 1
-                val newBalance = if (isPortfolioSeed) BigDecimal.fromInt(72450) else if (isPureMpesaAccount) latestBalance ?: account.balance else account.balance
-                val updateResult = accountRepository.addOrUpdateAccount(account.copy(balance = newBalance, lastSyncedAt = Clock.System.now()))
-                if (updateResult is Result.Error) {
-                    throw updateResult.exception
-                }
+        // Update lastSyncedAt even if no transactions were found, 
+        // as long as the process reached this point without error.
+        val accountResult = accountRepository.getAccountById(accountId)
+        if (accountResult is Result.Success) {
+            val account = accountResult.data
+            val isPureMpesaAccount = account.linkedSources.contains("mpesa") && account.linkedSources.size == 1
+            
+            // Only update balance if we actually found transactions or are seeding
+            val newBalance = when {
+                isPortfolioSeed -> BigDecimal.fromInt(72450)
+                transactions.isNotEmpty() && isPureMpesaAccount -> latestBalance ?: account.balance
+                else -> account.balance
             }
-        } else if (isPortfolioSeed) {
-            val accountResult = accountRepository.getAccountById(accountId)
-            if (accountResult is Result.Success) {
-                val account = accountResult.data
-                val updateResult = accountRepository.addOrUpdateAccount(account.copy(balance = BigDecimal.fromInt(72450), lastSyncedAt = Clock.System.now()))
-                if (updateResult is Result.Error) throw updateResult.exception
-            }
+
+            val updateResult = accountRepository.addOrUpdateAccount(
+                account.copy(
+                    balance = newBalance, 
+                    lastSyncedAt = Clock.System.now()
+                )
+            )
+            if (updateResult is Result.Error) throw updateResult.exception
         }
         onProgress(1.0f)
     }

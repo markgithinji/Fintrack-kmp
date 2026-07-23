@@ -262,7 +262,7 @@ fun HomeScreen(
 
             // Trigger auto-sync only if the account has linked sources
             if (acc.linkedSources.contains("mpesa") || acc.linkedSources.contains("equity")) {
-                transactionsViewModel.autoSyncTransactions(acc.id)
+                transactionsViewModel.autoSyncTransactions(acc.id, acc.lastSyncedAt)
             }
         }
     }

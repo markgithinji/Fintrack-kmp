@@ -114,12 +114,24 @@ class TransactionViewModel(
         }
     }
 
-    fun autoSyncTransactions(accountId: String? = null) {
+    fun autoSyncTransactions(accountId: String? = null, lastSyncedAt: Instant? = null) {
         val now = Clock.System.now()
-        val lastSync = lastAutoSyncTimes[accountId]
-        if (lastSync == null || (now - lastSync) >= 2.minutes) {
-            importTransactions(accountId)
+        val lastInMemorySync = lastAutoSyncTimes[accountId]
+        
+        // Cooldown period: 2 minutes
+        val cooldown = 2.minutes
+
+        // 1. Check if we already attempted a sync in this session within 2 minutes (cooldown for attempts)
+        if (lastInMemorySync != null && (now - lastInMemorySync) < cooldown) {
+            return
         }
+
+        // 2. Check if the account was successfully synced recently (persistent cooldown)
+        if (lastSyncedAt != null && (now - lastSyncedAt) < cooldown) {
+            return
+        }
+
+        importTransactions(accountId)
     }
 
     fun resetImportState(accountId: String? = null) {
