@@ -25,9 +25,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -74,6 +76,9 @@ class TransactionViewModel(
     private val _importProgress = MutableStateFlow<Map<String?, Float>>(emptyMap())
     val importProgress: StateFlow<Map<String?, Float>> = _importProgress.asStateFlow()
 
+    private val _importEvents = MutableSharedFlow<ImportEvent>()
+    val importEvents = _importEvents.asSharedFlow()
+
     private var lastLoadedRecentAccountId: String? = null
     private var recentTransactionsJob: Job? = null
     private var importJob: Job? = null
@@ -99,9 +104,11 @@ class TransactionViewModel(
                     _importProgress.update { it + (accountId to progress) }
                 }
                 _importState.update { it + (accountId to Result.Success(Unit)) }
+                _importEvents.emit(ImportEvent.Success(accountId))
             } catch (e: Exception) {
                 if (e !is CancellationException) {
                     _importState.update { it + (accountId to Result.Error(e)) }
+                    _importEvents.emit(ImportEvent.Error(accountId, e))
                 }
             }
         }
@@ -303,6 +310,11 @@ class TransactionViewModel(
     fun resetDeleteResult() { _deleteResult.value = null }
     fun resetSaveState() { _saveState.value = SaveState.Idle }
     fun clearValidationError() { _validationError.value = null }
+}
+
+sealed class ImportEvent {
+    data class Success(val accountId: String?) : ImportEvent()
+    data class Error(val accountId: String?, val exception: Exception) : ImportEvent()
 }
 
 private data class TransactionPagingParams(

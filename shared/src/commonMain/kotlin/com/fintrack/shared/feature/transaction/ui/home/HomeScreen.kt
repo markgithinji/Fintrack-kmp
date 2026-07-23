@@ -44,6 +44,7 @@ import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.ui.SmsSyncSignal
 import com.fintrack.shared.feature.settings.ui.SettingsViewModel
 import com.fintrack.shared.feature.summary.ui.StatisticsViewModel
+import com.fintrack.shared.feature.transaction.ui.ImportEvent
 import com.fintrack.shared.feature.transaction.ui.TransactionViewModel
 import com.fintrack.shared.feature.transaction.ui.home.components.CategoryComparisonCard
 import com.fintrack.shared.feature.transaction.ui.home.components.CurrentBalanceCardWrapper
@@ -131,6 +132,41 @@ fun HomeScreen(
     val importProgress = importProgressMap[accountId] ?: 0f
 
     var isManualSyncInProgress by remember { mutableStateOf(false) }
+
+    LaunchedEffect(accountId) {
+        transactionsViewModel.importEvents.collect { event ->
+            val wasManualSync = isManualSyncInProgress
+            isManualSyncInProgress = false
+            
+            when (event) {
+                is ImportEvent.Success -> {
+                    if (event.accountId == accountId) {
+                        onGlobalRefresh()
+                        delay(1500)
+                        transactionsViewModel.resetImportState(event.accountId)
+                    }
+                }
+
+                is ImportEvent.Error -> {
+                    if (event.accountId == accountId) {
+                        val account = (enrichedSelectedAccount as? Result.Success)?.data
+                        val isLinked =
+                            account?.linkedSources?.let { it.contains("mpesa") || it.contains("equity") }
+                                ?: false
+                        val message = event.exception.message ?: ""
+
+                        if (isLinked && (message.contains("permission", ignoreCase = true) || message.contains(
+                                "access",
+                                ignoreCase = true
+                            ))
+                        ) {
+                            onSmsPermissionRequired(wasManualSync)
+                        }
+                    }
+                }
+            }
+        }
+    }
     val throttledOnEditTransaction = rememberThrottleClick(onClick = onEditTransaction)
     val throttledOnCardClick = rememberThrottleClick<Pair<String, Boolean?>> { (accId, isInc) ->
         onCardClick(accId, isInc)
@@ -190,28 +226,6 @@ fun HomeScreen(
         if (smsSyncSignal != null) {
             transactionsViewModel.importTransactions(smsSyncSignal.accountId)
             onGlobalRefresh() // Clear the signal in MainViewModel
-        }
-    }
-
-    LaunchedEffect(importState) {
-        if (importState == null) return@LaunchedEffect
-
-        if (importState is Result.Success) {
-            onGlobalRefresh()
-            delay(1500)
-            transactionsViewModel.resetImportState(accountId)
-            isManualSyncInProgress = false
-        } else if (importState is Result.Error) {
-            val error = importState.exception
-            val message = error.message ?: ""
-            if (message.contains("permission", ignoreCase = true) || message.contains(
-                    "access",
-                    ignoreCase = true
-                )
-            ) {
-                onSmsPermissionRequired(isManualSyncInProgress)
-            }
-            isManualSyncInProgress = false
         }
     }
 
