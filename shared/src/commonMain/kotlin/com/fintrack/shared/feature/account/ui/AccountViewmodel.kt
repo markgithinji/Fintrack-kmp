@@ -73,6 +73,13 @@ class AccountsViewModel(
     }
 
     fun saveAccount(account: Account) {
+        // Prevent editing name of default accounts
+        val currentAccount = (accounts.value as? Result.Success)?.data?.find { it.id == account.id }
+        if (currentAccount?.isDefault == true && currentAccount.name != account.name) {
+            _saveResult.value = Result.Error(Exception("Default accounts cannot have their names changed"))
+            return
+        }
+
         viewModelScope.launch {
             _saveResult.value = Result.Loading
             val result = repo.addOrUpdateAccount(account)

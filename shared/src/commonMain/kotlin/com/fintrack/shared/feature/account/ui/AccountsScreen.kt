@@ -191,7 +191,6 @@ fun AccountsScreen(
                             if (mpesaLinkedAccountIds.contains(account.id)) sources.add("mpesa")
                             if (equityLinkedAccountIds.contains(account.id)) sources.add("equity")
                             account.copy(
-                                isDefault = account.id == effectiveDefaultAccountId,
                                 linkedSources = sources
                             )
                         }.sortedBy { it.createdAt }
@@ -334,7 +333,7 @@ fun AccountsScreen(
                     account.copy(
                         name = name,
                         type = type,
-                        isDefault = false, // Backend doesn't need to know
+                        isDefault = account.isDefault, // Preserve original isDefault status
                         linkedSources = emptyList() // Backend doesn't need to know
                     )
                 )
