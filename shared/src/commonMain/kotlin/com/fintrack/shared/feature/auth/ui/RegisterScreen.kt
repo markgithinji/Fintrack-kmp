@@ -84,10 +84,10 @@ fun RegisterScreen(
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onConfirmPasswordChange: (String) -> Unit,
-    onValidateName: () -> Unit,
-    onValidateEmail: () -> Unit,
-    onValidatePassword: () -> Unit,
-    onValidateConfirmPassword: () -> Unit,
+    onValidateName: (String) -> Unit,
+    onValidateEmail: (String) -> Unit,
+    onValidatePassword: (String) -> Unit,
+    onValidateConfirmPassword: (String) -> Unit,
     onRegisterClick: () -> Unit,
     onShowToast: (String, Boolean) -> Unit,
     onClearToast: () -> Unit,
@@ -189,7 +189,7 @@ fun RegisterScreen(
                 isError = formState.nameError != null,
                 errorMessage = null, // Shown consolidated below
                 onFocusChanged = { isFocused ->
-                    if (!isFocused) onValidateName()
+                    if (!isFocused) onValidateName("FocusLoss")
                 },
                 contentType = ContentType.PersonFullName,
                 modifier = Modifier.focusRequester(nameFocusRequester)
@@ -208,7 +208,7 @@ fun RegisterScreen(
                 isError = formState.emailError != null,
                 errorMessage = null, // Shown consolidated below
                 onFocusChanged = { isFocused ->
-                    if (!isFocused) onValidateEmail()
+                    if (!isFocused) onValidateEmail("FocusLoss")
                 },
                 contentType = ContentType.EmailAddress
             )
@@ -229,7 +229,7 @@ fun RegisterScreen(
                 isError = formState.passwordError != null,
                 errorMessage = null, // Shown consolidated below
                 onFocusChanged = { isFocused ->
-                    if (!isFocused) onValidatePassword()
+                    if (!isFocused) onValidatePassword("FocusLoss")
                 },
                 contentType = ContentType.NewPassword
             )
@@ -256,7 +256,7 @@ fun RegisterScreen(
                 isError = formState.confirmPasswordError != null,
                 errorMessage = null, // Shown consolidated below
                 onFocusChanged = { isFocused ->
-                    if (!isFocused) onValidateConfirmPassword()
+                    if (!isFocused) onValidateConfirmPassword("FocusLoss")
                 },
                 contentType = ContentType.NewPassword
             )
@@ -318,7 +318,7 @@ fun RegisterScreen(
                         alpha = 0.7f
                     )
                 ),
-                enabled = !isRegistering && !isSuccess
+                enabled = !isRegistering && !isSuccess && (formState.name.isNotBlank() && formState.email.isNotBlank() && formState.password.isNotBlank() && formState.confirmPassword.isNotBlank())
             ) {
                 when (registerState) {
                     is AuthState.Loading -> {

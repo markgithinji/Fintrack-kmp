@@ -15,6 +15,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.border
 import androidx.compose.material3.TextField
 import androidx.compose.ui.Modifier
@@ -52,6 +56,9 @@ fun FinanceTextField(
     modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(16.dp)
+    
+    // Track if the field has been touched to avoid premature validation logs
+    var isTouched by remember { mutableStateOf(false) }
 
     TextField(
         value = value,
@@ -65,6 +72,13 @@ fun FinanceTextField(
                 shape = shape
             )
             .onFocusChanged { focusState ->
+                if (focusState.isFocused) {
+                    isTouched = true
+                }
+                // Only propagate focus loss if the field was actually touched/focused before
+                if (!focusState.isFocused && !isTouched) {
+                    return@onFocusChanged
+                }
                 onFocusChanged(focusState.isFocused)
             }
             .then(

@@ -33,8 +33,8 @@ class LoginValidationUseCase {
 }
 
 data class LoginValidationResult(
-    val emailResult: ValidationResult = ValidationResult.Success,
-    val passwordResult: ValidationResult = ValidationResult.Success
+    val emailResult: ValidationResult,
+    val passwordResult: ValidationResult
 ) {
     val isValid: Boolean = emailResult is ValidationResult.Success &&
             passwordResult is ValidationResult.Success

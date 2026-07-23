@@ -11,5 +11,9 @@ data class RegisterFormState(
     val confirmPasswordError: String? = null,
     val activeError: String? = null,
     val passwordStrength: String = "None",
-    val isFormValid: Boolean = false
+    val isFormValid: Boolean = false,
+    val isNameDirty: Boolean = false,
+    val isEmailDirty: Boolean = false,
+    val isPasswordDirty: Boolean = false,
+    val isConfirmPasswordDirty: Boolean = false
 )

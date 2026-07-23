@@ -12,8 +12,8 @@ object ApiConfig {
     val BASE_URL: String
         get() = when (currentEnvironment) {
             Environment.DEVELOPMENT -> "http://192.168.100.96:8080" // Change this to your laptop's local IP address
-            Environment.STAGING -> "http://192.168.100.96:8080"
-            Environment.PRODUCTION -> "https://api.example.com"
+            Environment.STAGING -> "https://fintrack-ktor.onrender.com"
+            Environment.PRODUCTION -> "https://fintrack-ktor.onrender.com"
         }
 
     fun initialize(environment: Environment) {

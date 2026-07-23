@@ -101,54 +101,80 @@ class AuthViewModel(
 
     fun updateLoginEmail(email: String) {
         val currentState = _loginFormState.value
-        _loginFormState.value = currentState.copy(
+        val validationResult = loginValidationUseCase(email, currentState.password)
+        val newState = currentState.copy(
             email = email,
-            emailError = null, // Clear error when typing
+            emailError = null, // Hide error while typing
             activeError = if (currentState.activeError == currentState.emailError) null else currentState.activeError,
-            isFormValid = loginValidationUseCase(email, currentState.password).isValid
+            isFormValid = validationResult.isValid
         )
+        _loginFormState.value = newState
     }
 
-    fun validateLoginEmail() {
+    fun validateLoginEmail(trigger: String = "unknown") {
         val currentState = _loginFormState.value
+
         val result = loginValidationUseCase(currentState.email, currentState.password)
         val emailError = (result.emailResult as? ValidationResult.Error)?.message
-        _loginFormState.value = currentState.copy(
-            emailError = emailError,
-            activeError = emailError ?: currentState.passwordError
+
+        // Mark as dirty on FocusLoss (leaving the field)
+        val isDirty = currentState.isEmailDirty || trigger == "FocusLoss"
+        val showError = isDirty && emailError != null
+
+        val newState = currentState.copy(
+            emailError = if (showError) emailError else null,
+            activeError = (if (showError) emailError else null) ?: currentState.passwordError,
+            isFormValid = result.isValid,
+            isEmailDirty = isDirty
         )
+        _loginFormState.value = newState
     }
 
     fun updateLoginPassword(password: String) {
         val currentState = _loginFormState.value
-        _loginFormState.value = currentState.copy(
+        val validationResult = loginValidationUseCase(currentState.email, password)
+        val newState = currentState.copy(
             password = password,
-            passwordError = null, // Clear error when typing
+            passwordError = null, // Hide error while typing
             activeError = if (currentState.activeError == currentState.passwordError) null else currentState.activeError,
-            isFormValid = loginValidationUseCase(currentState.email, password).isValid
+            isFormValid = validationResult.isValid
         )
+        _loginFormState.value = newState
     }
 
-    fun validateLoginPassword() {
+    fun validateLoginPassword(trigger: String = "unknown") {
         val currentState = _loginFormState.value
+
         val result = loginValidationUseCase(currentState.email, currentState.password)
         val passwordError = (result.passwordResult as? ValidationResult.Error)?.message
-        _loginFormState.value = currentState.copy(
-            passwordError = passwordError,
-            activeError = passwordError ?: currentState.emailError
+
+        val isDirty = currentState.isPasswordDirty || trigger == "FocusLoss"
+        val showError = isDirty && passwordError != null
+
+        val newState = currentState.copy(
+            passwordError = if (showError) passwordError else null,
+            activeError = (if (showError) passwordError else null) ?: currentState.emailError,
+            isFormValid = result.isValid,
+            isPasswordDirty = isDirty
         )
+        _loginFormState.value = newState
     }
 
     fun login() {
         val formState = _loginFormState.value
-        if (!formState.isFormValid) {
-            val result = loginValidationUseCase(formState.email, formState.password)
+
+        // Final validation check
+        val result = loginValidationUseCase(formState.email, formState.password)
+        if (!result.isValid) {
             val emailError = (result.emailResult as? ValidationResult.Error)?.message
             val passwordError = (result.passwordResult as? ValidationResult.Error)?.message
             _loginFormState.value = formState.copy(
                 emailError = emailError,
                 passwordError = passwordError,
-                activeError = emailError ?: passwordError
+                activeError = emailError ?: passwordError,
+                isFormValid = result.isValid,
+                isEmailDirty = true,
+                isPasswordDirty = true
             )
             return
         }
@@ -178,21 +204,24 @@ class AuthViewModel(
 
     fun updateName(name: String) {
         val currentState = _registerFormState.value
-        _registerFormState.value = currentState.copy(
+        val result = registerValidationUseCase(
             name = name,
-            nameError = null, // Clear error when typing
-            activeError = if (currentState.activeError == currentState.nameError) null else currentState.activeError,
-            isFormValid = registerValidationUseCase(
-                name = name,
-                email = currentState.email,
-                password = currentState.password,
-                confirmPassword = currentState.confirmPassword
-            ).isValid
+            email = currentState.email,
+            password = currentState.password,
+            confirmPassword = currentState.confirmPassword
         )
+        val newState = currentState.copy(
+            name = name,
+            nameError = null,
+            activeError = if (currentState.activeError == currentState.nameError) null else currentState.activeError,
+            isFormValid = result.isValid
+        )
+        _registerFormState.value = newState
     }
 
-    fun validateName() {
+    fun validateName(trigger: String = "unknown") {
         val currentState = _registerFormState.value
+
         val result = registerValidationUseCase(
             name = currentState.name,
             email = currentState.email,
@@ -200,30 +229,40 @@ class AuthViewModel(
             confirmPassword = currentState.confirmPassword
         )
         val nameError = (result.nameResult as? ValidationResult.Error)?.message
-        _registerFormState.value = currentState.copy(
-            nameError = nameError,
-            activeError = nameError ?: currentState.emailError ?: currentState.passwordError
-            ?: currentState.confirmPasswordError
+
+        val isDirty = currentState.isNameDirty || trigger == "FocusLoss"
+        val showError = isDirty && nameError != null
+
+        val newState = currentState.copy(
+            nameError = if (showError) nameError else null,
+            activeError = (if (showError) nameError else null) ?: currentState.emailError
+            ?: currentState.passwordError ?: currentState.confirmPasswordError,
+            isFormValid = result.isValid,
+            isNameDirty = isDirty
         )
+        _registerFormState.value = newState
     }
 
     fun updateEmail(email: String) {
         val currentState = _registerFormState.value
-        _registerFormState.value = currentState.copy(
+        val result = registerValidationUseCase(
+            name = currentState.name,
             email = email,
-            emailError = null, // Clear error when typing
-            activeError = if (currentState.activeError == currentState.emailError) null else currentState.activeError,
-            isFormValid = registerValidationUseCase(
-                name = currentState.name,
-                email = email,
-                password = currentState.password,
-                confirmPassword = currentState.confirmPassword
-            ).isValid
+            password = currentState.password,
+            confirmPassword = currentState.confirmPassword
         )
+        val newState = currentState.copy(
+            email = email,
+            emailError = null,
+            activeError = if (currentState.activeError == currentState.emailError) null else currentState.activeError,
+            isFormValid = result.isValid
+        )
+        _registerFormState.value = newState
     }
 
-    fun validateEmail() {
+    fun validateEmail(trigger: String = "unknown") {
         val currentState = _registerFormState.value
+
         val result = registerValidationUseCase(
             name = currentState.name,
             email = currentState.email,
@@ -231,11 +270,18 @@ class AuthViewModel(
             confirmPassword = currentState.confirmPassword
         )
         val emailError = (result.emailResult as? ValidationResult.Error)?.message
-        _registerFormState.value = currentState.copy(
-            emailError = emailError,
-            activeError = emailError ?: currentState.nameError ?: currentState.passwordError
-            ?: currentState.confirmPasswordError
+
+        val isDirty = currentState.isEmailDirty || trigger == "FocusLoss"
+        val showError = isDirty && emailError != null
+
+        val newState = currentState.copy(
+            emailError = if (showError) emailError else null,
+            activeError = (if (showError) emailError else null) ?: currentState.nameError
+            ?: currentState.passwordError ?: currentState.confirmPasswordError,
+            isFormValid = result.isValid,
+            isEmailDirty = isDirty
         )
+        _registerFormState.value = newState
     }
 
     fun updatePassword(password: String) {
@@ -247,17 +293,19 @@ class AuthViewModel(
             confirmPassword = currentState.confirmPassword
         )
 
-        _registerFormState.value = currentState.copy(
+        val newState = currentState.copy(
             password = password,
-            passwordError = null, // Clear error when typing
+            passwordError = null,
             activeError = if (currentState.activeError == currentState.passwordError) null else currentState.activeError,
             passwordStrength = result.passwordStrength,
             isFormValid = result.isValid
         )
+        _registerFormState.value = newState
     }
 
-    fun validatePassword() {
+    fun validatePassword(trigger: String = "unknown") {
         val currentState = _registerFormState.value
+
         val result = registerValidationUseCase(
             name = currentState.name,
             email = currentState.email,
@@ -265,30 +313,40 @@ class AuthViewModel(
             confirmPassword = currentState.confirmPassword
         )
         val passwordError = (result.passwordResult as? ValidationResult.Error)?.message
-        _registerFormState.value = currentState.copy(
-            passwordError = passwordError,
-            activeError = passwordError ?: currentState.nameError ?: currentState.emailError
-            ?: currentState.confirmPasswordError
+
+        val isDirty = currentState.isPasswordDirty || trigger == "FocusLoss"
+        val showError = isDirty && passwordError != null
+
+        val newState = currentState.copy(
+            passwordError = if (showError) passwordError else null,
+            activeError = (if (showError) passwordError else null) ?: currentState.nameError
+            ?: currentState.emailError ?: currentState.confirmPasswordError,
+            isFormValid = result.isValid,
+            isPasswordDirty = isDirty
         )
+        _registerFormState.value = newState
     }
 
     fun updateConfirmPassword(confirmPassword: String) {
         val currentState = _registerFormState.value
-        _registerFormState.value = currentState.copy(
-            confirmPassword = confirmPassword,
-            confirmPasswordError = null, // Clear error when typing
-            activeError = if (currentState.activeError == currentState.confirmPasswordError) null else currentState.activeError,
-            isFormValid = registerValidationUseCase(
-                name = currentState.name,
-                email = currentState.email,
-                password = currentState.password,
-                confirmPassword = confirmPassword
-            ).isValid
+        val result = registerValidationUseCase(
+            name = currentState.name,
+            email = currentState.email,
+            password = currentState.password,
+            confirmPassword = confirmPassword
         )
+        val newState = currentState.copy(
+            confirmPassword = confirmPassword,
+            confirmPasswordError = null,
+            activeError = if (currentState.activeError == currentState.confirmPasswordError) null else currentState.activeError,
+            isFormValid = result.isValid
+        )
+        _registerFormState.value = newState
     }
 
-    fun validateConfirmPassword() {
+    fun validateConfirmPassword(trigger: String = "unknown") {
         val currentState = _registerFormState.value
+
         val result = registerValidationUseCase(
             name = currentState.name,
             email = currentState.email,
@@ -297,22 +355,32 @@ class AuthViewModel(
         )
         val confirmPasswordError =
             (result.confirmPasswordResult as? ValidationResult.Error)?.message
-        _registerFormState.value = currentState.copy(
-            confirmPasswordError = confirmPasswordError,
-            activeError = confirmPasswordError ?: currentState.nameError ?: currentState.emailError
-            ?: currentState.passwordError
+
+        val isDirty = currentState.isConfirmPasswordDirty || trigger == "FocusLoss"
+        val showError = isDirty && confirmPasswordError != null
+
+        val newState = currentState.copy(
+            confirmPasswordError = if (showError) confirmPasswordError else null,
+            activeError = (if (showError) confirmPasswordError else null) ?: currentState.nameError
+            ?: currentState.emailError ?: currentState.passwordError,
+            isFormValid = result.isValid,
+            isConfirmPasswordDirty = isDirty
         )
+        _registerFormState.value = newState
     }
 
     fun register() {
         val formState = _registerFormState.value
-        if (!formState.isFormValid) {
-            val result = registerValidationUseCase(
-                name = formState.name,
-                email = formState.email,
-                password = formState.password,
-                confirmPassword = formState.confirmPassword
-            )
+
+        // Final validation check
+        val result = registerValidationUseCase(
+            name = formState.name,
+            email = formState.email,
+            password = formState.password,
+            confirmPassword = formState.confirmPassword
+        )
+
+        if (!result.isValid) {
             val nameError = (result.nameResult as? ValidationResult.Error)?.message
             val emailError = (result.emailResult as? ValidationResult.Error)?.message
             val passwordError = (result.passwordResult as? ValidationResult.Error)?.message
@@ -324,7 +392,12 @@ class AuthViewModel(
                 emailError = emailError,
                 passwordError = passwordError,
                 confirmPasswordError = confirmPasswordError,
-                activeError = nameError ?: emailError ?: passwordError ?: confirmPasswordError
+                activeError = nameError ?: emailError ?: passwordError ?: confirmPasswordError,
+                isFormValid = result.isValid,
+                isNameDirty = true,
+                isEmailDirty = true,
+                isPasswordDirty = true,
+                isConfirmPasswordDirty = true
             )
             return
         }

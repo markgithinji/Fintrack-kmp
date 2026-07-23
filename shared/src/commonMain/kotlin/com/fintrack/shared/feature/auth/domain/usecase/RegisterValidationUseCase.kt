@@ -80,10 +80,10 @@ class RegisterValidationUseCase {
 }
 
 data class RegisterValidationResult(
-    val nameResult: ValidationResult = ValidationResult.Success,
-    val emailResult: ValidationResult = ValidationResult.Success,
-    val passwordResult: ValidationResult = ValidationResult.Success,
-    val confirmPasswordResult: ValidationResult = ValidationResult.Success,
+    val nameResult: ValidationResult,
+    val emailResult: ValidationResult,
+    val passwordResult: ValidationResult,
+    val confirmPasswordResult: ValidationResult,
     val passwordStrength: String = "None"
 ) {
     val isValid: Boolean = nameResult is ValidationResult.Success &&

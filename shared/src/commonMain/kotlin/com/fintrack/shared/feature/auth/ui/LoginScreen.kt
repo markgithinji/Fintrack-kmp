@@ -82,8 +82,8 @@ fun LoginScreen(
     toastMessage: Pair<String, Boolean>?,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
-    onValidateEmail: () -> Unit,
-    onValidatePassword: () -> Unit,
+    onValidateEmail: (String) -> Unit,
+    onValidatePassword: (String) -> Unit,
     onLoginClick: () -> Unit,
     onShowToast: (String, Boolean) -> Unit,
     onClearToast: () -> Unit,
@@ -196,7 +196,7 @@ fun LoginScreen(
                 isError = formState.emailError != null,
                 errorMessage = null, // Consolidated in the error box
                 onFocusChanged = { isFocused ->
-                    if (!isFocused) onValidateEmail()
+                    if (!isFocused) onValidateEmail("FocusLoss")
                 },
                 contentType = ContentType.EmailAddress,
                 modifier = Modifier.focusRequester(emailFocusRequester)
@@ -224,7 +224,7 @@ fun LoginScreen(
                 isError = formState.passwordError != null,
                 errorMessage = null, // Consolidated in the error box
                 onFocusChanged = { isFocused ->
-                    if (!isFocused) onValidatePassword()
+                    if (!isFocused) onValidatePassword("FocusLoss")
                 },
                 contentType = ContentType.Password
             )
@@ -302,7 +302,7 @@ fun LoginScreen(
                         alpha = 0.7f
                     ),
                 ),
-                enabled = !isLoggingIn && !isSuccess,
+                enabled = !isLoggingIn && !isSuccess && (formState.email.isNotBlank() && formState.password.isNotBlank()),
             ) {
                 when (loginState) {
                     is AuthState.Loading -> {
