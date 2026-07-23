@@ -112,7 +112,7 @@ fun TransactionsListCard(
                 when (result) {
                     is Result.Loading -> {
                         val currentData = lastTransactions
-                        if (currentData != null) {
+                        if (currentData != null && currentData.isNotEmpty()) {
                             TransactionsListContent(
                                 transactions = currentData,
                                 animatedVisibilityScope = animatedVisibilityScope,
