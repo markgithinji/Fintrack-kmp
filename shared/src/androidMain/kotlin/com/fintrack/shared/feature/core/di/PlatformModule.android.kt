@@ -28,7 +28,8 @@ actual val platformModule: org.koin.core.module.Module = module {
             context = get(),
             transactionRepository = get(),
             accountRepository = get(),
-            categoryRepository = get()
+            categoryRepository = get(),
+            settingsDataSource = get()
         )
     } bind TransactionImporter::class
 }

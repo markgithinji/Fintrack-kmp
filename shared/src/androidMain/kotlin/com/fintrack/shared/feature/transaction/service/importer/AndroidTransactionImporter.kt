@@ -5,13 +5,16 @@ import com.fintrack.shared.feature.account.domain.repository.AccountRepository
 import com.fintrack.shared.feature.category.domain.repository.CategoryRepository
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.transaction.domain.service.TransactionImporter
+import kotlinx.coroutines.flow.first
 
 class AndroidTransactionImporter(
     private val context: Context,
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val settingsDataSource: SettingsDataSource
 ) : TransactionImporter {
     override suspend fun importHistory(
         targetAccountId: String?,
@@ -28,14 +31,24 @@ class AndroidTransactionImporter(
         val mpesaImporter = MpesaImporter(context, transactionRepository, accountRepository, categoryRepository)
         val equityImporter = EquityImporter(context, transactionRepository, accountRepository, categoryRepository)
 
+        val mpesaLinkedAccountIds = settingsDataSource.mpesaLinkedAccountIds.first()
+        val equityLinkedAccountIds = settingsDataSource.equityLinkedAccountIds.first()
+
         if (targetAccountId != null) {
-            val targetAccount = accounts.find { it.id == targetAccountId }
-            val hasMpesa = targetAccount?.linkedSources?.contains("mpesa") == true
-            val hasEquity = targetAccount?.linkedSources?.contains("equity") == true
+            val hasMpesa = mpesaLinkedAccountIds.contains(targetAccountId)
+            val hasEquity = equityLinkedAccountIds.contains(targetAccountId)
             
             when {
                 isPortfolioSeed -> {
-                    mpesaImporter.importHistory(targetAccountId, true, onProgress)
+                    if (hasMpesa && hasEquity) {
+                        mpesaImporter.importHistory(targetAccountId, true) { onProgress(it * 0.5f) }
+                        equityImporter.importHistory(targetAccountId, true) { onProgress(0.5f + (it * 0.5f)) }
+                    } else if (hasEquity) {
+                        equityImporter.importHistory(targetAccountId, true, onProgress)
+                    } else {
+                        // Default to M-Pesa for seeding
+                        mpesaImporter.importHistory(targetAccountId, true, onProgress)
+                    }
                 }
                 hasMpesa && hasEquity -> {
                     mpesaImporter.importHistory(targetAccountId, isPortfolioSeed) { onProgress(it * 0.5f) }
@@ -55,8 +68,8 @@ class AndroidTransactionImporter(
         }
 
         // Global sync
-        val mpesaAccounts = accounts.filter { it.linkedSources.contains("mpesa") }
-        val equityAccounts = accounts.filter { it.linkedSources.contains("equity") }
+        val mpesaAccounts = accounts.filter { mpesaLinkedAccountIds.contains(it.id) }
+        val equityAccounts = accounts.filter { equityLinkedAccountIds.contains(it.id) }
 
         if (mpesaAccounts.isEmpty() && equityAccounts.isEmpty()) {
             if (isPortfolioSeed) {
