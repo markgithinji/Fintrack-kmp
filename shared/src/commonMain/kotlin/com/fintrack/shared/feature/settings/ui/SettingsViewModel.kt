@@ -89,8 +89,8 @@ class SettingsViewModel(
     private val _seedProgress = MutableStateFlow(0f)
     val seedProgress: StateFlow<Float> = _seedProgress.asStateFlow()
 
-    private val _seedState = MutableStateFlow<SaveState<Unit>>(SaveState.Idle)
-    val seedState: StateFlow<SaveState<Unit>> = _seedState.asStateFlow()
+    private val _seedState = MutableStateFlow<SaveState<String>>(SaveState.Idle)
+    val seedState: StateFlow<SaveState<String>> = _seedState.asStateFlow()
 
     // Settings Flows
     val theme: StateFlow<AppTheme> = settingsDataSource.theme
@@ -484,10 +484,16 @@ class SettingsViewModel(
             _seedState.value = SaveState.Loading
             _seedProgress.value = 0f
             try {
-                // Seed for the primary M-Pesa account if found, otherwise first account
                 val accounts = _accounts.value
-                val targetAccountId = accounts.find { it.name.lowercase().contains("mpesa") }?.id 
-                    ?: accounts.firstOrNull()?.id
+                val defaultId = defaultAccountId.value
+                
+                // Priority: 1. Default Account, 2. Account with "mpesa" in name, 3. First account
+                val targetAccount = accounts.find { it.id == defaultId }
+                    ?: accounts.find { it.name.lowercase().contains("mpesa") }
+                    ?: accounts.firstOrNull()
+
+                val targetAccountId = targetAccount?.id
+                val targetAccountName = targetAccount?.name ?: "Unknown Account"
 
                 transactionImporter.importHistory(
                     targetAccountId = targetAccountId,
@@ -495,7 +501,7 @@ class SettingsViewModel(
                 ) { progress ->
                     _seedProgress.value = progress
                 }
-                _seedState.value = SaveState.Success(Unit)
+                _seedState.value = SaveState.Success(targetAccountName)
             } catch (e: Exception) {
                 _seedState.value = SaveState.Error(e)
                 _error.value = "Failed to seed portfolio data: ${e.message}"

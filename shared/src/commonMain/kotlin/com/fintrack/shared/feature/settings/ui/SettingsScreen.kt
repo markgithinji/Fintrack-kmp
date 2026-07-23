@@ -622,9 +622,9 @@ fun SettingsScreen(
                     }
 
                     SettingsSection(title = "Portfolio Demo") {
-                        val seedSubtitle = when (seedState) {
+                        val seedSubtitle = when (val state = seedState) {
                             is SaveState.Loading -> "Seeding... ${(seedProgress * 100).toInt()}%"
-                            is SaveState.Success -> "Successfully seeded!"
+                            is SaveState.Success -> "Successfully seeded to ${state.data}!"
                             is SaveState.Error -> "Failed to seed data"
                             else -> "Populate charts with 6 months of sample data"
                         }
@@ -914,6 +914,10 @@ fun SettingsScreen(
             "This will generate multiple transactions per day for the last 6 months to populate your charts with rich data. This helps in exploring the app's features and visualizations. Real data is not affected."
         }
 
+        val successMessage = (seedState as? SaveState.Success<String>)?.data?.let { accountName ->
+            "Dummy transactions have been successfully added to '$accountName'."
+        } ?: "The dummy transactions have been successfully added to your account."
+
         ConfirmationDialog(
             title = "Seed Portfolio Data",
             message = seedMessage,
@@ -922,7 +926,7 @@ fun SettingsScreen(
             isSuccess = seedState is SaveState.Success,
             errorMessage = (seedState as? SaveState.Error)?.exception?.message,
             successTitle = "Seeding Complete",
-            successMessage = "The dummy transactions have been successfully added to your account.",
+            successMessage = successMessage,
             autoDismiss = false,
             onConfirm = { viewModel.seedPortfolioData() },
             onDismiss = {
