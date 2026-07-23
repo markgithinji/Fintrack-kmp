@@ -143,11 +143,21 @@ fun BudgetDetailScreen(
     }
 
     LaunchedEffect(saveState) {
-        if (saveState is SaveState.Success) {
-            onGlobalRefresh()
-            delay(1200)
-            onSave()
-            viewModel.resetSaveState()
+        when (saveState) {
+            is SaveState.Success -> {
+                onGlobalRefresh()
+                delay(1200)
+                onSave()
+                viewModel.resetSaveState()
+            }
+            is SaveState.Error -> {
+                val message = (saveState as SaveState.Error).exception.let {
+                    (it as? ApiException)?.getUserFriendlyMessage() ?: it.message ?: "Failed to save budget"
+                }
+                onShowToast(message, true)
+                viewModel.resetSaveState()
+            }
+            else -> {}
         }
     }
 
@@ -184,17 +194,6 @@ fun BudgetDetailScreen(
         }
     }
 
-    LaunchedEffect(saveState) {
-        if (saveState is SaveState.Success) {
-            onSave()
-        } else if (saveState is SaveState.Error) {
-            val message = (saveState as SaveState.Error).exception.let {
-                (it as? ApiException)?.getUserFriendlyMessage() ?: it.message ?: "Failed to save budget"
-            }
-            onShowToast(message, true)
-            viewModel.resetSaveState()
-        }
-    }
 
     Box(
         modifier = Modifier
