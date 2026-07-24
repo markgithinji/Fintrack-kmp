@@ -3,6 +3,7 @@ package com.fintrack.shared.feature.transaction.domain.usecase
 import com.fintrack.shared.feature.core.util.FileSaver
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.model.ExportFormat
+import com.fintrack.shared.feature.transaction.domain.model.Transaction
 import com.fintrack.shared.feature.transaction.domain.repository.TransactionRepository
 import com.fintrack.shared.feature.transaction.domain.util.generatePdfBytes
 import kotlinx.datetime.TimeZone
@@ -49,7 +50,7 @@ class ExportTransactionsUseCase(
         }
     }
 
-    private fun generateCsv(transactions: List<com.fintrack.shared.feature.transaction.domain.model.Transaction>): String {
+    private fun generateCsv(transactions: List<Transaction>): String {
         val csv = StringBuilder()
         csv.append("Date,Category,Amount,Transaction Fees,Total,Type,Account,Description\n")
         

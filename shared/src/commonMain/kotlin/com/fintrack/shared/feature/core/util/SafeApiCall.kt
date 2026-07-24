@@ -72,6 +72,7 @@ private fun handleRedirectException(e: RedirectResponseException): ApiException 
 
 private suspend fun handleClientException(e: ClientRequestException): ApiException {
     val statusCode = e.response.status.value
+    val url = e.response.call.request.url.toString()
     val errorResponse = try {
         e.response.body<ErrorResponse>()
     } catch (parseException: Exception) {
@@ -97,7 +98,7 @@ private suspend fun handleClientException(e: ClientRequestException): ApiExcepti
             }
         }
         403 -> ApiException.Forbidden("Access denied: $message")
-        404 -> ApiException.NotFound("Resource not found: $message")
+        404 -> ApiException.NotFound("Resource not found at $url: $message")
         409 -> {
             if (errorCode != null) {
                 mapToAuthException(message, errorCode) ?: ApiException.ClientError(message, statusCode)
@@ -106,8 +107,8 @@ private suspend fun handleClientException(e: ClientRequestException): ApiExcepti
             }
         }
         422 -> ApiException.Validation(message)
-        in 400..499 -> ApiException.ClientError(message, statusCode)
-        else -> ApiException.Unknown("Unexpected client error: $message")
+        in 400..499 -> ApiException.ClientError("$message (at $url)", statusCode)
+        else -> ApiException.Unknown("Unexpected client error: $message (at $url)")
     }
 }
 

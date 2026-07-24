@@ -51,7 +51,7 @@ fun Throwable.getUserFriendlyMessage(): String {
             }
             is ApiException.Network -> details.ifEmpty { "Connection failed. Please check your internet and try again." }
             is ApiException.Validation -> details
-            is ApiException.NotFound -> "The requested information could not be found."
+            is ApiException.NotFound -> if (details.contains("http")) details else "The requested information could not be found."
             is ApiException.ServerError -> "Something went wrong on our end. We're working on it!"
             is ApiException.Unauthorized -> "Authentication required. Please log in again."
             is ApiException.Forbidden -> "You don't have permission to do this."

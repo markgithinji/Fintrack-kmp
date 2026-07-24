@@ -9,16 +9,18 @@ enum class Environment {
 object ApiConfig {
     private var currentEnvironment: Environment = Environment.STAGING
 
+    // Change this to your laptop's local IP address (e.g., "192.168.100.96")
+    private const val LOCAL_HOST = "192.168.100.96" 
+    private const val RENDER_URL = "https://fintrack-ktor.onrender.com"
+
     val BASE_URL: String
         get() = when (currentEnvironment) {
-            Environment.DEVELOPMENT -> "http://192.168.100.96:8080" // Change this to your laptop's local IP address
-            Environment.STAGING -> "https://fintrack-ktor.onrender.com"
-            Environment.PRODUCTION -> "https://fintrack-ktor.onrender.com"
+            Environment.DEVELOPMENT -> "http://$LOCAL_HOST:8080"
+            Environment.STAGING -> RENDER_URL
+            Environment.PRODUCTION -> RENDER_URL
         }
 
     fun initialize(environment: Environment) {
         currentEnvironment = environment
     }
 }
-//10.176.101.247
-//192.168.100.96

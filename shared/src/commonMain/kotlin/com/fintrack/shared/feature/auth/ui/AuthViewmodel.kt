@@ -13,6 +13,7 @@ import com.fintrack.shared.feature.auth.domain.usecase.RegisterValidationUseCase
 import com.fintrack.shared.feature.core.domain.ValidationResult
 import com.fintrack.shared.feature.core.domain.ValidationTrigger
 import com.fintrack.shared.feature.core.util.Result
+import com.fintrack.shared.feature.core.data.model.ApiException
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
 import com.fintrack.shared.feature.user.domain.repository.UserRepository
 import kotlinx.coroutines.delay
@@ -449,14 +450,26 @@ class AuthViewModel(
 
                         _authStatus.value = AuthState.Success(true)
                     } else {
+                        // Token is invalid but request succeeded (e.g. backend says false)
                         tokenDataSource.clearTokens()
                         _authStatus.value = AuthState.Success(false)
                     }
                 }
 
                 is Result.Error -> {
-                    // On network error, show error state to allow retry instead of forcing login
-                    _authStatus.value = AuthState.Error(result.exception)
+                    val exception = result.exception
+                    // If the user no longer exists (404) or we are unauthorized (401),
+                    // we must clear tokens and force a re-login instead of showing an error.
+                    if (exception is ApiException.NotFound ||
+                        exception is ApiException.Unauthorized
+                    ) {
+                        tokenDataSource.clearTokens()
+                        userRepository.clearProfile()
+                        _authStatus.value = AuthState.Success(false)
+                    } else {
+                        // On network error or other server errors, show error state to allow retry
+                        _authStatus.value = AuthState.Error(exception)
+                    }
                 }
 
                 is Result.Loading -> {

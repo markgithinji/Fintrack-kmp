@@ -3,6 +3,7 @@ package com.fintrack.shared.feature.navigation.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fintrack.shared.feature.account.domain.usecase.GetAccountsUseCase
+import com.fintrack.shared.feature.auth.domain.datasource.TokenDataSource
 import com.fintrack.shared.feature.budget.domain.usecase.CheckBudgetThresholdsUseCase
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.settings.domain.datasource.SettingsDataSource
@@ -19,7 +20,7 @@ import kotlin.time.Clock
 
 class MainViewModel(
     private val settingsDataSource: SettingsDataSource,
-    private val tokenDataSource: com.fintrack.shared.feature.auth.domain.datasource.TokenDataSource,
+    private val tokenDataSource: TokenDataSource,
     userRepository: UserRepository,
     private val getAccountsUseCase: GetAccountsUseCase,
     private val checkBudgetThresholdsUseCase: CheckBudgetThresholdsUseCase,
