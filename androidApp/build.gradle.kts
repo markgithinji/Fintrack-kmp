@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.fintrack.android"
-    compileSdk = 36
+    compileSdk = 37
 
     buildFeatures {
         buildConfig = true
@@ -15,7 +15,7 @@ android {
     defaultConfig {
         applicationId = "com.fintrack.android"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -55,7 +55,7 @@ android {
 dependencies {
     implementation(project(":shared"))
     implementation(libs.androidx.lifecycle.viewmodelCompose)
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+    implementation(libs.kotlinx.datetime)
 
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.core.ktx)
