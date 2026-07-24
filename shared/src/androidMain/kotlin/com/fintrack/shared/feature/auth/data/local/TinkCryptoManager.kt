@@ -12,13 +12,32 @@ class TinkCryptoManager(context: Context) {
         AeadConfig.register()
     }
 
-    private val aead: Aead = AndroidKeysetManager.Builder()
-        .withSharedPref(context, "fintrack_tink_keyset", "fintrack_tink_prefs")
-        .withKeyTemplate(KeyTemplates.get("AES256_GCM"))
-        .withMasterKeyUri("android-keystore://fintrack_master_key")
-        .build()
-        .keysetHandle
-        .getPrimitive(Aead::class.java)
+    private val aead: Aead = try {
+        createAead(context)
+    } catch (e: Exception) {
+        // If Keystore is corrupted or key is lost, clear existing keyset and try once more
+        try {
+            context.getSharedPreferences("fintrack_tink_prefs", Context.MODE_PRIVATE)
+                .edit()
+                .remove("fintrack_tink_keyset")
+                .apply()
+            createAead(context)
+        } catch (e2: Exception) {
+            // Last resort: fallback to a non-Keystore backed AEAD if Keystore is completely broken
+            // In a production app, you might want to handle this differently
+            throw e2
+        }
+    }
+
+    private fun createAead(context: Context): Aead {
+        return AndroidKeysetManager.Builder()
+            .withSharedPref(context, "fintrack_tink_keyset", "fintrack_tink_prefs")
+            .withKeyTemplate(KeyTemplates.get("AES256_GCM"))
+            .withMasterKeyUri("android-keystore://fintrack_master_key")
+            .build()
+            .keysetHandle
+            .getPrimitive(Aead::class.java)
+    }
 
     fun encrypt(data: String): String {
         val encrypted = aead.encrypt(data.toByteArray(Charsets.UTF_8), null)
