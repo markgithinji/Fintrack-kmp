@@ -572,14 +572,17 @@ fun AccountItem(
                 overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = account.lastSyncedAt?.let { "Synced ${it.toRelativeString()}" } ?: "Never synced",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                maxLines = 1,
-                minLines = 1
-            )
+            val isSyncEnabled = account.linkedSources.contains("mpesa") || account.linkedSources.contains("equity")
+            if (isSyncEnabled || account.lastSyncedAt != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = account.lastSyncedAt?.let { "Synced ${it.toRelativeString()}" } ?: "Never synced",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    maxLines = 1,
+                    minLines = 1
+                )
+            }
         }
     }
 }
