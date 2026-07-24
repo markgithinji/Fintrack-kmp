@@ -51,3 +51,12 @@ actual fun SmsPermissionLauncher(
         }
     }
 }
+
+@Composable
+actual fun rememberSmsPermissionState(): Boolean {
+    val context = LocalContext.current
+    return ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.READ_SMS
+    ) == PackageManager.PERMISSION_GRANTED
+}

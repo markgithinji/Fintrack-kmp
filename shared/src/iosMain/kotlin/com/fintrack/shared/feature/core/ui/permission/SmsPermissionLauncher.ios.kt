@@ -16,3 +16,6 @@ actual fun SmsPermissionLauncher(
         }
     }
 }
+
+@Composable
+actual fun rememberSmsPermissionState(): Boolean = false

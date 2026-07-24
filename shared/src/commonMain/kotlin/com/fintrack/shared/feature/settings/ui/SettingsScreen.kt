@@ -117,6 +117,7 @@ import com.fintrack.shared.feature.core.ui.biometric.BiometricResult
 import com.fintrack.shared.feature.core.ui.permission.NotificationPermissionLauncher
 import com.fintrack.shared.feature.core.ui.permission.PermissionRationaleDialog
 import com.fintrack.shared.feature.core.ui.permission.SmsPermissionLauncher
+import com.fintrack.shared.feature.core.ui.permission.rememberSmsPermissionState
 import com.fintrack.shared.feature.core.util.Result
 import com.fintrack.shared.feature.navigation.ui.LocalBiometricAuthenticator
 import com.fintrack.shared.feature.settings.domain.model.AppTheme
@@ -167,6 +168,8 @@ fun SettingsScreen(
     val trackedCategoryIds by viewModel.trackedCategoryIds.collectAsStateWithLifecycle()
     val trackedCategoryNames by viewModel.trackedCategoryNames.collectAsStateWithLifecycle()
     val allCategories by viewModel.allCategories.collectAsStateWithLifecycle()
+
+    val smsPermissionGranted = rememberSmsPermissionState()
 
     val changePasswordFormState by viewModel.changePasswordFormState.collectAsStateWithLifecycle()
     val changePasswordState by viewModel.changePasswordState.collectAsStateWithLifecycle()
@@ -347,7 +350,9 @@ fun SettingsScreen(
                             checked = isMpesaListenerEnabled,
                             onCheckedChange = { enabled ->
                                 if (enabled) {
-                                    if (isSmsRationaleHidden) {
+                                    if (smsPermissionGranted) {
+                                        viewModel.setMpesaListenerEnabled(true)
+                                    } else if (isSmsRationaleHidden) {
                                         showSmsPermissionRequest = SmsPermissionTarget.MPESA
                                         activeSmsTarget = SmsPermissionTarget.MPESA
                                     } else {
@@ -369,7 +374,9 @@ fun SettingsScreen(
                             checked = isEquityListenerEnabled,
                             onCheckedChange = { enabled ->
                                 if (enabled) {
-                                    if (isSmsRationaleHidden) {
+                                    if (smsPermissionGranted) {
+                                        viewModel.setEquityListenerEnabled(true)
+                                    } else if (isSmsRationaleHidden) {
                                         showSmsPermissionRequest = SmsPermissionTarget.EQUITY
                                         activeSmsTarget = SmsPermissionTarget.EQUITY
                                     } else {

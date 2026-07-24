@@ -8,3 +8,6 @@ expect fun SmsPermissionLauncher(
     onResult: (Boolean) -> Unit,
     onDismissTrigger: () -> Unit
 )
+
+@Composable
+expect fun rememberSmsPermissionState(): Boolean
