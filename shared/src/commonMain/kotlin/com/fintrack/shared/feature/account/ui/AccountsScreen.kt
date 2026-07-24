@@ -346,6 +346,12 @@ fun AccountLoadingShimmer(
     topPadding: Dp,
     bottomPadding: Dp,
 ) {
+    val shimmerColors = listOf(
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.08f),
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.18f),
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.08f),
+    )
+
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
@@ -359,49 +365,75 @@ fun AccountLoadingShimmer(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item(span = { GridItemSpan(2) }) {
-            AnimatedShimmerBox(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(140.dp)
-                    .clip(RoundedCornerShape(24.dp))
+                    .height(80.dp) // Match NetWorthHeader height
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+            ) {
+                AnimatedShimmerBox(
+                    modifier = Modifier.fillMaxSize(),
+                    shimmerColors = shimmerColors
+                )
+            }
+        }
+
+        item(span = { GridItemSpan(2) }) {
+            AnimatedShimmerBox(
+                modifier = Modifier
+                    .width(120.dp)
+                    .height(18.dp)
+                    .clip(RoundedCornerShape(4.dp)),
+                shimmerColors = shimmerColors
             )
         }
 
         items(6) {
-            Box(
+            Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(115.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                    .height(115.dp),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             ) {
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(10.dp),
-                    verticalArrangement = Arrangement.Center
-                ) {
+                Box(modifier = Modifier.fillMaxSize()) {
                     AnimatedShimmerBox(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
+                        modifier = Modifier.fillMaxSize(),
+                        shimmerColors = shimmerColors
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(10.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f))
+                        )
 
-                    AnimatedShimmerBox(
-                        modifier = Modifier
-                            .fillMaxWidth(0.7f)
-                            .height(16.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                    )
+                        Spacer(modifier = Modifier.height(10.dp))
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.7f)
+                                .height(16.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f))
+                        )
 
-                    AnimatedShimmerBox(
-                        modifier = Modifier
-                            .fillMaxWidth(0.5f)
-                            .height(20.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                    )
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.5f)
+                                .height(20.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f))
+                        )
+                    }
                 }
             }
         }
