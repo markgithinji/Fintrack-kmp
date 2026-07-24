@@ -221,6 +221,12 @@ fun CurrentBalanceCard(
 
 @Composable
 private fun CurrentBalanceLoadingState() {
+    val shimmerColors = listOf(
+        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.12f),
+        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.35f),
+        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.12f),
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -235,14 +241,16 @@ private fun CurrentBalanceLoadingState() {
                 AnimatedShimmerBox(
                     modifier = Modifier
                         .size(16.dp)
-                        .clip(CircleShape)
+                        .clip(CircleShape),
+                    shimmerColors = shimmerColors
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 AnimatedShimmerBox(
                     modifier = Modifier
                         .width(80.dp)
                         .height(16.dp)
-                        .clip(RoundedCornerShape(4.dp))
+                        .clip(RoundedCornerShape(4.dp)),
+                    shimmerColors = shimmerColors
                 )
             }
         }
@@ -253,7 +261,8 @@ private fun CurrentBalanceLoadingState() {
             modifier = Modifier
                 .width(100.dp)
                 .height(16.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .clip(RoundedCornerShape(4.dp)),
+            shimmerColors = shimmerColors
         )
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -262,7 +271,8 @@ private fun CurrentBalanceLoadingState() {
             modifier = Modifier
                 .width(180.dp)
                 .height(32.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .clip(RoundedCornerShape(4.dp)),
+            shimmerColors = shimmerColors
         )
     }
 }

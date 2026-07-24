@@ -20,18 +20,18 @@ import androidx.compose.ui.graphics.Color
 fun AnimatedShimmerBox(
     modifier: Modifier = Modifier,
     shimmerColors: List<Color> = listOf(
-        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.05f),
         MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f),
-        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.05f),
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.08f),
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f),
     )
 ) {
     val transition = rememberInfiniteTransition()
     val translateAnim by transition.animateFloat(
-        initialValue = -500f,
-        targetValue = 1500f,
+        initialValue = -300f,
+        targetValue = 1000f,
         animationSpec = infiniteRepeatable(
             animation = tween(
-                durationMillis = 1200,
+                durationMillis = 1000,
                 easing = LinearEasing
             ),
             repeatMode = RepeatMode.Restart
@@ -41,7 +41,7 @@ fun AnimatedShimmerBox(
     val brush = Brush.linearGradient(
         colors = shimmerColors,
         start = Offset(translateAnim, translateAnim),
-        end = Offset(translateAnim + 500f, translateAnim + 500f)
+        end = Offset(translateAnim + 300f, translateAnim + 300f)
     )
 
     Box(
