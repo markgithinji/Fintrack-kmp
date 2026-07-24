@@ -37,6 +37,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import com.fintrack.shared.feature.core.ui.AnimatedShimmerBox
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -164,12 +165,10 @@ fun AccountsScreen(
         ) {
             when (val state = accountsState) {
                 is Result.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    AccountLoadingShimmer(
+                        topPadding = paddingValues.calculateTopPadding() + 12.dp,
+                        bottomPadding = paddingValues.calculateBottomPadding() + 32.dp,
+                    )
                 }
 
                 is Result.Success -> {
@@ -339,6 +338,73 @@ fun AccountsScreen(
                 )
             }
         )
+    }
+}
+
+@Composable
+fun AccountLoadingShimmer(
+    topPadding: Dp,
+    bottomPadding: Dp,
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            top = topPadding,
+            end = 16.dp,
+            bottom = bottomPadding
+        ),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item(span = { GridItemSpan(2) }) {
+            AnimatedShimmerBox(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(140.dp)
+                    .clip(RoundedCornerShape(24.dp))
+            )
+        }
+
+        items(6) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(115.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(10.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    AnimatedShimmerBox(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    AnimatedShimmerBox(
+                        modifier = Modifier
+                            .fillMaxWidth(0.7f)
+                            .height(16.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    AnimatedShimmerBox(
+                        modifier = Modifier
+                            .fillMaxWidth(0.5f)
+                            .height(20.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                    )
+                }
+            }
+        }
     }
 }
 
