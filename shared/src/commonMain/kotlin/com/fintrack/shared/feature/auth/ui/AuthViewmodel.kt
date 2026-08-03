@@ -83,9 +83,11 @@ class AuthViewModel(
             tokenDataSource.accessToken.collect { token ->
                 val currentStatus = _authStatus.value
                 if (token == null) {
+                    // When token is cleared, ensure we transition to non-auth state and reset screen states
                     if (currentStatus != AuthState.Success(false)) {
                         _authStatus.value = AuthState.Success(false)
                     }
+                    clearAuthStates()
                 } else {
                     val isGloballyAuthenticated =
                         (currentStatus as? AuthState.Success)?.data ?: false
@@ -482,6 +484,8 @@ class AuthViewModel(
     fun clearAuthStates() {
         _loginState.value = AuthState.Idle
         _registerState.value = AuthState.Idle
+        _loginFormState.value = LoginFormState()
+        _registerFormState.value = RegisterFormState()
     }
 
     fun logout() {
@@ -497,10 +501,7 @@ class AuthViewModel(
                 _authStatus.value = AuthState.Success(false)
 
                 // Reset states
-                _loginState.value = AuthState.Idle
-                _registerState.value = AuthState.Idle
-                _loginFormState.value = LoginFormState()
-                _registerFormState.value = RegisterFormState()
+                clearAuthStates()
             }
         }
     }
