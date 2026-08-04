@@ -392,6 +392,9 @@ class SettingsViewModel(
                 _deleteAccountState.value = SaveState.Error(result.exception)
                 _error.value = "Failed to delete account"
             } else {
+                // Wipe any remaining ViewModel state
+                _budgets.value = Result.Loading
+                _accounts.value = emptyList()
                 _deleteAccountState.value = SaveState.Success(Unit)
             }
         }
